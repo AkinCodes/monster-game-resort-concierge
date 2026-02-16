@@ -1,0 +1,1486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Destruction Lab - Tier 4: Research | Monster Resort Concierge</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background: #fafbfc;
+    color: #1e293b;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* ── Header Banner ─────────────────────────────── */
+  .hero {
+    background: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 30%, #a78bfa 60%, #c4b5fd 100%);
+    padding: 3.5rem 2rem 3rem;
+    text-align: center;
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.06'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+  .hero-content { position: relative; z-index: 1; max-width: 700px; margin: 0 auto; }
+  .hero-badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.2);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 50px;
+    padding: 0.35rem 1.2rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+  .hero h1 {
+    font-size: 2.8rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 2px 12px rgba(0,0,0,0.15);
+  }
+  .hero h1 span { color: #e9d5ff; }
+  .hero p {
+    font-size: 1.15rem;
+    opacity: 0.92;
+    margin-bottom: 0.25rem;
+  }
+  .hero .exercise-count {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-top: 0.75rem;
+    background: rgba(255,255,255,0.18);
+    display: inline-block;
+    padding: 0.3rem 1.4rem;
+    border-radius: 30px;
+  }
+
+  /* ── Nav Strip ─────────────────────────────────── */
+  .nav-strip {
+    background: #fff;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 0.6rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .nav-strip a {
+    text-decoration: none;
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 0.4rem 1rem;
+    border-radius: 8px;
+    color: #64748b;
+    transition: all 0.2s;
+  }
+  .nav-strip a:hover { background: #f1f5f9; color: #1e293b; }
+  .nav-strip a.active {
+    background: #8b5cf6;
+    color: #fff;
+  }
+  .nav-strip .sep { color: #cbd5e1; font-size: 0.75rem; }
+
+  /* ── Container ─────────────────────────────────── */
+  .container { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
+  /* ── Progress ──────────────────────────────────── */
+  .progress-section {
+    background: #fff;
+    border-radius: 14px;
+    padding: 1.5rem 1.75rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    border: 1px solid #e2e8f0;
+  }
+  .progress-labels {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 0.6rem;
+  }
+  .progress-labels .title { font-weight: 700; font-size: 0.95rem; }
+  .progress-labels .count { font-size: 0.85rem; color: #64748b; font-weight: 600; }
+  .progress-track {
+    height: 14px;
+    background: #f1f5f9;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 10px;
+    background: linear-gradient(90deg, #8b5cf6, #a78bfa, #c084fc);
+    transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+    position: relative;
+  }
+  .progress-fill::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%);
+    animation: shimmer 2s infinite;
+  }
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+  .progress-global {
+    font-size: 0.8rem;
+    color: #64748b;
+    text-align: center;
+    font-weight: 500;
+  }
+  .progress-global strong { color: #8b5cf6; }
+
+  /* ── Controls Row ──────────────────────────────── */
+  .controls {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.55rem 1.2rem;
+    border-radius: 10px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+  .btn:hover { background: #f8fafc; border-color: #cbd5e1; transform: translateY(-1px); }
+  .btn-purple { background: #8b5cf6; color: #fff; border-color: #8b5cf6; }
+  .btn-purple:hover { background: #7c3aed; border-color: #7c3aed; }
+
+  /* ── Info Box ──────────────────────────────────── */
+  .info-box {
+    background: #faf5ff;
+    border: 1px solid #e9d5ff;
+    border-left: 4px solid #8b5cf6;
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 2rem;
+  }
+  .info-box h3 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #6d28d9;
+    margin-bottom: 0.4rem;
+  }
+  .info-box p { font-size: 0.88rem; color: #475569; }
+  .info-box code {
+    font-family: 'JetBrains Mono', monospace;
+    background: #f1f5f9;
+    padding: 0.2rem 0.5rem;
+    border-radius: 5px;
+    font-size: 0.82rem;
+    color: #6d28d9;
+  }
+
+  /* ── Exercise Card ─────────────────────────────── */
+  .exercise-card {
+    background: #fff;
+    border-left: 4px solid #8b5cf6;
+    border-radius: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.03);
+    margin-bottom: 1.25rem;
+    transition: transform 0.2s, box-shadow 0.2s;
+    overflow: hidden;
+  }
+  .exercise-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(139,92,246,0.12), 0 2px 6px rgba(0,0,0,0.06);
+  }
+  .exercise-card.completed { border-left-color: #22c55e; }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 1.25rem;
+    cursor: pointer;
+    user-select: none;
+  }
+  .card-header input[type="checkbox"] {
+    width: 20px; height: 20px;
+    accent-color: #8b5cf6;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .card-id {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #8b5cf6;
+    background: #f5f3ff;
+    padding: 0.15rem 0.55rem;
+    border-radius: 6px;
+    flex-shrink: 0;
+  }
+  .card-title {
+    font-weight: 700;
+    font-size: 0.92rem;
+    color: #1e293b;
+    flex: 1;
+  }
+  .concept-badge {
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.2rem 0.65rem;
+    border-radius: 50px;
+    background: #f5f3ff;
+    color: #7c3aed;
+    border: 1px solid #e9d5ff;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .nogap-badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 0.15rem 0.5rem;
+    border-radius: 50px;
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .expand-arrow {
+    font-size: 1.1rem;
+    color: #94a3b8;
+    transition: transform 0.3s;
+    flex-shrink: 0;
+  }
+  .exercise-card.open .expand-arrow { transform: rotate(180deg); }
+
+  .card-body {
+    display: none;
+    padding: 0 1.25rem 1.25rem;
+  }
+  .exercise-card.open .card-body { display: block; }
+
+  /* ── Panels ────────────────────────────────────── */
+  .panel {
+    border-radius: 10px;
+    padding: 1rem 1.15rem;
+    margin-bottom: 0.75rem;
+    font-size: 0.87rem;
+  }
+  .panel h4 {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 0.4rem;
+  }
+  .panel-hypothesis { background: #fefce8; }
+  .panel-hypothesis h4 { color: #a16207; }
+  .panel-action { background: #eff6ff; }
+  .panel-action h4 { color: #1d4ed8; }
+  .panel-verify { background: #f0fdf4; }
+  .panel-verify h4 { color: #15803d; }
+  .panel-why { background: #faf5ff; }
+  .panel-why h4 { color: #7c3aed; }
+  .panel-interview { background: #fff7ed; }
+  .panel-interview h4 { color: #c2410c; }
+  .panel-recovery { background: #f8fafc; }
+  .panel-recovery h4 { color: #475569; }
+
+  .panel code, .code-block {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+  }
+  .code-block {
+    background: #f1f5f9;
+    color: #334155;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    margin-top: 0.4rem;
+    overflow-x: auto;
+    line-height: 1.5;
+  }
+  .panel ul {
+    margin: 0.3rem 0 0 1.2rem;
+    font-size: 0.87rem;
+  }
+  .panel li { margin-bottom: 0.2rem; }
+
+  .file-ref {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: #6d28d9;
+    background: #f5f3ff;
+    padding: 0.1rem 0.4rem;
+    border-radius: 4px;
+  }
+
+  /* ── Notes ──────────────────────────────────────── */
+  .notes-area {
+    margin-top: 0.75rem;
+  }
+  .notes-area label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #64748b;
+    margin-bottom: 0.3rem;
+  }
+  .notes-area textarea {
+    width: 100%;
+    min-height: 70px;
+    padding: 0.65rem 0.85rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    resize: vertical;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    color: #1e293b;
+    background: #fff;
+  }
+  .notes-area textarea:focus {
+    outline: none;
+    border-color: #8b5cf6;
+    box-shadow: 0 0 0 3px rgba(139,92,246,0.15);
+  }
+
+  /* ── Gap Table ─────────────────────────────────── */
+  .gap-table-section {
+    background: #fff;
+    border-radius: 14px;
+    padding: 1.75rem;
+    margin-top: 2.5rem;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    border: 1px solid #e2e8f0;
+  }
+  .gap-table-section h2 {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #1e293b;
+    margin-bottom: 0.4rem;
+  }
+  .gap-table-section > p {
+    font-size: 0.85rem;
+    color: #64748b;
+    margin-bottom: 1.2rem;
+  }
+  .gap-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+  }
+  .gap-table th {
+    text-align: left;
+    font-weight: 700;
+    padding: 0.6rem 0.75rem;
+    background: #f8fafc;
+    border-bottom: 2px solid #e2e8f0;
+    color: #475569;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .gap-table td {
+    padding: 0.55rem 0.75rem;
+    border-bottom: 1px solid #f1f5f9;
+    color: #334155;
+  }
+  .gap-table tr:hover td { background: #faf5ff; }
+  .gap-badge-no {
+    display: inline-block;
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 0.12rem 0.5rem;
+    border-radius: 50px;
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+  }
+
+  /* ── Footer ────────────────────────────────────── */
+  .footer-nav {
+    display: flex;
+    justify-content: flex-start;
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e2e8f0;
+  }
+  .footer-nav a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #8b5cf6;
+    padding: 0.65rem 1.3rem;
+    border-radius: 10px;
+    border: 1px solid #e9d5ff;
+    background: #faf5ff;
+    transition: all 0.2s;
+  }
+  .footer-nav a:hover { background: #f5f3ff; transform: translateY(-1px); }
+
+  /* ── Responsive ────────────────────────────────── */
+  @media (max-width: 640px) {
+    .hero { padding: 2.5rem 1.25rem 2rem; }
+    .hero h1 { font-size: 2rem; }
+    .container { padding: 1.25rem 1rem 3rem; }
+    .card-header { flex-wrap: wrap; gap: 0.5rem; }
+    .concept-badge, .nogap-badge { font-size: 0.65rem; }
+    .controls { gap: 0.5rem; }
+    .btn { padding: 0.45rem 0.85rem; font-size: 0.78rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ════════════ HEADER BANNER ════════════ -->
+<header class="hero">
+  <div class="hero-content">
+    <div class="hero-badge">Destruction Lab</div>
+    <h1>Tier 4: <span>Research</span></h1>
+    <p>Algorithm Modifications &amp; A/B Comparisons</p>
+    <div class="exercise-count">16 exercises</div>
+  </div>
+</header>
+
+<!-- ════════════ NAVIGATION STRIP ════════════ -->
+<nav class="nav-strip">
+  <a href="learning_roadmap.html">Learning Roadmap</a>
+  <span class="sep">|</span>
+  <a href="destruction_lab_tier1.html">Tier 1: Warm-Up</a>
+  <a href="destruction_lab_tier2.html">Tier 2: Escalation</a>
+  <a href="destruction_lab_tier3.html">Tier 3: Advanced</a>
+  <a href="destruction_lab_tier4.html" class="active">Tier 4: Research</a>
+</nav>
+
+<!-- ════════════ MAIN CONTAINER ════════════ -->
+<div class="container">
+
+  <!-- Progress Bar -->
+  <div class="progress-section">
+    <div class="progress-labels">
+      <span class="title">Tier 4 Progress</span>
+      <span class="count" id="tierCount">0 / 16</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="tierFill" style="width: 0%"></div>
+    </div>
+    <div class="progress-global">
+      <strong id="globalCount">0</strong> / 67 total exercises completed &nbsp;|&nbsp; <strong id="localCount">0</strong> / 16 this tier
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <button class="btn" onclick="expandAll()">&#9654; Expand All</button>
+    <button class="btn" onclick="collapseAll()">&#9660; Collapse All</button>
+    <button class="btn btn-purple" onclick="exportDamageReport()">&#128203; Export Damage Report</button>
+  </div>
+
+  <!-- Before You Start -->
+  <div class="info-box">
+    <h3>Before You Start</h3>
+    <p>Create a fresh branch before making any destructive changes:</p>
+    <div class="code-block">git checkout -b destruction-lab</div>
+    <p style="margin-top: 0.5rem;">Each exercise includes a recovery command. Always verify you can restore the original code.</p>
+  </div>
+
+  <!-- ════════════ EXERCISES ════════════ -->
+
+  <!-- Exercise 52 -->
+  <div class="exercise-card" data-id="52" data-nogap="false">
+    <div class="card-header" onclick="toggleCard(this)">
+      <input type="checkbox" onclick="event.stopPropagation(); toggleCheck(52)">
+      <span class="card-id">#52</span>
+      <span class="card-title">Rebalance Confidence Weights to Equal</span>
+      <span class="concept-badge">Signal Weight Optimization</span>
+      <span class="nogap-badge">NO TEST</span>
+      <span class="expand-arrow">&#9662;</span>
+    </div>
+    <div class="card-body">
+      <div class="panel panel-hypothesis">
+        <h4>Hypothesis</h4>
+        <p>Equal weighting reduces semantic dominance.</p>
+      </div>
+      <div class="panel panel-action">
+        <h4>Action</h4>
+        <p><span class="file-ref">app/hallucination.py</span> (line 176). Change <code>0.3/0.5/0.2</code> to <code>0.33/0.34/0.33</code>.</p>
+        <div class="code-block">weights = [0.33, 0.34, 0.33]  # was [0.3, 0.5, 0.2]</div>
+      </div>
+      <div class="panel panel-verify">
+        <h4>Verify</h4>
+        <p>Compare confidence scores before/after. Observe how semantic signal no longer dominates overall score.</p>
+      </div>
+      <div class="panel panel-why">
+        <h4>Why It Matters</h4>
+        <p>Weight tuning is hyperparameter optimization. Understanding how individual signal weights affect ensemble scores is critical for ML systems.</p>
+      </div>
+      <div class="panel panel-interview">
+        <h4>Interview Prep</h4>
+        <ul>
+          <li>How do you tune multi-signal weights?</li>
+          <li>Grid search vs Bayesian optimization?</li>
+          <li>How would you A/B test scoring weights?</li>
+        </ul>
+      </div>
+      <div class="panel panel-recovery">
+        <h4>Recovery</h4>
+        <div class="code-block">git checkout -- app/hallucination.py</div>
+      </div>
+      <div class="notes-area">
+        <label>Notes</label>
+        <textarea placeholder="Your observations..." oninput="saveNotes(52, this.value)"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Exercise 53 -->
+  <div class="exercise-card" data-id="53" data-nogap="false">
+    <div class="card-header" onclick="toggleCard(this)">
+      <input type="checkbox" onclick="event.stopPropagation(); toggleCheck(53)">
+      <span class="card-id">#53</span>
+      <span class="card-title">Increase Hallucination Thresholds</span>
+      <span class="concept-badge">Threshold Sensitivity Analysis</span>
+      <span class="nogap-badge">NO TEST</span>
+      <span class="expand-arrow">&#9662;</span>
+    </div>
+    <div class="card-body">
+      <div class="panel panel-hypothesis">
+        <h4>Hypothesis</h4>
+        <p>With thresholds at 0.9/0.7, almost everything gets classified as LOW risk.</p>
+      </div>
+      <div class="panel panel-action">
+        <h4>Action</h4>
+        <p><span class="file-ref">app/hallucination.py</span> (lines 70-75). Change <code>0.7/0.4</code> to <code>0.9/0.7</code>.</p>
+        <div class="code-block"># was: HIGH > 0.7, MEDIUM > 0.4
+HIGH_THRESHOLD = 0.9   # was 0.7
+MEDIUM_THRESHOLD = 0.7  # was 0.4</div>
+      </div>
+      <div class="panel panel-verify">
+        <h4>Verify</h4>
+        <p>Most responses now classified as LOW or MEDIUM. Very few trigger HIGH hallucination risk.</p>
+      </div>
+      <div class="panel panel-why">
+        <h4>Why It Matters</h4>
+        <p>Threshold tuning directly impacts user experience. Too high = false sense of safety. Too low = alert fatigue.</p>
+      </div>
+      <div class="panel panel-interview">
+        <h4>Interview Prep</h4>
+        <ul>
+          <li>How do you determine optimal thresholds?</li>
+          <li>Precision-recall tradeoff in classification?</li>
+          <li>How do you handle threshold drift over time?</li>
+        </ul>
+      </div>
+      <div class="panel panel-recovery">
+        <h4>Recovery</h4>
+        <div class="code-block">git checkout -- app/hallucination.py</div>
+      </div>
+      <div class="notes-area">
+        <label>Notes</label>
+        <textarea placeholder="Your observations..." oninput="saveNotes(53, this.value)"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Exercise 54 -->
+  <div class="exercise-card" data-id="54" data-nogap="false">
+    <div class="card-header" onclick="toggleCard(this)">
+      <input type="checkbox" onclick="event.stopPropagation(); toggleCheck(54)">
+      <span class="card-id">#54</span>
+      <span class="card-title">Remove Epsilon from Cosine Similarity</span>
+      <span class="concept-badge">Numerical Stability</span>
+      <span class="nogap-badge">NO TEST</span>
+      <span class="expand-arrow">&#9662;</span>
+    </div>
+    <div class="card-body">
+      <div class="panel panel-hypothesis">
+        <h4>Hypothesis</h4>
+        <p>Without epsilon (1e-10), a zero-length vector causes division by zero.</p>
+      </div>
+      <div class="panel panel-action">
+        <h4>Action</h4>
+        <p><span class="file-ref">app/hallucination.py</span> (line 127). Remove <code>+ 1e-10</code> from the denominator.</p>
+        <div class="code-block"># Before:  norm = np.sqrt(np.sum(v**2)) + 1e-10
+# After:   norm = np.sqrt(np.sum(v**2))</div>
+      </div>
+      <div class="panel panel-verify">
+        <h4>Verify</h4>
+        <p>Potential NaN/Inf in similarity scores when any vector has zero magnitude.</p>
+      </div>
+      <div class="panel panel-why">
+        <h4>Why It Matters</h4>
+        <p>Epsilon is a numerical stability guard. It's a small constant that prevents catastrophic floating-point errors in production systems.</p>
+      </div>
+      <div class="panel panel-interview">
+        <h4>Interview Prep</h4>
+        <ul>
+          <li>What is numerical stability and why does it matter?</li>
+          <li>Where do you add epsilon guards in ML pipelines?</li>
+          <li>float32 vs float64 precision tradeoffs?</li>
+        </ul>
+      </div>
+      <div class="panel panel-recovery">
+        <h4>Recovery</h4>
+        <div class="code-block">git checkout -- app/hallucination.py</div>
+      </div>
+      <div class="notes-area">
+        <label>Notes</label>
+        <textarea placeholder="Your observations..." oninput="saveNotes(54, this.value)"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Exercise 55 -->
+  <div class="exercise-card" data-id="55" data-nogap="false">
+    <div class="card-header" onclick="toggleCard(this)">
+      <input type="checkbox" onclick="event.stopPropagation(); toggleCheck(55)">
+      <span class="card-id">#55</span>
+      <span class="card-title">Change RRF Constant k from 60 to 1</span>
+      <span class="concept-badge">RRF Hyperparameter Tuning</span>
+      <span class="nogap-badge">NO TEST</span>
+      <span class="expand-arrow">&#9662;</span>
+    </div>
+    <div class="card-body">
+      <div class="panel panel-hypothesis">
+        <h4>Hypothesis</h4>
+        <p>With k=1, top-ranked results dominate aggressively and diversity drops significantly.</p>
+      </div>
+      <div class="panel panel-action">
+        <h4>Action</h4>
+        <p><span class="file-ref">app/advanced_rag.py</span> (line 259). Change <code>k=60</code> to <code>k=1</code>.</p>
+        <div class="code-block">score = 1.0 / (k + rank)  # k=1 instead of k=60</div>
+      </div>
+      <div class="panel panel-verify">
+        <h4>Verify</h4>
+        <p>Results dominated by the #1 result from each retrieval method. Little diversity in final rankings.</p>
+      </div>
+      <div class="panel panel-why">
+        <h4>Why It Matters</h4>
+        <p>k=60 is the standard constant from the original RRF paper. It balances giving top results priority while maintaining diversity from lower-ranked results.</p>
+      </div>
+      <div class="panel panel-interview">
+        <h4>Interview Prep</h4>
+        <ul>
+          <li>What is the role of k in Reciprocal Rank Fusion?</li>
+          <li>How does k affect result diversity?</li>
+          <li>What did the original RRF paper recommend and why?</li>
+        </ul>
+      </div>
+      <div class="panel panel-recovery">
+        <h4>Recovery</h4>
+        <div class="code-block">git checkout -- app/advanced_rag.py</div>
+      </div>
+      <div class="notes-area">
+        <label>Notes</label>
+        <textarea placeholder="Your observations..." oninput="saveNotes(55, this.value)"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Exercise 56 -->
+  <div class="exercise-card" data-id="56" data-nogap="false">
+    <div class="card-header" onclick="toggleCard(this)">
+      <input type="checkbox" onclick="event.stopPropagation(); toggleCheck(56)">
+      <span class="card-id">#56</span>
+      <span class="card-title">Swap BM25 and Dense Weights in RRF</span>
+      <span class="concept-badge">Hybrid Search Balance</span>
+      <span class="nogap-badge">NO TEST</span>
+      <span class="expand-arrow">&#9662;</span>
+    </div>
+    <div class="card-body">
+      <div class="panel panel-hypothesis">
+        <h4>Hypothesis</h4>
+        <p>With 80% BM25 weight, keyword matching dominates over semantic understanding.</p>
+      </div>
+      <div class="panel panel-action">
+        <h4>Action</h4>
+        <p><span class="file-ref">app/advanced_rag.py</span> (line 237). Change <code>bm25_weight</code> from <code>0.4</code> to <code>0.8</code>.</p>
+        <div class="code-block">bm25_weight = 0.8  # was 0.4</div>
+      </div>
+      <div class="panel panel-verify">
+        <h4>Verify</h4>
+        <p>Keyword queries improve significantly. Semantic/conceptual queries degrade in quality.</p>
+      </div>
+      <div class="panel panel-why">
+        <h4>Why It Matters</h4>
+        <p>The BM25/dense balance is a fundamental retrieval architecture decision. It determines whether your system favors exact matches or semantic understanding.</p>
+      </div>
+      <div class="panel panel-interview">
+        <h4>Interview Prep</h4>
+        <ul>
+          <li>When would you weight BM25 higher than dense retrieval?</li>
+          <li>How does query type affect optimal weights?</li>
+          <li>How do you tune hybrid search in production?</li>
+        </ul>
+      </div>
+      <div class="panel panel-recovery">
+        <h4>Recovery</h4>
+        <div class="code-block">git checkout -- app/advanced_rag.py</div>
+      </div>
+      <div class="notes-area">
+        <label>Notes</label>
+        <textarea placeholder="Your observations..." oninput="saveNotes(56, this.value)"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Exercise 57 -->
+  <div class="exercise-card" data-id="57" data-nogap="false">
+    <div class="card-header" onclick="toggleCard(this)">
+      <input type="checkbox" onclick="event.stopPropagation(); toggleCheck(57)">
+      <span class="card-id">#57</span>
+      <span class="card-title">Disable LLM Fallback Chain</span>
+      <span class="concept-badge">Resilience Pattern</span>
+      <span class="nogap-badge">NO TEST</span>
+      <span class="expand-arrow">&#9662;</span>
+    </div>
+    <div class="card-body">
+      <div class="panel panel-hypothesis">
+        <h4>Hypothesis</h4>
+        <p>With fallback disabled, the first provider failure terminates the entire request.</p>
+      </div>
+      <div class="panel panel-action">
+        <h4>Action</h4>
+        <p><span class="file-ref">app/llm_providers.py</span> (line 372). Set <code>self.fallback_enabled = False</code>.</p>
+        <div class="code-block">self.fallback_enabled = False  # was True</div>
+      </div>
+      <div class="panel panel-verify">
+        <h4>Verify</h4>
+        <p>Immediate failure on provider error, even when backup providers are configured and healthy.</p>
+      </div>
+      <div class="panel panel-why">
+        <h4>Why It Matters</h4>
+        <p>Fallback chains are the simplest resilience pattern. Without them, a single upstream failure cascades to every user request.</p>
+      </div>
+      <div class="panel panel-interview">
+        <h4>Interview Prep</h4>
+        <ul>
+          <li>What resilience patterns do you know (retry, fallback, circuit breaker)?</li>
+          <li>When should you NOT retry a failed request?</li>
+          <li>How does exponential backoff prevent thundering herd?</li>
+        </ul>
+      </div>
+      <div class="panel panel-recovery">
+        <h4>Recovery</h4>
+        <div class="code-block">git checkout -- app/llm_providers.py</div>
+      </div>
+      <div class="notes-area">
+        <label>Notes</label>
+        <textarea placeholder="Your observations..." oninput="saveNotes(57, this.value)"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Exercise 58 -->
+  <div class="exercise-card" data-id="58" data-nogap="false">
+    <div class="card-header" onclick="toggleCard(this)">
+      <input type="checkbox" onclick="event.stopPropagation(); toggleCheck(58)">
+      <span class="card-id">#58</span>
+      <span class="card-title">Change Summarization Threshold from 12 to 2</span>
+      <span class="concept-badge">Batch Size Tuning</span>
+      <span class="nogap-badge">NO TEST</span>
+      <span class="expand-arrow">&#9662;</span>
+    </div>
+    <div class="card-body">
+      <div class="panel panel-hypothesis">
+        <h4>Hypothesis</h4>
+        <p>With threshold of 2, summarization triggers every 2 messages instead of 12.</p>
+      </div>
+      <div class="panel panel-action">
+        <h4>Action</h4>
+        <p><span class="file-ref">app/memory.py</span> (line 14). Change <code>12</code> to <code>2</code>.</p>
+        <div class="code-block">SUMMARIZATION_THRESHOLD = 2  # was 12</div>
+      </div>
+      <div class="panel panel-verify">
+        <h4>Verify</h4>
+        <p>Observe 2 summarization API calls for just 4 messages. Massive cost increase, minimal context benefit.</p>
+      </div>
+      <div class="panel panel-why">
+        <h4>Why It Matters</h4>
+        <p>Batch threshold balances context retention vs API cost. Too frequent = expensive. Too rare = context overflow.</p>
+      </div>
+      <div class="panel panel-interview">
+        <h4>Interview Prep</h4>
+        <ul>
+          <li>How do you choose summarization frequency?</li>
+          <li>Context window length vs information loss tradeoff?</li>
+          <li>How do LLM API costs factor into architecture decisions?</li>
+        </ul>
+      </div>
+      <div class="panel panel-recovery">
+        <h4>Recovery</h4>
+        <div class="code-block">git checkout -- app/memory.py</div>
+      </div>
+      <div class="notes-area">
+        <label>Notes</label>
+        <textarea placeholder="Your observations..." oninput="saveNotes(58, this.value)"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Exercise 59 -->
+  <div class="exercise-card" data-id="59" data-nogap="false">
+    <div class="card-header" onclick="toggleCard(this)">
+      <input type="checkbox" onclick="event.stopPropagation(); toggleCheck(59)">
+      <span class="card-id">#59</span>
+      <span class="card-title">Remove LLM Summarization, Keep Only Cheap Summary</span>
+      <span class="concept-badge">Feature Degradation Analysis</span>
+      <span class="nogap-badge">NO TEST</span>
+      <span class="expand-arrow">&#9662;</span>
+    </div>
+    <div class="card-body">
+      <div class="panel panel-hypothesis">
+        <h4>Hypothesis</h4>
+        <p>Without LLM summarization, only the regex-based cheap summary is used.</p>
+      </div>
+      <div class="panel panel-action">
+        <h4>Action</h4>
+        <p><span class="file-ref">app/memory.py</span> (lines 91-114). Comment out the entire OpenAI summarization block.</p>
+        <div class="code-block"># Comment out lines 91-114:
+# response = openai.ChatCompletion.create(
+#     model="gpt-3.5-turbo",
+#     messages=[...],
+#     ...
+# )</div>
+      </div>
+      <div class="panel panel-verify">
+        <h4>Verify</h4>
+        <p>Summary output is just: <code>"Intents: booking. Mentioned: Count, Vampire, Manor"</code> &mdash; no real comprehension.</p>
+      </div>
+      <div class="panel panel-why">
+        <h4>Why It Matters</h4>
+        <p>Tests whether the expensive LLM feature justifies its cost. A classic build-vs-buy, quality-vs-cost analysis.</p>
+      </div>
+      <div class="panel panel-interview">
+        <h4>Interview Prep</h4>
+        <ul>
+          <li>How do you evaluate summarization quality (ROUGE, BERTScore)?</li>
+          <li>What is ROUGE score and when is it useful?</li>
+          <li>When is regex-based extraction good enough?</li>
+        </ul>
+      </div>
+      <div class="panel panel-recovery">
+        <h4>Recovery</h4>
+        <div class="code-block">git checkout -- app/memory.py</div>
+      </div>
+      <div class="notes-area">
+        <label>Notes</label>
+        <textarea placeholder="Your observations..." oninput="saveNotes(59, this.value)"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Exercise 60 -->
+  <div class="exercise-card" data-id="60" data-nogap="false">
+    <div class="card-header" onclick="toggleCard(this)">
+      <input type="checkbox" onclick="event.stopPropagation(); toggleCheck(60)">
+      <span class="card-id">#60</span>
+      <span class="card-title">Remove Cache Size Limit (LRU Eviction)</span>
+      <span class="concept-badge">Memory Bounded Data Structures</span>
+      <span class="nogap-badge">NO TEST</span>
+      <span class="expand-arrow">&#9662;</span>
+    </div>
+    <div class="card-body">
+      <div class="panel panel-hypothesis">
+        <h4>Hypothesis</h4>
+        <p>Without a size limit, the cache grows unbounded and eventually consumes all available memory.</p>
+      </div>
+      <div class="panel panel-action">
+        <h4>Action</h4>
+        <p><span class="file-ref">app/cache_utils.py</span> (lines 37-38). Comment out the LRU eviction logic.</p>
+        <div class="code-block"># Comment out:
+# if len(self._cache) >= self.max_size:
+#     self._cache.pop(next(iter(self._cache)))</div>
+      </div>
+      <div class="panel panel-verify">
+        <h4>Verify</h4>
+        <p>Memory usage grows linearly with requests and never plateaus. In production, this leads to OOM kills.</p>
+      </div>
+      <div class="panel panel-why">
+        <h4>Why It Matters</h4>
+        <p>Every cache needs a size limit. Unbounded caches are one of the most common memory leak patterns in production systems.</p>
+      </div>
+      <div class="panel panel-interview">
+        <h4>Interview Prep</h4>
+        <ul>
+          <li>How does LRU eviction work?</li>
+          <li>How do you size a cache for production?</li>
+          <li>LRU vs LFU vs FIFO eviction strategies?</li>
+        </ul>
+      </div>
+      <div class="panel panel-recovery">
+        <h4>Recovery</h4>
+        <div class="code-block">git checkout -- app/cache_utils.py</div>
+      </div>
+      <div class="notes-area">
+        <label>Notes</label>
+        <textarea placeholder="Your observations..." oninput="saveNotes(60, this.value)"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Exercise 61 -->
+  <div class="exercise-card" data-id="61" data-nogap="false">
+    <div class="card-header" onclick="toggleCard(this)">
+      <input type="checkbox" onclick="event.stopPropagation(); toggleCheck(61)">
+      <span class="card-id">#61</span>
+      <span class="card-title">Remove Cache Key Hashing</span>
+      <span class="concept-badge">Key Space Management</span>
+      <span class="nogap-badge">NO TEST</span>
+      <span class="expand-arrow">&#9662;</span>
+    </div>
+    <div class="card-body">
+      <div class="panel panel-hypothesis">
+        <h4>Hypothesis</h4>
+        <p>Without MD5 hashing, cache keys are full raw strings of arbitrary length.</p>
+      </div>
+      <div class="panel panel-action">
+        <h4>Action</h4>
+        <p><span class="file-ref">app/cache_utils.py</span> (line 51). Return the raw key instead of its hash.</p>
+        <div class="code-block"># Before: return hashlib.md5(raw.encode()).hexdigest()
+# After:  return raw</div>
+      </div>
+      <div class="panel panel-verify">
+        <h4>Verify</h4>
+        <p>Cache keys are very long raw strings instead of uniform 32-character hex hashes.</p>
+      </div>
+      <div class="panel panel-why">
+        <h4>Why It Matters</h4>
+        <p>Hashing normalizes key length, prevents memory waste from long keys, and enables efficient lookups in hash-based data structures.</p>
+      </div>
+      <div class="panel panel-interview">
+        <h4>Interview Prep</h4>
+        <ul>
+          <li>Why hash cache keys instead of using raw strings?</li>
+          <li>MD5 collision risks in caching contexts?</li>
+          <li>Does key length matter for performance?</li>
+        </ul>
+      </div>
+      <div class="panel panel-recovery">
+        <h4>Recovery</h4>
+        <div class="code-block">git checkout -- app/cache_utils.py</div>
+      </div>
+      <div class="notes-area">
+        <label>Notes</label>
+        <textarea placeholder="Your observations..." oninput="saveNotes(61, this.value)"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Exercise 62 -->
+  <div class="exercise-card" data-id="62" data-nogap="false">
+    <div class="card-header" onclick="toggleCard(this)">
+      <input type="checkbox" onclick="event.stopPropagation(); toggleCheck(62)">
+      <span class="card-id">#62</span>
+      <span class="card-title">Remove Config Environment Validation</span>
+      <span class="concept-badge">Configuration Validation</span>
+      <span class="nogap-badge">NO TEST</span>
+      <span class="expand-arrow">&#9662;</span>
+    </div>
+    <div class="card-body">
+      <div class="panel panel-hypothesis">
+        <h4>Hypothesis</h4>
+        <p>Without validation, typos like <code>"prodd"</code> are silently accepted as valid environments.</p>
+      </div>
+      <div class="panel panel-action">
+        <h4>Action</h4>
+        <p><span class="file-ref">app/config.py</span> (lines 79-85). Comment out <code>validate_environment</code>.</p>
+        <div class="code-block"># Comment out:
+# def validate_environment(self):
+#     valid = {"development", "staging", "production"}
+#     if self.environment not in valid:
+#         raise ValueError(f"Invalid environment: {self.environment}")</div>
+      </div>
+      <div class="panel panel-verify">
+        <h4>Verify</h4>
+        <p><code>MRC_ENVIRONMENT=prodd</code> is accepted without error. App runs with unknown configuration state.</p>
+      </div>
+      <div class="panel panel-why">
+        <h4>Why It Matters</h4>
+        <p>Config validation catches human errors at startup, not at 3 AM when a typo causes silent misconfiguration in production.</p>
+      </div>
+      <div class="panel panel-interview">
+        <h4>Interview Prep</h4>
+        <ul>
+          <li>When should you validate configuration?</li>
+          <li>What is the fail-fast principle?</li>
+          <li>How do you handle config across different environments?</li>
+        </ul>
+      </div>
+      <div class="panel panel-recovery">
+        <h4>Recovery</h4>
+        <div class="code-block">git checkout -- app/config.py</div>
+      </div>
+      <div class="notes-area">
+        <label>Notes</label>
+        <textarea placeholder="Your observations..." oninput="saveNotes(62, this.value)"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Exercise 63 -->
+  <div class="exercise-card" data-id="63" data-nogap="false">
+    <div class="card-header" onclick="toggleCard(this)">
+      <input type="checkbox" onclick="event.stopPropagation(); toggleCheck(63)">
+      <span class="card-id">#63</span>
+      <span class="card-title">Remove OpenAI Key Production Validation</span>
+      <span class="concept-badge">Environment-Specific Validation</span>
+      <span class="nogap-badge">NO TEST</span>
+      <span class="expand-arrow">&#9662;</span>
+    </div>
+    <div class="card-body">
+      <div class="panel panel-hypothesis">
+        <h4>Hypothesis</h4>
+        <p>Without validation, production starts successfully with a placeholder API key.</p>
+      </div>
+      <div class="panel panel-action">
+        <h4>Action</h4>
+        <p><span class="file-ref">app/config.py</span> (lines 106-114). Comment out <code>validate_openai_api_key</code>.</p>
+        <div class="code-block"># Comment out:
+# def validate_openai_api_key(self):
+#     if self.environment == "production":
+#         if self.openai_api_key.startswith("sk-..."):
+#             raise ValueError("Placeholder API key in production!")</div>
+      </div>
+      <div class="panel panel-verify">
+        <h4>Verify</h4>
+        <p>App starts with <code>"sk-..."</code> placeholder key. Silently fails on the first real user request with an auth error.</p>
+      </div>
+      <div class="panel panel-why">
+        <h4>Why It Matters</h4>
+        <p>Fail-fast catches misconfiguration at deploy time, not at request time. Users should never be the first to discover missing credentials.</p>
+      </div>
+      <div class="panel panel-interview">
+        <h4>Interview Prep</h4>
+        <ul>
+          <li>Why is fail-fast important for deployments?</li>
+          <li>How do you validate differently per environment?</li>
+          <li>How do you test production-like configuration safely?</li>
+        </ul>
+      </div>
+      <div class="panel panel-recovery">
+        <h4>Recovery</h4>
+        <div class="code-block">git checkout -- app/config.py</div>
+      </div>
+      <div class="notes-area">
+        <label>Notes</label>
+        <textarea placeholder="Your observations..." oninput="saveNotes(63, this.value)"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Exercise 64 -->
+  <div class="exercise-card" data-id="64" data-nogap="false">
+    <div class="card-header" onclick="toggleCard(this)">
+      <input type="checkbox" onclick="event.stopPropagation(); toggleCheck(64)">
+      <span class="card-id">#64</span>
+      <span class="card-title">Change Sentence Split Regex</span>
+      <span class="concept-badge">Text Segmentation</span>
+      <span class="nogap-badge">NO TEST</span>
+      <span class="expand-arrow">&#9662;</span>
+    </div>
+    <div class="card-body">
+      <div class="panel panel-hypothesis">
+        <h4>Hypothesis</h4>
+        <p>A simple <code>". "</code> split handles far fewer edge cases than the regex pattern.</p>
+      </div>
+      <div class="panel panel-action">
+        <h4>Action</h4>
+        <p><span class="file-ref">app/hallucination.py</span> (line 64). Replace regex split with <code>text.strip().split(". ")</code>.</p>
+        <div class="code-block"># Before: sentences = re.split(r'(?<=[.!?])\s+', text.strip())
+# After:  sentences = text.strip().split(". ")</div>
+      </div>
+      <div class="panel panel-verify">
+        <h4>Verify</h4>
+        <p><code>"Amazing! What a stay? Truly wonderful."</code> becomes one sentence instead of three.</p>
+      </div>
+      <div class="panel panel-why">
+        <h4>Why It Matters</h4>
+        <p>Text segmentation quality directly affects all downstream NLP tasks. Bad splits = bad embeddings = bad retrieval.</p>
+      </div>
+      <div class="panel panel-interview">
+        <h4>Interview Prep</h4>
+        <ul>
+          <li>What are sentence boundary detection challenges?</li>
+          <li>How does segmentation quality affect NLP pipelines?</li>
+          <li>What is the Punkt tokenizer and when would you use it?</li>
+        </ul>
+      </div>
+      <div class="panel panel-recovery">
+        <h4>Recovery</h4>
+        <div class="code-block">git checkout -- app/hallucination.py</div>
+      </div>
+      <div class="notes-area">
+        <label>Notes</label>
+        <textarea placeholder="Your observations..." oninput="saveNotes(64, this.value)"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Exercise 65 -->
+  <div class="exercise-card" data-id="65" data-nogap="false">
+    <div class="card-header" onclick="toggleCard(this)">
+      <input type="checkbox" onclick="event.stopPropagation(); toggleCheck(65)">
+      <span class="card-id">#65</span>
+      <span class="card-title">Remove MLflow Enabled Guard</span>
+      <span class="concept-badge">Feature Flags / Graceful Degradation</span>
+      <span class="nogap-badge">NO TEST</span>
+      <span class="expand-arrow">&#9662;</span>
+    </div>
+    <div class="card-body">
+      <div class="panel panel-hypothesis">
+        <h4>Hypothesis</h4>
+        <p>Without the guard, disabled MLflow still tries to connect, causing connection errors.</p>
+      </div>
+      <div class="panel panel-action">
+        <h4>Action</h4>
+        <p><span class="file-ref">app/mlflow_tracking.py</span>. Comment out all <code>if not self.enabled: return</code> guards.</p>
+        <div class="code-block"># Comment out in each method:
+# if not self.enabled:
+#     return</div>
+      </div>
+      <div class="panel panel-verify">
+        <h4>Verify</h4>
+        <p>Connection refused errors to <code>localhost:5000</code> on every request. Logs flooded with MLflow errors.</p>
+      </div>
+      <div class="panel panel-why">
+        <h4>Why It Matters</h4>
+        <p>Feature flags should completely bypass the feature when disabled. A disabled feature that still has side effects is a bug.</p>
+      </div>
+      <div class="panel panel-interview">
+        <h4>Interview Prep</h4>
+        <ul>
+          <li>How do feature flags work in production systems?</li>
+          <li>What is graceful degradation?</li>
+          <li>Feature flag vs circuit breaker: when to use which?</li>
+        </ul>
+      </div>
+      <div class="panel panel-recovery">
+        <h4>Recovery</h4>
+        <div class="code-block">git checkout -- app/mlflow_tracking.py</div>
+      </div>
+      <div class="notes-area">
+        <label>Notes</label>
+        <textarea placeholder="Your observations..." oninput="saveNotes(65, this.value)"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Exercise 66 -->
+  <div class="exercise-card" data-id="66" data-nogap="false">
+    <div class="card-header" onclick="toggleCard(this)">
+      <input type="checkbox" onclick="event.stopPropagation(); toggleCheck(66)">
+      <span class="card-id">#66</span>
+      <span class="card-title">Remove Tool Execution Error Handling</span>
+      <span class="concept-badge">Error Boundary</span>
+      <span class="nogap-badge">NO TEST</span>
+      <span class="expand-arrow">&#9662;</span>
+    </div>
+    <div class="card-body">
+      <div class="panel panel-hypothesis">
+        <h4>Hypothesis</h4>
+        <p>Without the try/catch, any tool failure crashes the entire agent loop.</p>
+      </div>
+      <div class="panel panel-action">
+        <h4>Action</h4>
+        <p><span class="file-ref">app/tools.py</span> (lines 167-180). Comment out the <code>except</code> block.</p>
+        <div class="code-block"># Comment out:
+# except Exception as e:
+#     logger.error(f"Tool {name} failed: {e}")
+#     return {"error": str(e), "tool": name}</div>
+      </div>
+      <div class="panel panel-verify">
+        <h4>Verify</h4>
+        <p>Unhandled exception propagates up and crashes the entire request. One bad tool takes down the whole conversation.</p>
+      </div>
+      <div class="panel panel-why">
+        <h4>Why It Matters</h4>
+        <p>Error boundaries define blast radius. A well-placed try/catch prevents a single tool failure from becoming a system-wide outage.</p>
+      </div>
+      <div class="panel panel-interview">
+        <h4>Interview Prep</h4>
+        <ul>
+          <li>What is an error boundary and where do you place them?</li>
+          <li>Sync vs async error boundaries?</li>
+          <li>How does error shape affect LLM agent behavior?</li>
+        </ul>
+      </div>
+      <div class="panel panel-recovery">
+        <h4>Recovery</h4>
+        <div class="code-block">git checkout -- app/tools.py</div>
+      </div>
+      <div class="notes-area">
+        <label>Notes</label>
+        <textarea placeholder="Your observations..." oninput="saveNotes(66, this.value)"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Exercise 67 -->
+  <div class="exercise-card" data-id="67" data-nogap="false">
+    <div class="card-header" onclick="toggleCard(this)">
+      <input type="checkbox" onclick="event.stopPropagation(); toggleCheck(67)">
+      <span class="card-id">#67</span>
+      <span class="card-title">Remove Clean Kwargs Colon Stripping</span>
+      <span class="concept-badge">Input Normalization / Defensive Parsing</span>
+      <span class="nogap-badge">NO TEST</span>
+      <span class="expand-arrow">&#9662;</span>
+    </div>
+    <div class="card-body">
+      <div class="panel panel-hypothesis">
+        <h4>Hypothesis</h4>
+        <p>Without colon stripping, LLM-generated trailing colons cause unexpected keyword arguments.</p>
+      </div>
+      <div class="panel panel-action">
+        <h4>Action</h4>
+        <p><span class="file-ref">app/tools.py</span> (line 144). Replace <code>clean_kwargs</code> with <code>kwargs</code> directly.</p>
+        <div class="code-block"># Before: result = func(**clean_kwargs(raw_args))
+# After:  result = func(**raw_args)</div>
+      </div>
+      <div class="panel panel-verify">
+        <h4>Verify</h4>
+        <p><code>TypeError: unexpected keyword argument 'guest_name:'</code> &mdash; the trailing colon is now part of the key.</p>
+      </div>
+      <div class="panel panel-why">
+        <h4>Why It Matters</h4>
+        <p>LLMs sometimes produce slightly malformed JSON. Defensive parsing (Postel's Law: be liberal in what you accept) prevents brittle integrations.</p>
+      </div>
+      <div class="panel panel-interview">
+        <h4>Interview Prep</h4>
+        <ul>
+          <li>How do you handle defensive parsing for LLM output?</li>
+          <li>What strategies exist for malformed tool call arguments?</li>
+          <li>What is Postel's Law and how does it apply to API design?</li>
+        </ul>
+      </div>
+      <div class="panel panel-recovery">
+        <h4>Recovery</h4>
+        <div class="code-block">git checkout -- app/tools.py</div>
+      </div>
+      <div class="notes-area">
+        <label>Notes</label>
+        <textarea placeholder="Your observations..." oninput="saveNotes(67, this.value)"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════ TEST GAP ANALYSIS TABLE ════════════ -->
+  <div class="gap-table-section">
+    <h2>Test Gap Analysis</h2>
+    <p>All Tier 4 exercises target code paths with no test coverage. These are prime candidates for new tests.</p>
+    <table class="gap-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Exercise</th>
+          <th>File</th>
+          <th>Concept</th>
+          <th>Test?</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>#52</td><td>Rebalance Confidence Weights</td><td>app/hallucination.py</td><td>Signal Weight Optimization</td><td><span class="gap-badge-no">NO TEST</span></td></tr>
+        <tr><td>#53</td><td>Increase Hallucination Thresholds</td><td>app/hallucination.py</td><td>Threshold Sensitivity</td><td><span class="gap-badge-no">NO TEST</span></td></tr>
+        <tr><td>#54</td><td>Remove Epsilon from Cosine Sim</td><td>app/hallucination.py</td><td>Numerical Stability</td><td><span class="gap-badge-no">NO TEST</span></td></tr>
+        <tr><td>#55</td><td>Change RRF Constant k</td><td>app/advanced_rag.py</td><td>RRF Hyperparameter</td><td><span class="gap-badge-no">NO TEST</span></td></tr>
+        <tr><td>#56</td><td>Swap BM25/Dense Weights</td><td>app/advanced_rag.py</td><td>Hybrid Search Balance</td><td><span class="gap-badge-no">NO TEST</span></td></tr>
+        <tr><td>#57</td><td>Disable LLM Fallback Chain</td><td>app/llm_providers.py</td><td>Resilience Pattern</td><td><span class="gap-badge-no">NO TEST</span></td></tr>
+        <tr><td>#58</td><td>Summarization Threshold</td><td>app/memory.py</td><td>Batch Size Tuning</td><td><span class="gap-badge-no">NO TEST</span></td></tr>
+        <tr><td>#59</td><td>Remove LLM Summarization</td><td>app/memory.py</td><td>Feature Degradation</td><td><span class="gap-badge-no">NO TEST</span></td></tr>
+        <tr><td>#60</td><td>Remove Cache Size Limit</td><td>app/cache_utils.py</td><td>Memory Bounded DS</td><td><span class="gap-badge-no">NO TEST</span></td></tr>
+        <tr><td>#61</td><td>Remove Cache Key Hashing</td><td>app/cache_utils.py</td><td>Key Space Management</td><td><span class="gap-badge-no">NO TEST</span></td></tr>
+        <tr><td>#62</td><td>Remove Config Env Validation</td><td>app/config.py</td><td>Config Validation</td><td><span class="gap-badge-no">NO TEST</span></td></tr>
+        <tr><td>#63</td><td>Remove OpenAI Key Validation</td><td>app/config.py</td><td>Env-Specific Validation</td><td><span class="gap-badge-no">NO TEST</span></td></tr>
+        <tr><td>#64</td><td>Change Sentence Split Regex</td><td>app/hallucination.py</td><td>Text Segmentation</td><td><span class="gap-badge-no">NO TEST</span></td></tr>
+        <tr><td>#65</td><td>Remove MLflow Enabled Guard</td><td>app/mlflow_tracking.py</td><td>Feature Flags</td><td><span class="gap-badge-no">NO TEST</span></td></tr>
+        <tr><td>#66</td><td>Remove Tool Error Handling</td><td>app/tools.py</td><td>Error Boundary</td><td><span class="gap-badge-no">NO TEST</span></td></tr>
+        <tr><td>#67</td><td>Remove Clean Kwargs Stripping</td><td>app/tools.py</td><td>Defensive Parsing</td><td><span class="gap-badge-no">NO TEST</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ════════════ FOOTER NAV ════════════ -->
+  <div class="footer-nav">
+    <a href="destruction_lab_tier3.html">&larr; Tier 3: Advanced</a>
+  </div>
+
+</div>
+
+<!-- ════════════ JAVASCRIPT ════════════ -->
+<script>
+(function() {
+  const STORAGE_KEY = 'destruction_lab_v3';
+  const TIER_IDS = Array.from({length: 16}, (_, i) => i + 52); // 52-67
+  const TOTAL_EXERCISES = 67;
+
+  // ── State ──
+  function getState() {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+    } catch { return {}; }
+  }
+  function setState(s) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+  }
+
+  // ── Init ──
+  function init() {
+    const state = getState();
+    // Restore checkboxes
+    TIER_IDS.forEach(id => {
+      const card = document.querySelector(`.exercise-card[data-id="${id}"]`);
+      if (!card) return;
+      const cb = card.querySelector('input[type="checkbox"]');
+      if (state['check_' + id]) {
+        cb.checked = true;
+        card.classList.add('completed');
+      }
+      // Restore notes
+      const ta = card.querySelector('textarea');
+      if (ta && state['notes_' + id]) {
+        ta.value = state['notes_' + id];
+      }
+    });
+    updateProgress();
+  }
+
+  // ── Progress ──
+  function updateProgress() {
+    const state = getState();
+    let tierDone = 0;
+    TIER_IDS.forEach(id => { if (state['check_' + id]) tierDone++; });
+
+    // Count global (IDs 1-67)
+    let globalDone = 0;
+    for (let i = 1; i <= TOTAL_EXERCISES; i++) {
+      if (state['check_' + i]) globalDone++;
+    }
+
+    document.getElementById('tierCount').textContent = tierDone + ' / 16';
+    document.getElementById('tierFill').style.width = ((tierDone / 16) * 100) + '%';
+    document.getElementById('globalCount').textContent = globalDone;
+    document.getElementById('localCount').textContent = tierDone;
+  }
+
+  // ── Toggle Card ──
+  window.toggleCard = function(header) {
+    const card = header.closest('.exercise-card');
+    card.classList.toggle('open');
+  };
+
+  // ── Toggle Check ──
+  window.toggleCheck = function(id) {
+    const state = getState();
+    const card = document.querySelector(`.exercise-card[data-id="${id}"]`);
+    const cb = card.querySelector('input[type="checkbox"]');
+    if (cb.checked) {
+      state['check_' + id] = true;
+      card.classList.add('completed');
+    } else {
+      delete state['check_' + id];
+      card.classList.remove('completed');
+    }
+    setState(state);
+    updateProgress();
+  };
+
+  // ── Save Notes ──
+  window.saveNotes = function(id, value) {
+    const state = getState();
+    if (value.trim()) {
+      state['notes_' + id] = value;
+    } else {
+      delete state['notes_' + id];
+    }
+    setState(state);
+  };
+
+  // ── Expand / Collapse ──
+  window.expandAll = function() {
+    document.querySelectorAll('.exercise-card').forEach(c => c.classList.add('open'));
+  };
+  window.collapseAll = function() {
+    document.querySelectorAll('.exercise-card').forEach(c => c.classList.remove('open'));
+  };
+
+  // ── Export Damage Report ──
+  window.exportDamageReport = function() {
+    const state = getState();
+    const lines = [
+      '========================================',
+      '  DESTRUCTION LAB - TIER 4 DAMAGE REPORT',
+      '  Generated: ' + new Date().toLocaleString(),
+      '========================================',
+      ''
+    ];
+
+    let tierDone = 0;
+    let globalDone = 0;
+    for (let i = 1; i <= TOTAL_EXERCISES; i++) {
+      if (state['check_' + i]) globalDone++;
+    }
+
+    TIER_IDS.forEach(id => {
+      const card = document.querySelector(`.exercise-card[data-id="${id}"]`);
+      const title = card.querySelector('.card-title').textContent;
+      const concept = card.querySelector('.concept-badge').textContent;
+      const done = state['check_' + id] ? true : false;
+      if (done) tierDone++;
+      const notes = state['notes_' + id] || '(no notes)';
+
+      lines.push(`#${id} - ${title}`);
+      lines.push(`  Concept: ${concept}`);
+      lines.push(`  Status:  ${done ? 'COMPLETED' : 'PENDING'}`);
+      lines.push(`  Notes:   ${notes}`);
+      lines.push('');
+    });
+
+    lines.push('----------------------------------------');
+    lines.push(`Tier 4:  ${tierDone} / 16 completed`);
+    lines.push(`Global:  ${globalDone} / ${TOTAL_EXERCISES} completed`);
+    lines.push('----------------------------------------');
+
+    const blob = new Blob([lines.join('\n')], {type: 'text/plain'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'destruction_lab_tier4_damage_report.txt';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Boot
+  document.addEventListener('DOMContentLoaded', init);
+})();
+</script>
+</body>
+</html>

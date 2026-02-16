@@ -1,0 +1,1388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Destruction Lab - Tier 1: Intermediate | Monster Resort Concierge</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #fafbfc;
+    color: #1e293b;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* ── Header Banner ── */
+  .hero {
+    background: linear-gradient(135deg, #059669 0%, #10b981 40%, #34d399 70%, #6ee7b7 100%);
+    padding: 3rem 2rem 2.5rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.06'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") repeat;
+  }
+  .hero-content { position: relative; z-index: 1; max-width: 800px; margin: 0 auto; }
+  .hero-tier-badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.25);
+    backdrop-filter: blur(4px);
+    color: #fff;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.35rem 1.2rem;
+    border-radius: 50px;
+    margin-bottom: 1rem;
+  }
+  .hero h1 {
+    font-size: 2.6rem;
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+  .hero .subtitle {
+    font-size: 1.15rem;
+    color: rgba(255,255,255,0.9);
+    font-weight: 500;
+    margin-bottom: 0.3rem;
+  }
+  .hero .exercise-count {
+    font-size: 0.95rem;
+    color: rgba(255,255,255,0.75);
+    font-weight: 600;
+  }
+
+  /* ── Navigation Strip ── */
+  .nav-strip {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    background: #fff;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e2e8f0;
+    flex-wrap: wrap;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .nav-strip a {
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 0.4rem 1rem;
+    border-radius: 50px;
+    transition: all 0.2s;
+    color: #64748b;
+    background: #f1f5f9;
+  }
+  .nav-strip a:hover { background: #e2e8f0; color: #334155; }
+  .nav-strip a.active {
+    background: #10b981;
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(16,185,129,0.3);
+  }
+  .nav-strip .sep { color: #cbd5e1; font-size: 0.75rem; }
+
+  /* ── Container ── */
+  .container { max-width: 960px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
+  /* ── Progress Section ── */
+  .progress-section {
+    background: #fff;
+    border-radius: 16px;
+    padding: 1.5rem 2rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);
+  }
+  .progress-labels {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 0.75rem;
+  }
+  .progress-labels .tier-label {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #10b981;
+  }
+  .progress-labels .count {
+    font-size: 0.85rem;
+    color: #64748b;
+    font-weight: 500;
+  }
+  .progress-bar-track {
+    width: 100%;
+    height: 12px;
+    background: #e2e8f0;
+    border-radius: 50px;
+    overflow: hidden;
+    margin-bottom: 0.75rem;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #059669, #10b981, #34d399);
+    border-radius: 50px;
+    transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    min-width: 0;
+  }
+  .global-progress {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    text-align: right;
+    font-weight: 500;
+  }
+
+  /* ── Controls Row ── */
+  .controls-row {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.55rem 1.2rem;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-outline {
+    background: #fff;
+    color: #475569;
+    border: 1.5px solid #e2e8f0;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  }
+  .btn-outline:hover { background: #f8fafc; border-color: #cbd5e1; transform: translateY(-1px); }
+  .btn-primary {
+    background: linear-gradient(135deg, #059669, #10b981);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(16,185,129,0.25);
+  }
+  .btn-primary:hover { box-shadow: 0 4px 14px rgba(16,185,129,0.35); transform: translateY(-1px); }
+
+  /* ── Info Box ── */
+  .info-box {
+    background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+    border: 1.5px solid #a7f3d0;
+    border-radius: 14px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 2rem;
+  }
+  .info-box-title {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #065f46;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .info-box p { font-size: 0.9rem; color: #047857; margin-bottom: 0.4rem; }
+  .info-box code {
+    font-family: 'JetBrains Mono', monospace;
+    background: rgba(255,255,255,0.6);
+    padding: 0.15rem 0.45rem;
+    border-radius: 6px;
+    font-size: 0.82rem;
+    color: #065f46;
+  }
+
+  /* ── Exercise Cards ── */
+  .exercise-card {
+    background: #fff;
+    border-radius: 14px;
+    border-left: 4px solid #10b981;
+    margin-bottom: 1.25rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.03);
+    transition: box-shadow 0.25s, transform 0.25s;
+    overflow: hidden;
+  }
+  .exercise-card:hover {
+    box-shadow: 0 4px 16px rgba(16,185,129,0.12), 0 2px 6px rgba(0,0,0,0.06);
+    transform: translateY(-2px);
+  }
+  .exercise-card.completed { border-left-color: #059669; }
+  .exercise-card.completed .card-header { background: #f0fdf4; }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 1.25rem;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.2s;
+  }
+  .card-header:hover { background: #fafbfc; }
+
+  .card-checkbox {
+    width: 22px;
+    height: 22px;
+    accent-color: #10b981;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .card-number {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #94a3b8;
+    flex-shrink: 0;
+    min-width: 2rem;
+  }
+  .card-title {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #1e293b;
+    flex: 1;
+    line-height: 1.4;
+  }
+  .concept-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+    color: #065f46;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.25rem 0.75rem;
+    border-radius: 50px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .expand-arrow {
+    font-size: 1.1rem;
+    color: #94a3b8;
+    transition: transform 0.3s;
+    flex-shrink: 0;
+    width: 24px;
+    text-align: center;
+  }
+  .exercise-card.open .expand-arrow { transform: rotate(180deg); }
+
+  .card-body {
+    display: none;
+    padding: 0 1.25rem 1.25rem;
+  }
+  .exercise-card.open .card-body { display: block; }
+
+  /* ── Panels ── */
+  .panel {
+    border-radius: 10px;
+    padding: 1rem 1.15rem;
+    margin-bottom: 0.75rem;
+  }
+  .panel-title {
+    font-weight: 700;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .panel p, .panel li { font-size: 0.88rem; line-height: 1.65; }
+  .panel ul { padding-left: 1.25rem; }
+  .panel li { margin-bottom: 0.25rem; }
+
+  .panel-hypothesis { background: #fefce8; }
+  .panel-hypothesis .panel-title { color: #a16207; }
+  .panel-action { background: #eff6ff; }
+  .panel-action .panel-title { color: #1d4ed8; }
+  .panel-verify { background: #f0fdf4; }
+  .panel-verify .panel-title { color: #15803d; }
+  .panel-why { background: #faf5ff; }
+  .panel-why .panel-title { color: #7e22ce; }
+  .panel-interview { background: #fff7ed; }
+  .panel-interview .panel-title { color: #c2410c; }
+  .panel-recovery { background: #f8fafc; }
+  .panel-recovery .panel-title { color: #475569; }
+
+  /* ── Code Blocks ── */
+  code, .code-block {
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .code-block {
+    background: #f1f5f9;
+    color: #334155;
+    border-radius: 8px;
+    padding: 0.85rem 1rem;
+    font-size: 0.82rem;
+    line-height: 1.7;
+    overflow-x: auto;
+    margin: 0.5rem 0;
+    border: 1px solid #e2e8f0;
+  }
+  .inline-code {
+    background: #f1f5f9;
+    color: #334155;
+    padding: 0.12rem 0.4rem;
+    border-radius: 5px;
+    font-size: 0.82rem;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .file-path {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: #0369a1;
+    background: #e0f2fe;
+    padding: 0.15rem 0.5rem;
+    border-radius: 5px;
+  }
+
+  /* ── Notes Textarea ── */
+  .notes-area {
+    width: 100%;
+    min-height: 70px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    color: #334155;
+    resize: vertical;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    background: #fff;
+    margin-top: 0.5rem;
+  }
+  .notes-area:focus {
+    outline: none;
+    border-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16,185,129,0.15);
+  }
+  .notes-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #64748b;
+    margin-top: 0.75rem;
+  }
+
+  /* ── Gap Table ── */
+  .gap-section {
+    background: #fff;
+    border-radius: 14px;
+    padding: 1.5rem 2rem;
+    margin-top: 2.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);
+  }
+  .gap-section h2 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 0.75rem;
+  }
+  .gap-note {
+    color: #059669;
+    font-size: 0.9rem;
+    font-weight: 600;
+    background: #ecfdf5;
+    padding: 0.85rem 1.15rem;
+    border-radius: 10px;
+    border: 1px solid #a7f3d0;
+  }
+
+  /* ── Footer Nav ── */
+  .footer-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e2e8f0;
+  }
+  .footer-nav a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #10b981;
+    padding: 0.65rem 1.5rem;
+    border-radius: 12px;
+    background: #ecfdf5;
+    transition: all 0.2s;
+  }
+  .footer-nav a:hover { background: #d1fae5; transform: translateY(-1px); }
+
+  /* ── Responsive ── */
+  @media (max-width: 640px) {
+    .hero h1 { font-size: 1.8rem; }
+    .container { padding: 1.25rem 1rem; }
+    .card-header { flex-wrap: wrap; }
+    .concept-badge { order: 5; margin-top: 0.3rem; }
+    .nav-strip { gap: 0.35rem; padding: 0.6rem; }
+    .nav-strip a { font-size: 0.78rem; padding: 0.35rem 0.7rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════ HERO ═══════════════════════ -->
+<div class="hero">
+  <div class="hero-content">
+    <div class="hero-tier-badge">Destruction Lab</div>
+    <h1>Tier 1: Intermediate</h1>
+    <div class="subtitle">Observable Changes Caught by Tests</div>
+    <div class="exercise-count">17 exercises</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ NAV STRIP ═══════════════════════ -->
+<nav class="nav-strip">
+  <a href="learning_roadmap.html">Learning Roadmap</a>
+  <span class="sep">|</span>
+  <a href="destruction_lab_tier1.html" class="active">Tier 1</a>
+  <a href="destruction_lab_tier2.html">Tier 2</a>
+  <a href="destruction_lab_tier3.html">Tier 3</a>
+  <a href="destruction_lab_tier4.html">Tier 4</a>
+</nav>
+
+<!-- ═══════════════════════ MAIN CONTENT ═══════════════════════ -->
+<div class="container">
+
+  <!-- Progress -->
+  <div class="progress-section">
+    <div class="progress-labels">
+      <span class="tier-label">Tier 1 Progress</span>
+      <span class="count" id="tierCount">0 / 17 completed</span>
+    </div>
+    <div class="progress-bar-track">
+      <div class="progress-bar-fill" id="tierBar" style="width:0%"></div>
+    </div>
+    <div class="global-progress" id="globalCount">0 / 67 total</div>
+  </div>
+
+  <!-- Controls Row -->
+  <div class="controls-row">
+    <button class="btn btn-outline" onclick="expandAll()">Expand All</button>
+    <button class="btn btn-outline" onclick="collapseAll()">Collapse All</button>
+    <button class="btn btn-primary" onclick="exportDamageReport()">Export Damage Report</button>
+  </div>
+
+  <!-- Before You Start -->
+  <div class="info-box">
+    <div class="info-box-title">Before You Start</div>
+    <p>Create a dedicated branch so you can freely destroy and restore:</p>
+    <div class="code-block">git checkout -b destruction-lab</div>
+    <p style="margin-top:0.4rem">Each exercise includes a recovery command. You can also always run <code>git checkout -- .</code> to restore everything.</p>
+  </div>
+
+  <!-- ═══════════════════════ EXERCISE CARDS ═══════════════════════ -->
+
+  <!-- Exercise 1 -->
+  <div class="exercise-card" data-id="1" data-nogap="true">
+    <div class="card-header" onclick="toggleCard(this)">
+      <input type="checkbox" class="card-checkbox" onclick="event.stopPropagation(); toggleCheck(1)">
+      <span class="card-number">#1</span>
+      <span class="card-title">Remove BM25 Positive-Score Filter</span>
+      <span class="concept-badge">Search Quality Filtering</span>
+      <span class="expand-arrow">&#9662;</span>
+    </div>
+    <div class="card-body">
+      <div class="panel panel-hypothesis">
+        <div class="panel-title">Hypothesis</div>
+        <p>Without the &gt;0 filter, BM25 will return documents with zero relevance scores, polluting the fusion step with noise.</p>
+      </div>
+      <div class="panel panel-action">
+        <div class="panel-title">Action</div>
+        <p><span class="file-path">app/advanced_rag.py</span> (lines 146-148)</p>
+        <p>Comment out:</p>
+        <div class="code-block">return [(int(idx), float(scores[idx])) for idx in top_indices if scores[idx] > 0]</div>
+        <p>Replace with:</p>
+        <div class="code-block">return [(int(idx), float(scores[idx])) for idx in top_indices]</div>
+      </div>
+      <div class="panel panel-verify">
+        <div class="panel-title">Verify</div>
+        <div class="code-block">uv run pytest tests/ -k "rag or search" -v</div>
+        <p>Expected: Search results include irrelevant documents with score 0.0</p>
+      </div>
+      <div class="panel panel-why">
+        <div class="panel-title">Why It Matters</div>
+        <p>Score thresholds are the first line of defense against noise in retrieval systems.</p>
+      </div>
+      <div class="panel panel-interview">
+        <div class="panel-title">Interview Prep</div>
+        <ul>
+          <li>How do you handle zero-relevance results?</li>
+          <li>Difference between BM25 and TF-IDF?</li>
+          <li>Why filter before fusion?</li>
+        </ul>
+      </div>
+      <div class="panel panel-recovery">
+        <div class="panel-title">Recovery</div>
+        <div class="code-block">git checkout -- app/advanced_rag.py</div>
+      </div>
+      <div class="notes-label">Notes</div>
+      <textarea class="notes-area" placeholder="Your observations..." oninput="saveNote(1, this.value)"></textarea>
+    </div>
+  </div>
+
+  <!-- Exercise 2 -->
+  <div class="exercise-card" data-id="2" data-nogap="true">
+    <div class="card-header" onclick="toggleCard(this)">
+      <input type="checkbox" class="card-checkbox" onclick="event.stopPropagation(); toggleCheck(2)">
+      <span class="card-number">#2</span>
+      <span class="card-title">Reverse Sort Direction in BM25</span>
+      <span class="concept-badge">Sort Order in Ranking</span>
+      <span class="expand-arrow">&#9662;</span>
+    </div>
+    <div class="card-body">
+      <div class="panel panel-hypothesis">
+        <div class="panel-title">Hypothesis</div>
+        <p>Removing <span class="inline-code">[::-1]</span> reverses from descending to ascending, returning the LEAST relevant documents first.</p>
+      </div>
+      <div class="panel panel-action">
+        <div class="panel-title">Action</div>
+        <p><span class="file-path">app/advanced_rag.py</span> (line 145)</p>
+        <p>Comment out:</p>
+        <div class="code-block">top_indices = np.argsort(scores)[::-1][:k]</div>
+        <p>Replace with:</p>
+        <div class="code-block">top_indices = np.argsort(scores)[:k]</div>
+      </div>
+      <div class="panel panel-verify">
+        <div class="panel-title">Verify</div>
+        <div class="code-block">uv run pytest tests/ -k "search" -v</div>
+        <p>Expected: worst-matching docs returned first</p>
+      </div>
+      <div class="panel panel-why">
+        <div class="panel-title">Why It Matters</div>
+        <p><span class="inline-code">np.argsort</span> returns ascending order by default. Forgetting to reverse is a subtle but devastating bug.</p>
+      </div>
+      <div class="panel panel-interview">
+        <div class="panel-title">Interview Prep</div>
+        <ul>
+          <li>What does <span class="inline-code">np.argsort</span> return?</li>
+          <li>Why is sort direction critical in ranking?</li>
+          <li>How would you detect inverted ranking in production?</li>
+        </ul>
+      </div>
+      <div class="panel panel-recovery">
+        <div class="panel-title">Recovery</div>
+        <div class="code-block">git checkout -- app/advanced_rag.py</div>
+      </div>
+      <div class="notes-label">Notes</div>
+      <textarea class="notes-area" placeholder="Your observations..." oninput="saveNote(2, this.value)"></textarea>
+    </div>
+  </div>
+
+  <!-- Exercise 3 -->
+  <div class="exercise-card" data-id="3" data-nogap="true">
+    <div class="card-header" onclick="toggleCard(this)">
+      <input type="checkbox" class="card-checkbox" onclick="event.stopPropagation(); toggleCheck(3)">
+      <span class="card-number">#3</span>
+      <span class="card-title">Remove Token Overlap Score</span>
+      <span class="concept-badge">Confidence Signal Ablation</span>
+      <span class="expand-arrow">&#9662;</span>
+    </div>
+    <div class="card-body">
+      <div class="panel panel-hypothesis">
+        <div class="panel-title">Hypothesis</div>
+        <p>Setting overlap to always 0.0 removes 30% of the confidence signal.</p>
+      </div>
+      <div class="panel panel-action">
+        <div class="panel-title">Action</div>
+        <p><span class="file-path">app/hallucination.py</span> (lines 98-107)</p>
+        <p>Comment out the <span class="inline-code">_compute_context_overlap</span> body. Return <span class="inline-code">0.0</span>.</p>
+      </div>
+      <div class="panel panel-verify">
+        <div class="panel-title">Verify</div>
+        <div class="code-block">uv run pytest tests/ -k "hallucination or confidence" -v</div>
+      </div>
+      <div class="panel panel-why">
+        <div class="panel-title">Why It Matters</div>
+        <p>The 30/50/20 weighting means each signal has measurable impact. Ablation testing proves each component's contribution.</p>
+      </div>
+      <div class="panel panel-interview">
+        <div class="panel-title">Interview Prep</div>
+        <ul>
+          <li>How do you weight multiple confidence signals?</li>
+          <li>Ablation vs A/B testing?</li>
+          <li>How do you detect a broken signal in production?</li>
+        </ul>
+      </div>
+      <div class="panel panel-recovery">
+        <div class="panel-title">Recovery</div>
+        <div class="code-block">git checkout -- app/hallucination.py</div>
+      </div>
+      <div class="notes-label">Notes</div>
+      <textarea class="notes-area" placeholder="Your observations..." oninput="saveNote(3, this.value)"></textarea>
+    </div>
+  </div>
+
+  <!-- Exercise 4 -->
+  <div class="exercise-card" data-id="4" data-nogap="true">
+    <div class="card-header" onclick="toggleCard(this)">
+      <input type="checkbox" class="card-checkbox" onclick="event.stopPropagation(); toggleCheck(4)">
+      <span class="card-number">#4</span>
+      <span class="card-title">Remove SQL Injection Detection</span>
+      <span class="concept-badge">Input Validation / Security</span>
+      <span class="expand-arrow">&#9662;</span>
+    </div>
+    <div class="card-body">
+      <div class="panel panel-hypothesis">
+        <div class="panel-title">Hypothesis</div>
+        <p>Without SQL pattern checking, <span class="inline-code">DROP TABLE</span> or <span class="inline-code">OR 1=1</span> payloads pass through undetected.</p>
+      </div>
+      <div class="panel panel-action">
+        <div class="panel-title">Action</div>
+        <p><span class="file-path">app/validation.py</span> (lines 33-45)</p>
+        <p>Comment out the <span class="inline-code">dangerous_sql</span> list and the check block.</p>
+      </div>
+      <div class="panel panel-verify">
+        <div class="panel-title">Verify</div>
+        <div class="code-block">uv run pytest tests/ -k "validation or sql" -v</div>
+      </div>
+      <div class="panel panel-why">
+        <div class="panel-title">Why It Matters</div>
+        <p>Defense-in-depth: even with parameterized queries, input validation catches attacks early.</p>
+      </div>
+      <div class="panel panel-interview">
+        <div class="panel-title">Interview Prep</div>
+        <ul>
+          <li>Why use parameterized queries AND input validation?</li>
+          <li>What is defense-in-depth?</li>
+          <li>Name 3 SQL injection patterns.</li>
+        </ul>
+      </div>
+      <div class="panel panel-recovery">
+        <div class="panel-title">Recovery</div>
+        <div class="code-block">git checkout -- app/validation.py</div>
+      </div>
+      <div class="notes-label">Notes</div>
+      <textarea class="notes-area" placeholder="Your observations..." oninput="saveNote(4, this.value)"></textarea>
+    </div>
+  </div>
+
+  <!-- Exercise 5 -->
+  <div class="exercise-card" data-id="5" data-nogap="true">
+    <div class="card-header" onclick="toggleCard(this)">
+      <input type="checkbox" class="card-checkbox" onclick="event.stopPropagation(); toggleCheck(5)">
+      <span class="card-number">#5</span>
+      <span class="card-title">Remove XSS Pattern Detection</span>
+      <span class="concept-badge">XSS Prevention</span>
+      <span class="expand-arrow">&#9662;</span>
+    </div>
+    <div class="card-body">
+      <div class="panel panel-hypothesis">
+        <div class="panel-title">Hypothesis</div>
+        <p>Without XSS checks, <span class="inline-code">&lt;script&gt;</span> tags and <span class="inline-code">javascript:</span> payloads pass through unfiltered.</p>
+      </div>
+      <div class="panel panel-action">
+        <div class="panel-title">Action</div>
+        <p><span class="file-path">app/validation.py</span> (lines 47-57)</p>
+        <p>Comment out the <span class="inline-code">xss_patterns</span> list and check block.</p>
+      </div>
+      <div class="panel panel-verify">
+        <div class="panel-title">Verify</div>
+        <div class="code-block">uv run pytest tests/ -k "validation or xss" -v</div>
+      </div>
+      <div class="panel panel-why">
+        <div class="panel-title">Why It Matters</div>
+        <p>XSS is a top-10 OWASP vulnerability. Catching it at the input layer prevents stored and reflected attacks.</p>
+      </div>
+      <div class="panel panel-interview">
+        <div class="panel-title">Interview Prep</div>
+        <ul>
+          <li>Stored vs reflected XSS?</li>
+          <li>Why sanitize on input AND output?</li>
+          <li>What does <span class="inline-code">bleach.clean</span> do?</li>
+        </ul>
+      </div>
+      <div class="panel panel-recovery">
+        <div class="panel-title">Recovery</div>
+        <div class="code-block">git checkout -- app/validation.py</div>
+      </div>
+      <div class="notes-label">Notes</div>
+      <textarea class="notes-area" placeholder="Your observations..." oninput="saveNote(5, this.value)"></textarea>
+    </div>
+  </div>
+
+  <!-- Exercise 6 -->
+  <div class="exercise-card" data-id="6" data-nogap="true">
+    <div class="card-header" onclick="toggleCard(this)">
+      <input type="checkbox" class="card-checkbox" onclick="event.stopPropagation(); toggleCheck(6)">
+      <span class="card-number">#6</span>
+      <span class="card-title">Remove sqlite3.Row Factory</span>
+      <span class="concept-badge">Database Result Mapping</span>
+      <span class="expand-arrow">&#9662;</span>
+    </div>
+    <div class="card-body">
+      <div class="panel panel-hypothesis">
+        <div class="panel-title">Hypothesis</div>
+        <p>Without Row factory, queries return tuples instead of dict-like objects, breaking all <span class="inline-code">row["column"]</span> access patterns.</p>
+      </div>
+      <div class="panel panel-action">
+        <div class="panel-title">Action</div>
+        <p><span class="file-path">app/database.py</span> (line 77)</p>
+        <p>Comment out:</p>
+        <div class="code-block">conn.row_factory = sqlite3.Row</div>
+      </div>
+      <div class="panel panel-verify">
+        <div class="panel-title">Verify</div>
+        <div class="code-block">uv run pytest tests/ -k "database or booking" -v</div>
+        <p>Expected: TypeError when accessing results by column name</p>
+      </div>
+      <div class="panel panel-why">
+        <div class="panel-title">Why It Matters</div>
+        <p>Row factory bridges SQL results and Python dict access. Without it, the entire data layer breaks.</p>
+      </div>
+      <div class="panel panel-interview">
+        <div class="panel-title">Interview Prep</div>
+        <ul>
+          <li>What does <span class="inline-code">sqlite3.Row</span> provide?</li>
+          <li>Tuple vs dict-style access tradeoffs?</li>
+          <li>How do ORMs solve this problem?</li>
+        </ul>
+      </div>
+      <div class="panel panel-recovery">
+        <div class="panel-title">Recovery</div>
+        <div class="code-block">git checkout -- app/database.py</div>
+      </div>
+      <div class="notes-label">Notes</div>
+      <textarea class="notes-area" placeholder="Your observations..." oninput="saveNote(6, this.value)"></textarea>
+    </div>
+  </div>
+
+  <!-- Exercise 7 -->
+  <div class="exercise-card" data-id="7" data-nogap="true">
+    <div class="card-header" onclick="toggleCard(this)">
+      <input type="checkbox" class="card-checkbox" onclick="event.stopPropagation(); toggleCheck(7)">
+      <span class="card-number">#7</span>
+      <span class="card-title">Remove book_room Tool Schema</span>
+      <span class="concept-badge">Tool Schema Registration</span>
+      <span class="expand-arrow">&#9662;</span>
+    </div>
+    <div class="card-body">
+      <div class="panel panel-hypothesis">
+        <div class="panel-title">Hypothesis</div>
+        <p>Without the schema definition, the LLM won't know <span class="inline-code">book_room</span> exists and can never invoke it.</p>
+      </div>
+      <div class="panel panel-action">
+        <div class="panel-title">Action</div>
+        <p><span class="file-path">app/tools.py</span> (lines 30-63)</p>
+        <p>Comment out the entire <span class="inline-code">book_room</span> schema block.</p>
+      </div>
+      <div class="panel panel-verify">
+        <div class="panel-title">Verify</div>
+        <div class="code-block">uv run pytest tests/ -k "tool" -v</div>
+      </div>
+      <div class="panel panel-why">
+        <div class="panel-title">Why It Matters</div>
+        <p>Tool schemas are the contract between the LLM and your application. No schema = invisible tool.</p>
+      </div>
+      <div class="panel panel-interview">
+        <div class="panel-title">Interview Prep</div>
+        <ul>
+          <li>What is the role of tool schemas in LLM applications?</li>
+          <li>How does the LLM decide which tool to call?</li>
+          <li>What happens if the schema is malformed?</li>
+        </ul>
+      </div>
+      <div class="panel panel-recovery">
+        <div class="panel-title">Recovery</div>
+        <div class="code-block">git checkout -- app/tools.py</div>
+      </div>
+      <div class="notes-label">Notes</div>
+      <textarea class="notes-area" placeholder="Your observations..." oninput="saveNote(7, this.value)"></textarea>
+    </div>
+  </div>
+
+  <!-- Exercise 8 -->
+  <div class="exercise-card" data-id="8" data-nogap="true">
+    <div class="card-header" onclick="toggleCard(this)">
+      <input type="checkbox" class="card-checkbox" onclick="event.stopPropagation(); toggleCheck(8)">
+      <span class="card-number">#8</span>
+      <span class="card-title">Remove Static API Key Check</span>
+      <span class="concept-badge">Authentication Priority Chain</span>
+      <span class="expand-arrow">&#9662;</span>
+    </div>
+    <div class="card-body">
+      <div class="panel panel-hypothesis">
+        <div class="panel-title">Hypothesis</div>
+        <p>Without the static key check, the <span class="inline-code">X-API-Key</span> authentication path breaks entirely.</p>
+      </div>
+      <div class="panel panel-action">
+        <div class="panel-title">Action</div>
+        <p><span class="file-path">app/auth_mixins.py</span> (lines 21-23)</p>
+        <p>Comment out the static key check block.</p>
+      </div>
+      <div class="panel panel-verify">
+        <div class="panel-title">Verify</div>
+        <div class="code-block">uv run pytest tests/ -k "auth" -v</div>
+      </div>
+      <div class="panel panel-why">
+        <div class="panel-title">Why It Matters</div>
+        <p>Authentication is a priority chain -- each method must be checked in order, and removing one link breaks the chain.</p>
+      </div>
+      <div class="panel panel-interview">
+        <div class="panel-title">Interview Prep</div>
+        <ul>
+          <li>API key vs JWT authentication?</li>
+          <li>Why support multiple auth methods?</li>
+          <li>What is the fallback pattern in auth?</li>
+        </ul>
+      </div>
+      <div class="panel panel-recovery">
+        <div class="panel-title">Recovery</div>
+        <div class="code-block">git checkout -- app/auth_mixins.py</div>
+      </div>
+      <div class="notes-label">Notes</div>
+      <textarea class="notes-area" placeholder="Your observations..." oninput="saveNote(8, this.value)"></textarea>
+    </div>
+  </div>
+
+  <!-- Exercise 9 -->
+  <div class="exercise-card" data-id="9" data-nogap="true">
+    <div class="card-header" onclick="toggleCard(this)">
+      <input type="checkbox" class="card-checkbox" onclick="event.stopPropagation(); toggleCheck(9)">
+      <span class="card-number">#9</span>
+      <span class="card-title">Remove lru_cache from get_settings</span>
+      <span class="concept-badge">Singleton Pattern via Cache</span>
+      <span class="expand-arrow">&#9662;</span>
+    </div>
+    <div class="card-body">
+      <div class="panel panel-hypothesis">
+        <div class="panel-title">Hypothesis</div>
+        <p>Without caching, every call to <span class="inline-code">get_settings()</span> creates a new Settings instance, re-reading environment variables each time.</p>
+      </div>
+      <div class="panel panel-action">
+        <div class="panel-title">Action</div>
+        <p><span class="file-path">app/config.py</span> (line 132)</p>
+        <p>Comment out:</p>
+        <div class="code-block">@lru_cache</div>
+      </div>
+      <div class="panel panel-verify">
+        <div class="panel-title">Verify</div>
+        <div class="code-block">uv run pytest tests/ -k "config or settings" -v</div>
+      </div>
+      <div class="panel panel-why">
+        <div class="panel-title">Why It Matters</div>
+        <p><span class="inline-code">@lru_cache</span> makes <span class="inline-code">get_settings()</span> a singleton factory. Without it, settings identity checks fail.</p>
+      </div>
+      <div class="panel panel-interview">
+        <div class="panel-title">Interview Prep</div>
+        <ul>
+          <li>How does <span class="inline-code">@lru_cache</span> implement the singleton pattern?</li>
+          <li>Module-level variable vs cached singleton?</li>
+          <li>When should you NOT cache settings?</li>
+        </ul>
+      </div>
+      <div class="panel panel-recovery">
+        <div class="panel-title">Recovery</div>
+        <div class="code-block">git checkout -- app/config.py</div>
+      </div>
+      <div class="notes-label">Notes</div>
+      <textarea class="notes-area" placeholder="Your observations..." oninput="saveNote(9, this.value)"></textarea>
+    </div>
+  </div>
+
+  <!-- Exercise 10 -->
+  <div class="exercise-card" data-id="10" data-nogap="true">
+    <div class="card-header" onclick="toggleCard(this)">
+      <input type="checkbox" class="card-checkbox" onclick="event.stopPropagation(); toggleCheck(10)">
+      <span class="card-number">#10</span>
+      <span class="card-title">Remove Key Expiration Check</span>
+      <span class="concept-badge">Token Expiration / TTL</span>
+      <span class="expand-arrow">&#9662;</span>
+    </div>
+    <div class="card-body">
+      <div class="panel panel-hypothesis">
+        <div class="panel-title">Hypothesis</div>
+        <p>Without the expiration check, expired API keys remain valid indefinitely.</p>
+      </div>
+      <div class="panel panel-action">
+        <div class="panel-title">Action</div>
+        <p><span class="file-path">app/security.py</span> (lines 71-75)</p>
+        <p>Comment out the expiration check block.</p>
+      </div>
+      <div class="panel panel-verify">
+        <div class="panel-title">Verify</div>
+        <div class="code-block">uv run pytest tests/ -k "security or api_key" -v</div>
+      </div>
+      <div class="panel panel-why">
+        <div class="panel-title">Why It Matters</div>
+        <p>Key expiration is fundamental to security rotation. Without it, leaked keys live forever.</p>
+      </div>
+      <div class="panel panel-interview">
+        <div class="panel-title">Interview Prep</div>
+        <ul>
+          <li>Why do API keys need expiration?</li>
+          <li>What is key rotation?</li>
+          <li>How do you handle expiration gracefully for clients?</li>
+        </ul>
+      </div>
+      <div class="panel panel-recovery">
+        <div class="panel-title">Recovery</div>
+        <div class="code-block">git checkout -- app/security.py</div>
+      </div>
+      <div class="notes-label">Notes</div>
+      <textarea class="notes-area" placeholder="Your observations..." oninput="saveNote(10, this.value)"></textarea>
+    </div>
+  </div>
+
+  <!-- Exercise 11 -->
+  <div class="exercise-card" data-id="11" data-nogap="true">
+    <div class="card-header" onclick="toggleCard(this)">
+      <input type="checkbox" class="card-checkbox" onclick="event.stopPropagation(); toggleCheck(11)">
+      <span class="card-number">#11</span>
+      <span class="card-title">Remove is_active Check from verify_key</span>
+      <span class="concept-badge">Key Revocation</span>
+      <span class="expand-arrow">&#9662;</span>
+    </div>
+    <div class="card-body">
+      <div class="panel panel-hypothesis">
+        <div class="panel-title">Hypothesis</div>
+        <p>Without the active check, revoked/deactivated keys still authenticate successfully.</p>
+      </div>
+      <div class="panel panel-action">
+        <div class="panel-title">Action</div>
+        <p><span class="file-path">app/security.py</span> (lines 77-79)</p>
+        <p>Comment out the <span class="inline-code">is_active</span> check block.</p>
+      </div>
+      <div class="panel panel-verify">
+        <div class="panel-title">Verify</div>
+        <div class="code-block">uv run pytest tests/ -k "security or revoke" -v</div>
+      </div>
+      <div class="panel panel-why">
+        <div class="panel-title">Why It Matters</div>
+        <p>Revocation is the emergency brake for compromised credentials. Without it, you cannot respond to security incidents.</p>
+      </div>
+      <div class="panel panel-interview">
+        <div class="panel-title">Interview Prep</div>
+        <ul>
+          <li>Expiration vs revocation -- what's the difference?</li>
+          <li>How does revocation work in distributed systems?</li>
+          <li>What is a CRL (Certificate Revocation List)?</li>
+        </ul>
+      </div>
+      <div class="panel panel-recovery">
+        <div class="panel-title">Recovery</div>
+        <div class="code-block">git checkout -- app/security.py</div>
+      </div>
+      <div class="notes-label">Notes</div>
+      <textarea class="notes-area" placeholder="Your observations..." oninput="saveNote(11, this.value)"></textarea>
+    </div>
+  </div>
+
+  <!-- Exercise 12 -->
+  <div class="exercise-card" data-id="12" data-nogap="true">
+    <div class="card-header" onclick="toggleCard(this)">
+      <input type="checkbox" class="card-checkbox" onclick="event.stopPropagation(); toggleCheck(12)">
+      <span class="card-number">#12</span>
+      <span class="card-title">Remove HTML Sanitization</span>
+      <span class="concept-badge">Output Encoding / Sanitization</span>
+      <span class="expand-arrow">&#9662;</span>
+    </div>
+    <div class="card-body">
+      <div class="panel panel-hypothesis">
+        <div class="panel-title">Hypothesis</div>
+        <p>Without sanitization, raw HTML tags pass through to the response, enabling injection attacks.</p>
+      </div>
+      <div class="panel panel-action">
+        <div class="panel-title">Action</div>
+        <p><span class="file-path">app/validation.py</span> (line 59)</p>
+        <p>Comment out:</p>
+        <div class="code-block">user_text = sanitize_html(user_text)</div>
+      </div>
+      <div class="panel panel-verify">
+        <div class="panel-title">Verify</div>
+        <div class="code-block">uv run pytest tests/ -k "validation or sanitize" -v</div>
+      </div>
+      <div class="panel panel-why">
+        <div class="panel-title">Why It Matters</div>
+        <p>Defense-in-depth: sanitization is the last line before output. Input validation and output sanitization work as a pair.</p>
+      </div>
+      <div class="panel panel-interview">
+        <div class="panel-title">Interview Prep</div>
+        <ul>
+          <li>Validation vs sanitization -- what's the difference?</li>
+          <li>Why do both input validation and output sanitization?</li>
+          <li>What does <span class="inline-code">bleach.clean</span> strip?</li>
+        </ul>
+      </div>
+      <div class="panel panel-recovery">
+        <div class="panel-title">Recovery</div>
+        <div class="code-block">git checkout -- app/validation.py</div>
+      </div>
+      <div class="notes-label">Notes</div>
+      <textarea class="notes-area" placeholder="Your observations..." oninput="saveNote(12, this.value)"></textarea>
+    </div>
+  </div>
+
+  <!-- Exercise 13 -->
+  <div class="exercise-card" data-id="13" data-nogap="true">
+    <div class="card-header" onclick="toggleCard(this)">
+      <input type="checkbox" class="card-checkbox" onclick="event.stopPropagation(); toggleCheck(13)">
+      <span class="card-number">#13</span>
+      <span class="card-title">Remove Message Length Check</span>
+      <span class="concept-badge">Input Bounds Checking</span>
+      <span class="expand-arrow">&#9662;</span>
+    </div>
+    <div class="card-body">
+      <div class="panel panel-hypothesis">
+        <div class="panel-title">Hypothesis</div>
+        <p>Without length limits, arbitrarily long messages are accepted, enabling resource exhaustion attacks.</p>
+      </div>
+      <div class="panel panel-action">
+        <div class="panel-title">Action</div>
+        <p><span class="file-path">app/validation.py</span> (lines 30-31)</p>
+        <p>Comment out the length check block.</p>
+      </div>
+      <div class="panel panel-verify">
+        <div class="panel-title">Verify</div>
+        <div class="code-block">uv run pytest tests/ -k "validation" -v</div>
+      </div>
+      <div class="panel panel-why">
+        <div class="panel-title">Why It Matters</div>
+        <p>Input bounds prevent resource exhaustion and denial-of-service. Every input needs a maximum.</p>
+      </div>
+      <div class="panel panel-interview">
+        <div class="panel-title">Interview Prep</div>
+        <ul>
+          <li>Why limit input length for LLM applications?</li>
+          <li>How do you choose the right max length?</li>
+          <li>Characters vs tokens -- what's the difference?</li>
+        </ul>
+      </div>
+      <div class="panel panel-recovery">
+        <div class="panel-title">Recovery</div>
+        <div class="code-block">git checkout -- app/validation.py</div>
+      </div>
+      <div class="notes-label">Notes</div>
+      <textarea class="notes-area" placeholder="Your observations..." oninput="saveNote(13, this.value)"></textarea>
+    </div>
+  </div>
+
+  <!-- Exercise 14 -->
+  <div class="exercise-card" data-id="14" data-nogap="true">
+    <div class="card-header" onclick="toggleCard(this)">
+      <input type="checkbox" class="card-checkbox" onclick="event.stopPropagation(); toggleCheck(14)">
+      <span class="card-number">#14</span>
+      <span class="card-title">Remove Tool Call Counter Metric</span>
+      <span class="concept-badge">Observability / Prometheus Metrics</span>
+      <span class="expand-arrow">&#9662;</span>
+    </div>
+    <div class="card-body">
+      <div class="panel panel-hypothesis">
+        <div class="panel-title">Hypothesis</div>
+        <p>Without the counter increment, tool call frequency becomes invisible to monitoring dashboards.</p>
+      </div>
+      <div class="panel panel-action">
+        <div class="panel-title">Action</div>
+        <p><span class="file-path">app/tools.py</span> (line 149)</p>
+        <p>Comment out:</p>
+        <div class="code-block">TOOL_CALL_COUNT.labels(tool=name).inc()</div>
+      </div>
+      <div class="panel panel-verify">
+        <div class="panel-title">Verify</div>
+        <div class="code-block">uv run pytest tests/ -k "tool" -v</div>
+      </div>
+      <div class="panel panel-why">
+        <div class="panel-title">Why It Matters</div>
+        <p>Metrics are how you know your system is healthy. Without them, you are flying blind in production.</p>
+      </div>
+      <div class="panel panel-interview">
+        <div class="panel-title">Interview Prep</div>
+        <ul>
+          <li>Counters vs gauges vs histograms in Prometheus?</li>
+          <li>Why label metrics with dimensions?</li>
+          <li>What is Prometheus's pull model?</li>
+        </ul>
+      </div>
+      <div class="panel panel-recovery">
+        <div class="panel-title">Recovery</div>
+        <div class="code-block">git checkout -- app/tools.py</div>
+      </div>
+      <div class="notes-label">Notes</div>
+      <textarea class="notes-area" placeholder="Your observations..." oninput="saveNote(14, this.value)"></textarea>
+    </div>
+  </div>
+
+  <!-- Exercise 15 -->
+  <div class="exercise-card" data-id="15" data-nogap="true">
+    <div class="card-header" onclick="toggleCard(this)">
+      <input type="checkbox" class="card-checkbox" onclick="event.stopPropagation(); toggleCheck(15)">
+      <span class="card-number">#15</span>
+      <span class="card-title">Remove Error Handling in book_room</span>
+      <span class="concept-badge">Error Propagation</span>
+      <span class="expand-arrow">&#9662;</span>
+    </div>
+    <div class="card-body">
+      <div class="panel panel-hypothesis">
+        <div class="panel-title">Hypothesis</div>
+        <p>Without the catch block, errors propagate as unhandled exceptions instead of structured error responses.</p>
+      </div>
+      <div class="panel panel-action">
+        <div class="panel-title">Action</div>
+        <p><span class="file-path">app/tools.py</span> (lines 272-280)</p>
+        <p>Comment out the <span class="inline-code">except</span> block entirely.</p>
+      </div>
+      <div class="panel panel-verify">
+        <div class="panel-title">Verify</div>
+        <div class="code-block">uv run pytest tests/ -k "book" -v</div>
+      </div>
+      <div class="panel panel-why">
+        <div class="panel-title">Why It Matters</div>
+        <p>Tool functions should return structured errors, not raise exceptions. The LLM needs a predictable error shape to reason about failures.</p>
+      </div>
+      <div class="panel panel-interview">
+        <div class="panel-title">Interview Prep</div>
+        <ul>
+          <li>Should tools raise or return error objects?</li>
+          <li>What's the difference for calling code?</li>
+          <li>How does error shape affect LLM reasoning?</li>
+        </ul>
+      </div>
+      <div class="panel panel-recovery">
+        <div class="panel-title">Recovery</div>
+        <div class="code-block">git checkout -- app/tools.py</div>
+      </div>
+      <div class="notes-label">Notes</div>
+      <textarea class="notes-area" placeholder="Your observations..." oninput="saveNote(15, this.value)"></textarea>
+    </div>
+  </div>
+
+  <!-- Exercise 16 -->
+  <div class="exercise-card" data-id="16" data-nogap="true">
+    <div class="card-header" onclick="toggleCard(this)">
+      <input type="checkbox" class="card-checkbox" onclick="event.stopPropagation(); toggleCheck(16)">
+      <span class="card-number">#16</span>
+      <span class="card-title">Remove BM25 None Guard</span>
+      <span class="concept-badge">Defensive Programming / Null Guards</span>
+      <span class="expand-arrow">&#9662;</span>
+    </div>
+    <div class="card-body">
+      <div class="panel panel-hypothesis">
+        <div class="panel-title">Hypothesis</div>
+        <p>Without the None guard, calling <span class="inline-code">_bm25_search</span> before ingestion causes an <span class="inline-code">AttributeError</span>.</p>
+      </div>
+      <div class="panel panel-action">
+        <div class="panel-title">Action</div>
+        <p><span class="file-path">app/advanced_rag.py</span> (lines 135-137)</p>
+        <p>Comment out the None guard check.</p>
+      </div>
+      <div class="panel panel-verify">
+        <div class="panel-title">Verify</div>
+        <div class="code-block">uv run pytest tests/ -k "rag" -v</div>
+      </div>
+      <div class="panel panel-why">
+        <div class="panel-title">Why It Matters</div>
+        <p>Lazy-initialized objects need null guards. Without them, call-order bugs cause cryptic AttributeErrors.</p>
+      </div>
+      <div class="panel panel-interview">
+        <div class="panel-title">Interview Prep</div>
+        <ul>
+          <li>What is defensive programming?</li>
+          <li>When are null guards appropriate?</li>
+          <li>How do you handle lazy initialization safely?</li>
+        </ul>
+      </div>
+      <div class="panel panel-recovery">
+        <div class="panel-title">Recovery</div>
+        <div class="code-block">git checkout -- app/advanced_rag.py</div>
+      </div>
+      <div class="notes-label">Notes</div>
+      <textarea class="notes-area" placeholder="Your observations..." oninput="saveNote(16, this.value)"></textarea>
+    </div>
+  </div>
+
+  <!-- Exercise 17 -->
+  <div class="exercise-card" data-id="17" data-nogap="true">
+    <div class="card-header" onclick="toggleCard(this)">
+      <input type="checkbox" class="card-checkbox" onclick="event.stopPropagation(); toggleCheck(17)">
+      <span class="card-number">#17</span>
+      <span class="card-title">Remove Transaction Rollback</span>
+      <span class="concept-badge">Transaction Safety / ACID</span>
+      <span class="expand-arrow">&#9662;</span>
+    </div>
+    <div class="card-body">
+      <div class="panel panel-hypothesis">
+        <div class="panel-title">Hypothesis</div>
+        <p>Without rollback, failed transactions leave partial writes in the database, violating atomicity.</p>
+      </div>
+      <div class="panel panel-action">
+        <div class="panel-title">Action</div>
+        <p><span class="file-path">app/database.py</span> (lines 81-83)</p>
+        <p>Comment out the <span class="inline-code">except</span> block containing the rollback.</p>
+      </div>
+      <div class="panel panel-verify">
+        <div class="panel-title">Verify</div>
+        <div class="code-block">uv run pytest tests/ -k "database" -v</div>
+      </div>
+      <div class="panel panel-why">
+        <div class="panel-title">Why It Matters</div>
+        <p>ACID compliance requires that failed transactions are fully rolled back. Partial writes corrupt data integrity.</p>
+      </div>
+      <div class="panel panel-interview">
+        <div class="panel-title">Interview Prep</div>
+        <ul>
+          <li>What are the ACID properties?</li>
+          <li>Why is explicit rollback important even if the DB auto-rolls back?</li>
+          <li>SQLite vs PostgreSQL transaction differences?</li>
+        </ul>
+      </div>
+      <div class="panel panel-recovery">
+        <div class="panel-title">Recovery</div>
+        <div class="code-block">git checkout -- app/database.py</div>
+      </div>
+      <div class="notes-label">Notes</div>
+      <textarea class="notes-area" placeholder="Your observations..." oninput="saveNote(17, this.value)"></textarea>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════ TEST GAP ANALYSIS ═══════════════════════ -->
+  <div class="gap-section">
+    <h2>Test Gap Analysis</h2>
+    <div class="gap-note">
+      No test gaps in this tier! All 17 exercises have existing tests that catch the destruction.
+    </div>
+  </div>
+
+  <!-- ═══════════════════════ FOOTER NAV ═══════════════════════ -->
+  <div class="footer-nav">
+    <a href="learning_roadmap.html">Back to Roadmap</a>
+    <a href="destruction_lab_tier2.html">Next: Tier 2 &rarr;</a>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════ JAVASCRIPT ═══════════════════════ -->
+<script>
+(function() {
+  const STORAGE_KEY = 'destruction_lab_v3';
+  const TIER_IDS = Array.from({length: 17}, (_, i) => i + 1);
+  const TOTAL_EXERCISES = 67;
+  const TIER_COUNT = 17;
+
+  function getData() {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    } catch { return {}; }
+  }
+
+  function setData(d) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
+  }
+
+  // ── Checkbox State ──
+  window.toggleCheck = function(id) {
+    const data = getData();
+    const key = 'checked_' + id;
+    data[key] = !data[key];
+    setData(data);
+    renderCard(id);
+    updateProgress();
+  };
+
+  function renderCard(id) {
+    const data = getData();
+    const card = document.querySelector(`.exercise-card[data-id="${id}"]`);
+    if (!card) return;
+    const cb = card.querySelector('.card-checkbox');
+    const checked = !!data['checked_' + id];
+    cb.checked = checked;
+    card.classList.toggle('completed', checked);
+
+    // Restore notes
+    const ta = card.querySelector('.notes-area');
+    if (ta && data['notes_' + id] !== undefined) {
+      ta.value = data['notes_' + id];
+    }
+  }
+
+  // ── Notes ──
+  window.saveNote = function(id, value) {
+    const data = getData();
+    data['notes_' + id] = value;
+    setData(data);
+  };
+
+  // ── Progress ──
+  function updateProgress() {
+    const data = getData();
+    let tierDone = 0;
+    TIER_IDS.forEach(id => { if (data['checked_' + id]) tierDone++; });
+
+    let globalDone = 0;
+    for (let i = 1; i <= TOTAL_EXERCISES; i++) {
+      if (data['checked_' + i]) globalDone++;
+    }
+
+    document.getElementById('tierCount').textContent = tierDone + ' / ' + TIER_COUNT + ' completed';
+    document.getElementById('tierBar').style.width = (tierDone / TIER_COUNT * 100) + '%';
+    document.getElementById('globalCount').textContent = globalDone + ' / ' + TOTAL_EXERCISES + ' total | ' + tierDone + ' / ' + TIER_COUNT + ' this tier';
+  }
+
+  // ── Expand / Collapse ──
+  window.toggleCard = function(headerEl) {
+    const card = headerEl.closest('.exercise-card');
+    card.classList.toggle('open');
+  };
+
+  window.expandAll = function() {
+    document.querySelectorAll('.exercise-card').forEach(c => c.classList.add('open'));
+  };
+
+  window.collapseAll = function() {
+    document.querySelectorAll('.exercise-card').forEach(c => c.classList.remove('open'));
+  };
+
+  // ── Export Damage Report ──
+  window.exportDamageReport = function() {
+    const data = getData();
+    let md = '# Destruction Lab - Tier 1: Intermediate\n';
+    md += '## Damage Report\n';
+    md += '_Generated: ' + new Date().toLocaleString() + '_\n\n';
+
+    let done = 0;
+    TIER_IDS.forEach(id => {
+      const card = document.querySelector(`.exercise-card[data-id="${id}"]`);
+      if (!card) return;
+      const title = card.querySelector('.card-title').textContent;
+      const checked = !!data['checked_' + id];
+      const note = data['notes_' + id] || '';
+      if (checked) done++;
+
+      md += '### #' + id + ' ' + title + '\n';
+      md += '- Status: ' + (checked ? 'COMPLETED' : 'Pending') + '\n';
+      if (note.trim()) {
+        md += '- Notes: ' + note.trim() + '\n';
+      }
+      md += '\n';
+    });
+
+    md += '---\n';
+    md += '**Progress:** ' + done + ' / ' + TIER_COUNT + ' completed\n';
+
+    const blob = new Blob([md], {type: 'text/markdown'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'destruction_lab_tier1_report.md';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // ── Init ──
+  TIER_IDS.forEach(id => renderCard(id));
+  updateProgress();
+})();
+</script>
+</body>
+</html>

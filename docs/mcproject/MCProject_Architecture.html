@@ -1,0 +1,1611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCProject - Architecture Documentation</title>
+    <style>
+        :root {
+            --primary: #0052CC;
+            --primary-light: #DEEBFF;
+            --primary-dark: #003d99;
+            --accent: #3BC8FA;
+            --accent-secondary: #73A0FA;
+            --bg: #FFFFFF;
+            --bg-subtle: #F4F5F7;
+            --bg-code: #F1F2F4;
+            --text: #172B4D;
+            --text-subtle: #6B778C;
+            --border: #DFE1E6;
+            --success: #36B37E;
+            --warning: #FFAB00;
+            --danger: #FF5630;
+            --info: #0065FF;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            color: var(--text);
+            background: var(--bg);
+            line-height: 1.6;
+        }
+
+        .page-header {
+            background: linear-gradient(135deg, #0052CC 0%, #003d99 50%, #172B4D 100%);
+            color: white;
+            padding: 48px 0;
+            border-bottom: 4px solid var(--accent);
+        }
+
+        .page-header .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 0 32px;
+        }
+
+        .page-header h1 {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        .page-header .subtitle {
+            font-size: 16px;
+            opacity: 0.85;
+            font-weight: 400;
+        }
+
+        .page-header .meta {
+            margin-top: 20px;
+            display: flex;
+            gap: 24px;
+            font-size: 13px;
+            opacity: 0.7;
+        }
+
+        .page-header .meta span {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 0 32px;
+        }
+
+        .content {
+            padding: 40px 0 80px;
+        }
+
+        /* Table of Contents */
+        .toc {
+            background: var(--primary-light);
+            border: 1px solid #B3D4FF;
+            border-radius: 8px;
+            padding: 24px 32px;
+            margin-bottom: 40px;
+        }
+
+        .toc h2 {
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--primary);
+            margin-bottom: 16px;
+        }
+
+        .toc ol {
+            padding-left: 20px;
+        }
+
+        .toc li {
+            margin-bottom: 6px;
+        }
+
+        .toc a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 15px;
+        }
+
+        .toc a:hover {
+            text-decoration: underline;
+        }
+
+        .toc ol ol {
+            margin-top: 6px;
+            padding-left: 20px;
+        }
+
+        .toc ol ol li {
+            margin-bottom: 4px;
+        }
+
+        .toc ol ol a {
+            font-weight: 400;
+            font-size: 14px;
+            color: var(--text-subtle);
+        }
+
+        /* Sections */
+        h2 {
+            font-size: 28px;
+            font-weight: 700;
+            margin: 48px 0 16px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--border);
+            color: var(--text);
+        }
+
+        h2:first-of-type {
+            margin-top: 0;
+        }
+
+        h3 {
+            font-size: 20px;
+            font-weight: 600;
+            margin: 32px 0 12px;
+            color: var(--text);
+        }
+
+        h4 {
+            font-size: 16px;
+            font-weight: 600;
+            margin: 24px 0 8px;
+            color: var(--text);
+        }
+
+        p {
+            margin-bottom: 16px;
+            font-size: 15px;
+            line-height: 1.7;
+        }
+
+        /* Code blocks */
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 16px 20px;
+            overflow-x: auto;
+            margin: 16px 0;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        code {
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 13px;
+        }
+
+        p code, li code, td code {
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            padding: 2px 6px;
+            font-size: 12px;
+            color: #c7254e;
+        }
+
+        /* Info panels */
+        .panel {
+            border-radius: 6px;
+            padding: 16px 20px;
+            margin: 20px 0;
+            border-left: 4px solid;
+        }
+
+        .panel-info {
+            background: #DEEBFF;
+            border-color: #0065FF;
+        }
+
+        .panel-success {
+            background: #E3FCEF;
+            border-color: #36B37E;
+        }
+
+        .panel-warning {
+            background: #FFFAE6;
+            border-color: #FFAB00;
+        }
+
+        .panel-danger {
+            background: #FFEBE6;
+            border-color: #FF5630;
+        }
+
+        .panel-title {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .panel p {
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .panel p:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+            font-size: 14px;
+        }
+
+        th {
+            background: var(--bg-subtle);
+            font-weight: 600;
+            text-align: left;
+            padding: 12px 16px;
+            border: 1px solid var(--border);
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-subtle);
+        }
+
+        td {
+            padding: 10px 16px;
+            border: 1px solid var(--border);
+            vertical-align: top;
+        }
+
+        tr:nth-child(even) {
+            background: var(--bg-subtle);
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-new { background: #E3FCEF; color: #006644; }
+        .badge-modified { background: #DEEBFF; color: #0747A6; }
+        .badge-unchanged { background: #F4F5F7; color: #6B778C; }
+        .badge-required { background: #FFEBE6; color: #BF2600; }
+        .badge-optional { background: #F4F5F7; color: #6B778C; }
+
+        /* Diagram containers */
+        .diagram {
+            background: var(--bg-subtle);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 32px;
+            margin: 24px 0;
+            text-align: center;
+            overflow-x: auto;
+        }
+
+        .diagram-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-subtle);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 24px;
+        }
+
+        /* Architecture diagram boxes */
+        .arch-row {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .arch-box {
+            border: 2px solid;
+            border-radius: 8px;
+            padding: 12px 20px;
+            min-width: 140px;
+            font-size: 13px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .arch-box.view { border-color: #36B37E; background: #E3FCEF; color: #006644; }
+        .arch-box.viewmodel { border-color: #0065FF; background: #DEEBFF; color: #0747A6; }
+        .arch-box.service { border-color: #6554C0; background: #EAE6FF; color: #403294; }
+        .arch-box.model { border-color: #FF8B00; background: #FFFAE6; color: #974F0C; }
+        .arch-box.external { border-color: #FF5630; background: #FFEBE6; color: #BF2600; }
+        .arch-box.config { border-color: #6B778C; background: #F4F5F7; color: #42526E; }
+
+        .arch-box small {
+            display: block;
+            font-weight: 400;
+            font-size: 11px;
+            margin-top: 4px;
+            opacity: 0.8;
+        }
+
+        .arch-arrow {
+            text-align: center;
+            font-size: 20px;
+            color: var(--text-subtle);
+            margin: 8px 0;
+        }
+
+        .arch-arrow-label {
+            font-size: 11px;
+            color: var(--text-subtle);
+            font-weight: 500;
+        }
+
+        /* Flow diagram */
+        .flow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin: 16px 0;
+        }
+
+        .flow-step {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 8px 14px;
+            font-size: 12px;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .flow-step.highlight {
+            background: var(--primary-light);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .flow-arrow {
+            color: var(--text-subtle);
+            font-size: 16px;
+        }
+
+        /* Sequence diagram */
+        .sequence {
+            text-align: left;
+            display: inline-block;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 12px;
+            line-height: 1.8;
+        }
+
+        .seq-actor {
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .seq-action {
+            color: var(--text);
+        }
+
+        .seq-note {
+            color: var(--text-subtle);
+            font-style: italic;
+        }
+
+        /* File tree */
+        .file-tree {
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 20px 24px;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            overflow-x: auto;
+            margin: 16px 0;
+        }
+
+        .file-tree .dir { color: #0052CC; font-weight: 600; }
+        .file-tree .file { color: var(--text); }
+        .file-tree .new { color: #36B37E; }
+        .file-tree .modified { color: #0065FF; }
+        .file-tree .comment { color: var(--text-subtle); font-style: italic; }
+
+        /* Lists */
+        ul, ol {
+            padding-left: 24px;
+            margin-bottom: 16px;
+        }
+
+        li {
+            margin-bottom: 6px;
+            font-size: 15px;
+        }
+
+        /* Horizontal divider */
+        hr {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 40px 0;
+        }
+
+        /* Status label */
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .status-dot.green { background: #36B37E; }
+        .status-dot.yellow { background: #FFAB00; }
+        .status-dot.red { background: #FF5630; }
+
+        /* Expand/collapse */
+        details {
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            margin: 12px 0;
+        }
+
+        details summary {
+            padding: 12px 16px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            background: var(--bg-subtle);
+            border-radius: 6px;
+        }
+
+        details[open] summary {
+            border-bottom: 1px solid var(--border);
+            border-radius: 6px 6px 0 0;
+        }
+
+        details .detail-content {
+            padding: 16px;
+        }
+
+        /* Two-column layout */
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin: 16px 0;
+        }
+
+        @media (max-width: 768px) {
+            .two-col { grid-template-columns: 1fr; }
+            .arch-row { flex-direction: column; align-items: center; }
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--bg-subtle);
+            border-top: 1px solid var(--border);
+            padding: 24px 0;
+            text-align: center;
+            font-size: 13px;
+            color: var(--text-subtle);
+        }
+    </style>
+</head>
+<body>
+
+<!-- Page Header -->
+<header class="page-header">
+    <div class="container">
+        <h1>MCProject - Architecture Documentation</h1>
+        <p class="subtitle">iOS Member Concierge App with OpenAI + MCP Tool Integration</p>
+        <div class="meta">
+            <span>Platform: iOS (SwiftUI)</span>
+            <span>Pattern: MVVM</span>
+            <span>AI Model: GPT-4o</span>
+            <span>Protocol: MCP (JSON-RPC 2.0)</span>
+        </div>
+    </div>
+</header>
+
+<!-- Content -->
+<div class="container content">
+
+    <!-- Table of Contents -->
+    <div class="toc">
+        <h2>Table of Contents</h2>
+        <ol>
+            <li><a href="#overview">Project Overview</a></li>
+            <li><a href="#architecture">High-Level Architecture</a>
+                <ol>
+                    /* Lines 539-541 omitted */
+                </ol>
+            </li>
+            <li><a href="#project-structure">Project Structure</a></li>
+            <li><a href="#dual-mode">Dual Mode System: Tools vs Chat</a></li>
+            <li><a href="#openai-integration">OpenAI Integration</a>
+                <ol>
+                    /* Lines 547-551 omitted */
+                </ol>
+            </li>
+            <li><a href="#mcp-integration">MCP Gateway Integration</a>
+                <ol>
+                    /* Lines 555-558 omitted */
+                </ol>
+            </li>
+            <li><a href="#data-flow">End-to-End Data Flows</a>
+                <ol>
+                    /* Lines 562-565 omitted */
+                </ol>
+            </li>
+            <li><a href="#data-models">Data Models</a></li>
+            <li><a href="#ui-components">UI Components</a></li>
+            <li><a href="#argument-sanitization">Argument Sanitization</a></li>
+            <li><a href="#configuration">Configuration &amp; API Keys</a></li>
+            <li><a href="#known-issues">Known Issues &amp; Notes</a></li>
+        </ol>
+    </div>
+
+    <!-- 1. Overview -->
+    <h2 id="overview">1. Project Overview</h2>
+    <p>
+        MCProject is a premium iOS concierge application for Soho House members. It provides two interaction paradigms:
+        a <strong>Tool Picker</strong> mode for structured, form-based tool invocations and a <strong>Conversational Chat</strong>
+        mode powered by OpenAI's GPT-4o, where users type natural language requests and the AI automatically determines
+        which backend tools to call.
+    </p>
+    <p>
+        The app communicates with a <strong>Model Context Protocol (MCP)</strong> gateway server that exposes hospitality
+        tools (venues, events, hotels, restaurants, bookings). In Chat mode, OpenAI acts as an orchestration layer,
+        interpreting user intent, selecting the right MCP tool, formatting arguments, executing calls, and synthesising
+        results into a natural language response with rich UI cards.
+    </p>
+
+    <div class="panel panel-info">
+        <p class="panel-title">Key Technologies</p>
+        <p><strong>Language:</strong> Swift 5.9+ &nbsp;|&nbsp; <strong>UI:</strong> SwiftUI &nbsp;|&nbsp; <strong>Architecture:</strong> MVVM</p>
+        <p><strong>AI Model:</strong> OpenAI GPT-4o (function calling) &nbsp;|&nbsp; <strong>Backend:</strong> MCP Gateway (JSON-RPC 2.0 over SSE)</p>
+        <p><strong>Min iOS:</strong> 17.0 &nbsp;|&nbsp; <strong>Xcode:</strong> 15+</p>
+    </div>
+
+    <!-- 2. Architecture -->
+    <h2 id="architecture">2. High-Level Architecture</h2>
+
+    <h3 id="arch-layers">2.1 Layer Diagram</h3>
+    <div class="diagram">
+        <div class="diagram-title">Application Architecture</div>
+
+        <!-- Presentation Layer -->
+        <div class="arch-row">
+            <div class="arch-box view">
+                ChatView<small>Main UI Screen</small>
+            </div>
+            <div class="arch-box view">
+                VenueCardView<small>Rich Card</small>
+            </div>
+            <div class="arch-box view">
+                EventListItemView<small>Rich Card</small>
+            </div>
+            <div class="arch-box view">
+                HotelCardView<small>Rich Card</small>
+            </div>
+            <div class="arch-box view">
+                RestaurantCardView<small>Rich Card</small>
+            </div>
+        </div>
+        <div style="font-size: 11px; color: #006644; font-weight: 600; margin-bottom: 8px;">PRESENTATION LAYER (Views)</div>
+
+        <div class="arch-arrow">&darr; @StateObject &nbsp;&nbsp; @Published &uarr;</div>
+
+        <!-- ViewModel Layer -->
+        <div class="arch-row">
+            <div class="arch-box viewmodel" style="min-width: 300px;">
+                ChatViewModel<small>State Management, Tool Orchestration, Response Processing</small>
+            </div>
+        </div>
+        <div style="font-size: 11px; color: #0747A6; font-weight: 600; margin-bottom: 8px;">VIEWMODEL LAYER</div>
+
+        <div class="arch-arrow">&darr; async/await &nbsp;&nbsp; callbacks &uarr;</div>
+
+        <!-- Service Layer -->
+        <div class="arch-row">
+            <div class="arch-box service">
+                OpenAIService<small>GPT-4o Function Calling</small>
+            </div>
+            <div class="arch-box service">
+                AgentService (AgentAPI)<small>MCP Tool Execution</small>
+            </div>
+        </div>
+        <div style="font-size: 11px; color: #403294; font-weight: 600; margin-bottom: 8px;">SERVICE LAYER</div>
+
+        <div class="arch-arrow">&darr; HTTPS &nbsp;&nbsp; SSE Streams &uarr;</div>
+
+        <!-- External Layer -->
+        <div class="arch-row">
+            <div class="arch-box external">
+                OpenAI API<small>api.openai.com</small>
+            </div>
+            <div class="arch-box external">
+                MCP Gateway<small>api.staging.sohohousedigital.com</small>
+            </div>
+        </div>
+        <div style="font-size: 11px; color: #BF2600; font-weight: 600; margin-bottom: 8px;">EXTERNAL SERVICES</div>
+    </div>
+
+    <h3 id="arch-mvvm">2.2 MVVM Pattern</h3>
+    <p>The app follows the MVVM (Model-View-ViewModel) pattern:</p>
+    <ul>
+        <li><strong>Model:</strong> <code>MCPModels.swift</code> defines <code>Venue</code>, <code>Event</code>, <code>Hotel</code>, <code>Restaurant</code>, and the generic <code>MCPListResponse&lt;T&gt;</code> wrapper.</li>
+        <li><strong>View:</strong> <code>ChatView.swift</code> is the primary screen, containing mode toggle, message list, input areas, and reusable components (ModernTextField, PremiumButton, SuggestionChip, etc.).</li>
+        <li><strong>ViewModel:</strong> <code>ChatViewModel</code> is an <code>ObservableObject</code> holding all published state. It orchestrates both modes and bridges between views and services.</li>
+    </ul>
+    <p>
+        The <code>ChatView</code> owns the <code>ChatViewModel</code> via <code>@StateObject</code>. Card sub-views
+        receive the ViewModel as an <code>@ObservedObject</code> for interaction callbacks (e.g., tapping a venue card
+        to fetch its open times).
+    </p>
+
+    <!-- 3. Project Structure -->
+    <h2 id="project-structure">3. Project Structure</h2>
+
+    <div class="panel panel-warning">
+        <p class="panel-title">Xcode Build Note</p>
+        <p>The inner <code>MCProject/MCProject/MCProject/</code> directory uses <code>PBXFileSystemSynchronizedRootGroup</code>,
+        meaning files placed there are <strong>auto-discovered</strong> by Xcode. The outer <code>Views/</code>, <code>Models/</code>,
+        <code>Services/</code>, <code>ViewModels/</code> folders are <strong>explicit groups</strong> in the Xcode project.</p>
+    </div>
+
+    <div class="file-tree">
+<span class="dir">MCProject/MCProject/</span>
+<span class="comment">                              # Xcode project root</span>
+<span class="dir">&boxvr;&HorizontalLine;&HorizontalLine; MCProject/</span>
+<span class="comment">                                      # Auto-discovered group</span>
+&boxvr;&HorizontalLine;&HorizontalLine; &boxvr;&HorizontalLine;&HorizontalLine; <span class="file">MCProjectApp.swift</span>
+<span class="comment">                      # App entry point</span>
+&boxvr;&HorizontalLine;&HorizontalLine; &boxvr;&HorizontalLine;&HorizontalLine; <span class="file">ContentView.swift</span>
+<span class="comment">                       # Placeholder (unused)</span>
+&boxvr;&HorizontalLine;&HorizontalLine; &boxvr;&HorizontalLine;&HorizontalLine; <span class="dir">Models/</span>
+&boxvr;&HorizontalLine;&HorizontalLine; &boxvr;&HorizontalLine;&HorizontalLine; &boxur;&HorizontalLine;&HorizontalLine; <span class="file">MCPModels.swift</span>
+<span class="comment">                    # Venue, Event, Hotel, Restaurant</span>
+&boxvr;&HorizontalLine;&HorizontalLine; &boxvr;&HorizontalLine;&HorizontalLine; <span class="dir">Services/</span>
+&boxvr;&HorizontalLine;&HorizontalLine; &boxvr;&HorizontalLine;&HorizontalLine; &boxvr;&HorizontalLine;&HorizontalLine; <span class="file">AgentService.swift</span>
+<span class="comment">               # MCP communication layer</span>
+&boxvr;&HorizontalLine;&HorizontalLine; &boxvr;&HorizontalLine;&HorizontalLine; &boxur;&HorizontalLine;&HorizontalLine; <span class="new">OpenAIService.swift</span>
+<span class="comment">              # NEW - OpenAI GPT-4o integration</span>
+&boxvr;&HorizontalLine;&HorizontalLine; &boxur;&HorizontalLine;&HorizontalLine; <span class="dir">ViewModels/</span>
+&boxvr;&HorizontalLine;&HorizontalLine;     &boxur;&HorizontalLine;&HorizontalLine; <span class="modified">ChatViewModel.swift</span>
+<span class="comment">            # MODIFIED - Added chat mode + OpenAI</span>
+&boxvr;&HorizontalLine;&HorizontalLine; <span class="dir">Views/</span>
+<span class="comment">                                          # Explicit Xcode group</span>
+&boxvr;&HorizontalLine;&HorizontalLine; &boxvr;&HorizontalLine;&HorizontalLine; <span class="modified">ChatView.swift</span>
+<span class="comment">                         # MODIFIED - Mode toggle + chat input</span>
+&boxvr;&HorizontalLine;&HorizontalLine; &boxvr;&HorizontalLine;&HorizontalLine; <span class="file">AppTheme.swift</span>
+<span class="comment">                         # Design system / theming</span>
+&boxvr;&HorizontalLine;&HorizontalLine; &boxvr;&HorizontalLine;&HorizontalLine; <span class="file">VenueCardView.swift</span>
+<span class="comment">                      # Venue card component</span>
+&boxvr;&HorizontalLine;&HorizontalLine; &boxvr;&HorizontalLine;&HorizontalLine; <span class="file">EventListItemView.swift</span>
+<span class="comment">                  # Event card component</span>
+&boxvr;&HorizontalLine;&HorizontalLine; &boxvr;&HorizontalLine;&HorizontalLine; <span class="file">EventsListView.swift</span>
+<span class="comment">                   # Event list + detail view</span>
+&boxvr;&HorizontalLine;&HorizontalLine; &boxvr;&HorizontalLine;&HorizontalLine; <span class="file">HotelCardView.swift</span>
+<span class="comment">                      # Hotel card component</span>
+&boxvr;&HorizontalLine;&HorizontalLine; &boxvr;&HorizontalLine;&HorizontalLine; <span class="file">RestaurantCardView.swift</span>
+<span class="comment">                  # Restaurant card component</span>
+&boxvr;&HorizontalLine;&HorizontalLine; &boxvr;&HorizontalLine;&HorizontalLine; <span class="file">MCPResponseViews.swift</span>
+<span class="comment">                   # Additional response views</span>
+&boxur;&HorizontalLine;&HorizontalLine; <span class="file">MCProject.xcodeproj</span>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>File</th>
+                <th>Status</th>
+                <th>Responsibility</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>MCProjectApp.swift</code></td>
+                <td><span class="badge badge-unchanged">Unchanged</span></td>
+                <td>App entry point. Configures MCP URL, API key, AgentAPI service, and presents ChatView</td>
+            </tr>
+            <tr>
+                <td><code>OpenAIService.swift</code></td>
+                <td><span class="badge badge-new">New</span></td>
+                <td>OpenAI GPT-4o API client, function calling loop, tool schema definitions, conversation history</td>
+            </tr>
+            <tr>
+                <td><code>AgentService.swift</code></td>
+                <td><span class="badge badge-unchanged">Unchanged</span></td>
+                <td>MCP gateway communication, JSON-RPC 2.0 encoding, SSE stream parsing, error handling</td>
+            </tr>
+            <tr>
+                <td><code>ChatViewModel.swift</code></td>
+                <td><span class="badge badge-modified">Modified</span></td>
+                <td>Added ChatMode enum, conversational mode methods, argument sanitization, OpenAI bridge</td>
+            </tr>
+            <tr>
+                <td><code>ChatView.swift</code></td>
+                <td><span class="badge badge-modified">Modified</span></td>
+                <td>Added mode toggle picker, conversational input area, suggestion chips, updated empty state</td>
+            </tr>
+            <tr>
+                <td><code>MCPModels.swift</code></td>
+                <td><span class="badge badge-unchanged">Unchanged</span></td>
+                <td>Data models: Venue, Event, Hotel, Restaurant, MCPListResponse&lt;T&gt;</td>
+            </tr>
+            <tr>
+                <td><code>AppTheme.swift</code></td>
+                <td><span class="badge badge-unchanged">Unchanged</span></td>
+                <td>Design system: gradients, accent colors, glassmorphic card modifiers</td>
+            </tr>
+            <tr>
+                <td><code>Card Views (4 files)</code></td>
+                <td><span class="badge badge-unchanged">Unchanged</span></td>
+                <td>Rich UI cards for venues, events, hotels, and restaurants</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- 4. Dual Mode System -->
+    <h2 id="dual-mode">4. Dual Mode System: Tools vs Chat</h2>
+
+    <p>The app supports two interaction modes, controlled by a <code>ChatMode</code> enum and a segmented Picker in the header:</p>
+
+    <div class="two-col">
+        <div>
+            <h4>Tool Picker Mode <code>.toolPicker</code></h4>
+            <ul>
+                <li>User selects a tool from a horizontal scroll picker</li>
+                <li>Structured form inputs appear (text fields, date pickers, steppers)</li>
+                <li>Arguments are explicitly constructed by the user</li>
+                <li>Direct MCP tool call via <code>AgentService</code></li>
+                <li>Response decoded and displayed as rich cards</li>
+                <li>No AI summarisation - raw results only</li>
+            </ul>
+        </div>
+        <div>
+            <h4>Conversational Mode <code>.conversational</code> (Default)</h4>
+            <ul>
+                <li>Single text input field ("Ask me anything...")</li>
+                <li>Natural language processed by OpenAI GPT-4o</li>
+                <li>AI determines which tool(s) to call and with what arguments</li>
+                <li>MCP tools executed automatically via bridge function</li>
+                <li>Rich cards displayed + AI-generated text summary</li>
+                <li>Multi-turn conversation history maintained</li>
+            </ul>
+        </div>
+    </div>
+
+    <pre><code>// ChatMode enum definition
+enum ChatMode: String, CaseIterable {
+    case toolPicker = "Tools"
+    case conversational = "Chat"
+}</code></pre>
+
+    <p>
+        The mode toggle is a SwiftUI <code>Picker</code> with <code>.segmented</code> style, bound to
+        <code>viewModel.chatMode</code>. The <code>inputArea</code> property conditionally renders either
+        <code>conversationalInputArea</code> or <code>toolPickerInputArea</code> based on the current mode.
+    </p>
+
+    <!-- 5. OpenAI Integration -->
+    <h2 id="openai-integration">5. OpenAI Integration</h2>
+
+    <h3 id="openai-service">5.1 OpenAIService</h3>
+    <p>
+        <code>OpenAIService</code> is the core class responsible for communicating with the OpenAI Chat Completions API.
+        It manages conversation history, encodes tool schemas, and implements the function-calling loop.
+    </p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Property / Method</th>
+                <th>Type</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>apiKey</code></td>
+                <td><code>String</code></td>
+                <td>OpenAI API key (from <code>ApiKeys.openAIAPIKey</code>)</td>
+            </tr>
+            <tr>
+                <td><code>conversationHistory</code></td>
+                <td><code>[OpenAIChatMessage]</code></td>
+                <td>Full conversation history including system prompt, user messages, assistant responses, and tool results</td>
+            </tr>
+            <tr>
+                <td><code>model</code></td>
+                <td><code>String</code></td>
+                <td>Fixed to <code>"gpt-4o"</code></td>
+            </tr>
+            <tr>
+                <td><code>systemPrompt</code></td>
+                <td><code>String</code> (computed)</td>
+                <td>Dynamic prompt injecting today's date, date formatting rules, booking flow instructions</td>
+            </tr>
+            <tr>
+                <td><code>sendMessage(_:executeTool:)</code></td>
+                <td><code>async throws -> String</code></td>
+                <td>Main entry point. Sends user message, handles tool-calling loop, returns final text</td>
+            </tr>
+            <tr>
+                <td><code>resetConversation()</code></td>
+                <td><code>Void</code></td>
+                <td>Clears history, re-initialises with system prompt</td>
+            </tr>
+            <tr>
+                <td><code>callOpenAI()</code></td>
+                <td><code>async throws -> OpenAIChatResponse</code></td>
+                <td>Low-level HTTP POST to OpenAI API</td>
+            </tr>
+            <tr>
+                <td><code>parseOpenAIArguments(_:)</code></td>
+                <td><code>[String: JSONValue]</code></td>
+                <td>Converts OpenAI's JSON string args to the <code>JSONValue</code> type used by MCP</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3 id="openai-tool-calling">5.2 Function Calling Loop</h3>
+    <p>
+        When OpenAI determines that a tool call is needed, it returns a response with <code>finish_reason: "tool_calls"</code>
+        instead of a text response. The service implements a loop that handles this iteratively:
+    </p>
+
+    <div class="diagram">
+        <div class="diagram-title">OpenAI Function Calling Loop</div>
+        <div style="text-align: left; display: inline-block; max-width: 600px;">
+            <pre style="background: white; border: 2px solid var(--primary); border-radius: 8px; padding: 20px; font-size: 12px; line-height: 1.8;"><code>1. User message appended to conversationHistory
+2. LOOP (max 10 iterations):
+   a. POST conversationHistory + toolSchemas to OpenAI
+   b. Receive response
+   c. IF finish_reason == "tool_calls":
+      - Append assistant message (with tool_calls) to history
+      - For each tool_call:
+        i.   Parse tool name + arguments
+        ii.  Execute via closure: executeTool(name, args)
+        iii. Append tool result to history
+      - Continue loop (go to step 2a)
+   d. ELSE (finish_reason == "stop"):
+      - Append assistant text to history
+      - Return text to caller
+3. If max iterations reached, return fallback message</code></pre>
+        </div>
+    </div>
+
+    <div class="panel panel-info">
+        <p class="panel-title">Why a loop?</p>
+        <p>OpenAI may need to call multiple tools in sequence. For example, a booking request requires:
+        (1) search restaurants to get venue IDs, (2) check availability, (3) confirm the table.
+        Each step returns tool results that OpenAI uses to decide the next action.</p>
+    </div>
+
+    <h3 id="openai-schemas">5.3 Tool Schemas</h3>
+    <p>
+        The <code>MCPToolSchemas</code> enum defines all 11 MCP tools as OpenAI function-calling tool definitions.
+        Each schema includes the tool name, description, and a JSON Schema for parameters.
+    </p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Tool Name</th>
+                <th>Required Parameters</th>
+                <th>Optional Parameters</th>
+                <th>Purpose</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>get_specific_venues</code></td>
+                <td><code>location</code></td>
+                <td><code>features_or_amenities</code></td>
+                <td>Find venues in a specific city</td>
+            </tr>
+            <tr>
+                <td><code>get_all_venues</code></td>
+                <td><em>none</em></td>
+                <td><em>none</em></td>
+                <td>List all venues worldwide</td>
+            </tr>
+            <tr>
+                <td><code>get_venue_open_times</code></td>
+                <td><code>venue_id</code></td>
+                <td><em>none</em></td>
+                <td>Get opening hours for a venue</td>
+            </tr>
+            <tr>
+                <td><code>get_events</code></td>
+                <td><code>event_start_at_iso_8601</code></td>
+                <td><code>event_finish_at_iso_8601</code>, <code>event_type_query_or_category</code>, <code>venue_ids</code></td>
+                <td>Find events at venues</td>
+            </tr>
+            <tr>
+                <td><code>get_hotel_availability</code></td>
+                <td><code>hotel_code</code></td>
+                <td><code>number_of_rooms_stays</code>, <code>adults</code>, <code>children</code>, <code>limit</code>, <code>room_stay_start/end_date</code></td>
+                <td>Check hotel room availability</td>
+            </tr>
+            <tr>
+                <td><code>search_specific_restaurants</code></td>
+                <td><code>location</code></td>
+                <td><em>none</em></td>
+                <td>Find restaurants by location</td>
+            </tr>
+            <tr>
+                <td><code>check_restaurant_table_availability</code></td>
+                <td><code>estimated_time_iso_8601</code>, <code>party_size</code>, <code>restaurant_venue_ids</code></td>
+                <td><em>none</em></td>
+                <td>Check table availability</td>
+            </tr>
+            <tr>
+                <td><code>confirm_restaurant_table</code></td>
+                <td><code>estimated_time_iso_8601</code>, <code>party_size</code>, <code>restaurant_venue_id</code>, <code>customer_mobile_number</code>, <code>confirmed_terms_and_conditions</code></td>
+                <td><code>additional_comments</code></td>
+                <td>Confirm a table booking</td>
+            </tr>
+            <tr>
+                <td><code>get_current_table_bookings</code></td>
+                <td><em>none</em></td>
+                <td><em>none</em></td>
+                <td>Get member's current bookings</td>
+            </tr>
+            <tr>
+                <td><code>modify_table_booking</code></td>
+                <td><code>new_time_iso_8601</code>, <code>party_size</code>, <code>restaurant_venue_id</code>, <code>customer_mobile_number</code>, <code>booking_id</code></td>
+                <td><code>additional_comments</code></td>
+                <td>Modify an existing booking</td>
+            </tr>
+            <tr>
+                <td><code>cancel_table_booking</code></td>
+                <td><code>booking_id</code></td>
+                <td><em>none</em></td>
+                <td>Cancel a booking</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3 id="openai-system-prompt">5.4 System Prompt</h3>
+    <p>The system prompt establishes the AI's persona and provides critical operational rules:</p>
+
+    <pre><code>You are a premium Soho House member concierge assistant. You help members
+discover venues, find events, check hotel availability, find restaurants,
+and manage table bookings.
+
+Today's date is {dynamically injected}. Use this to interpret relative
+dates like "today", "tomorrow", "this week", "next Friday", etc.
+
+IMPORTANT DATE FORMATTING RULES:
+- For event queries (get_events): use YYYY-MM-DD format only
+- For restaurant/hotel queries: use ISO 8601 with Z suffix
+  (e.g. "2026-02-05T19:00:00Z"). NEVER use +00:00 offset.
+- For hotel dates: use YYYY-MM-DD format
+
+IMPORTANT BOOKING FLOW:
+- Before checking table availability or confirming a table,
+  ALWAYS search for restaurants first using search_specific_restaurants
+  to get valid restaurant venue IDs.
+- Use the exact venue IDs returned from search results.
+- When confirming a table, you MUST ask the user for their mobile number.
+- Always set confirmed_terms_and_conditions to true when the user
+  wants to confirm.
+
+NUMERIC PARAMETERS:
+- party_size, number_of_rooms_stays, adults, children, limit must be
+  whole integers (e.g. 2, not 2.0)</code></pre>
+
+    <div class="panel panel-success">
+        <p class="panel-title">Dynamic Date Injection</p>
+        <p>The system prompt is a computed property that injects today's date at runtime. This allows GPT-4o to correctly
+        interpret relative date expressions like "tonight", "this weekend", "next week", etc.</p>
+    </div>
+
+    <!-- 6. MCP Integration -->
+    <h2 id="mcp-integration">6. MCP Gateway Integration</h2>
+
+    <h3 id="mcp-protocol">6.1 Protocol &amp; Transport</h3>
+    <p>
+        The app communicates with the MCP (Model Context Protocol) gateway using <strong>JSON-RPC 2.0</strong> over HTTP
+        with <strong>Server-Sent Events (SSE)</strong> for streaming responses.
+    </p>
+
+    <table>
+        <thead>
+            <tr>
+                /* Lines 1046-1048 omitted */
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                /* Lines 1052-1054 omitted */
+            </tr>
+            <tr>
+                /* Lines 1056-1058 omitted */
+            </tr>
+            <tr>
+                /* Lines 1060-1062 omitted */
+            </tr>
+            <tr>
+                /* Lines 1064-1066 omitted */
+            </tr>
+            <tr>
+                /* Lines 1068-1070 omitted */
+            </tr>
+            <tr>
+                /* Lines 1072-1074 omitted */
+            </tr>
+            <tr>
+                /* Lines 1076-1078 omitted */
+            </tr>
+        </tbody>
+    </table>
+
+    <h4>Request Envelope Structure</h4>
+    <pre><code>{
+    "id": 250841,
+    "jsonrpc": "2.0",
+    "method": "tools/call",
+    "params": {
+        "name": "get_specific_venues",
+        "arguments": {
+            "location": "London",
+            "features_or_amenities": "pool"
+        },
+        "_meta": {
+            "progressToken": 250841
+        }
+    }
+}</code></pre>
+
+    <h3 id="mcp-agent-service">6.2 AgentService (AgentAPI)</h3>
+    <p>
+        The <code>AgentService.swift</code> file contains the <code>AgentAPI</code> class which handles all MCP communication.
+        Key features include:
+    </p>
+    <ul>
+        <li><strong>JSONValue enum:</strong> Lightweight type-safe JSON encoding for tool arguments (<code>.string</code>, <code>.number</code>, <code>.bool</code>, <code>.array</code>, <code>.object</code>, <code>.null</code>)</li>
+        <li><strong>Dual contract support:</strong> RPC (default) and REST, with automatic fallback on 500 errors</li>
+        <li><strong>SSE stream parsing:</strong> Reads <code>event: message</code> / <code>data: {...}</code> lines from the response</li>
+        <li><strong>Tool name fallback mapping:</strong> Handles legacy tool name redirections</li>
+        <li><strong>Debug logging:</strong> Generates curl commands for debugging failed requests</li>
+        <li><strong>Error handling:</strong> Extracts trace IDs from error responses for server-side debugging</li>
+    </ul>
+
+    <h4>Core Method Signature</h4>
+    <pre><code>func callMCPTool(
+    toolName: String,
+    arguments: [String: JSONValue],
+    chatSession: String,
+    mcpURL: URL
+) async -> AsyncStream&lt;AgentPartialResponse&gt;</code></pre>
+
+    <p>
+        The method returns an <code>AsyncStream</code>, allowing the caller to process partial responses as they arrive
+        from the SSE stream. The stream yields <code>AgentPartialResponse</code> objects containing arrays of
+        <code>AgentMessage</code> (currently supporting the <code>.text</code> case).
+    </p>
+
+    <h3 id="mcp-tools">6.3 Available MCP Tools</h3>
+    <p>The MCP gateway exposes 11 tools across four domains:</p>
+
+    <div class="two-col">
+        <div>
+            <h4>Venues</h4>
+            <ul>
+                <li><code>get_specific_venues</code> - Search by location</li>
+                <li><code>get_all_venues</code> - List all</li>
+                <li><code>get_venue_open_times</code> - Opening hours</li>
+            </ul>
+
+            <h4>Events</h4>
+            <ul>
+                <li><code>get_events</code> - Search by date/category/venue</li>
+            </ul>
+
+            <h4>Hotels</h4>
+            <ul>
+                <li><code>get_hotel_availability</code> - Room availability</li>
+            </ul>
+        </div>
+        <div>
+            <h4>Restaurants &amp; Bookings</h4>
+            <ul>
+                <li><code>search_specific_restaurants</code> - Find restaurants</li>
+                <li><code>check_restaurant_table_availability</code> - Check tables</li>
+                <li><code>confirm_restaurant_table</code> - Book a table</li>
+                <li><code>get_current_table_bookings</code> - View bookings</li>
+                <li><code>modify_table_booking</code> - Change a booking</li>
+                <li><code>cancel_table_booking</code> - Cancel a booking</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- 7. Data Flows -->
+    <h2 id="data-flow">7. End-to-End Data Flows</h2>
+
+    <h3 id="flow-conversational">7.1 Conversational Mode Flow</h3>
+    <p>Example: User types <em>"Find me venues in London with a pool"</em></p>
+
+    <div class="diagram">
+        <div class="diagram-title">Conversational Mode - Full Request Lifecycle</div>
+        <div style="text-align: left; display: inline-block; font-size: 13px; line-height: 2.0;">
+            <pre style="background: white; border: 2px solid var(--primary); border-radius: 8px; padding: 24px; font-size: 12px;"><code>
+ User                ChatView           ChatViewModel         OpenAIService          AgentAPI           MCP Gateway         OpenAI API
+  |                     |                    |                     |                    |                    |                   |
+  |-- types message --> |                    |                     |                    |                    |                   |
+  |                     |-- sendConversational|Message() --------->|                    |                    |                   |
+  |                     |                    |-- add user msg      |                    |                    |                   |
+  |                     |                    |-- add "Thinking..." |                    |                    |                   |
+  |                     |                    |                     |                    |                    |                   |
+  |                     |                    |-- sendMessage() --->|                    |                    |                   |
+  |                     |                    |                     |-- callOpenAI() ----|-------------------------------------->|
+  |                     |                    |                     |                    |                    |                   |
+  |                     |                    |                     |<--- tool_calls: get_specific_venues(location:"London"...) -|
+  |                     |                    |                     |                    |                    |                   |
+  |                     |                    |<-- executeTool() ---|                    |                    |                   |
+  |                     |                    |                     |                    |                    |                   |
+  |                     |                    |-- sanitize args     |                    |                    |                   |
+  |                     |                    |-- callMCPTool() ----|------ POST ------->|--- JSON-RPC 2.0 ->|                   |
+  |                     |                    |                     |                    |                    |                   |
+  |                     |                    |                     |                    |<-- SSE stream -----|                   |
+  |                     |                    |<---- venue JSON ----|<-- AsyncStream ----|                    |                   |
+  |                     |                    |                     |                    |                    |                   |
+  |                     |                    |-- display venue     |                    |                    |                   |
+  |                     |                    |   cards (rich UI)   |                    |                    |                   |
+  |                     |                    |                     |                    |                    |                   |
+  |                     |                    |-- return JSON ------>|                    |                    |                   |
+  |                     |                    |                     |-- callOpenAI() ----|-------------------------------------->|
+  |                     |                    |                     |   (with tool       |                    |                   |
+  |                     |                    |                     |    results)        |                    |                   |
+  |                     |                    |                     |                    |                    |                   |
+  |                     |                    |                     |<--- "I found 3 venues in London..." -------------------- |
+  |                     |                    |                     |                    |                    |                   |
+  |                     |                    |<-- return text -----|                    |                    |                   |
+  |                     |                    |                     |                    |                    |                   |
+  |                     |                    |-- remove "Thinking"|                    |                    |                   |
+  |                     |                    |-- add AI summary   |                    |                    |                   |
+  |                     |<-- @Published -----|                     |                    |                    |                   |
+  |<-- UI updates ------|                    |                     |                    |                    |                   |
+
+</code></pre>
+        </div>
+    </div>
+
+    <h4>Step-by-Step Breakdown</h4>
+    <ol>
+        <li><strong>User input:</strong> Text captured in <code>conversationalInput</code>, sent via <code>sendConversationalMessage()</code></li>
+        <li><strong>UI feedback:</strong> User message bubble + "Thinking..." indicator appended to <code>messages</code></li>
+        <li><strong>OpenAI call:</strong> <code>openAIService.sendMessage(text, executeTool: closure)</code> sends to GPT-4o with all 11 tool schemas</li>
+        <li><strong>Tool detection:</strong> OpenAI returns <code>finish_reason: "tool_calls"</code> with <code>get_specific_venues(location: "London", features_or_amenities: "pool")</code></li>
+        <li><strong>Bridge execution:</strong> The closure calls <code>executeMCPToolForOpenAI(toolName:arguments:)</code></li>
+        <li><strong>Argument sanitization:</strong> <code>sanitizeArgumentsForMCP()</code> normalises dates and number types</li>
+        <li><strong>MCP call:</strong> <code>aiService.callMCPTool()</code> sends JSON-RPC 2.0 request to MCP gateway</li>
+        <li><strong>SSE response:</strong> Gateway streams back venue data as SSE events</li>
+        <li><strong>Rich cards:</strong> <code>processToolResultForDisplay()</code> decodes JSON into <code>[Venue]</code> and appends venue cards to messages</li>
+        <li><strong>Return to OpenAI:</strong> Raw JSON text returned to OpenAI as tool result</li>
+        <li><strong>Summary generation:</strong> OpenAI receives tool results, generates natural language summary</li>
+        <li><strong>Final display:</strong> "Thinking..." removed, AI summary text bubble appended</li>
+    </ol>
+
+    <h3 id="flow-tool-picker">7.2 Tool Picker Mode Flow</h3>
+    <p>Example: User selects "Find Venues" tool, enters "London" as location, taps "Find Venues" button</p>
+
+    <div class="diagram">
+        <div class="diagram-title">Tool Picker Mode - Direct MCP Call</div>
+        <div class="flow">
+            <div class="flow-step">User fills form</div>
+            <div class="flow-arrow">&rarr;</div>
+            <div class="flow-step highlight">findSpecificVenues()</div>
+            <div class="flow-arrow">&rarr;</div>
+            <div class="flow-step">Build args dict</div>
+            <div class="flow-arrow">&rarr;</div>
+            <div class="flow-step highlight">callMCPTool()</div>
+            <div class="flow-arrow">&rarr;</div>
+            <div class="flow-step">MCP Gateway</div>
+            <div class="flow-arrow">&rarr;</div>
+            <div class="flow-step">SSE Response</div>
+            <div class="flow-arrow">&rarr;</div>
+            <div class="flow-step highlight">processMCPResponse()</div>
+            <div class="flow-arrow">&rarr;</div>
+            <div class="flow-step">Rich Cards</div>
+        </div>
+    </div>
+
+    <p>
+        In Tool Picker mode, there is <strong>no OpenAI involvement</strong>. The ViewModel directly constructs arguments
+        from form inputs and calls the MCP gateway. Responses are decoded through the same
+        <code>processMCPResponse()</code> pipeline that attempts multiple JSON decoding strategies:
+    </p>
+    <ol>
+        <li>Try <code>MCPListResponse&lt;Venue&gt;</code> (wrapped response with <code>items</code>/<code>results</code> key)</li>
+        <li>Try <code>MCPListResponse&lt;Event&gt;</code>, <code>&lt;Hotel&gt;</code>, <code>&lt;Restaurant&gt;</code></li>
+        <li>Fallback to direct array: <code>[Event]</code>, <code>[Venue]</code>, <code>[Hotel]</code>, <code>[Restaurant]</code></li>
+        <li>Final fallback: minimal event parsing from raw JSON dictionaries</li>
+        <li>Last resort: display raw text</li>
+    </ol>
+
+    <h3 id="flow-multi-turn">7.3 Multi-Turn Conversation</h3>
+    <p>
+        In conversational mode, <code>OpenAIService</code> maintains the full <code>conversationHistory</code> array.
+        This enables contextual follow-up queries:
+    </p>
+
+    <pre><code>// Conversation history structure:
+[
+    .system("You are a premium Soho House concierge..."),
+    .user("Find venues in London with a pool"),
+    .assistantWithToolCalls([get_specific_venues(location: "London", ...)]),
+    .toolResult(toolCallId: "call_abc", content: "{venues JSON...}"),
+    .assistant("I found 3 venues in London with pools: ..."),
+    .user("What events are happening at those venues this week?"),    // <-- follow-up
+    .assistantWithToolCalls([get_events(venue_ids: [...], ...)]),      // <-- AI has context!
+    .toolResult(toolCallId: "call_def", content: "{events JSON...}"),
+    .assistant("Here are the upcoming events at those venues: ...")
+]</code></pre>
+
+    <div class="panel panel-success">
+        <p class="panel-title">Context Awareness</p>
+        <p>Because the full conversation history is sent with each request, GPT-4o understands context like "those venues"
+        and can reference venue IDs from previous tool results without the user needing to specify them again.</p>
+    </div>
+
+    <!-- 8. Data Models -->
+    <h2 id="data-models">8. Data Models</h2>
+
+    <h3>ChatMessage (Display Model)</h3>
+    <pre><code>enum ChatMessage: Identifiable, Equatable {
+    case text(id: UUID, content: String, isUser: Bool)
+    case venueList(id: UUID, venues: [Venue])
+    case eventList(id: UUID, events: [Event])
+    case hotelList(id: UUID, hotels: [Hotel])
+    case restaurantList(id: UUID, restaurants: [Restaurant])
+}</code></pre>
+    <p>This enum drives the message list UI. Each case renders differently in <code>MessageBubble</code>: text cases show bubbles, list cases show rich cards.</p>
+
+    <h3>MCP Domain Models</h3>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Model</th>
+                <th>Key Properties</th>
+                <th>JSON Keys (CodingKeys)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>Venue</code></td>
+                <td>id, name, address, description, rating, imageUrl</td>
+                <td><code>venue_id</code>, <code>venue_name</code>, <code>image_url</code></td>
+            </tr>
+            <tr>
+                <td><code>Event</code></td>
+                <td>id, title, venueId, venueName, startTime, endTime, category, description, imageUrl</td>
+                <td>Custom decoder with ISO 8601 date parsing</td>
+            </tr>
+            <tr>
+                <td><code>Hotel</code></td>
+                <td>id, hotelCode, name, roomType, price, currency, availability, checkInDate, checkOutDate, imageUrl</td>
+                <td>Standard mapping</td>
+            </tr>
+            <tr>
+                <td><code>Restaurant</code></td>
+                <td>id, name, address, description, rating, imageUrl</td>
+                <td><code>restaurant_id</code>, <code>restaurant_name</code></td>
+            </tr>
+            <tr>
+                <td><code>MCPListResponse&lt;T&gt;</code></td>
+                <td>items: [T]</td>
+                <td><code>results</code> &rarr; <code>items</code></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>JSONValue (Argument Encoding)</h3>
+    <pre><code>enum JSONValue: Codable {
+    case string(String)
+    case number(Double)
+    case bool(Bool)
+    case array([JSONValue])
+    case object([String: JSONValue])
+    case null
+}</code></pre>
+    <p>
+        Used throughout the app for MCP tool arguments. Provides type-safe JSON encoding without relying on
+        <code>Any</code> or <code>JSONSerialization</code>. The OpenAI bridge converts from <code>JSONSerialization</code>
+        output to <code>JSONValue</code> using the <code>convertToJSONValue()</code> helper, which includes special
+        boolean detection via <code>CFBooleanGetTypeID()</code>.
+    </p>
+
+    <!-- 9. UI Components -->
+    <h2 id="ui-components">9. UI Components</h2>
+
+    <h3>Design System (AppTheme)</h3>
+    <div class="two-col">
+        <div>
+            <h4>Colour Palette</h4>
+            <table>
+                <tr>
+                    /* Lines 1368-1370 omitted */
+                </tr>
+                <tr>
+                    /* Lines 1372-1374 omitted */
+                </tr>
+                <tr>
+                    /* Lines 1376-1378 omitted */
+                </tr>
+                <tr>
+                    /* Lines 1380-1382 omitted */
+                </tr>
+            </table>
+        </div>
+        <div>
+            <h4>Card Modifiers</h4>
+            <ul>
+                <li><code>.elevatedCard()</code> - Glassmorphic card with ultra-thin material, gradient borders, and shadows</li>
+                <li><code>.compactCard()</code> - Simpler card with rounded corners and subtle background</li>
+            </ul>
+            <h4>Glass Effect</h4>
+            <p>All cards use <code>.ultraThinMaterial</code> with layered opacity fills and gradient borders for a premium glassmorphic aesthetic.</p>
+        </div>
+    </div>
+
+    <h3>Reusable Components</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Component</th>
+                <th>Usage</th>
+                <th>Props</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>ModernTextField</code></td>
+                <td>Text input with icon prefix</td>
+                <td><code>placeholder</code>, <code>text</code> (Binding), <code>icon</code>, <code>keyboardType</code></td>
+            </tr>
+            <tr>
+                <td><code>ModernDatePicker</code></td>
+                <td>Styled date picker</td>
+                <td><code>title</code>, <code>selection</code> (Binding), <code>displayedComponents</code></td>
+            </tr>
+            <tr>
+                <td><code>StepperCard</code></td>
+                <td>Integer value with +/- controls</td>
+                <td><code>title</code>, <code>value</code> (Binding), <code>range</code></td>
+            </tr>
+            <tr>
+                <td><code>PremiumButton</code></td>
+                <td>Gradient action button</td>
+                <td><code>title</code>, <code>icon</code>, <code>style</code> (.primary/.secondary), <code>action</code></td>
+            </tr>
+            <tr>
+                <td><code>SuggestionChip</code></td>
+                <td>Quick-start query chip</td>
+                <td><code>text</code>, <code>action</code></td>
+            </tr>
+            <tr>
+                <td><code>MessageBubble</code></td>
+                <td>Chat message rendering</td>
+                <td><code>message</code> (ChatMessage), <code>viewModel</code></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>Rich Card Views</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Card View</th>
+                <th>Displays</th>
+                <th>Interactions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>VenueCardView</code></td>
+                <td>Image, name, address, description, star rating</td>
+                <td>Tap to fetch venue open times</td>
+            </tr>
+            <tr>
+                <td><code>EventListItemView</code></td>
+                <td>Thumbnail, title, venue name, date/time, category badge</td>
+                <td>NavigationLink to EventDetailView</td>
+            </tr>
+            <tr>
+                <td><code>HotelCardView</code></td>
+                <td>Name, room type, price, availability status, dates, hotel code badge</td>
+                <td>Display only</td>
+            </tr>
+            <tr>
+                <td><code>RestaurantCardView</code></td>
+                <td>Name, address, description (3 lines), star rating</td>
+                <td>Display only</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- 10. Argument Sanitization -->
+    <h2 id="argument-sanitization">10. Argument Sanitization</h2>
+    <p>
+        The <code>sanitizeArgumentsForMCP()</code> method in ChatViewModel is a critical bridge between
+        OpenAI's output and MCP's expectations. It handles format mismatches that occur because OpenAI
+        generates arguments based on its training data, not the exact requirements of the MCP gateway.
+    </p>
+
+    <h4>Sanitization Rules</h4>
+    <table>
+        <thead>
+            <tr>
+                <th>Issue</th>
+                <th>OpenAI Sends</th>
+                <th>MCP Expects</th>
+                <th>Fix Applied</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                /* Lines 1492-1496 omitted */
+            </tr>
+            <tr>
+                /* Lines 1498-1502 omitted */
+            </tr>
+            <tr>
+                /* Lines 1504-1508 omitted */
+            </tr>
+        </tbody>
+    </table>
+
+    <h4>Keys Sanitized</h4>
+    <div class="two-col">
+        <div>
+            <strong>Date keys:</strong>
+            <ul>
+                /* Lines 1517-1523 omitted */
+            </ul>
+        </div>
+        <div>
+            <strong>Integer keys:</strong>
+            <ul>
+                /* Lines 1528-1533 omitted */
+            </ul>
+        </div>
+    </div>
+
+    <!-- 11. Configuration -->
+    <h2 id="configuration">11. Configuration &amp; API Keys</h2>
+
+    <div class="panel panel-danger">
+        <p class="panel-title">Security</p>
+        <p>API keys are stored in a separate secrets file outside the main project directory. This file should
+        <strong>never</strong> be committed to version control.</p>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                /* Lines 1549-1552 omitted */
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                /* Lines 1556-1559 omitted */
+            </tr>
+            <tr>
+                /* Lines 1561-1564 omitted */
+            </tr>
+            <tr>
+                /* Lines 1566-1569 omitted */
+            </tr>
+            <tr>
+                /* Lines 1571-1574 omitted */
+            </tr>
+            <tr>
+                /* Lines 1576-1579 omitted */
+            </tr>
+            <tr>
+                /* Lines 1581-1584 omitted */
+            </tr>
+            <tr>
+                /* Lines 1586-1589 omitted */
+            </tr>
+            <tr>
+                /* Lines 1591-1594 omitted */
+            </tr>
+            <tr>
+                /* Lines 1596-1599 omitted */
+            </tr>
+        </tbody>
+    </table>
+
+    <h4>App Initialisation (MCProjectApp.swift)</h4>
+    <pre><code>@main
+struct MCProjectApp: App {
+    var body: some Scene {
+        WindowGroup {
+            NavigationView {/* Lines 1609-1617 omitted */}
+        }
+    }
+}</code></pre>
+
+    <!-- 12. Known Issues -->
+    <h2 id="known-issues">12. Known Issues &amp; Notes</h2>
+
+    <table>
+        <thead>
+            <tr>
+                /* Lines 1628-1631 omitted */
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                /* Lines 1635-1638 omitted */
+            </tr>
+            <tr>
+                /* Lines 1640-1643 omitted */
+            </tr>
+            <tr>
+                /* Lines 1645-1648 omitted */
+            </tr>
+            <tr>
+                /* Lines 1650-1653 omitted */
+            </tr>
+            <tr>
+                /* Lines 1655-1658 omitted */
+            </tr>
+        </tbody>
+    </table>
+
+    <hr>
+
+    <div class="panel panel-info">
+        <p class="panel-title">Summary</p>
+        <p>MCProject is a dual-mode iOS concierge app that combines:</p>
+        <ul style="margin-top: 8px; margin-bottom: 0;">
+            <li><strong>Tool Picker Mode:</strong> Direct, form-driven MCP tool invocations for precise control</li>
+            <li><strong>Conversational Mode:</strong> OpenAI GPT-4o function calling to orchestrate MCP tools via natural language</li>
+        </ul>
+        <p style="margin-top: 12px; margin-bottom: 0;">
+            The OpenAI layer acts as an intelligent orchestration middleware, translating natural language into structured
+            tool calls, executing them via the existing MCP infrastructure, and synthesising results into human-friendly
+            summaries alongside rich UI cards. The argument sanitization layer bridges format differences between
+            OpenAI's output and MCP's requirements, while multi-turn conversation history enables contextual follow-up
+            queries.
+        </p>
+    </div>
+
+</div>
+
+<footer class="footer">
+    <div class="container">
+        <p>MCProject Architecture Documentation &bull; Generated February 2026</p>
+        <p>Soho House Digital &bull; Member Concierge Prototype</p>
+    </div>
+</footer>
+
+</body>
+</html>

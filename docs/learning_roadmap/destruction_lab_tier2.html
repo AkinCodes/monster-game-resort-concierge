@@ -1,0 +1,1670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Monster Resort — Destruction Lab Tier 2: Advanced</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #fafbfc;
+    --surface: #ffffff;
+    --border: #e2e8f0;
+    --border-accent: #3b82f6;
+    --text: #1e293b;
+    --text-dim: #64748b;
+    --text-link: #2563eb;
+    --ocean: #3b82f6;
+    --ocean-light: #dbeafe;
+    --ocean-dark: #1e40af;
+    --ocean-gradient-start: #3b82f6;
+    --ocean-gradient-mid: #2563eb;
+    --ocean-gradient-end: #1d4ed8;
+    --red: #ef4444;
+    --red-light: #fef2f2;
+    --green: #22c55e;
+    --green-light: #f0fdf4;
+    --yellow-light: #fefce8;
+    --blue-light: #eff6ff;
+    --purple-light: #faf5ff;
+    --orange-light: #fff7ed;
+    --gray-light: #f8fafc;
+    --code-bg: #f1f5f9;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.04);
+    --shadow-lg: 0 10px 25px rgba(0,0,0,0.08), 0 4px 10px rgba(0,0,0,0.04);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px 120px;
+  }
+
+  /* HEADER BANNER */
+  .header-banner {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 40%, #1d4ed8 70%, #1e40af 100%);
+    margin: 0 -24px;
+    padding: 48px 48px 40px;
+    position: relative;
+    overflow: hidden;
+  }
+  .header-banner::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+  .header-banner::after {
+    content: '';
+    position: absolute;
+    bottom: -30%;
+    left: 10%;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+  .header-banner .tier-label {
+    display: inline-block;
+    background: rgba(255,255,255,0.2);
+    backdrop-filter: blur(10px);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 4px 14px;
+    border-radius: 20px;
+    margin-bottom: 12px;
+  }
+  .header-banner h1 {
+    font-size: 2.4rem;
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 6px;
+    position: relative;
+    z-index: 1;
+  }
+  .header-banner .subtitle {
+    color: rgba(255,255,255,0.85);
+    font-size: 1.05rem;
+    font-weight: 400;
+    margin-bottom: 4px;
+    position: relative;
+    z-index: 1;
+  }
+  .header-banner .exercise-count {
+    color: rgba(255,255,255,0.65);
+    font-size: 0.85rem;
+    font-weight: 500;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* NAV STRIP */
+  .nav-strip {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 8px 12px;
+    margin: 24px 0 20px;
+    box-shadow: var(--shadow-sm);
+  }
+  .nav-strip a {
+    text-decoration: none;
+    font-size: 0.8rem;
+    font-weight: 500;
+    padding: 6px 14px;
+    border-radius: 6px;
+    color: var(--text-dim);
+    transition: all 0.2s ease;
+  }
+  .nav-strip a:hover {
+    background: var(--blue-light);
+    color: var(--ocean);
+  }
+  .nav-strip a.active {
+    background: var(--ocean);
+    color: #fff;
+    font-weight: 600;
+  }
+  .nav-strip .divider {
+    width: 1px;
+    background: var(--border);
+    margin: 2px 4px;
+  }
+
+  /* PROGRESS BAR */
+  .progress-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 22px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow-sm);
+  }
+  .progress-labels {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .progress-labels .tier-progress {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .progress-labels .global-progress {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+  }
+  .progress-track {
+    height: 10px;
+    background: #e2e8f0;
+    border-radius: 99px;
+    overflow: hidden;
+    position: relative;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #3b82f6, #2563eb, #1d4ed8);
+    border-radius: 99px;
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+  }
+  .progress-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%);
+    animation: shimmer 2s infinite;
+  }
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+
+  /* CONTROLS ROW */
+  .controls-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .controls-row button {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 500;
+    padding: 8px 16px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: var(--shadow-sm);
+  }
+  .controls-row button:hover {
+    background: var(--blue-light);
+    border-color: var(--ocean);
+    color: var(--ocean);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+  }
+  .controls-row button.primary {
+    background: var(--ocean);
+    color: #fff;
+    border-color: var(--ocean);
+  }
+  .controls-row button.primary:hover {
+    background: var(--ocean-dark);
+    border-color: var(--ocean-dark);
+    color: #fff;
+  }
+
+  /* INFO BOX */
+  .info-box {
+    background: var(--blue-light);
+    border: 1px solid #bfdbfe;
+    border-left: 4px solid var(--ocean);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+  }
+  .info-box .info-title {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--ocean-dark);
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .info-box p {
+    font-size: 0.85rem;
+    color: #1e40af;
+    margin-bottom: 4px;
+  }
+  .info-box code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    background: rgba(59,130,246,0.1);
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+
+  /* EXERCISE CARD */
+  .exercise-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--ocean);
+    border-radius: 10px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.25s ease;
+    overflow: hidden;
+  }
+  .exercise-card:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px);
+  }
+  .exercise-card.completed {
+    border-left-color: var(--green);
+  }
+  .exercise-card.completed .card-header .ex-number {
+    background: var(--green);
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 18px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .card-header input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--ocean);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .card-header .ex-number {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    font-weight: 600;
+    background: var(--ocean);
+    color: #fff;
+    padding: 2px 8px;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+  .card-header .ex-title {
+    font-weight: 600;
+    font-size: 0.92rem;
+    color: var(--text);
+    flex: 1;
+  }
+  .concept-badge {
+    font-size: 0.7rem;
+    font-weight: 600;
+    background: var(--ocean-light);
+    color: var(--ocean-dark);
+    padding: 3px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .no-test-badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    background: var(--red-light);
+    color: var(--red);
+    padding: 2px 8px;
+    border-radius: 20px;
+    white-space: nowrap;
+    letter-spacing: 0.03em;
+    flex-shrink: 0;
+  }
+  .expand-arrow {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    transition: transform 0.25s ease;
+    flex-shrink: 0;
+    width: 20px;
+    text-align: center;
+  }
+  .exercise-card.open .expand-arrow {
+    transform: rotate(180deg);
+  }
+
+  .card-body {
+    display: none;
+    padding: 0 18px 18px;
+  }
+  .exercise-card.open .card-body {
+    display: block;
+  }
+
+  /* COLORED PANELS */
+  .panel {
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    border: 1px solid transparent;
+  }
+  .panel-hypothesis {
+    background: var(--yellow-light);
+    border-color: #fef08a;
+  }
+  .panel-action {
+    background: var(--blue-light);
+    border-color: #bfdbfe;
+  }
+  .panel-verify {
+    background: var(--green-light);
+    border-color: #bbf7d0;
+  }
+  .panel-why {
+    background: var(--purple-light);
+    border-color: #e9d5ff;
+  }
+  .panel-interview {
+    background: var(--orange-light);
+    border-color: #fed7aa;
+  }
+  .panel-recovery {
+    background: var(--gray-light);
+    border-color: #e2e8f0;
+  }
+
+  .panel-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+  }
+  .panel-hypothesis .panel-label { color: #a16207; }
+  .panel-action .panel-label { color: #1d4ed8; }
+  .panel-verify .panel-label { color: #15803d; }
+  .panel-why .panel-label { color: #7c3aed; }
+  .panel-interview .panel-label { color: #c2410c; }
+  .panel-recovery .panel-label { color: #475569; }
+
+  .panel p, .panel ul {
+    font-size: 0.84rem;
+    color: var(--text);
+    line-height: 1.65;
+  }
+  .panel ul {
+    padding-left: 18px;
+  }
+  .panel li {
+    margin-bottom: 3px;
+  }
+
+  code, .code-block {
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .code-block {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    overflow-x: auto;
+    color: var(--text);
+    margin: 6px 0;
+  }
+  .inline-code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    background: var(--code-bg);
+    padding: 1px 6px;
+    border-radius: 4px;
+    color: var(--text);
+  }
+  .file-ref {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--text-link);
+    font-weight: 500;
+  }
+
+  /* NOTES */
+  .notes-area {
+    margin-top: 10px;
+  }
+  .notes-area label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: block;
+    margin-bottom: 4px;
+  }
+  .notes-area textarea {
+    width: 100%;
+    min-height: 60px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.84rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 12px;
+    color: var(--text);
+    background: var(--bg);
+    resize: vertical;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .notes-area textarea:focus {
+    outline: none;
+    border-color: var(--ocean);
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+  }
+
+  /* TEST GAP TABLE */
+  .gap-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 22px;
+    margin: 32px 0 24px;
+    box-shadow: var(--shadow-sm);
+  }
+  .gap-section h2 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .gap-section .gap-desc {
+    font-size: 0.84rem;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+  }
+  .gap-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+  }
+  .gap-table th {
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-dim);
+    padding: 8px 12px;
+    border-bottom: 2px solid var(--border);
+    background: var(--bg);
+  }
+  .gap-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+  }
+  .gap-table tr:hover td {
+    background: var(--blue-light);
+  }
+  .gap-table .badge-no {
+    font-size: 0.68rem;
+    font-weight: 700;
+    background: var(--red-light);
+    color: var(--red);
+    padding: 2px 8px;
+    border-radius: 20px;
+  }
+
+  /* FOOTER NAV */
+  .footer-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 40px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+  }
+  .footer-nav a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--ocean);
+    padding: 10px 20px;
+    border: 1px solid var(--ocean);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+  }
+  .footer-nav a:hover {
+    background: var(--ocean);
+    color: #fff;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 640px) {
+    .header-banner { padding: 32px 24px 28px; }
+    .header-banner h1 { font-size: 1.7rem; }
+    .card-header { flex-wrap: wrap; gap: 6px; }
+    .concept-badge { order: 5; }
+    .controls-row { gap: 6px; }
+    .footer-nav { flex-direction: column; gap: 12px; }
+    .footer-nav a { width: 100%; justify-content: center; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ HEADER BANNER ============ -->
+<div class="header-banner">
+  <div class="tier-label">Destruction Lab</div>
+  <h1>Tier 2: Advanced</h1>
+  <div class="subtitle">Subtle Degradations NOT Caught by Tests</div>
+  <div class="exercise-count">17 exercises &middot; IDs #18 &ndash; #34</div>
+</div>
+
+<!-- ============ NAV STRIP ============ -->
+<nav class="nav-strip">
+  <a href="learning_roadmap.html">Learning Roadmap</a>
+  <div class="divider"></div>
+  <a href="destruction_lab_tier1.html">Tier 1: Fundamentals</a>
+  <a href="destruction_lab_tier2.html" class="active">Tier 2: Advanced</a>
+  <a href="destruction_lab_tier3.html">Tier 3: Expert</a>
+  <a href="destruction_lab_tier4.html">Tier 4: Architect</a>
+</nav>
+
+<!-- ============ PROGRESS BAR ============ -->
+<div class="progress-section">
+  <div class="progress-labels">
+    <span class="tier-progress" id="tierProgressLabel">0 / 17 this tier</span>
+    <span class="global-progress" id="globalProgressLabel">0 / 67 total</span>
+  </div>
+  <div class="progress-track">
+    <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+  </div>
+</div>
+
+<!-- ============ CONTROLS ============ -->
+<div class="controls-row">
+  <button onclick="expandAll()">Expand All</button>
+  <button onclick="collapseAll()">Collapse All</button>
+  <button class="primary" onclick="exportDamageReport()">Export Damage Report</button>
+</div>
+
+<!-- ============ BEFORE YOU START ============ -->
+<div class="info-box">
+  <div class="info-title">&#9432; Before You Start</div>
+  <p>Create a dedicated branch for your destruction experiments:</p>
+  <div class="code-block">git checkout -b destruction-lab</div>
+  <p>Each exercise includes a <strong>Recovery</strong> step. Always recover before starting the next exercise.</p>
+</div>
+
+<!-- ============ EXERCISE CARDS ============ -->
+
+<!-- EXERCISE 18 -->
+<div class="exercise-card" data-id="18" data-nogap="false">
+  <div class="card-header" onclick="toggleCard(this)">
+    <input type="checkbox" onclick="event.stopPropagation(); toggleCheck(18)" id="check-18">
+    <span class="ex-number">#18</span>
+    <span class="ex-title">Remove RRF BM25 Weight</span>
+    <span class="concept-badge">Reciprocal Rank Fusion</span>
+    <span class="no-test-badge">NO TEST</span>
+    <span class="expand-arrow">&#9660;</span>
+  </div>
+  <div class="card-body">
+    <div class="panel panel-hypothesis">
+      <div class="panel-label">Hypothesis</div>
+      <p>Without BM25 scores in RRF, fusion becomes dense-only, losing keyword matching capability. Queries that depend on exact keyword matches will return significantly worse results.</p>
+    </div>
+    <div class="panel panel-action">
+      <div class="panel-label">Action</div>
+      <p>File: <span class="file-ref">app/advanced_rag.py</span> (lines 188&ndash;190)</p>
+      <p>Comment out the BM25 weight loop in the RRF calculation:</p>
+      <div class="code-block"># for doc_id, bm25_score in bm25_results:<br>#     rrf_scores[doc_id] += bm25_weight / (k + bm25_rank)<br>#     bm25_rank += 1</div>
+    </div>
+    <div class="panel panel-verify">
+      <div class="panel-label">Verify</div>
+      <p>Run a keyword-heavy query and observe degraded results:</p>
+      <div class="code-block">curl -X POST http://localhost:8000/chat \<br>  -H "Content-Type: application/json" \<br>  -d '{"message": "Tell me about Vampire Manor"}'</div>
+      <p>Keyword queries like "Vampire Manor" return worse results because BM25 exact-match signal is missing.</p>
+    </div>
+    <div class="panel panel-why">
+      <div class="panel-label">Why It Matters</div>
+      <p>RRF combines keyword (BM25) and semantic (dense embedding) signals. Removing one leg of the fusion demonstrates how hybrid search outperforms either signal alone. Keywords handle proper nouns and exact terms; embeddings handle synonyms and concepts.</p>
+    </div>
+    <div class="panel panel-interview">
+      <div class="panel-label">Interview Prep</div>
+      <ul>
+        <li>What is Reciprocal Rank Fusion and how does it work?</li>
+        <li>Why combine keyword and semantic search instead of using one?</li>
+        <li>What types of queries does BM25 handle better than dense retrieval?</li>
+      </ul>
+    </div>
+    <div class="panel panel-recovery">
+      <div class="panel-label">Recovery</div>
+      <div class="code-block">git checkout -- app/advanced_rag.py</div>
+    </div>
+    <div class="notes-area">
+      <label for="notes-18">Notes</label>
+      <textarea id="notes-18" placeholder="Your observations..." oninput="saveNotes(18)"></textarea>
+    </div>
+  </div>
+</div>
+
+<!-- EXERCISE 19 -->
+<div class="exercise-card" data-id="19" data-nogap="false">
+  <div class="card-header" onclick="toggleCard(this)">
+    <input type="checkbox" onclick="event.stopPropagation(); toggleCheck(19)" id="check-19">
+    <span class="ex-number">#19</span>
+    <span class="ex-title">Remove Cross-Encoder Reranking</span>
+    <span class="concept-badge">Two-Stage Retrieval</span>
+    <span class="no-test-badge">NO TEST</span>
+    <span class="expand-arrow">&#9660;</span>
+  </div>
+  <div class="card-body">
+    <div class="panel panel-hypothesis">
+      <div class="panel-label">Hypothesis</div>
+      <p>Without reranking, retrieval quality drops because the cross-encoder's fine-grained relevance scoring is skipped. The initial retrieval results pass through unrefined.</p>
+    </div>
+    <div class="panel panel-action">
+      <div class="panel-label">Action</div>
+      <p>File: <span class="file-ref">app/advanced_rag.py</span> (lines 263&ndash;264)</p>
+      <p>Disable the reranker by forcing the condition to false:</p>
+      <div class="code-block"># Replace: if use_reranker:<br># With:<br>if False:</div>
+    </div>
+    <div class="panel panel-verify">
+      <div class="panel-label">Verify</div>
+      <p>Send a query and compare response quality:</p>
+      <div class="code-block">curl -X POST http://localhost:8000/chat \<br>  -H "Content-Type: application/json" \<br>  -d '{"message": "What amenities does the resort offer?"}'</div>
+      <p>Response quality subtly degrades &mdash; less relevant passages surface in the final answer.</p>
+    </div>
+    <div class="panel panel-why">
+      <div class="panel-label">Why It Matters</div>
+      <p>Two-stage retrieval is the standard pattern in production search: fast first-stage recall (bi-encoder) followed by slow, precise reranking (cross-encoder). This architecture balances speed and accuracy.</p>
+    </div>
+    <div class="panel panel-interview">
+      <div class="panel-label">Interview Prep</div>
+      <ul>
+        <li>What is the difference between a cross-encoder and a bi-encoder?</li>
+        <li>Why is two-stage retrieval more effective than single-stage?</li>
+        <li>How do you manage the speed/accuracy tradeoff in reranking?</li>
+      </ul>
+    </div>
+    <div class="panel panel-recovery">
+      <div class="panel-label">Recovery</div>
+      <div class="code-block">git checkout -- app/advanced_rag.py</div>
+    </div>
+    <div class="notes-area">
+      <label for="notes-19">Notes</label>
+      <textarea id="notes-19" placeholder="Your observations..." oninput="saveNotes(19)"></textarea>
+    </div>
+  </div>
+</div>
+
+<!-- EXERCISE 20 -->
+<div class="exercise-card" data-id="20" data-nogap="false">
+  <div class="card-header" onclick="toggleCard(this)">
+    <input type="checkbox" onclick="event.stopPropagation(); toggleCheck(20)" id="check-20">
+    <span class="ex-number">#20</span>
+    <span class="ex-title">Remove Case Normalization in BM25</span>
+    <span class="concept-badge">Text Normalization</span>
+    <span class="no-test-badge">NO TEST</span>
+    <span class="expand-arrow">&#9660;</span>
+  </div>
+  <div class="card-body">
+    <div class="panel panel-hypothesis">
+      <div class="panel-label">Hypothesis</div>
+      <p>Without <span class="inline-code">.lower()</span>, BM25 queries become case-sensitive. Uppercase queries won't match lowercase-indexed documents, returning zero results.</p>
+    </div>
+    <div class="panel panel-action">
+      <div class="panel-label">Action</div>
+      <p>File: <span class="file-ref">app/advanced_rag.py</span> (line 139)</p>
+      <p>Remove <span class="inline-code">.lower()</span> from the tokenized_query construction:</p>
+      <div class="code-block"># Before: tokenized_query = query.lower().split()<br># After:  tokenized_query = query.split()</div>
+    </div>
+    <div class="panel panel-verify">
+      <div class="panel-label">Verify</div>
+      <p>Send an uppercase query and observe BM25 returning no results:</p>
+      <div class="code-block">curl -X POST http://localhost:8000/chat \<br>  -H "Content-Type: application/json" \<br>  -d '{"message": "VAMPIRE MANOR"}'</div>
+      <p>BM25 component returns zero results because "VAMPIRE" does not match "vampire" in the index.</p>
+    </div>
+    <div class="panel panel-why">
+      <div class="panel-label">Why It Matters</div>
+      <p>Text normalization is fundamental to information retrieval. Case folding, stemming, and stop-word removal are the invisible foundations that make search work. Missing any step creates silent failures.</p>
+    </div>
+    <div class="panel panel-interview">
+      <div class="panel-label">Interview Prep</div>
+      <ul>
+        <li>What are the standard text normalization steps in a search pipeline?</li>
+        <li>When would case-sensitive matching be desirable?</li>
+        <li>What is the difference between stemming and lemmatization?</li>
+      </ul>
+    </div>
+    <div class="panel panel-recovery">
+      <div class="panel-label">Recovery</div>
+      <div class="code-block">git checkout -- app/advanced_rag.py</div>
+    </div>
+    <div class="notes-area">
+      <label for="notes-20">Notes</label>
+      <textarea id="notes-20" placeholder="Your observations..." oninput="saveNotes(20)"></textarea>
+    </div>
+  </div>
+</div>
+
+<!-- EXERCISE 21 -->
+<div class="exercise-card" data-id="21" data-nogap="false">
+  <div class="card-header" onclick="toggleCard(this)">
+    <input type="checkbox" onclick="event.stopPropagation(); toggleCheck(21)" id="check-21">
+    <span class="ex-number">#21</span>
+    <span class="ex-title">Remove Semantic Similarity from Confidence Scoring</span>
+    <span class="concept-badge">Semantic Signal Ablation</span>
+    <span class="no-test-badge">NO TEST</span>
+    <span class="expand-arrow">&#9660;</span>
+  </div>
+  <div class="card-body">
+    <div class="panel panel-hypothesis">
+      <div class="panel-label">Hypothesis</div>
+      <p>Setting semantic similarity to always return 0.0 removes 50% of the confidence signal. Confidence scores will drop dramatically, even for well-grounded responses.</p>
+    </div>
+    <div class="panel panel-action">
+      <div class="panel-label">Action</div>
+      <p>File: <span class="file-ref">app/hallucination.py</span> (lines 109&ndash;134)</p>
+      <p>Replace the entire method body with a single return:</p>
+      <div class="code-block">def compute_semantic_similarity(self, response, sources):<br>    return 0.0</div>
+    </div>
+    <div class="panel panel-verify">
+      <div class="panel-label">Verify</div>
+      <div class="code-block">curl -X POST http://localhost:8000/chat \<br>  -H "Content-Type: application/json" \<br>  -d '{"message": "Tell me about room types"}'</div>
+      <p>Confidence scores drop dramatically because semantic similarity (50% weight) now contributes nothing.</p>
+    </div>
+    <div class="panel panel-why">
+      <div class="panel-label">Why It Matters</div>
+      <p>The 50% weight on semantic similarity means this signal dominates the confidence calculation. Ablation testing &mdash; zeroing one component &mdash; reveals how much each signal contributes to the overall score.</p>
+    </div>
+    <div class="panel panel-interview">
+      <div class="panel-label">Interview Prep</div>
+      <ul>
+        <li>How do you choose weights for multi-signal scoring?</li>
+        <li>What is ablation testing and why is it useful?</li>
+        <li>How would you detect this kind of failure in production?</li>
+      </ul>
+    </div>
+    <div class="panel panel-recovery">
+      <div class="panel-label">Recovery</div>
+      <div class="code-block">git checkout -- app/hallucination.py</div>
+    </div>
+    <div class="notes-area">
+      <label for="notes-21">Notes</label>
+      <textarea id="notes-21" placeholder="Your observations..." oninput="saveNotes(21)"></textarea>
+    </div>
+  </div>
+</div>
+
+<!-- EXERCISE 22 -->
+<div class="exercise-card" data-id="22" data-nogap="false">
+  <div class="card-header" onclick="toggleCard(this)">
+    <input type="checkbox" onclick="event.stopPropagation(); toggleCheck(22)" id="check-22">
+    <span class="ex-number">#22</span>
+    <span class="ex-title">Remove Anthropic Tool Schema Translation</span>
+    <span class="concept-badge">Provider Abstraction</span>
+    <span class="no-test-badge">NO TEST</span>
+    <span class="expand-arrow">&#9660;</span>
+  </div>
+  <div class="card-body">
+    <div class="panel panel-hypothesis">
+      <div class="panel-label">Hypothesis</div>
+      <p>Without translation, Anthropic receives OpenAI-format tool schemas. The different format causes tool calls to fail with malformed schema errors.</p>
+    </div>
+    <div class="panel panel-action">
+      <div class="panel-label">Action</div>
+      <p>File: <span class="file-ref">app/llm_providers.py</span> (lines 171&ndash;185)</p>
+      <p>Return raw OpenAI schemas unchanged instead of translating:</p>
+      <div class="code-block">def _translate_tools_for_anthropic(self, openai_schemas):<br>    return openai_schemas  # skip translation</div>
+    </div>
+    <div class="panel panel-verify">
+      <div class="panel-label">Verify</div>
+      <p>Set the Anthropic provider and send a booking request:</p>
+      <div class="code-block">curl -X POST http://localhost:8000/chat \<br>  -H "Content-Type: application/json" \<br>  -d '{"message": "Book a room for tonight", "provider": "anthropic"}'</div>
+      <p>Expect malformed tool schema errors &mdash; Anthropic rejects OpenAI-format schemas.</p>
+    </div>
+    <div class="panel panel-why">
+      <div class="panel-label">Why It Matters</div>
+      <p>Each LLM provider has its own tool/function calling format. The adapter pattern translates between them, enabling provider-agnostic application code. Breaking this reveals the hidden complexity of multi-provider support.</p>
+    </div>
+    <div class="panel panel-interview">
+      <div class="panel-label">Interview Prep</div>
+      <ul>
+        <li>Why do different LLM APIs use different tool formats?</li>
+        <li>What is the adapter pattern and how does it apply here?</li>
+        <li>How would you add support for a new provider?</li>
+      </ul>
+    </div>
+    <div class="panel panel-recovery">
+      <div class="panel-label">Recovery</div>
+      <div class="code-block">git checkout -- app/llm_providers.py</div>
+    </div>
+    <div class="notes-area">
+      <label for="notes-22">Notes</label>
+      <textarea id="notes-22" placeholder="Your observations..." oninput="saveNotes(22)"></textarea>
+    </div>
+  </div>
+</div>
+
+<!-- EXERCISE 23 -->
+<div class="exercise-card" data-id="23" data-nogap="false">
+  <div class="card-header" onclick="toggleCard(this)">
+    <input type="checkbox" onclick="event.stopPropagation(); toggleCheck(23)" id="check-23">
+    <span class="ex-number">#23</span>
+    <span class="ex-title">Remove Ollama Stream=False</span>
+    <span class="concept-badge">API Configuration</span>
+    <span class="no-test-badge">NO TEST</span>
+    <span class="expand-arrow">&#9660;</span>
+  </div>
+  <div class="card-body">
+    <div class="panel panel-hypothesis">
+      <div class="panel-label">Hypothesis</div>
+      <p>Without <span class="inline-code">stream=False</span>, Ollama defaults to streaming mode and returns NDJSON (newline-delimited JSON) instead of a single JSON object, breaking the parser.</p>
+    </div>
+    <div class="panel panel-action">
+      <div class="panel-label">Action</div>
+      <p>File: <span class="file-ref">app/llm_providers.py</span> (line 330)</p>
+      <p>Comment out the stream parameter:</p>
+      <div class="code-block"># "stream": False  # remove this line</div>
+    </div>
+    <div class="panel panel-verify">
+      <div class="panel-label">Verify</div>
+      <p>Set the Ollama provider and send any message. Expect a JSON decode error because the response is NDJSON, not a single JSON object.</p>
+    </div>
+    <div class="panel panel-why">
+      <div class="panel-label">Why It Matters</div>
+      <p>API defaults matter. A single missing configuration parameter can change the entire response format. Understanding streaming vs. non-streaming response modes is essential for robust API integration.</p>
+    </div>
+    <div class="panel panel-interview">
+      <div class="panel-label">Interview Prep</div>
+      <ul>
+        <li>What is the difference between streaming and non-streaming API responses?</li>
+        <li>When would you choose streaming over non-streaming?</li>
+        <li>What is NDJSON and how does it differ from standard JSON?</li>
+      </ul>
+    </div>
+    <div class="panel panel-recovery">
+      <div class="panel-label">Recovery</div>
+      <div class="code-block">git checkout -- app/llm_providers.py</div>
+    </div>
+    <div class="notes-area">
+      <label for="notes-23">Notes</label>
+      <textarea id="notes-23" placeholder="Your observations..." oninput="saveNotes(23)"></textarea>
+    </div>
+  </div>
+</div>
+
+<!-- EXERCISE 24 -->
+<div class="exercise-card" data-id="24" data-nogap="false">
+  <div class="card-header" onclick="toggleCard(this)">
+    <input type="checkbox" onclick="event.stopPropagation(); toggleCheck(24)" id="check-24">
+    <span class="ex-number">#24</span>
+    <span class="ex-title">Remove Memory Summarization Threshold</span>
+    <span class="concept-badge">Context Window Management</span>
+    <span class="no-test-badge">NO TEST</span>
+    <span class="expand-arrow">&#9660;</span>
+  </div>
+  <div class="card-body">
+    <div class="panel panel-hypothesis">
+      <div class="panel-label">Hypothesis</div>
+      <p>Without the message-count threshold, every single message triggers summarization. This wastes API calls and adds latency to every interaction.</p>
+    </div>
+    <div class="panel panel-action">
+      <div class="panel-label">Action</div>
+      <p>File: <span class="file-ref">app/memory.py</span> (lines 79&ndash;80)</p>
+      <p>Comment out the threshold check so summarization always triggers:</p>
+      <div class="code-block"># if len(messages) &lt; self.summarization_threshold:<br>#     return</div>
+    </div>
+    <div class="panel panel-verify">
+      <div class="panel-label">Verify</div>
+      <p>Send 3 messages and check the logs &mdash; every message now triggers a summarization call instead of waiting until the threshold is reached.</p>
+    </div>
+    <div class="panel panel-why">
+      <div class="panel-label">Why It Matters</div>
+      <p>Summarization is expensive (it calls the LLM). The threshold batches messages before summarizing, balancing context freshness against cost. Without it, every message incurs summarization overhead.</p>
+    </div>
+    <div class="panel panel-interview">
+      <div class="panel-label">Interview Prep</div>
+      <ul>
+        <li>How do you manage conversation context as it grows?</li>
+        <li>What is the tradeoff between context window length and cost?</li>
+        <li>Compare sliding window vs. summarization approaches.</li>
+      </ul>
+    </div>
+    <div class="panel panel-recovery">
+      <div class="panel-label">Recovery</div>
+      <div class="code-block">git checkout -- app/memory.py</div>
+    </div>
+    <div class="notes-area">
+      <label for="notes-24">Notes</label>
+      <textarea id="notes-24" placeholder="Your observations..." oninput="saveNotes(24)"></textarea>
+    </div>
+  </div>
+</div>
+
+<!-- EXERCISE 25 -->
+<div class="exercise-card" data-id="25" data-nogap="false">
+  <div class="card-header" onclick="toggleCard(this)">
+    <input type="checkbox" onclick="event.stopPropagation(); toggleCheck(25)" id="check-25">
+    <span class="ex-number">#25</span>
+    <span class="ex-title">Remove Cheap Summary Fallback</span>
+    <span class="concept-badge">Graceful Degradation</span>
+    <span class="no-test-badge">NO TEST</span>
+    <span class="expand-arrow">&#9660;</span>
+  </div>
+  <div class="card-body">
+    <div class="panel panel-hypothesis">
+      <div class="panel-label">Hypothesis</div>
+      <p>Without the cheap_summary fallback, if the LLM summarization call fails, the summary becomes <span class="inline-code">None</span>. Downstream code expecting a string may break or produce nonsensical context.</p>
+    </div>
+    <div class="panel panel-action">
+      <div class="panel-label">Action</div>
+      <p>File: <span class="file-ref">app/memory.py</span> (lines 115&ndash;116)</p>
+      <p>Comment out the cheap_summary fallback:</p>
+      <div class="code-block"># except Exception:<br>#     summary = cheap_summary(messages)</div>
+    </div>
+    <div class="panel panel-verify">
+      <div class="panel-label">Verify</div>
+      <p>Set an invalid OpenAI key and send 12+ messages to trigger summarization. The summary will be <span class="inline-code">None</span> instead of the cheap fallback text.</p>
+    </div>
+    <div class="panel panel-why">
+      <div class="panel-label">Why It Matters</div>
+      <p>Graceful degradation means always having a fallback. The cheap summary (e.g., concatenating last N messages) is worse than LLM summarization but infinitely better than <span class="inline-code">None</span>. Production systems need fallback chains.</p>
+    </div>
+    <div class="panel panel-interview">
+      <div class="panel-label">Interview Prep</div>
+      <ul>
+        <li>What is graceful degradation and why is it important?</li>
+        <li>How do you design fallback chains for critical features?</li>
+        <li>When is degradation preferable to outright failure?</li>
+      </ul>
+    </div>
+    <div class="panel panel-recovery">
+      <div class="panel-label">Recovery</div>
+      <div class="code-block">git checkout -- app/memory.py</div>
+    </div>
+    <div class="notes-area">
+      <label for="notes-25">Notes</label>
+      <textarea id="notes-25" placeholder="Your observations..." oninput="saveNotes(25)"></textarea>
+    </div>
+  </div>
+</div>
+
+<!-- EXERCISE 26 -->
+<div class="exercise-card" data-id="26" data-nogap="false">
+  <div class="card-header" onclick="toggleCard(this)">
+    <input type="checkbox" onclick="event.stopPropagation(); toggleCheck(26)" id="check-26">
+    <span class="ex-number">#26</span>
+    <span class="ex-title">Remove PDF Receipt Generation</span>
+    <span class="concept-badge">Non-Critical Feature Isolation</span>
+    <span class="no-test-badge">NO TEST</span>
+    <span class="expand-arrow">&#9660;</span>
+  </div>
+  <div class="card-body">
+    <div class="panel panel-hypothesis">
+      <div class="panel-label">Hypothesis</div>
+      <p>Without the receipt generation code, bookings still succeed but the PDF invoice is missing. The response will show <span class="inline-code">invoice_url: null</span>.</p>
+    </div>
+    <div class="panel panel-action">
+      <div class="panel-label">Action</div>
+      <p>File: <span class="file-ref">app/tools.py</span> (lines 233&ndash;262)</p>
+      <p>Comment out the entire PDF receipt try block:</p>
+      <div class="code-block"># try:<br>#     pdf = generate_receipt_pdf(booking)<br>#     ...<br># except Exception:<br>#     pass</div>
+    </div>
+    <div class="panel panel-verify">
+      <div class="panel-label">Verify</div>
+      <p>Book a room and check the response &mdash; the booking succeeds but <span class="inline-code">invoice_url</span> is <span class="inline-code">null</span>.</p>
+    </div>
+    <div class="panel panel-why">
+      <div class="panel-label">Why It Matters</div>
+      <p>Non-critical feature isolation means receipt generation failure should never block a booking. The try/except ensures the blast radius of a PDF library failure is contained to just the receipt, not the entire booking flow.</p>
+    </div>
+    <div class="panel panel-interview">
+      <div class="panel-label">Interview Prep</div>
+      <ul>
+        <li>How do you isolate non-critical features from critical paths?</li>
+        <li>What is the blast radius concept in system design?</li>
+        <li>When should errors be swallowed vs. propagated?</li>
+      </ul>
+    </div>
+    <div class="panel panel-recovery">
+      <div class="panel-label">Recovery</div>
+      <div class="code-block">git checkout -- app/tools.py</div>
+    </div>
+    <div class="notes-area">
+      <label for="notes-26">Notes</label>
+      <textarea id="notes-26" placeholder="Your observations..." oninput="saveNotes(26)"></textarea>
+    </div>
+  </div>
+</div>
+
+<!-- EXERCISE 27 -->
+<div class="exercise-card" data-id="27" data-nogap="false">
+  <div class="card-header" onclick="toggleCard(this)">
+    <input type="checkbox" onclick="event.stopPropagation(); toggleCheck(27)" id="check-27">
+    <span class="ex-number">#27</span>
+    <span class="ex-title">Remove Source Attribution from Confidence</span>
+    <span class="concept-badge">Sentence-Level Grounding</span>
+    <span class="no-test-badge">NO TEST</span>
+    <span class="expand-arrow">&#9660;</span>
+  </div>
+  <div class="card-body">
+    <div class="panel panel-hypothesis">
+      <div class="panel-label">Hypothesis</div>
+      <p>Without source attribution, 20% of the confidence signal is lost. The source attribution score will always be 0.0 regardless of how well-grounded the response is.</p>
+    </div>
+    <div class="panel panel-action">
+      <div class="panel-label">Action</div>
+      <p>File: <span class="file-ref">app/hallucination.py</span> (lines 136&ndash;160)</p>
+      <p>Replace the method to always return 0.0:</p>
+      <div class="code-block">def compute_source_attribution(self, response, sources):<br>    return 0.0</div>
+    </div>
+    <div class="panel panel-verify">
+      <div class="panel-label">Verify</div>
+      <div class="code-block">curl -X POST http://localhost:8000/chat \<br>  -H "Content-Type: application/json" \<br>  -d '{"message": "What dining options are available?"}'</div>
+      <p>Source attribution score is always 0.0, reducing overall confidence.</p>
+    </div>
+    <div class="panel panel-why">
+      <div class="panel-label">Why It Matters</div>
+      <p>Source attribution checks sentence-level grounding: can each sentence in the response be traced back to a source document? This is a finer-grained check than overall semantic similarity and catches subtle hallucinations.</p>
+    </div>
+    <div class="panel panel-interview">
+      <div class="panel-label">Interview Prep</div>
+      <ul>
+        <li>What is source attribution in NLP systems?</li>
+        <li>How does sentence-level grounding differ from document-level?</li>
+        <li>Why is attribution harder to compute than similarity?</li>
+      </ul>
+    </div>
+    <div class="panel panel-recovery">
+      <div class="panel-label">Recovery</div>
+      <div class="code-block">git checkout -- app/hallucination.py</div>
+    </div>
+    <div class="notes-area">
+      <label for="notes-27">Notes</label>
+      <textarea id="notes-27" placeholder="Your observations..." oninput="saveNotes(27)"></textarea>
+    </div>
+  </div>
+</div>
+
+<!-- EXERCISE 28 -->
+<div class="exercise-card" data-id="28" data-nogap="false">
+  <div class="card-header" onclick="toggleCard(this)">
+    <input type="checkbox" onclick="event.stopPropagation(); toggleCheck(28)" id="check-28">
+    <span class="ex-number">#28</span>
+    <span class="ex-title">Remove the 0.3 Grounding Threshold</span>
+    <span class="concept-badge">Threshold Tuning</span>
+    <span class="no-test-badge">NO TEST</span>
+    <span class="expand-arrow">&#9660;</span>
+  </div>
+  <div class="card-body">
+    <div class="panel panel-hypothesis">
+      <div class="panel-label">Hypothesis</div>
+      <p>With the threshold changed from 0.3 to 0.0, every sentence counts as grounded regardless of actual similarity. Attribution scores will approach 1.0 even for hallucinated content.</p>
+    </div>
+    <div class="panel panel-action">
+      <div class="panel-label">Action</div>
+      <p>File: <span class="file-ref">app/hallucination.py</span> (line 157)</p>
+      <p>Change the grounding threshold:</p>
+      <div class="code-block"># Before: if similarity > 0.3:<br># After:  if similarity > 0.0:</div>
+    </div>
+    <div class="panel panel-verify">
+      <div class="panel-label">Verify</div>
+      <div class="code-block">curl -X POST http://localhost:8000/chat \<br>  -H "Content-Type: application/json" \<br>  -d '{"message": "Tell me something fictional about the resort"}'</div>
+      <p>Attribution scores approach 1.0 because every sentence passes the trivial threshold.</p>
+    </div>
+    <div class="panel panel-why">
+      <div class="panel-label">Why It Matters</div>
+      <p>Thresholds tune signal quality. Too low and everything passes (false negatives disappear but false positives explode). Too high and nothing passes. The 0.3 threshold was chosen to balance precision and recall of grounding detection.</p>
+    </div>
+    <div class="panel panel-interview">
+      <div class="panel-label">Interview Prep</div>
+      <ul>
+        <li>How do you tune confidence thresholds in production?</li>
+        <li>What is the precision vs. recall tradeoff for thresholds?</li>
+        <li>How would you A/B test threshold changes?</li>
+      </ul>
+    </div>
+    <div class="panel panel-recovery">
+      <div class="panel-label">Recovery</div>
+      <div class="code-block">git checkout -- app/hallucination.py</div>
+    </div>
+    <div class="notes-area">
+      <label for="notes-28">Notes</label>
+      <textarea id="notes-28" placeholder="Your observations..." oninput="saveNotes(28)"></textarea>
+    </div>
+  </div>
+</div>
+
+<!-- EXERCISE 29 -->
+<div class="exercise-card" data-id="29" data-nogap="false">
+  <div class="card-header" onclick="toggleCard(this)">
+    <input type="checkbox" onclick="event.stopPropagation(); toggleCheck(29)" id="check-29">
+    <span class="ex-number">#29</span>
+    <span class="ex-title">Remove System Prompt Knowledge Base Injection</span>
+    <span class="concept-badge">RAG Grounding</span>
+    <span class="no-test-badge">NO TEST</span>
+    <span class="expand-arrow">&#9660;</span>
+  </div>
+  <div class="card-body">
+    <div class="panel panel-hypothesis">
+      <div class="panel-label">Hypothesis</div>
+      <p>Without RAG context injected into the system prompt, the LLM can only respond from its training data. Resort-specific knowledge will be replaced by generic or hallucinated information.</p>
+    </div>
+    <div class="panel panel-action">
+      <div class="panel-label">Action</div>
+      <p>File: <span class="file-ref">app/main.py</span> (lines 152&ndash;156)</p>
+      <p>Comment out the context_text injection into the system prompt:</p>
+      <div class="code-block"># context_text = format_retrieved_context(results)<br># system_prompt += f"\n\nRelevant context:\n{context_text}"</div>
+    </div>
+    <div class="panel panel-verify">
+      <div class="panel-label">Verify</div>
+      <div class="code-block">curl -X POST http://localhost:8000/chat \<br>  -H "Content-Type: application/json" \<br>  -d '{"message": "Tell me about Vampire Manor"}'</div>
+      <p>Response is generic instead of resort-specific. The LLM has no knowledge of your resort's actual offerings.</p>
+    </div>
+    <div class="panel panel-why">
+      <div class="panel-label">Why It Matters</div>
+      <p>RAG grounding is what makes the concierge know about YOUR resort. Without it, the LLM is just a generic chatbot. This is the core value proposition of RAG: injecting domain-specific knowledge at inference time without fine-tuning.</p>
+    </div>
+    <div class="panel panel-interview">
+      <div class="panel-label">Interview Prep</div>
+      <ul>
+        <li>What is RAG and how does it work end-to-end?</li>
+        <li>Why inject retrieved context into the system prompt?</li>
+        <li>When would you choose fine-tuning over RAG?</li>
+      </ul>
+    </div>
+    <div class="panel panel-recovery">
+      <div class="panel-label">Recovery</div>
+      <div class="code-block">git checkout -- app/main.py</div>
+    </div>
+    <div class="notes-area">
+      <label for="notes-29">Notes</label>
+      <textarea id="notes-29" placeholder="Your observations..." oninput="saveNotes(29)"></textarea>
+    </div>
+  </div>
+</div>
+
+<!-- EXERCISE 30 -->
+<div class="exercise-card" data-id="30" data-nogap="false">
+  <div class="card-header" onclick="toggleCard(this)">
+    <input type="checkbox" onclick="event.stopPropagation(); toggleCheck(30)" id="check-30">
+    <span class="ex-number">#30</span>
+    <span class="ex-title">Remove Chat History from Agent</span>
+    <span class="concept-badge">Conversational Memory</span>
+    <span class="no-test-badge">NO TEST</span>
+    <span class="expand-arrow">&#9660;</span>
+  </div>
+  <div class="card-body">
+    <div class="panel panel-hypothesis">
+      <div class="panel-label">Hypothesis</div>
+      <p>Without chat history, every message is treated as the first message in a conversation. The agent cannot reference previous turns, losing conversational context entirely.</p>
+    </div>
+    <div class="panel panel-action">
+      <div class="panel-label">Action</div>
+      <p>File: <span class="file-ref">app/main.py</span> (lines 171&ndash;179)</p>
+      <p>Comment out past_messages loading:</p>
+      <div class="code-block"># past_messages = memory.get_messages(session_id)<br># for msg in past_messages:<br>#     messages.append(msg)</div>
+    </div>
+    <div class="panel panel-verify">
+      <div class="panel-label">Verify</div>
+      <p>Send two messages in the same session:</p>
+      <div class="code-block"># Message 1: "My name is Dracula"<br># Message 2: "What's my name?"<br># Expected: Agent can't remember your name</div>
+    </div>
+    <div class="panel panel-why">
+      <div class="panel-label">Why It Matters</div>
+      <p>Conversational memory is what makes a chatbot feel intelligent. Without it, every interaction is stateless &mdash; the agent forgets everything between messages. This is one of the most noticeable degradations for end users.</p>
+    </div>
+    <div class="panel panel-interview">
+      <div class="panel-label">Interview Prep</div>
+      <ul>
+        <li>How do LLMs maintain context across conversation turns?</li>
+        <li>What are different approaches to conversational memory?</li>
+        <li>How does context window size limit memory?</li>
+      </ul>
+    </div>
+    <div class="panel panel-recovery">
+      <div class="panel-label">Recovery</div>
+      <div class="code-block">git checkout -- app/main.py</div>
+    </div>
+    <div class="notes-area">
+      <label for="notes-30">Notes</label>
+      <textarea id="notes-30" placeholder="Your observations..." oninput="saveNotes(30)"></textarea>
+    </div>
+  </div>
+</div>
+
+<!-- EXERCISE 31 -->
+<div class="exercise-card" data-id="31" data-nogap="false">
+  <div class="card-header" onclick="toggleCard(this)">
+    <input type="checkbox" onclick="event.stopPropagation(); toggleCheck(31)" id="check-31">
+    <span class="ex-number">#31</span>
+    <span class="ex-title">Remove ModelRouter Fallback</span>
+    <span class="concept-badge">Provider Failover</span>
+    <span class="no-test-badge">NO TEST</span>
+    <span class="expand-arrow">&#9660;</span>
+  </div>
+  <div class="card-body">
+    <div class="panel panel-hypothesis">
+      <div class="panel-label">Hypothesis</div>
+      <p>Without the fallback mechanism, if the primary provider fails, the request dies immediately even though alternative providers are available and healthy.</p>
+    </div>
+    <div class="panel panel-action">
+      <div class="panel-label">Action</div>
+      <p>File: <span class="file-ref">app/llm_providers.py</span> (lines 391&ndash;392)</p>
+      <p>Replace the fallback logic with immediate failure:</p>
+      <div class="code-block">except Exception as e:<br>    raise  # remove fallback, just re-raise</div>
+    </div>
+    <div class="panel panel-verify">
+      <div class="panel-label">Verify</div>
+      <p>Set an invalid OpenAI API key and send a request. It fails even though the Anthropic provider is available and could handle the request.</p>
+    </div>
+    <div class="panel panel-why">
+      <div class="panel-label">Why It Matters</div>
+      <p>Multi-provider failover is critical for production LLM applications. If you depend on a single provider, their outage becomes your outage. The ModelRouter's fallback chain provides resilience.</p>
+    </div>
+    <div class="panel panel-interview">
+      <div class="panel-label">Interview Prep</div>
+      <ul>
+        <li>What is the circuit breaker pattern and how does it relate to failover?</li>
+        <li>How would you implement LLM provider failover in production?</li>
+        <li>What metrics would you track for provider health?</li>
+      </ul>
+    </div>
+    <div class="panel panel-recovery">
+      <div class="panel-label">Recovery</div>
+      <div class="code-block">git checkout -- app/llm_providers.py</div>
+    </div>
+    <div class="notes-area">
+      <label for="notes-31">Notes</label>
+      <textarea id="notes-31" placeholder="Your observations..." oninput="saveNotes(31)"></textarea>
+    </div>
+  </div>
+</div>
+
+<!-- EXERCISE 32 -->
+<div class="exercise-card" data-id="32" data-nogap="false">
+  <div class="card-header" onclick="toggleCard(this)">
+    <input type="checkbox" onclick="event.stopPropagation(); toggleCheck(32)" id="check-32">
+    <span class="ex-number">#32</span>
+    <span class="ex-title">Remove Cache TTL Expiry Check</span>
+    <span class="concept-badge">Cache Invalidation / TTL</span>
+    <span class="no-test-badge">NO TEST</span>
+    <span class="expand-arrow">&#9660;</span>
+  </div>
+  <div class="card-body">
+    <div class="panel panel-hypothesis">
+      <div class="panel-label">Hypothesis</div>
+      <p>Without the TTL expiry check, cached entries live forever. The cache will serve stale results indefinitely, even after the underlying data changes.</p>
+    </div>
+    <div class="panel panel-action">
+      <div class="panel-label">Action</div>
+      <p>File: <span class="file-ref">app/cache_utils.py</span> (lines 25&ndash;28)</p>
+      <p>Comment out the TTL check:</p>
+      <div class="code-block"># if time.time() - entry["timestamp"] > self.ttl:<br>#     del self._cache[key]<br>#     return None</div>
+    </div>
+    <div class="panel panel-verify">
+      <div class="panel-label">Verify</div>
+      <p>Cache returns stale results indefinitely. Even after updating data, the old cached version persists because the TTL never expires.</p>
+    </div>
+    <div class="panel panel-why">
+      <div class="panel-label">Why It Matters</div>
+      <p>"There are only two hard things in Computer Science: cache invalidation and naming things." TTL (Time To Live) is the simplest cache invalidation strategy and prevents stale data from being served forever.</p>
+    </div>
+    <div class="panel panel-interview">
+      <div class="panel-label">Interview Prep</div>
+      <ul>
+        <li>What are the main cache invalidation strategies (TTL, LRU, write-through)?</li>
+        <li>How do you choose between TTL, LRU, and write-through caching?</li>
+        <li>When is serving stale data acceptable?</li>
+      </ul>
+    </div>
+    <div class="panel panel-recovery">
+      <div class="panel-label">Recovery</div>
+      <div class="code-block">git checkout -- app/cache_utils.py</div>
+    </div>
+    <div class="notes-area">
+      <label for="notes-32">Notes</label>
+      <textarea id="notes-32" placeholder="Your observations..." oninput="saveNotes(32)"></textarea>
+    </div>
+  </div>
+</div>
+
+<!-- EXERCISE 33 -->
+<div class="exercise-card" data-id="33" data-nogap="false">
+  <div class="card-header" onclick="toggleCard(this)">
+    <input type="checkbox" onclick="event.stopPropagation(); toggleCheck(33)" id="check-33">
+    <span class="ex-number">#33</span>
+    <span class="ex-title">Remove Cache Thread Lock</span>
+    <span class="concept-badge">Thread Safety</span>
+    <span class="no-test-badge">NO TEST</span>
+    <span class="expand-arrow">&#9660;</span>
+  </div>
+  <div class="card-body">
+    <div class="panel panel-hypothesis">
+      <div class="panel-label">Hypothesis</div>
+      <p>Without the thread lock, concurrent requests can corrupt the OrderedDict. Race conditions may cause KeyError exceptions, lost entries, or corrupted state.</p>
+    </div>
+    <div class="panel panel-action">
+      <div class="panel-label">Action</div>
+      <p>File: <span class="file-ref">app/cache_utils.py</span> (lines 22, 33)</p>
+      <p>Comment out both <span class="inline-code">with self._lock:</span> statements in the get and set methods:</p>
+      <div class="code-block"># with self._lock:  # comment out in both get() and set()</div>
+    </div>
+    <div class="panel panel-verify">
+      <div class="panel-label">Verify</div>
+      <p>Run the cache-related tests to check for race conditions:</p>
+      <div class="code-block">uv run pytest tests/ -k "cache" -v</div>
+      <p>Concurrent access may cause intermittent failures or corrupted cache state.</p>
+    </div>
+    <div class="panel panel-why">
+      <div class="panel-label">Why It Matters</div>
+      <p>Thread safety is invisible until it's not. In a web server handling concurrent requests, shared mutable state (like a cache) must be protected. Race conditions are notoriously hard to reproduce and debug.</p>
+    </div>
+    <div class="panel panel-interview">
+      <div class="panel-label">Interview Prep</div>
+      <ul>
+        <li>What is a race condition and how do you prevent it?</li>
+        <li>How do you write thread-safe Python code?</li>
+        <li>What are the limitations of Python's GIL for thread safety?</li>
+      </ul>
+    </div>
+    <div class="panel panel-recovery">
+      <div class="panel-label">Recovery</div>
+      <div class="code-block">git checkout -- app/cache_utils.py</div>
+    </div>
+    <div class="notes-area">
+      <label for="notes-33">Notes</label>
+      <textarea id="notes-33" placeholder="Your observations..." oninput="saveNotes(33)"></textarea>
+    </div>
+  </div>
+</div>
+
+<!-- EXERCISE 34 -->
+<div class="exercise-card" data-id="34" data-nogap="false">
+  <div class="card-header" onclick="toggleCard(this)">
+    <input type="checkbox" onclick="event.stopPropagation(); toggleCheck(34)" id="check-34">
+    <span class="ex-number">#34</span>
+    <span class="ex-title">Remove Confidence Level Classification</span>
+    <span class="concept-badge">Risk Classification</span>
+    <span class="no-test-badge">NO TEST</span>
+    <span class="expand-arrow">&#9660;</span>
+  </div>
+  <div class="card-body">
+    <div class="panel panel-hypothesis">
+      <div class="panel-label">Hypothesis</div>
+      <p>Without proper classification, every response is labeled "HIGH" confidence regardless of the actual score. Users and downstream systems lose the ability to distinguish trustworthy from untrustworthy responses.</p>
+    </div>
+    <div class="panel panel-action">
+      <div class="panel-label">Action</div>
+      <p>File: <span class="file-ref">app/hallucination.py</span> (lines 178&ndash;183)</p>
+      <p>Replace the classification logic to always return HIGH:</p>
+      <div class="code-block">def classify_confidence(self, score):<br>    return "HIGH"</div>
+    </div>
+    <div class="panel panel-verify">
+      <div class="panel-label">Verify</div>
+      <p>Send queries that should produce low-confidence responses. Even obviously hallucinated answers will show "HIGH" confidence, making the label meaningless.</p>
+    </div>
+    <div class="panel panel-why">
+      <div class="panel-label">Why It Matters</div>
+      <p>Classification turns a continuous score into an actionable signal. "0.42 confidence" requires interpretation; "LOW confidence" triggers clear business rules (e.g., add disclaimer, escalate to human). Without it, confidence becomes noise.</p>
+    </div>
+    <div class="panel panel-interview">
+      <div class="panel-label">Interview Prep</div>
+      <ul>
+        <li>Why classify continuous scores into discrete levels?</li>
+        <li>How do you choose threshold boundaries for classification?</li>
+        <li>What is the tradeoff between false positives and false negatives?</li>
+      </ul>
+    </div>
+    <div class="panel panel-recovery">
+      <div class="panel-label">Recovery</div>
+      <div class="code-block">git checkout -- app/hallucination.py</div>
+    </div>
+    <div class="notes-area">
+      <label for="notes-34">Notes</label>
+      <textarea id="notes-34" placeholder="Your observations..." oninput="saveNotes(34)"></textarea>
+    </div>
+  </div>
+</div>
+
+<!-- ============ TEST GAP ANALYSIS ============ -->
+<div class="gap-section">
+  <h2>Test Gap Analysis</h2>
+  <p class="gap-desc">All Tier 2 exercises expose degradations that are NOT caught by existing tests. These represent opportunities to write targeted test cases.</p>
+  <table class="gap-table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Exercise</th>
+        <th>File</th>
+        <th>Test Coverage</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>#18</td><td>Remove RRF BM25 Weight</td><td class="file-ref">app/advanced_rag.py</td><td><span class="badge-no">NO TEST</span></td></tr>
+      <tr><td>#19</td><td>Remove Cross-Encoder Reranking</td><td class="file-ref">app/advanced_rag.py</td><td><span class="badge-no">NO TEST</span></td></tr>
+      <tr><td>#20</td><td>Remove Case Normalization in BM25</td><td class="file-ref">app/advanced_rag.py</td><td><span class="badge-no">NO TEST</span></td></tr>
+      <tr><td>#21</td><td>Remove Semantic Similarity from Confidence</td><td class="file-ref">app/hallucination.py</td><td><span class="badge-no">NO TEST</span></td></tr>
+      <tr><td>#22</td><td>Remove Anthropic Tool Schema Translation</td><td class="file-ref">app/llm_providers.py</td><td><span class="badge-no">NO TEST</span></td></tr>
+      <tr><td>#23</td><td>Remove Ollama Stream=False</td><td class="file-ref">app/llm_providers.py</td><td><span class="badge-no">NO TEST</span></td></tr>
+      <tr><td>#24</td><td>Remove Memory Summarization Threshold</td><td class="file-ref">app/memory.py</td><td><span class="badge-no">NO TEST</span></td></tr>
+      <tr><td>#25</td><td>Remove Cheap Summary Fallback</td><td class="file-ref">app/memory.py</td><td><span class="badge-no">NO TEST</span></td></tr>
+      <tr><td>#26</td><td>Remove PDF Receipt Generation</td><td class="file-ref">app/tools.py</td><td><span class="badge-no">NO TEST</span></td></tr>
+      <tr><td>#27</td><td>Remove Source Attribution from Confidence</td><td class="file-ref">app/hallucination.py</td><td><span class="badge-no">NO TEST</span></td></tr>
+      <tr><td>#28</td><td>Remove the 0.3 Grounding Threshold</td><td class="file-ref">app/hallucination.py</td><td><span class="badge-no">NO TEST</span></td></tr>
+      <tr><td>#29</td><td>Remove System Prompt Knowledge Base Injection</td><td class="file-ref">app/main.py</td><td><span class="badge-no">NO TEST</span></td></tr>
+      <tr><td>#30</td><td>Remove Chat History from Agent</td><td class="file-ref">app/main.py</td><td><span class="badge-no">NO TEST</span></td></tr>
+      <tr><td>#31</td><td>Remove ModelRouter Fallback</td><td class="file-ref">app/llm_providers.py</td><td><span class="badge-no">NO TEST</span></td></tr>
+      <tr><td>#32</td><td>Remove Cache TTL Expiry Check</td><td class="file-ref">app/cache_utils.py</td><td><span class="badge-no">NO TEST</span></td></tr>
+      <tr><td>#33</td><td>Remove Cache Thread Lock</td><td class="file-ref">app/cache_utils.py</td><td><span class="badge-no">NO TEST</span></td></tr>
+      <tr><td>#34</td><td>Remove Confidence Level Classification</td><td class="file-ref">app/hallucination.py</td><td><span class="badge-no">NO TEST</span></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ============ FOOTER NAV ============ -->
+<div class="footer-nav">
+  <a href="destruction_lab_tier1.html">&larr; Tier 1: Fundamentals</a>
+  <a href="destruction_lab_tier3.html">Tier 3: Expert &rarr;</a>
+</div>
+
+<!-- ============ JAVASCRIPT ============ -->
+<script>
+(function() {
+  const STORAGE_KEY = 'destruction_lab_v3';
+  const TIER_IDS = Array.from({length: 17}, (_, i) => i + 18); // 18-34
+  const TIER_COUNT = 17;
+  const GLOBAL_COUNT = 67;
+
+  // --- State Management ---
+  function getState() {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function saveState(state) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }
+
+  // --- Checkbox ---
+  window.toggleCheck = function(id) {
+    const state = getState();
+    const key = 'ex_' + id;
+    const checkbox = document.getElementById('check-' + id);
+    state[key] = checkbox.checked;
+    saveState(state);
+    updateCardStyle(id);
+    updateProgress();
+  };
+
+  function updateCardStyle(id) {
+    const state = getState();
+    const card = document.querySelector('.exercise-card[data-id="' + id + '"]');
+    if (!card) return;
+    if (state['ex_' + id]) {
+      card.classList.add('completed');
+    } else {
+      card.classList.remove('completed');
+    }
+  }
+
+  // --- Progress ---
+  function updateProgress() {
+    const state = getState();
+    let tierDone = 0;
+    TIER_IDS.forEach(function(id) {
+      if (state['ex_' + id]) tierDone++;
+    });
+
+    let globalDone = 0;
+    for (let i = 1; i <= GLOBAL_COUNT; i++) {
+      if (state['ex_' + i]) globalDone++;
+    }
+
+    document.getElementById('tierProgressLabel').textContent = tierDone + ' / ' + TIER_COUNT + ' this tier';
+    document.getElementById('globalProgressLabel').textContent = globalDone + ' / ' + GLOBAL_COUNT + ' total';
+
+    const pct = TIER_COUNT > 0 ? (tierDone / TIER_COUNT * 100) : 0;
+    document.getElementById('progressFill').style.width = pct + '%';
+  }
+
+  // --- Notes ---
+  window.saveNotes = function(id) {
+    const state = getState();
+    const textarea = document.getElementById('notes-' + id);
+    state['notes_' + id] = textarea.value;
+    saveState(state);
+  };
+
+  function loadNotes() {
+    const state = getState();
+    TIER_IDS.forEach(function(id) {
+      const textarea = document.getElementById('notes-' + id);
+      if (textarea && state['notes_' + id]) {
+        textarea.value = state['notes_' + id];
+      }
+    });
+  }
+
+  // --- Expand / Collapse ---
+  window.toggleCard = function(headerEl) {
+    const card = headerEl.closest('.exercise-card');
+    card.classList.toggle('open');
+  };
+
+  window.expandAll = function() {
+    document.querySelectorAll('.exercise-card').forEach(function(card) {
+      card.classList.add('open');
+    });
+  };
+
+  window.collapseAll = function() {
+    document.querySelectorAll('.exercise-card').forEach(function(card) {
+      card.classList.remove('open');
+    });
+  };
+
+  // --- Damage Report Export ---
+  window.exportDamageReport = function() {
+    const state = getState();
+    let lines = [];
+    lines.push('# Destruction Lab - Tier 2: Advanced - Damage Report');
+    lines.push('');
+    lines.push('Generated: ' + new Date().toISOString().slice(0, 10));
+    lines.push('');
+
+    let completed = 0;
+    TIER_IDS.forEach(function(id) {
+      if (state['ex_' + id]) completed++;
+    });
+    lines.push('## Progress: ' + completed + ' / ' + TIER_COUNT + ' completed');
+    lines.push('');
+
+    TIER_IDS.forEach(function(id) {
+      const card = document.querySelector('.exercise-card[data-id="' + id + '"]');
+      if (!card) return;
+      const title = card.querySelector('.ex-title').textContent;
+      const concept = card.querySelector('.concept-badge').textContent;
+      const done = state['ex_' + id] ? 'x' : ' ';
+      const notes = state['notes_' + id] || '';
+
+      lines.push('### #' + id + ' - ' + title);
+      lines.push('- [' + done + '] Completed');
+      lines.push('- Concept: ' + concept);
+      if (notes.trim()) {
+        lines.push('- Notes: ' + notes.trim());
+      }
+      lines.push('');
+    });
+
+    const blob = new Blob([lines.join('\n')], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'destruction_lab_tier2_report.md';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  // --- Init ---
+  function init() {
+    const state = getState();
+
+    // Restore checkboxes
+    TIER_IDS.forEach(function(id) {
+      const checkbox = document.getElementById('check-' + id);
+      if (checkbox && state['ex_' + id]) {
+        checkbox.checked = true;
+      }
+      updateCardStyle(id);
+    });
+
+    loadNotes();
+    updateProgress();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+
+</body>
+</html>

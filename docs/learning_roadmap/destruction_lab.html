@@ -1,0 +1,3958 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Monster Resort — Destruction Lab v2.0: Masters-Level</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface2: #1c2128;
+    --surface3: #21262d;
+    --border: #30363d;
+    --border-accent: #d4a843;
+    --text: #e6edf3;
+    --text-dim: #8b949e;
+    --text-link: #58a6ff;
+    --gold: #d4a843;
+    --gold-dim: #8b7430;
+    --crimson: #f85149;
+    --crimson-dim: #4a1c1a;
+    --teal: #3fb950;
+    --teal-dim: #1a3a20;
+    --violet: #bc8cff;
+    --violet-dim: #2d1f4e;
+    --blue: #58a6ff;
+    --blue-dim: #1a2940;
+    --orange: #d29922;
+    --code-bg: #0d1117;
+    --card-bg: #161b22;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 32px 24px 120px;
+  }
+
+  /* HEADER */
+  .page-header {
+    border-bottom: 2px solid var(--gold-dim);
+    padding-bottom: 20px;
+    margin-bottom: 24px;
+  }
+  .page-header h1 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--gold), var(--crimson));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 6px;
+  }
+  .page-header .subtitle {
+    color: var(--text-dim);
+    font-size: 0.9rem;
+  }
+  .breadcrumb {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+  }
+  .breadcrumb a { color: var(--text-link); text-decoration: none; }
+
+  /* PROGRESS BAR */
+  .progress-bar-container {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .progress-bar-track {
+    flex: 1;
+    height: 10px;
+    background: var(--surface3);
+    border-radius: 5px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--teal), var(--gold));
+    border-radius: 5px;
+    transition: width 0.4s ease;
+  }
+  .progress-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--gold);
+    white-space: nowrap;
+    min-width: 80px;
+  }
+
+  /* CONTROLS */
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 24px;
+    align-items: center;
+  }
+  .controls button, .controls .filter-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 7px 14px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    font-family: inherit;
+    color: var(--text);
+    transition: all 0.2s;
+  }
+  .controls button:hover, .controls .filter-btn:hover {
+    background: var(--surface2);
+    border-color: var(--gold-dim);
+  }
+  .filter-btn.active {
+    background: var(--gold-dim);
+    border-color: var(--gold);
+    color: var(--gold);
+  }
+  .filter-btn[data-tier="1"].active { background: var(--teal-dim); border-color: var(--teal); color: var(--teal); }
+  .filter-btn[data-tier="2"].active { background: var(--blue-dim); border-color: var(--blue); color: var(--blue); }
+  .filter-btn[data-tier="3"].active { background: var(--crimson-dim); border-color: var(--crimson); color: var(--crimson); }
+  .filter-btn[data-tier="4"].active { background: var(--violet-dim); border-color: var(--violet); color: var(--violet); }
+
+  /* SECTION HEADERS */
+  h2 {
+    font-size: 1.35rem;
+    font-weight: 700;
+    margin-top: 40px;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  h2 .tier-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 3px 10px;
+    border-radius: 4px;
+    vertical-align: middle;
+    margin-left: 8px;
+  }
+  .tier-1 { background: var(--teal-dim); color: var(--teal); }
+  .tier-2 { background: var(--blue-dim); color: var(--blue); }
+  .tier-3 { background: var(--crimson-dim); color: var(--crimson); }
+  .tier-4 { background: var(--violet-dim); color: var(--violet); }
+
+  /* EXERCISE CARD */
+  .ex-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 12px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .ex-card:hover { border-color: var(--gold-dim); }
+  .ex-card.completed { border-left: 3px solid var(--teal); }
+  .ex-card.completed .ex-header .ex-check { color: var(--teal); }
+
+  .ex-header {
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .ex-header:hover { background: var(--surface2); }
+  .ex-check {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .ex-check.checked {
+    background: var(--teal);
+    border-color: var(--teal);
+    color: #000;
+  }
+  .ex-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    min-width: 28px;
+  }
+  .ex-title {
+    font-weight: 600;
+    font-size: 0.9rem;
+    flex: 1;
+  }
+  .ex-concept {
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .ex-toggle {
+    color: var(--text-dim);
+    font-size: 0.75rem;
+    transition: transform 0.2s;
+    flex-shrink: 0;
+  }
+  .ex-header.open .ex-toggle { transform: rotate(180deg); }
+  .no-test-badge {
+    font-size: 0.65rem;
+    background: var(--crimson-dim);
+    color: var(--crimson);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .ex-body { padding: 0 16px 16px; display: none; }
+  .ex-body.open { display: block; }
+
+  /* PANELS inside cards */
+  .panel {
+    border-radius: 6px;
+    padding: 12px 14px;
+    margin: 10px 0;
+    font-size: 0.84rem;
+    border-left: 3px solid;
+  }
+  .panel-hyp { background: #1a2332; border-color: var(--blue); }
+  .panel-action { background: #1a1a2e; border-color: var(--violet); }
+  .panel-observe { background: #1a2a1a; border-color: var(--teal); }
+  .panel-why { background: #2a1a1a; border-color: var(--crimson); }
+  .panel-interview { background: var(--violet-dim); border-color: var(--violet); }
+  .panel-recovery { background: var(--surface2); border-color: var(--gold); }
+  .panel label { font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 4px; }
+  .panel-hyp label { color: var(--blue); }
+  .panel-action label { color: var(--violet); }
+  .panel-observe label { color: var(--teal); }
+  .panel-why label { color: var(--crimson); }
+  .panel-interview label { color: var(--violet); }
+  .panel-recovery label { color: var(--gold); }
+
+  .ex-file {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--text-link);
+    margin-bottom: 8px;
+  }
+
+  /* CODE BLOCKS */
+  pre {
+    background: #010409;
+    color: #e6edf3;
+    padding: 14px;
+    border-radius: 6px;
+    overflow-x: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    line-height: 1.5;
+    margin: 8px 0;
+    border: 1px solid var(--border);
+  }
+  pre .kw { color: #ff7b72; }
+  pre .fn { color: #d2a8ff; }
+  pre .str { color: #a5d6ff; }
+  pre .cm { color: #8b949e; }
+  pre .num { color: #79c0ff; }
+
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    background: var(--surface3);
+    padding: 2px 6px;
+    border-radius: 3px;
+  }
+
+  /* INTERVIEW Qs */
+  .interview-list { list-style: none; padding: 0; }
+  .interview-list li {
+    padding: 4px 0;
+    font-size: 0.84rem;
+    color: var(--text-dim);
+  }
+  .interview-list li::before { content: "Q: "; color: var(--violet); font-weight: 600; }
+
+  /* NOTES TEXTAREA */
+  .notes-area {
+    width: 100%;
+    min-height: 50px;
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 8px 10px;
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.82rem;
+    resize: vertical;
+    margin-top: 8px;
+  }
+  .notes-area:focus { outline: none; border-color: var(--gold-dim); }
+  .notes-label { font-size: 0.75rem; color: var(--text-dim); margin-top: 10px; }
+
+  /* TABLE */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0;
+    font-size: 0.82rem;
+  }
+  th, td {
+    text-align: left;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+  }
+  th {
+    background: var(--surface2);
+    font-weight: 600;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--text-dim);
+  }
+
+  /* INFO PANEL */
+  .info-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    font-size: 0.88rem;
+  }
+  .info-panel strong { color: var(--gold); display: block; margin-bottom: 4px; }
+
+  p { margin-bottom: 8px; }
+  ul, ol { padding-left: 20px; margin-bottom: 8px; }
+  li { margin-bottom: 3px; font-size: 0.85rem; }
+  a { color: var(--text-link); }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="breadcrumb">
+  <a href="#">Monster Resort</a> / <a href="#">Engineering</a> / Destruction Lab v2.0
+</div>
+
+<div class="page-header">
+  <h1>Destruction Lab v2.0: Masters-Level Code Surgery</h1>
+  <div class="subtitle">67 exercises targeting specific logic blocks. Every exercise follows: Hypothesis &rarr; Action &rarr; Observation &rarr; Analysis.</div>
+</div>
+
+<div class="progress-bar-container">
+  <span class="progress-text" id="progressText">0 / 67</span>
+  <div class="progress-bar-track">
+    <div class="progress-bar-fill" id="progressFill" style="width: 0%"></div>
+  </div>
+  <button onclick="exportDamageReport()" style="background:var(--surface);border:1px solid var(--gold-dim);color:var(--gold);padding:6px 12px;border-radius:4px;cursor:pointer;font-size:0.78rem;font-family:inherit;">Export Damage Report</button>
+</div>
+
+<div class="controls">
+  <button class="filter-btn active" data-tier="all" onclick="filterTier('all', this)">All (67)</button>
+  <button class="filter-btn" data-tier="1" onclick="filterTier('1', this)">Tier 1: Intermediate (17)</button>
+  <button class="filter-btn" data-tier="2" onclick="filterTier('2', this)">Tier 2: Advanced (17)</button>
+  <button class="filter-btn" data-tier="3" onclick="filterTier('3', this)">Tier 3: Expert (17)</button>
+  <button class="filter-btn" data-tier="4" onclick="filterTier('4', this)">Tier 4: Research (16)</button>
+  <span style="margin-left:auto"></span>
+  <button onclick="expandAll()">Expand All</button>
+  <button onclick="collapseAll()">Collapse All</button>
+</div>
+
+<div class="info-panel">
+  <strong>Before You Start</strong>
+  <code>git checkout -b destruction-lab</code> &mdash; work on a branch. Every exercise has a recovery command. You are deleting <em>specific logic blocks</em> (3-10 lines), not entire files. The goal is to observe <strong>behavioral changes</strong>, not startup crashes.
+</div>
+
+<!-- ============================================== -->
+<!-- EXERCISES CONTAINER -->
+<!-- ============================================== -->
+<div id="exercisesContainer">
+
+<!-- ============================================== -->
+<!-- TIER 1: INTERMEDIATE (17 exercises) -->
+<!-- ============================================== -->
+<h2 id="tier1">Tier 1: Intermediate <span class="tier-label tier-1">Observable Changes Caught by Tests</span></h2>
+
+<!-- ============================================================
+     TIER 1 — Intermediate Exercises (17 cards, IDs 1-17)
+     Monster Resort Concierge Destruction Lab
+     ============================================================ -->
+
+<div class="exercise-card" data-tier="1" data-nogap="true">
+  <div class="exercise-header" onclick="toggleCard(1)">
+    <input type="checkbox" id="ex-1" onchange="toggleCheck(1)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#1</span>
+    <span class="exercise-title">Remove BM25 Positive-Score Filter</span>
+    <span class="concept-badge">Search Quality Filtering</span>
+    <span class="expand-icon" id="icon-1">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-1">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Without the >0 filter, BM25 will return documents with zero relevance scores, polluting the fusion step with noise.</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/advanced_rag.py</code> (lines 146-148)</p>
+      <p>Comment out:</p>
+      <pre><code>return [
+    (int(idx), float(scores[idx])) for idx in top_indices if scores[idx] > 0
+]</code></pre>
+      <p>Replace with:</p>
+      <pre><code>return [(int(idx), float(scores[idx])) for idx in top_indices]</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code>uv run pytest tests/ -k "rag or search" -v</code></pre>
+      <p><strong>Expected:</strong> Search results include irrelevant documents with score 0.0</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>Score thresholds are the first line of defense against noise in retrieval systems. Without them, every document in the corpus becomes a "result."</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>How do you handle zero-relevance results in search systems?</li>
+        <li>What's the difference between BM25 and TF-IDF scoring?</li>
+        <li>Why filter before fusion rather than after?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/advanced_rag.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-1" rows="3" onchange="saveNotes(1)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="1" data-nogap="true">
+  <div class="exercise-header" onclick="toggleCard(2)">
+    <input type="checkbox" id="ex-2" onchange="toggleCheck(2)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#2</span>
+    <span class="exercise-title">Reverse Sort Direction in BM25</span>
+    <span class="concept-badge">Sort Order in Ranking</span>
+    <span class="expand-icon" id="icon-2">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-2">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Removing [::-1] reverses from descending to ascending, returning the LEAST relevant documents first.</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/advanced_rag.py</code> (line 145)</p>
+      <p>Comment out:</p>
+      <pre><code>top_indices = np.argsort(scores)[::-1][:k]</code></pre>
+      <p>Replace with:</p>
+      <pre><code>top_indices = np.argsort(scores)[:k]</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code>uv run pytest tests/ -k "search" -v</code></pre>
+      <p><strong>Expected:</strong> Search returns worst-matching documents instead of best-matching</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>np.argsort returns ascending order by default. The [::-1] reversal is the difference between "best first" and "worst first" — a single missing slice operation inverts the entire ranking.</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>What does np.argsort return?</li>
+        <li>Why is sort direction critical in ranking?</li>
+        <li>How would you detect an inverted ranking in production?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/advanced_rag.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-2" rows="3" onchange="saveNotes(2)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="1" data-nogap="true">
+  <div class="exercise-header" onclick="toggleCard(3)">
+    <input type="checkbox" id="ex-3" onchange="toggleCheck(3)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#3</span>
+    <span class="exercise-title">Remove Token Overlap Score</span>
+    <span class="concept-badge">Confidence Signal Ablation</span>
+    <span class="expand-icon" id="icon-3">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-3">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Setting overlap to always 0.0 removes 30% of the confidence signal, dropping overall scores by ~0.3.</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/hallucination.py</code> (lines 98-107)</p>
+      <p>Comment out the body of <code>_compute_context_overlap</code> and return 0.0:</p>
+      <pre><code># Comment out:
+response_tokens = _tokenize(response_text)
+if not response_tokens:
+    return 0.0
+
+context_tokens = set()
+for ctx in contexts:
+    context_tokens.update(_tokenize(ctx))
+
+overlap = response_tokens &amp; context_tokens
+return len(overlap) / len(response_tokens)
+
+# Replace with:
+return 0.0</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code>uv run pytest tests/ -k "hallucination or confidence" -v</code></pre>
+      <p><strong>Expected:</strong> Context overlap always reports 0.0, overall confidence scores drop</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>The 30/50/20 weighting means each signal has measurable impact. Ablating one signal tests whether the system degrades gracefully or catastrophically.</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>How do you weight multiple signals in a scoring system?</li>
+        <li>What's the difference between ablation testing and A/B testing?</li>
+        <li>How would you detect a broken signal in production?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/hallucination.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-3" rows="3" onchange="saveNotes(3)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="1" data-nogap="true">
+  <div class="exercise-header" onclick="toggleCard(4)">
+    <input type="checkbox" id="ex-4" onchange="toggleCheck(4)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#4</span>
+    <span class="exercise-title">Remove SQL Injection Detection</span>
+    <span class="concept-badge">Input Validation / Security</span>
+    <span class="expand-icon" id="icon-4">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-4">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Without SQL pattern checking, messages containing "DROP TABLE" or "OR 1=1" will pass through validation.</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/validation.py</code> (lines 33-45)</p>
+      <p>Comment out:</p>
+      <pre><code>dangerous_sql = [
+    "DROP TABLE",
+    "DELETE FROM",
+    "INSERT INTO",
+    "UPDATE ",
+    "--",
+    "/*",
+    "*/",
+    "';",
+    "OR 1=1",
+]
+if any(pattern in user_text.upper() for pattern in dangerous_sql):
+    raise ValidationError("Potentially malicious SQL detected")</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code>uv run pytest tests/ -k "validation or sql" -v</code></pre>
+      <p><strong>Expected:</strong> Tests that check SQL injection detection will fail</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>Input validation is defense-in-depth. Even though SQLite uses parameterized queries, the validation layer catches malicious intent before it reaches the database.</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>Why use both parameterized queries AND input validation?</li>
+        <li>What's defense-in-depth?</li>
+        <li>Name 3 SQL injection patterns.</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/validation.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-4" rows="3" onchange="saveNotes(4)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="1" data-nogap="true">
+  <div class="exercise-header" onclick="toggleCard(5)">
+    <input type="checkbox" id="ex-5" onchange="toggleCheck(5)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#5</span>
+    <span class="exercise-title">Remove XSS Pattern Detection</span>
+    <span class="concept-badge">XSS Prevention</span>
+    <span class="expand-icon" id="icon-5">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-5">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Without XSS checks, <code>&lt;script&gt;alert(1)&lt;/script&gt;</code> and <code>javascript:</code> payloads pass through validation.</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/validation.py</code> (lines 47-57)</p>
+      <p>Comment out:</p>
+      <pre><code>xss_patterns = [
+    r"&lt;script[^&gt;]*&gt;.*?&lt;/script&gt;",
+    r"javascript:",
+    r"on\w+\s*=",  # Event handlers
+    r"&lt;iframe",
+    r"&lt;object",
+    r"&lt;embed",
+]
+for pattern in xss_patterns:
+    if re.search(pattern, user_text, re.IGNORECASE):
+        raise ValidationError("Potentially malicious HTML detected")</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code>uv run pytest tests/ -k "validation or xss" -v</code></pre>
+      <p><strong>Expected:</strong> XSS-related validation tests fail</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>XSS is a top-10 OWASP vulnerability. Even server-side apps need XSS prevention if responses are ever rendered in HTML.</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>What's the difference between stored and reflected XSS?</li>
+        <li>Why sanitize on input AND output?</li>
+        <li>What does bleach.clean do?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/validation.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-5" rows="3" onchange="saveNotes(5)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="1" data-nogap="true">
+  <div class="exercise-header" onclick="toggleCard(6)">
+    <input type="checkbox" id="ex-6" onchange="toggleCheck(6)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#6</span>
+    <span class="exercise-title">Remove sqlite3.Row Factory</span>
+    <span class="concept-badge">Database Result Mapping</span>
+    <span class="expand-icon" id="icon-6">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-6">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Without Row factory, queries return plain tuples instead of dict-like objects, breaking all row["column_name"] access.</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/database.py</code> (line 77)</p>
+      <p>Comment out:</p>
+      <pre><code>conn.row_factory = sqlite3.Row</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code>uv run pytest tests/ -k "database or booking" -v</code></pre>
+      <p><strong>Expected:</strong> TypeError: tuple indices must be integers or slices, not str</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>Row factory is the bridge between SQL results and Python dict access. Without it, every dict-style access crashes.</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>What does sqlite3.Row provide?</li>
+        <li>What's the difference between tuple and dict-style access?</li>
+        <li>How do ORMs solve this?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/database.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-6" rows="3" onchange="saveNotes(6)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="1" data-nogap="true">
+  <div class="exercise-header" onclick="toggleCard(7)">
+    <input type="checkbox" id="ex-7" onchange="toggleCheck(7)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#7</span>
+    <span class="exercise-title">Remove book_room Tool Schema</span>
+    <span class="concept-badge">Tool Schema Registration</span>
+    <span class="expand-icon" id="icon-7">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-7">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Without the schema, the LLM won't know book_room exists and will never call it.</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/tools.py</code> (lines 30-63)</p>
+      <p>Comment out the entire <code>if self.name == "book_room":</code> block:</p>
+      <pre><code>if self.name == "book_room":
+    return {
+        "name": "book_room",
+        "description": "Book a room at one of our official Monster Resort properties.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "session_id": {"type": "string"},
+                "guest_name": {"type": "string"},
+                "hotel_name": {
+                    "type": "string",
+                    "enum": [
+                        "The Mummy Resort &amp; Tomb-Service",
+                        "The Werewolf Lodge: Moon &amp; Moor",
+                        "Castle Frankenstein: High Voltage Luxury",
+                        "Vampire Manor: Eternal Night Inn",
+                        "Zombie Bed &amp; Breakfast: Brains &amp; Beds",
+                        "Ghostly B&amp;B: Spectral Stay",
+                    ],
+                },
+                "room_type": {"type": "string"},
+                "check_in": {"type": "string"},
+                "check_out": {"type": "string"},
+            },
+            "required": [
+                "session_id",
+                "guest_name",
+                "hotel_name",
+                "room_type",
+                "check_in",
+                "check_out",
+            ],
+        },
+    }</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code>uv run pytest tests/ -k "tool" -v</code></pre>
+      <p><strong>Expected:</strong> book_room tool has no OpenAI schema, LLM can't invoke it</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>Tool schemas are the contract between the LLM and the application. No schema = the tool is invisible to the AI.</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>What's the role of tool schemas in function calling?</li>
+        <li>How does the LLM decide which tool to call?</li>
+        <li>What happens if a schema is malformed?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/tools.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-7" rows="3" onchange="saveNotes(7)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="1" data-nogap="true">
+  <div class="exercise-header" onclick="toggleCard(8)">
+    <input type="checkbox" id="ex-8" onchange="toggleCheck(8)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#8</span>
+    <span class="exercise-title">Remove Static API Key Check</span>
+    <span class="concept-badge">Authentication Priority Chain</span>
+    <span class="expand-icon" id="icon-8">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-8">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Without the static key check, the simple X-API-Key auth path breaks, falling through to managed keys or JWT.</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/auth_mixins.py</code> (lines 21-23)</p>
+      <p>Comment out:</p>
+      <pre><code># Static key check
+if token == settings.api_key.strip():
+    return "api_key_user"</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code>uv run pytest tests/ -k "auth" -v</code></pre>
+      <p><strong>Expected:</strong> Static API key authentication fails, only managed mr_ keys and JWT work</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>Authentication is a priority chain. Each method is tried in order. Removing one link breaks that specific auth path.</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>What's the difference between API key and JWT auth?</li>
+        <li>Why support multiple auth methods?</li>
+        <li>What's the fallback pattern?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/auth_mixins.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-8" rows="3" onchange="saveNotes(8)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="1" data-nogap="true">
+  <div class="exercise-header" onclick="toggleCard(9)">
+    <input type="checkbox" id="ex-9" onchange="toggleCheck(9)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#9</span>
+    <span class="exercise-title">Remove lru_cache from get_settings</span>
+    <span class="concept-badge">Singleton Pattern via Cache</span>
+    <span class="expand-icon" id="icon-9">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-9">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Without caching, every call to get_settings() creates a new Settings instance, re-reading env vars and regenerating random API keys each time.</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/config.py</code> (line 132)</p>
+      <p>Comment out:</p>
+      <pre><code>@lru_cache</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code>uv run pytest tests/ -k "config or settings" -v</code></pre>
+      <p><strong>Expected:</strong> Multiple calls to get_settings() return different objects with potentially different auto-generated api_key values</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>@lru_cache makes get_settings() a singleton factory. Without it, the app creates dozens of Settings objects, each potentially with a different random API key.</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>How does @lru_cache implement singleton pattern?</li>
+        <li>What's the difference between module-level singleton and cached singleton?</li>
+        <li>When would you NOT cache settings?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/config.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-9" rows="3" onchange="saveNotes(9)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="1" data-nogap="true">
+  <div class="exercise-header" onclick="toggleCard(10)">
+    <input type="checkbox" id="ex-10" onchange="toggleCheck(10)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#10</span>
+    <span class="exercise-title">Remove Key Expiration Check</span>
+    <span class="concept-badge">Token Expiration / TTL</span>
+    <span class="expand-icon" id="icon-10">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-10">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Without expiration checking, expired API keys remain valid forever.</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/security.py</code> (lines 71-75)</p>
+      <p>Comment out:</p>
+      <pre><code>if row["expires_at"]:
+    expires = datetime.fromisoformat(row["expires_at"])
+    if datetime.utcnow() > expires:
+        logger.warning(f"Expired key used by {row['user_id']}")
+        return None</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code>uv run pytest tests/ -k "security or api_key" -v</code></pre>
+      <p><strong>Expected:</strong> Expired API keys are accepted instead of rejected</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>Key expiration is fundamental to security rotation. Without it, compromised keys can never be invalidated by time alone.</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>Why do API keys need expiration?</li>
+        <li>What's key rotation?</li>
+        <li>How do you handle key expiration gracefully for clients?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/security.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-10" rows="3" onchange="saveNotes(10)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="1" data-nogap="true">
+  <div class="exercise-header" onclick="toggleCard(11)">
+    <input type="checkbox" id="ex-11" onchange="toggleCheck(11)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#11</span>
+    <span class="exercise-title">Remove is_active Check from verify_key</span>
+    <span class="concept-badge">Key Revocation</span>
+    <span class="expand-icon" id="icon-11">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-11">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Without the active check, revoked keys still authenticate successfully.</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/security.py</code> (lines 77-79)</p>
+      <p>Comment out:</p>
+      <pre><code>if not row["is_active"]:
+    logger.warning(f"Inactive key used by {row['user_id']}")
+    return None</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code>uv run pytest tests/ -k "security or revoke" -v</code></pre>
+      <p><strong>Expected:</strong> Revoked API keys are accepted instead of rejected</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>Revocation is the emergency brake for compromised credentials. Without it, you can't disable a leaked key.</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>What's the difference between expiration and revocation?</li>
+        <li>How do you handle revocation in distributed systems?</li>
+        <li>What's a CRL?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/security.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-11" rows="3" onchange="saveNotes(11)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="1" data-nogap="true">
+  <div class="exercise-header" onclick="toggleCard(12)">
+    <input type="checkbox" id="ex-12" onchange="toggleCheck(12)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#12</span>
+    <span class="exercise-title">Remove HTML Sanitization</span>
+    <span class="concept-badge">Output Encoding / Sanitization</span>
+    <span class="expand-icon" id="icon-12">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-12">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Without sanitization, HTML tags pass through to the response, potentially enabling stored XSS.</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/validation.py</code> (line 59)</p>
+      <p>Comment out:</p>
+      <pre><code>user_text = sanitize_html(user_text)</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code>uv run pytest tests/ -k "validation or sanitize" -v</code></pre>
+      <p><strong>Expected:</strong> HTML content passes through unsanitized</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>Even if XSS patterns are detected, sanitization is the final safety net. Defense-in-depth means multiple layers.</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>What's the difference between validation and sanitization?</li>
+        <li>Why do both?</li>
+        <li>What does bleach.clean strip by default?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/validation.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-12" rows="3" onchange="saveNotes(12)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="1" data-nogap="true">
+  <div class="exercise-header" onclick="toggleCard(13)">
+    <input type="checkbox" id="ex-13" onchange="toggleCheck(13)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#13</span>
+    <span class="exercise-title">Remove Message Length Check</span>
+    <span class="concept-badge">Input Bounds Checking</span>
+    <span class="expand-icon" id="icon-13">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-13">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Without length limits, users can send arbitrarily long messages, potentially causing LLM token limit issues or DoS.</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/validation.py</code> (lines 30-31)</p>
+      <p>Comment out:</p>
+      <pre><code>if len(user_text) > 5000:
+    raise ValidationError("Message too long (max 5000 characters)")</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code>uv run pytest tests/ -k "validation" -v</code></pre>
+      <p><strong>Expected:</strong> Messages over 5000 chars accepted without error</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>Input bounds prevent resource exhaustion. LLMs have token limits; unbounded input wastes money and may crash.</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>Why limit input length?</li>
+        <li>How do you choose a max length?</li>
+        <li>What's the relationship between characters and tokens?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/validation.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-13" rows="3" onchange="saveNotes(13)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="1" data-nogap="true">
+  <div class="exercise-header" onclick="toggleCard(14)">
+    <input type="checkbox" id="ex-14" onchange="toggleCheck(14)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#14</span>
+    <span class="exercise-title">Remove Tool Call Counter Metric</span>
+    <span class="concept-badge">Observability / Prometheus Metrics</span>
+    <span class="expand-icon" id="icon-14">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-14">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Without the counter, tool call frequency is invisible to monitoring dashboards.</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/tools.py</code> (line 149)</p>
+      <p>Comment out:</p>
+      <pre><code>TOOL_CALL_COUNT.labels(tool=name).inc()</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code>uv run pytest tests/ -k "tool" -v</code></pre>
+      <p><strong>Expected:</strong> Tool calls still work but metrics endpoint shows no tool_call counts</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>Metrics are how you know your system is healthy in production. Without them, you're flying blind.</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>What's the difference between counters, gauges, and histograms?</li>
+        <li>Why label metrics?</li>
+        <li>What's Prometheus pull model?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/tools.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-14" rows="3" onchange="saveNotes(14)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="1" data-nogap="true">
+  <div class="exercise-header" onclick="toggleCard(15)">
+    <input type="checkbox" id="ex-15" onchange="toggleCheck(15)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#15</span>
+    <span class="exercise-title">Remove Error Handling in book_room</span>
+    <span class="concept-badge">Error Propagation</span>
+    <span class="expand-icon" id="icon-15">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-15">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Without the catch block, database errors propagate as unhandled exceptions instead of returning {"ok": false, "error": ...}.</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/tools.py</code> (lines 272-280)</p>
+      <p>Comment out:</p>
+      <pre><code>except Exception as e:
+    logger.exception(
+        "book_room_failed",
+        extra={
+            "request_id": request_id,
+            "error": str(e),
+        },
+    )
+    return {"ok": False, "error": str(e), "request_id": request_id}</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code>uv run pytest tests/ -k "book" -v</code></pre>
+      <p><strong>Expected:</strong> Errors raise exceptions instead of returning error dicts</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>Tool functions should return structured errors, not throw exceptions, because the LLM agent needs to interpret the result.</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>Should tools raise exceptions or return error objects?</li>
+        <li>What's the difference for the calling code?</li>
+        <li>How does error shape affect LLM reasoning?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/tools.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-15" rows="3" onchange="saveNotes(15)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="1" data-nogap="true">
+  <div class="exercise-header" onclick="toggleCard(16)">
+    <input type="checkbox" id="ex-16" onchange="toggleCheck(16)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#16</span>
+    <span class="exercise-title">Remove BM25 None Guard</span>
+    <span class="concept-badge">Defensive Programming / Null Guards</span>
+    <span class="expand-icon" id="icon-16">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-16">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Without the None guard, calling _bm25_search before ingestion causes AttributeError on None.get_scores().</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/advanced_rag.py</code> (lines 135-137)</p>
+      <p>Comment out:</p>
+      <pre><code>if self.bm25 is None:
+    logger.warning("BM25 index not built, returning empty results")
+    return []</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code>uv run pytest tests/ -k "rag" -v</code></pre>
+      <p><strong>Expected:</strong> AttributeError: 'NoneType' object has no attribute 'get_scores'</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>Lazy-initialized objects need null guards. The BM25 index is built on first ingestion; before that, self.bm25 is None.</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>What's defensive programming?</li>
+        <li>When is it appropriate vs over-engineering?</li>
+        <li>How do you handle lazy initialization safely?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/advanced_rag.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-16" rows="3" onchange="saveNotes(16)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="1" data-nogap="true">
+  <div class="exercise-header" onclick="toggleCard(17)">
+    <input type="checkbox" id="ex-17" onchange="toggleCheck(17)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#17</span>
+    <span class="exercise-title">Remove Transaction Rollback</span>
+    <span class="concept-badge">Transaction Safety / ACID</span>
+    <span class="expand-icon" id="icon-17">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-17">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Without explicit rollback, failed transactions may leave partial writes in the database.</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/database.py</code> (lines 81-83)</p>
+      <p>Comment out:</p>
+      <pre><code>except Exception as e:
+    conn.rollback()
+    raise DatabaseError(f"Database transaction failed: {e}")</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code>uv run pytest tests/ -k "database" -v</code></pre>
+      <p><strong>Expected:</strong> Database errors don't rollback, potentially corrupting state</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>ACID compliance requires that failed transactions are rolled back. Without rollback, you get partial writes (the "I" in ACID — Isolation — is violated).</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>What are ACID properties?</li>
+        <li>Why is explicit rollback important?</li>
+        <li>What happens without it in SQLite vs PostgreSQL?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/database.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-17" rows="3" onchange="saveNotes(17)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================== -->
+<!-- TIER 2: ADVANCED (17 exercises) -->
+<!-- ============================================== -->
+<h2 id="tier2">Tier 2: Advanced <span class="tier-label tier-2">Subtle Degradations NOT Caught by Tests</span></h2>
+
+<div class="exercise-card" data-tier="2" data-nogap="false">
+  <div class="exercise-header" onclick="toggleCard(18)">
+    <input type="checkbox" id="ex-18" onchange="toggleCheck(18)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#18</span>
+    <span class="exercise-title">Remove RRF BM25 Weight</span>
+    <span class="concept-badge">Reciprocal Rank Fusion</span>
+    <span class="expand-icon" id="icon-18">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-18">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Without BM25 scores in RRF, fusion becomes dense-only, losing keyword matching capability (proper nouns, exact terms)</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/advanced_rag.py</code> (lines 188-190)</p>
+      <p>Comment out:</p>
+      <pre><code>for rank, (idx, _) in enumerate(bm25_results):
+    doc = self.corpus[idx]
+    scores[doc] = scores.get(doc, 0) + bm25_weight * (1 / (k + rank))</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code>curl -X POST http://localhost:8000/chat -H "X-API-Key: $KEY" -H "Content-Type: application/json" -d '{"message": "Tell me about Vampire Manor"}' | python -m json.tool</code></pre>
+      <p><strong>Expected:</strong> Queries with exact property names (like "Vampire Manor") return worse results because dense embeddings handle proper nouns poorly</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>RRF combines keyword and semantic signals. Removing one makes the system blind to that signal type. BM25 excels at exact matches; dense excels at semantic meaning</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>What is Reciprocal Rank Fusion?</li>
+        <li>Why combine keyword and semantic search?</li>
+        <li>What types of queries does BM25 handle better than dense embeddings?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/advanced_rag.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-18" rows="3" onchange="saveNotes(18)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="2" data-nogap="false">
+  <div class="exercise-header" onclick="toggleCard(19)">
+    <input type="checkbox" id="ex-19" onchange="toggleCheck(19)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#19</span>
+    <span class="exercise-title">Remove Cross-Encoder Reranking</span>
+    <span class="concept-badge">Two-Stage Retrieval</span>
+    <span class="expand-icon" id="icon-19">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-19">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Without reranking, the system returns RRF-fused results directly. Quality drops because the cross-encoder's fine-grained relevance scoring is skipped</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/advanced_rag.py</code> (lines 263-264)</p>
+      <p>Comment out:</p>
+      <pre><code>if use_reranker:</code></pre>
+      <p>Replace with:</p>
+      <pre><code>if False:</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code>curl -X POST http://localhost:8000/chat -H "X-API-Key: $KEY" -H "Content-Type: application/json" -d '{"message": "What spa treatments do you offer?"}' | python -m json.tool</code></pre>
+      <p><strong>Expected:</strong> Response quality subtly degrades — still works but context selection is less precise</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>Two-stage retrieval (retrieve many → rerank few) is the standard pattern. The first stage is fast but approximate; the reranker is slow but accurate</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>What's a cross-encoder vs bi-encoder?</li>
+        <li>Why is two-stage retrieval more effective?</li>
+        <li>What's the speed/accuracy tradeoff?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/advanced_rag.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-19" rows="3" onchange="saveNotes(19)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="2" data-nogap="false">
+  <div class="exercise-header" onclick="toggleCard(20)">
+    <input type="checkbox" id="ex-20" onchange="toggleCheck(20)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#20</span>
+    <span class="exercise-title">Remove Case Normalization in BM25</span>
+    <span class="concept-badge">Text Normalization</span>
+    <span class="expand-icon" id="icon-20">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-20">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Without .lower(), queries are case-sensitive. "Vampire" won't match "vampire" in the corpus, breaking case-insensitive search</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/advanced_rag.py</code> (line 139)</p>
+      <p>Comment out:</p>
+      <pre><code>tokenized_query = query.lower().split()</code></pre>
+      <p>Replace with:</p>
+      <pre><code>tokenized_query = query.split()</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code>curl -X POST http://localhost:8000/chat -H "X-API-Key: $KEY" -H "Content-Type: application/json" -d '{"message": "VAMPIRE MANOR"}' | python -m json.tool</code></pre>
+      <p><strong>Expected:</strong> All-caps queries return no BM25 results because token case doesn't match the lowercased corpus</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>Text normalization is fundamental to information retrieval. Without it, "Hotel" and "hotel" are different tokens</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>What text normalization steps are standard in IR?</li>
+        <li>When might case-sensitivity be desirable?</li>
+        <li>What's stemming vs lemmatization?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/advanced_rag.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-20" rows="3" onchange="saveNotes(20)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="2" data-nogap="false">
+  <div class="exercise-header" onclick="toggleCard(21)">
+    <input type="checkbox" id="ex-21" onchange="toggleCheck(21)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#21</span>
+    <span class="exercise-title">Remove Semantic Similarity from Confidence Scoring</span>
+    <span class="concept-badge">Semantic Signal Ablation</span>
+    <span class="expand-icon" id="icon-21">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-21">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Setting semantic similarity to always 0.0 removes 50% of the confidence signal (the heaviest weight), causing most responses to score LOW</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/hallucination.py</code> (lines 109-134)</p>
+      <p>Replace <code>_compute_semantic_similarity</code> body to always return 0.0:</p>
+      <pre><code># Replace the method body with:
+return 0.0</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code>curl -X POST http://localhost:8000/chat -H "X-API-Key: $KEY" -H "Content-Type: application/json" -d '{"message": "Tell me about the resort"}' | python -m json.tool</code></pre>
+      <p><strong>Expected:</strong> Confidence scores drop dramatically since 50% of the signal is zeroed out. Most responses classified as LOW confidence</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>The 50% weight on semantic similarity means this signal dominates. Ablating it tests whether the system over-relies on one signal</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>How do you choose weights for a multi-signal scoring system?</li>
+        <li>What's ablation testing?</li>
+        <li>How would you detect this failure in production?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/hallucination.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-21" rows="3" onchange="saveNotes(21)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="2" data-nogap="false">
+  <div class="exercise-header" onclick="toggleCard(22)">
+    <input type="checkbox" id="ex-22" onchange="toggleCheck(22)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#22</span>
+    <span class="exercise-title">Remove Anthropic Tool Schema Translation</span>
+    <span class="concept-badge">Provider Abstraction / Schema Translation</span>
+    <span class="expand-icon" id="icon-22">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-22">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Without translation, Anthropic receives OpenAI-format tool schemas, which have different structure (function.parameters vs input_schema), causing tool calls to fail</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/llm_providers.py</code> (lines 171-185)</p>
+      <p>Change <code>translate_tool_schemas</code> in AnthropicProvider to return the raw openai_schemas unchanged:</p>
+      <pre><code># Replace the method body with:
+return openai_schemas</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code># Set MRC_LLM_PROVIDER_PRIORITY=anthropic and send a booking request
+curl -X POST http://localhost:8000/chat -H "X-API-Key: $KEY" -H "Content-Type: application/json" -d '{"message": "Book a room at Vampire Manor for Count Dracula"}'</code></pre>
+      <p><strong>Expected:</strong> Anthropic API rejects malformed tool schemas or can't invoke tools</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>Each LLM provider has its own tool format. The translation layer is what makes the provider-agnostic abstraction work</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>Why do different LLM APIs use different formats?</li>
+        <li>What's the adapter pattern?</li>
+        <li>How would you add a new LLM provider?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/llm_providers.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-22" rows="3" onchange="saveNotes(22)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="2" data-nogap="false">
+  <div class="exercise-header" onclick="toggleCard(23)">
+    <input type="checkbox" id="ex-23" onchange="toggleCheck(23)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#23</span>
+    <span class="exercise-title">Remove Ollama Stream=False</span>
+    <span class="concept-badge">API Configuration</span>
+    <span class="expand-icon" id="icon-23">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-23">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Without stream=False, Ollama streams responses by default, returning NDJSON instead of a single JSON object, breaking resp.json() parsing</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/llm_providers.py</code> (line 330)</p>
+      <p>Comment out:</p>
+      <pre><code>"stream": False,</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code># Set MRC_OLLAMA_ENABLED=true, MRC_LLM_PROVIDER_PRIORITY=ollama
+curl -X POST http://localhost:8000/chat -H "X-API-Key: $KEY" -H "Content-Type: application/json" -d '{"message": "Hello"}' | python -m json.tool</code></pre>
+      <p><strong>Expected:</strong> JSON decode error because the response is streamed NDJSON, not a single JSON object</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>API defaults matter. Ollama's default is streaming; our code expects a single response. One missing parameter changes the entire response format</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>What's the difference between streaming and non-streaming API responses?</li>
+        <li>When would you choose streaming?</li>
+        <li>What's NDJSON?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/llm_providers.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-23" rows="3" onchange="saveNotes(23)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="2" data-nogap="false">
+  <div class="exercise-header" onclick="toggleCard(24)">
+    <input type="checkbox" id="ex-24" onchange="toggleCheck(24)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#24</span>
+    <span class="exercise-title">Remove Memory Summarization Threshold</span>
+    <span class="concept-badge">Context Window Management</span>
+    <span class="expand-icon" id="icon-24">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-24">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Without the threshold check, every message triggers summarization, making the system extremely slow and expensive (LLM call per message)</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/memory.py</code> (lines 79-80)</p>
+      <p>Comment out:</p>
+      <pre><code>if int(count) < self.max_messages_before_summary:
+    return</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code># Send 3 messages and check server logs for "LLM summarization" calls
+curl -X POST http://localhost:8000/chat -H "X-API-Key: $KEY" -H "Content-Type: application/json" -d '{"message": "Hello"}'
+# Check logs: docker logs monster-resort-concierge 2>&1 | grep -i "summar"</code></pre>
+      <p><strong>Expected:</strong> Every single message triggers a summarization LLM call instead of waiting for 12 messages</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>Summarization is expensive. The threshold batches it to avoid per-message LLM costs. Without it, costs multiply by 12x</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>How do you manage conversation context for LLMs?</li>
+        <li>What's the tradeoff between context length and cost?</li>
+        <li>What's sliding window vs summarization?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/memory.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-24" rows="3" onchange="saveNotes(24)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="2" data-nogap="false">
+  <div class="exercise-header" onclick="toggleCard(25)">
+    <input type="checkbox" id="ex-25" onchange="toggleCheck(25)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#25</span>
+    <span class="exercise-title">Remove Cheap Summary Fallback</span>
+    <span class="concept-badge">Graceful Degradation</span>
+    <span class="expand-icon" id="icon-25">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-25">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Without the fallback, if LLM summarization fails AND there's no cheap fallback, summary is None, and the merged summary has issues</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/memory.py</code> (lines 115-116)</p>
+      <p>Comment out:</p>
+      <pre><code>if not summary:
+    summary = self._cheap_summary(lines)</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code># Set OPENAI_API_KEY to an invalid value and send 12+ messages
+# Without OpenAI AND without cheap fallback, summary is None
+curl -X POST http://localhost:8000/chat -H "X-API-Key: $KEY" -H "Content-Type: application/json" -d '{"message": "Hello again"}'</code></pre>
+      <p><strong>Expected:</strong> Without OpenAI AND without cheap fallback, summary is None, potentially breaking the merge logic</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>Graceful degradation means always having a fallback. LLM → cheap regex → at least something. Never let a luxury feature break core functionality</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>What's graceful degradation?</li>
+        <li>How do you design fallback chains?</li>
+        <li>What's the difference between degradation and failure?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/memory.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-25" rows="3" onchange="saveNotes(25)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="2" data-nogap="false">
+  <div class="exercise-header" onclick="toggleCard(26)">
+    <input type="checkbox" id="ex-26" onchange="toggleCheck(26)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#26</span>
+    <span class="exercise-title">Remove PDF Receipt Generation</span>
+    <span class="concept-badge">Non-Critical Feature Isolation</span>
+    <span class="expand-icon" id="icon-26">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-26">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Without receipt generation, bookings still succeed but no PDF invoice is created. invoice_url remains None</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/tools.py</code> (lines 233-262)</p>
+      <p>Comment out the entire try block that calls pdf.create_receipt():</p>
+      <pre><code># Comment out the entire try block that generates the PDF receipt</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code>curl -X POST http://localhost:8000/chat -H "X-API-Key: $KEY" -H "Content-Type: application/json" -d '{"message": "Book a room at Vampire Manor for Count Dracula, Deluxe Crypt, check in 2025-03-01, check out 2025-03-05"}'</code></pre>
+      <p><strong>Expected:</strong> Booking succeeds, response has invoice_url: null instead of a PDF path</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>Receipt generation is isolated in a try/except so it can't break bookings. This is the "non-critical feature isolation" pattern — PDF failure shouldn't block the core business logic</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>How do you isolate non-critical features?</li>
+        <li>What's the blast radius concept?</li>
+        <li>When should errors be swallowed vs propagated?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/tools.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-26" rows="3" onchange="saveNotes(26)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="2" data-nogap="false">
+  <div class="exercise-header" onclick="toggleCard(27)">
+    <input type="checkbox" id="ex-27" onchange="toggleCheck(27)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#27</span>
+    <span class="exercise-title">Remove Source Attribution from Confidence</span>
+    <span class="concept-badge">Sentence-Level Grounding</span>
+    <span class="expand-icon" id="icon-27">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-27">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Without attribution, 20% of the confidence signal is lost. Responses that mix grounded and hallucinated sentences score the same</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/hallucination.py</code> (lines 136-160)</p>
+      <p>Replace <code>_compute_source_attribution</code> body to always return 0.0:</p>
+      <pre><code># Replace the method body with:
+return 0.0</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code>curl -X POST http://localhost:8000/chat -H "X-API-Key: $KEY" -H "Content-Type: application/json" -d '{"message": "What amenities does the resort have?"}' | python -m json.tool</code></pre>
+      <p><strong>Expected:</strong> Source attribution always 0.0, reducing overall confidence but less dramatically than removing semantic (20% vs 50% weight)</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>Source attribution checks sentence-level grounding. Without it, a response can be half-hallucinated and still score well on overlap and semantics</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>What's source attribution in NLP?</li>
+        <li>How does sentence-level grounding differ from document-level?</li>
+        <li>Why is attribution harder than similarity?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/hallucination.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-27" rows="3" onchange="saveNotes(27)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="2" data-nogap="false">
+  <div class="exercise-header" onclick="toggleCard(28)">
+    <input type="checkbox" id="ex-28" onchange="toggleCheck(28)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#28</span>
+    <span class="exercise-title">Remove the 0.3 Grounding Threshold</span>
+    <span class="concept-badge">Threshold Tuning</span>
+    <span class="expand-icon" id="icon-28">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-28">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>With threshold at 0.0, every sentence counts as grounded (any overlap at all), inflating attribution scores to near 1.0</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/hallucination.py</code> (line 157)</p>
+      <p>Comment out:</p>
+      <pre><code>if overlap_ratio >= 0.3:</code></pre>
+      <p>Replace with:</p>
+      <pre><code>if overlap_ratio >= 0.0:</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code>curl -X POST http://localhost:8000/chat -H "X-API-Key: $KEY" -H "Content-Type: application/json" -d '{"message": "Tell me about the resort amenities"}' | python -m json.tool</code></pre>
+      <p><strong>Expected:</strong> Source attribution scores approach 1.0 regardless of actual grounding quality</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>Thresholds are the knobs that tune signal quality. Too low → everything passes; too high → nothing passes. 0.3 means "at least 30% of words must come from the source"</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>How do you tune confidence thresholds?</li>
+        <li>What's precision vs recall in this context?</li>
+        <li>How would you A/B test threshold changes?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/hallucination.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-28" rows="3" onchange="saveNotes(28)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="2" data-nogap="false">
+  <div class="exercise-header" onclick="toggleCard(29)">
+    <input type="checkbox" id="ex-29" onchange="toggleCheck(29)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#29</span>
+    <span class="exercise-title">Remove System Prompt Knowledge Base Injection</span>
+    <span class="concept-badge">RAG Grounding</span>
+    <span class="expand-icon" id="icon-29">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-29">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Without RAG context in the prompt, the LLM responds from training data only, ignoring resort-specific knowledge</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/main.py</code> (lines 152-156)</p>
+      <p>Comment out the RAG context injection part of the system prompt (the line that includes context_text):</p>
+      <pre><code># Comment out the line that injects context_text into the system prompt</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code>curl -X POST http://localhost:8000/chat -H "X-API-Key: $KEY" -H "Content-Type: application/json" -d '{"message": "What amenities does Vampire Manor offer?"}' | python -m json.tool</code></pre>
+      <p><strong>Expected:</strong> Generic LLM response about vampire hotels instead of specific resort knowledge</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>RAG grounding is what makes the concierge know about YOUR resort. Without it, you just have a generic chatbot</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>What is RAG?</li>
+        <li>Why inject retrieved context into the system prompt?</li>
+        <li>What's the difference between fine-tuning and RAG?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/main.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-29" rows="3" onchange="saveNotes(29)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="2" data-nogap="false">
+  <div class="exercise-header" onclick="toggleCard(30)">
+    <input type="checkbox" id="ex-30" onchange="toggleCheck(30)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#30</span>
+    <span class="exercise-title">Remove Chat History from Agent</span>
+    <span class="concept-badge">Conversational Memory</span>
+    <span class="expand-icon" id="icon-30">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-30">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Without chat history, every message is treated as the first message. The AI has no memory of previous turns</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/main.py</code> (lines 171-179)</p>
+      <p>Comment out the past_messages loading and history building loop:</p>
+      <pre><code># Comment out the past_messages loading and the loop that builds history</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code># Send two messages in the same session:
+# 1. "My name is Dracula"
+# 2. "What's my name?"
+curl -X POST http://localhost:8000/chat -H "X-API-Key: $KEY" -H "Content-Type: application/json" -d '{"message": "My name is Dracula"}'
+curl -X POST http://localhost:8000/chat -H "X-API-Key: $KEY" -H "Content-Type: application/json" -d '{"message": "What is my name?"}'</code></pre>
+      <p><strong>Expected:</strong> AI can't remember the name because previous messages aren't loaded into the prompt</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>Conversational memory is what makes a chatbot feel intelligent. Without it, every turn starts fresh</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>How do LLMs maintain conversation context?</li>
+        <li>What are the approaches to conversational memory?</li>
+        <li>What's the context window limitation?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/main.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-30" rows="3" onchange="saveNotes(30)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="2" data-nogap="false">
+  <div class="exercise-header" onclick="toggleCard(31)">
+    <input type="checkbox" id="ex-31" onchange="toggleCheck(31)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#31</span>
+    <span class="exercise-title">Remove ModelRouter Fallback</span>
+    <span class="concept-badge">Provider Failover</span>
+    <span class="expand-icon" id="icon-31">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-31">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Without fallback, if the primary LLM provider fails, the entire chat endpoint fails instead of trying the next provider</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/llm_providers.py</code> (lines 391-392)</p>
+      <p>Comment out:</p>
+      <pre><code>if not self.fallback_enabled:
+    raise</code></pre>
+      <p>Replace with always raising after first provider failure:</p>
+      <pre><code>raise</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code># Set an invalid OpenAI key with MRC_LLM_PROVIDER_PRIORITY=openai,anthropic
+curl -X POST http://localhost:8000/chat -H "X-API-Key: $KEY" -H "Content-Type: application/json" -d '{"message": "Hello"}' | python -m json.tool</code></pre>
+      <p><strong>Expected:</strong> Request fails even though Anthropic could have handled it</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>Multi-provider failover is critical for production reliability. Without it, one API outage takes down your entire system</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>What's the circuit breaker pattern?</li>
+        <li>How do you implement LLM provider failover?</li>
+        <li>What metrics would you track for provider health?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/llm_providers.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-31" rows="3" onchange="saveNotes(31)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="2" data-nogap="false">
+  <div class="exercise-header" onclick="toggleCard(32)">
+    <input type="checkbox" id="ex-32" onchange="toggleCheck(32)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#32</span>
+    <span class="exercise-title">Remove Cache TTL Expiry Check</span>
+    <span class="concept-badge">Cache Invalidation / TTL</span>
+    <span class="expand-icon" id="icon-32">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-32">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Without expiry checking, cached entries live forever, serving stale results even after knowledge base updates</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/cache_utils.py</code> (lines 25-28)</p>
+      <p>Comment out:</p>
+      <pre><code>if monotonic() >= expires:
+    del self._cache[key]
+    return None</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code># Ingest new knowledge, query for it — old cached results may be returned
+# 1. Query something to cache it
+# 2. Update the knowledge base
+# 3. Query again — stale cached result returned
+curl -X POST http://localhost:8000/chat -H "X-API-Key: $KEY" -H "Content-Type: application/json" -d '{"message": "Tell me about Vampire Manor"}' | python -m json.tool</code></pre>
+      <p><strong>Expected:</strong> Cache never expires, returning stale results indefinitely</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>"There are only two hard things in CS: cache invalidation and naming things." TTL is the simplest invalidation strategy; without it, caches go stale</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>What are cache invalidation strategies?</li>
+        <li>What's TTL vs LRU vs write-through?</li>
+        <li>When is stale data acceptable?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/cache_utils.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-32" rows="3" onchange="saveNotes(32)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="2" data-nogap="false">
+  <div class="exercise-header" onclick="toggleCard(33)">
+    <input type="checkbox" id="ex-33" onchange="toggleCheck(33)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#33</span>
+    <span class="exercise-title">Remove Cache Thread Lock</span>
+    <span class="concept-badge">Thread Safety</span>
+    <span class="expand-icon" id="icon-33">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-33">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Without the lock, concurrent requests can corrupt the OrderedDict with race conditions</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/cache_utils.py</code> (lines 22, 33)</p>
+      <p>Comment out:</p>
+      <pre><code>with self._lock:</code></pre>
+      <p>(in both the get and set methods)</p>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code>uv run pytest tests/ -k "cache" -v</code></pre>
+      <p><strong>Expected:</strong> Potential race conditions in concurrent access (may not reproduce consistently — that's the insidious nature of race conditions)</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>Thread safety is invisible until it's not. FastAPI with uvicorn uses thread pools; without locks, the cache corrupts under load</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>What's a race condition?</li>
+        <li>How do you make Python data structures thread-safe?</li>
+        <li>What's the GIL and when doesn't it protect you?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/cache_utils.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-33" rows="3" onchange="saveNotes(33)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="2" data-nogap="false">
+  <div class="exercise-header" onclick="toggleCard(34)">
+    <input type="checkbox" id="ex-34" onchange="toggleCheck(34)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#34</span>
+    <span class="exercise-title">Remove Confidence Level Classification</span>
+    <span class="concept-badge">Risk Classification</span>
+    <span class="expand-icon" id="icon-34">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-34">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Without proper classification, every response is labeled HIGH confidence, masking hallucinations from monitoring</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/hallucination.py</code> (lines 178-183)</p>
+      <p>Replace the if/elif/else block to always return ConfidenceLevel.HIGH:</p>
+      <pre><code># Replace the classification logic with:
+return ConfidenceLevel.HIGH</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code># Send a query about something not in the knowledge base, check confidence level
+curl -X POST http://localhost:8000/chat -H "X-API-Key: $KEY" -H "Content-Type: application/json" -d '{"message": "Tell me about the underwater space station"}' | python -m json.tool</code></pre>
+      <p><strong>Expected:</strong> Even obviously hallucinated responses show confidence level "HIGH"</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>Classification turns a continuous score into an actionable signal. Without it, monitoring dashboards can't filter or alert on low-confidence responses</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>Why classify continuous scores into discrete levels?</li>
+        <li>How do you choose threshold boundaries?</li>
+        <li>What's the cost of false positives vs false negatives?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/hallucination.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-34" rows="3" onchange="saveNotes(34)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================== -->
+<!-- TIER 3: EXPERT (17 exercises) -->
+<!-- ============================================== -->
+<h2 id="tier3">Tier 3: Expert <span class="tier-label tier-3">Security Vulnerabilities &amp; Cascading Failures</span></h2>
+
+<div class="exercise-card" data-tier="3" data-nogap="false">
+  <div class="exercise-header" onclick="toggleCard(35)">
+    <input type="checkbox" id="ex-35" onchange="toggleCheck(35)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#35</span>
+    <span class="exercise-title">Remove the Final 401 Raise (Total Auth Bypass)</span>
+    <span class="concept-badge">Authentication Bypass</span>
+    <span class="expand-icon" id="icon-35">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-35">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Without the final 401 raise, unauthenticated requests fall through and are granted access as "anonymous"</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/auth_mixins.py</code> (line 57)</p>
+      <p>Comment out:</p>
+      <pre><code>raise HTTPException(status_code=401, detail="Invalid token or not authenticated")</code></pre>
+      <p>Replace with:</p>
+      <pre><code>return "anonymous"</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code>curl -X POST http://localhost:8000/chat -H "Content-Type: application/json" -d '{"message": "Hello"}' -v</code></pre>
+      <p><strong>Expected:</strong> Request succeeds with 200 instead of 401 — complete authentication bypass</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>The final raise is the safety net of the auth chain. Every auth check above it can fail; this line ensures that if ALL checks fail, access is denied. Removing it creates a total auth bypass.</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>What's the principle of "deny by default"?</li>
+        <li>How do you audit authentication chains?</li>
+        <li>What's the OWASP Broken Authentication category?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/auth_mixins.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-35" rows="3" onchange="saveNotes(35)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="3" data-nogap="false">
+  <div class="exercise-header" onclick="toggleCard(36)">
+    <input type="checkbox" id="ex-36" onchange="toggleCheck(36)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#36</span>
+    <span class="exercise-title">Remove Key Hash Verification</span>
+    <span class="concept-badge">Cryptographic Verification Bypass</span>
+    <span class="expand-icon" id="icon-36">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-36">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Without hash verification, any string starting with "mr_" is accepted as a valid API key</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/security.py</code> (lines 60-69)</p>
+      <p>Replace verify_key to skip hash comparison and always return "verified_user":</p>
+      <pre><code># Comment out the hash comparison logic
+# and replace with:
+return "verified_user"</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code>curl -X POST http://localhost:8000/chat -H "X-API-Key: mr_totally_fake_key" -H "Content-Type: application/json" -d '{"message": "Hello"}'</code></pre>
+      <p><strong>Expected:</strong> Fake API key accepted, request succeeds</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>Hash verification is the core of key authentication. The key is never stored in plain text — only its SHA-256 hash. Bypassing the hash check makes any key valid.</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>Why hash API keys before storage?</li>
+        <li>What's the difference between hashing and encryption for credentials?</li>
+        <li>What's a rainbow table attack?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/security.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-36" rows="3" onchange="saveNotes(36)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="3" data-nogap="false">
+  <div class="exercise-header" onclick="toggleCard(37)">
+    <input type="checkbox" id="ex-37" onchange="toggleCheck(37)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#37</span>
+    <span class="exercise-title">Remove Revoked Key Check</span>
+    <span class="concept-badge">Credential Revocation</span>
+    <span class="expand-icon" id="icon-37">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-37">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Without the is_active check, revoked API keys continue to authenticate successfully</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/security.py</code> (lines 77-79)</p>
+      <p>Comment out:</p>
+      <pre><code>if not row["is_active"]:
+    logger.warning(...)
+    return None</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code># Create a key, revoke it via admin API, then use it
+# The revoked key still authenticates successfully</code></pre>
+      <p><strong>Expected:</strong> Revoked key still works — no way to emergency-disable compromised credentials</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>Revocation is the incident response mechanism. When a key is compromised, you revoke it. Without the check, revocation is decorative — it updates the DB but has no effect.</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>How do you handle credential compromise?</li>
+        <li>What's a CRL in TLS?</li>
+        <li>How do you design for key revocation in distributed systems?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/security.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-37" rows="3" onchange="saveNotes(37)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="3" data-nogap="false">
+  <div class="exercise-header" onclick="toggleCard(38)">
+    <input type="checkbox" id="ex-38" onchange="toggleCheck(38)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#38</span>
+    <span class="exercise-title">Remove Rate Limiter Installation</span>
+    <span class="concept-badge">Rate Limiting / DoS Prevention</span>
+    <span class="expand-icon" id="icon-38">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-38">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Without rate limiting, there's no protection against request flooding. A single client can send unlimited requests.</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/main.py</code> (line 114)</p>
+      <p>Comment out:</p>
+      <pre><code>install_rate_limiter(app, settings)</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code>for i in $(seq 1 100); do curl -s -o /dev/null -w "%{http_code}\n" -X POST http://localhost:8000/chat -H "X-API-Key: $KEY" -H "Content-Type: application/json" -d '{"message": "test"}'; done</code></pre>
+      <p><strong>Expected:</strong> All 100 requests return 200. Without rate limiter, no 429 (Too Many Requests) responses</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>Rate limiting prevents abuse and protects backend resources. Without it, one client can exhaust LLM API quotas, database connections, and server memory.</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>What rate limiting algorithms exist (token bucket, sliding window, fixed window)?</li>
+        <li>Where should rate limiting be applied?</li>
+        <li>What's the difference between rate limiting and throttling?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/main.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-38" rows="3" onchange="saveNotes(38)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="3" data-nogap="false">
+  <div class="exercise-header" onclick="toggleCard(39)">
+    <input type="checkbox" id="ex-39" onchange="toggleCheck(39)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#39</span>
+    <span class="exercise-title">Remove JWT Expiration from Token Creation</span>
+    <span class="concept-badge">Token Expiration / Stateless Auth</span>
+    <span class="expand-icon" id="icon-39">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-39">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Without the "exp" claim, JWT tokens never expire. A stolen token grants permanent access.</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/auth.py</code> (lines 89-91)</p>
+      <p>Comment out:</p>
+      <pre><code>expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+to_encode.update({"exp": expire})</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code># Create a JWT, wait, use it — it will never expire
+# The token remains valid indefinitely</code></pre>
+      <p><strong>Expected:</strong> JWT tokens are valid forever, creating a permanent credential vulnerability</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>JWT expiration is the primary security mechanism for stateless tokens. Without it, there's no way to invalidate a JWT (there's no server-side session to destroy).</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>Why do JWTs need expiration?</li>
+        <li>What's the refresh token pattern?</li>
+        <li>How do you invalidate JWTs before expiration?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/auth.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-39" rows="3" onchange="saveNotes(39)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="3" data-nogap="true">
+  <div class="exercise-header" onclick="toggleCard(40)">
+    <input type="checkbox" id="ex-40" onchange="toggleCheck(40)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#40</span>
+    <span class="exercise-title">Remove SECRET_KEY Length Validation</span>
+    <span class="concept-badge">Secret Strength Enforcement</span>
+    <span class="expand-icon" id="icon-40">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-40">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Without length validation, weak secrets like "abc" are accepted, making JWT tokens trivially forgeable.</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/auth.py</code> (lines 74-79)</p>
+      <p>Comment out:</p>
+      <pre><code>if len(SECRET_KEY) < 32:
+    raise ValueError(...)</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code>uv run pytest tests/ -k "auth" -v</code></pre>
+      <p><strong>Expected:</strong> Tests that verify minimum key length fail. Weak secrets accepted at startup</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>A short JWT secret can be brute-forced. The 32-character minimum ensures sufficient entropy for HS256.</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>How many bits of entropy does HS256 need?</li>
+        <li>What's a brute-force attack on JWT?</li>
+        <li>Why is key length important for HMAC?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/auth.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-40" rows="3" onchange="saveNotes(40)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="3" data-nogap="true">
+  <div class="exercise-header" onclick="toggleCard(41)">
+    <input type="checkbox" id="ex-41" onchange="toggleCheck(41)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#41</span>
+    <span class="exercise-title">Remove Default Secret Rejection</span>
+    <span class="concept-badge">Secure Defaults</span>
+    <span class="expand-icon" id="icon-41">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-41">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Without this check, the default placeholder secret could be used in production, making all JWTs forgeable by anyone who reads the source code.</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/auth.py</code> (lines 68-72)</p>
+      <p>Comment out:</p>
+      <pre><code>if SECRET_KEY == "changeme-super-secret-key":
+    raise ValueError(...)</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code>MRC_JWT_SECRET_KEY="changeme-super-secret-key" uv run python -c "from app.auth import SECRET_KEY; print(SECRET_KEY)"</code></pre>
+      <p><strong>Expected:</strong> The placeholder secret is accepted instead of raising an error</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>Secure defaults mean the system refuses to start with known-insecure configuration. This is defense against copy-paste deployment.</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>What's the principle of secure defaults?</li>
+        <li>How do you prevent credential leakage in open-source projects?</li>
+        <li>What's secrets management?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/auth.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-41" rows="3" onchange="saveNotes(41)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="3" data-nogap="false">
+  <div class="exercise-header" onclick="toggleCard(42)">
+    <input type="checkbox" id="ex-42" onchange="toggleCheck(42)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#42</span>
+    <span class="exercise-title">Destroy the Agent Tool Loop</span>
+    <span class="concept-badge">Agent Loop / ReAct Pattern</span>
+    <span class="expand-icon" id="icon-42">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-42">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Without the tool execution block, the LLM can request tools but they never execute. Bookings, searches, and retrievals all silently fail.</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/main.py</code> (lines 189-215)</p>
+      <p>Comment out the entire block:</p>
+      <pre><code>if llm_resp.tool_calls:
+    # ... entire tool execution block</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code>curl -X POST http://localhost:8000/chat -H "X-API-Key: $KEY" -H "Content-Type: application/json" -d '{"message": "Book a room at Vampire Manor for Count Dracula"}'</code></pre>
+      <p><strong>Expected:</strong> LLM responds with intent to book but no actual booking is created. The response is the Phase 1 response only (no tool results, no Phase 2 synthesis)</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>The tool loop is the "Act" in ReAct (Reason-Act-Observe). Without it, the AI can reason but never act. It's the difference between a chatbot and an agent.</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>What's the ReAct pattern?</li>
+        <li>How do LLM agent loops work?</li>
+        <li>What's the difference between a chatbot and an agent?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/main.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-42" rows="3" onchange="saveNotes(42)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="3" data-nogap="false">
+  <div class="exercise-header" onclick="toggleCard(43)">
+    <input type="checkbox" id="ex-43" onchange="toggleCheck(43)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#43</span>
+    <span class="exercise-title">Remove Memory Persistence</span>
+    <span class="concept-badge">State Persistence</span>
+    <span class="expand-icon" id="icon-43">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-43">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Without saving messages, the conversation has no memory between requests. Each request is independent.</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/main.py</code> (lines 267-268)</p>
+      <p>Comment out:</p>
+      <pre><code>memory.add_message(session_id, "user", user_text)
+memory.add_message(session_id, "assistant", response_data["message"])</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code># Send "My name is Dracula" then "What's my name?" in the same session
+# The AI cannot remember the name because messages aren't stored</code></pre>
+      <p><strong>Expected:</strong> AI can't remember the name because messages aren't stored between requests</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>Stateless HTTP + persistent storage = stateful conversations. Without the storage step, you lose the state bridge between requests.</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>How do stateless protocols maintain state?</li>
+        <li>What's the difference between session and request scope?</li>
+        <li>How do you design for horizontal scaling with stateful conversations?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/main.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-43" rows="3" onchange="saveNotes(43)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="3" data-nogap="false">
+  <div class="exercise-header" onclick="toggleCard(44)">
+    <input type="checkbox" id="ex-44" onchange="toggleCheck(44)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#44</span>
+    <span class="exercise-title">Remove Hallucination Detection</span>
+    <span class="concept-badge">Observability / Quality Monitoring</span>
+    <span class="expand-icon" id="icon-44">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-44">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Without hallucination detection, responses have no confidence scores. You lose the ability to detect quality degradation.</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/main.py</code> (lines 224-226 in tool branch, lines 239-242 in no-tool branch)</p>
+      <p>Comment out all confidence scoring calls:</p>
+      <pre><code>confidence = detector.score_response(...)</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code># Send queries and check that response has no "confidence" field
+curl -X POST http://localhost:8000/chat -H "X-API-Key: $KEY" -H "Content-Type: application/json" -d '{"message": "Tell me about the resort"}' | python3 -m json.tool</code></pre>
+      <p><strong>Expected:</strong> Responses work fine but have no confidence metadata — you're blind to quality</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>Hallucination detection is the quality monitoring layer. Without it, the system works but you can't tell good responses from bad ones.</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>How do you monitor LLM response quality in production?</li>
+        <li>What's the difference between online and offline evaluation?</li>
+        <li>How would you alert on quality degradation?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/main.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-44" rows="3" onchange="saveNotes(44)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="3" data-nogap="false">
+  <div class="exercise-header" onclick="toggleCard(45)">
+    <input type="checkbox" id="ex-45" onchange="toggleCheck(45)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#45</span>
+    <span class="exercise-title">Remove Validate Message Call</span>
+    <span class="concept-badge">Input Validation Gate</span>
+    <span class="expand-icon" id="icon-45">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-45">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Without validation, any input passes through — SQL injection, XSS, empty strings, 100MB messages.</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/main.py</code> (line 141)</p>
+      <p>Comment out:</p>
+      <pre><code>text = validate_message(user_text)</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code>curl -X POST http://localhost:8000/chat -H "X-API-Key: $KEY" -H "Content-Type: application/json" -d '{"message": "<script>alert(1)</script>"}'</code></pre>
+      <p><strong>Expected:</strong> Malicious input is accepted and processed by the LLM</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>The validate_message call is the single entry point for all input validation. Removing it removes ALL input security in one line.</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>Why validate at the boundary?</li>
+        <li>What's the difference between validation and sanitization?</li>
+        <li>What's the OWASP input validation cheat sheet?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/main.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-45" rows="3" onchange="saveNotes(45)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="3" data-nogap="false">
+  <div class="exercise-header" onclick="toggleCard(46)">
+    <input type="checkbox" id="ex-46" onchange="toggleCheck(46)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#46</span>
+    <span class="exercise-title">Remove Knowledge Ingestion at Startup</span>
+    <span class="concept-badge">Data Pipeline / ETL</span>
+    <span class="expand-icon" id="icon-46">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-46">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Without ingestion, the RAG knowledge base is empty. The concierge knows nothing about the resort.</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/main.py</code> (lines 280-283)</p>
+      <p>Comment out the entire knowledge ingestion block:</p>
+      <pre><code># Comment out the entire knowledge ingestion block at startup</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code># Start the server and ask about resort amenities
+curl -X POST http://localhost:8000/chat -H "X-API-Key: $KEY" -H "Content-Type: application/json" -d '{"message": "What amenities does the resort have?"}'</code></pre>
+      <p><strong>Expected:</strong> "I do not have specific details on that in our records" for everything — the AI has no knowledge to reference</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>The RAG pipeline has two phases: ingest (offline/startup) and query (runtime). Without ingestion, there's nothing to query.</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>What's ETL?</li>
+        <li>When should you ingest data — at startup, on schedule, or on demand?</li>
+        <li>How do you handle ingestion failures?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/main.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-46" rows="3" onchange="saveNotes(46)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="3" data-nogap="false">
+  <div class="exercise-header" onclick="toggleCard(47)">
+    <input type="checkbox" id="ex-47" onchange="toggleCheck(47)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#47</span>
+    <span class="exercise-title">Remove Session ID Generation Fallback</span>
+    <span class="concept-badge">Identifier Generation</span>
+    <span class="expand-icon" id="icon-47">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-47">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Without the UUID fallback, requests without a session_id get None, causing database errors when trying to store messages.</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/main.py</code> (line 262)</p>
+      <p>Change:</p>
+      <pre><code>session_id = payload.get("session_id") or str(uuid.uuid4())</code></pre>
+      <p>To:</p>
+      <pre><code>session_id = payload.get("session_id")</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code>curl -X POST http://localhost:8000/chat -H "X-API-Key: $KEY" -H "Content-Type: application/json" -d '{"message": "Hello"}'</code></pre>
+      <p><strong>Expected:</strong> Error when session_id is None and the system tries to use it as a database key</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>Auto-generating identifiers is the "convention over configuration" pattern. Clients shouldn't need to manage session IDs.</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>When should servers generate IDs vs clients?</li>
+        <li>What are UUID collision probabilities?</li>
+        <li>What's the difference between UUID v4 and v7?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/main.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-47" rows="3" onchange="saveNotes(47)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="3" data-nogap="false">
+  <div class="exercise-header" onclick="toggleCard(48)">
+    <input type="checkbox" id="ex-48" onchange="toggleCheck(48)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#48</span>
+    <span class="exercise-title">Remove Provider Logging in ModelRouter</span>
+    <span class="concept-badge">Operational Visibility</span>
+    <span class="expand-icon" id="icon-48">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-48">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Without logging, you can't see which provider was tried, which succeeded, or which failed. Debugging production issues becomes guesswork.</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/llm_providers.py</code> (lines 384, 386, 390)</p>
+      <p>Comment out all logger calls in ModelRouter.chat:</p>
+      <pre><code>logger.info(...)
+logger.warning(...)</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code># Send a request and check server logs
+# No log entries about LLM provider selection or failure</code></pre>
+      <p><strong>Expected:</strong> No log entries about LLM provider selection or failure — silent operation</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>Logging is the minimum viable observability. Without it, you're debugging by reading tea leaves.</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>What's structured logging?</li>
+        <li>What log levels should you use and when?</li>
+        <li>How do you balance logging detail with performance?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/llm_providers.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-48" rows="3" onchange="saveNotes(48)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="3" data-nogap="false">
+  <div class="exercise-header" onclick="toggleCard(49)">
+    <input type="checkbox" id="ex-49" onchange="toggleCheck(49)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#49</span>
+    <span class="exercise-title">Remove Database Error Wrapping</span>
+    <span class="concept-badge">Error Abstraction</span>
+    <span class="expand-icon" id="icon-49">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-49">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Without error wrapping, raw sqlite3 errors leak to callers, breaking the abstraction layer.</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/database.py</code> (lines 81-83)</p>
+      <p>Comment out the except block that wraps errors:</p>
+      <pre><code>except sqlite3.Error as e:
+    raise DatabaseError(f"...context...") from e</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code># Trigger a database error (e.g., violate a unique constraint)
+# Observe raw sqlite3 error instead of wrapped DatabaseError</code></pre>
+      <p><strong>Expected:</strong> Raw sqlite3.IntegrityError instead of DatabaseError with context message</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>Error wrapping creates clean abstraction boundaries. Callers should handle DatabaseError, not sqlite3-specific exceptions.</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>Why wrap errors at abstraction boundaries?</li>
+        <li>What's the difference between checked and unchecked exceptions?</li>
+        <li>How do you design error hierarchies?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/database.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-49" rows="3" onchange="saveNotes(49)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="3" data-nogap="false">
+  <div class="exercise-header" onclick="toggleCard(50)">
+    <input type="checkbox" id="ex-50" onchange="toggleCheck(50)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#50</span>
+    <span class="exercise-title">Remove Schema Migration Version Tracking</span>
+    <span class="concept-badge">Database Migrations</span>
+    <span class="expand-icon" id="icon-50">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-50">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Without version tracking, the system can't detect when schemas need upgrading. Old databases run with stale schemas.</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/database.py</code> (lines 98-109)</p>
+      <p>Comment out the schema_migrations version check and update:</p>
+      <pre><code># Comment out the entire schema version check and update block</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code># Check that schema_migrations table isn't updated on startup
+# The system has no way to know if the DB is up to date</code></pre>
+      <p><strong>Expected:</strong> No schema version recorded — the system has no way to know if the DB is up to date</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>Schema migrations are how production databases evolve safely. Without version tracking, deployments can silently break on schema mismatches.</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>What are database migrations?</li>
+        <li>What tools exist (Alembic, Flyway, Prisma)?</li>
+        <li>How do you handle backwards-compatible schema changes?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/database.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-50" rows="3" onchange="saveNotes(50)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="3" data-nogap="false">
+  <div class="exercise-header" onclick="toggleCard(51)">
+    <input type="checkbox" id="ex-51" onchange="toggleCheck(51)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#51</span>
+    <span class="exercise-title">Remove AdvancedRAG Reranker Lazy Loading</span>
+    <span class="concept-badge">Lazy Initialization</span>
+    <span class="expand-icon" id="icon-51">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-51">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Without the guard, every search loads a new CrossEncoder model (several hundred MB), causing massive memory usage and slow responses.</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/advanced_rag.py</code> (lines 68-71)</p>
+      <p>Change <code>_load_reranker</code> to always recreate the CrossEncoder (remove the <code>if self.reranker is None</code> guard):</p>
+      <pre><code># Remove the guard so it always creates a new instance:
+# if self.reranker is None:   # <-- remove this check
+self.reranker = CrossEncoder(...)</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code># Monitor memory usage while sending multiple queries
+# Memory spikes with each query as new model instances are loaded</code></pre>
+      <p><strong>Expected:</strong> Memory spikes with each query as new model instances are loaded</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>Lazy loading + singleton pattern prevents expensive resources from being created multiple times. ML models should be loaded once and reused.</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>What's lazy initialization?</li>
+        <li>When is it appropriate?</li>
+        <li>What's the memory impact of loading ML models multiple times?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/advanced_rag.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-51" rows="3" onchange="saveNotes(51)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================== -->
+<!-- TIER 4: RESEARCH (16 exercises) -->
+<!-- ============================================== -->
+<h2 id="tier4">Tier 4: Research <span class="tier-label tier-4">Algorithm Modifications &amp; A/B Comparisons</span></h2>
+
+<div class="exercise-card" data-tier="4" data-nogap="false">
+  <div class="exercise-header" onclick="toggleCard(52)">
+    <input type="checkbox" id="ex-52" onchange="toggleCheck(52)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#52</span>
+    <span class="exercise-title">Rebalance Confidence Weights to Equal</span>
+    <span class="concept-badge">Signal Weight Optimization</span>
+    <span class="expand-icon" id="icon-52">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-52">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Equal weighting reduces semantic dominance. Responses where overlap is high but semantics are low will score higher than before.</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/hallucination.py</code> (line 176)</p>
+      <p>Comment out or modify:</p>
+      <pre><code>overall = 0.3 * overlap + 0.5 * semantic + 0.2 * attribution</code></pre>
+      <p>Replace with:</p>
+      <pre><code>overall = 0.33 * overlap + 0.34 * semantic + 0.33 * attribution</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code>Send multiple queries, compare confidence scores before and after the change</code></pre>
+      <p><strong>Expected:</strong> Confidence distribution shifts — responses with good keyword overlap but mediocre semantic match score higher</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>Weight tuning is a hyperparameter optimization problem. The 30/50/20 split was chosen to prioritize semantic understanding; equal weights test whether that prioritization matters.</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>How do you tune multi-signal weights?</li>
+        <li>What's grid search vs Bayesian optimization?</li>
+        <li>How would you A/B test scoring weight changes?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/hallucination.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-52" rows="3" onchange="saveNotes(52)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="4" data-nogap="false">
+  <div class="exercise-header" onclick="toggleCard(53)">
+    <input type="checkbox" id="ex-53" onchange="toggleCheck(53)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#53</span>
+    <span class="exercise-title">Increase Hallucination Thresholds</span>
+    <span class="concept-badge">Threshold Sensitivity Analysis</span>
+    <span class="expand-icon" id="icon-53">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-53">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>With stricter thresholds (0.9/0.7), almost everything is classified LOW. The system becomes overly paranoid.</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/hallucination.py</code> (lines 70-75)</p>
+      <p>Comment out or modify:</p>
+      <pre><code>high_threshold: float = 0.7
+medium_threshold: float = 0.4</code></pre>
+      <p>Replace with:</p>
+      <pre><code>high_threshold: float = 0.9
+medium_threshold: float = 0.7</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code>Send queries and examine confidence levels — most should now be LOW or MEDIUM</code></pre>
+      <p><strong>Expected:</strong> Even good responses with 0.75 confidence are now classified as MEDIUM instead of HIGH</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>Threshold tuning directly impacts user experience and trust. Too strict = every response gets a warning; too loose = hallucinations pass undetected.</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>How do you determine optimal thresholds?</li>
+        <li>What's the precision-recall tradeoff for classification boundaries?</li>
+        <li>How do you handle threshold drift over time?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/hallucination.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-53" rows="3" onchange="saveNotes(53)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="4" data-nogap="false">
+  <div class="exercise-header" onclick="toggleCard(54)">
+    <input type="checkbox" id="ex-54" onchange="toggleCheck(54)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#54</span>
+    <span class="exercise-title">Remove Epsilon from Cosine Similarity</span>
+    <span class="concept-badge">Numerical Stability</span>
+    <span class="expand-icon" id="icon-54">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-54">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Without the epsilon (1e-10), a zero-length vector causes division by zero (NaN or Inf), breaking the entire confidence calculation.</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/hallucination.py</code> (line 127)</p>
+      <p>Comment out or modify:</p>
+      <pre><code>/ (np.linalg.norm(resp_emb) * np.linalg.norm(emb) + 1e-10)</code></pre>
+      <p>Replace with:</p>
+      <pre><code>/ (np.linalg.norm(resp_emb) * np.linalg.norm(emb))</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code>Send an empty or very short query that might produce a near-zero embedding</code></pre>
+      <p><strong>Expected:</strong> Potential NaN or Inf in similarity scores that propagate through the confidence calculation</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>The epsilon is a numerical stability guard. In production ML systems, edge cases with zero vectors happen more than you'd expect.</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>What is numerical stability?</li>
+        <li>Where do you need epsilon guards in ML?</li>
+        <li>What's the difference between float32 and float64 precision issues?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/hallucination.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-54" rows="3" onchange="saveNotes(54)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="4" data-nogap="false">
+  <div class="exercise-header" onclick="toggleCard(55)">
+    <input type="checkbox" id="ex-55" onchange="toggleCheck(55)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#55</span>
+    <span class="exercise-title">Change RRF Constant k from 60 to 1</span>
+    <span class="concept-badge">RRF Hyperparameter Tuning</span>
+    <span class="expand-icon" id="icon-55">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-55">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>With k=1, the RRF formula <code>1/(k+rank)</code> becomes <code>1/(1+rank)</code>, making top-ranked results dominate much more aggressively. Result diversity drops.</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/advanced_rag.py</code> (line 259)</p>
+      <p>Comment out or modify:</p>
+      <pre><code>bm25_results, dense_results, k=60, bm25_weight=bm25_weight</code></pre>
+      <p>Replace with:</p>
+      <pre><code>bm25_results, dense_results, k=1, bm25_weight=bm25_weight</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code>Send queries and examine search result diversity</code></pre>
+      <p><strong>Expected:</strong> Search results become dominated by the #1 result from each method, with later results contributing almost nothing</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>The RRF constant k controls how much rank position matters. k=60 is the standard because it balances top results with diversity. k=1 creates extreme top-heaviness.</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>What role does the k parameter play in RRF?</li>
+        <li>How does k affect result diversity?</li>
+        <li>What's the original RRF paper's recommendation?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/advanced_rag.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-55" rows="3" onchange="saveNotes(55)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="4" data-nogap="false">
+  <div class="exercise-header" onclick="toggleCard(56)">
+    <input type="checkbox" id="ex-56" onchange="toggleCheck(56)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#56</span>
+    <span class="exercise-title">Swap BM25 and Dense Weights in RRF</span>
+    <span class="concept-badge">Hybrid Search Balance</span>
+    <span class="expand-icon" id="icon-56">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-56">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>With 80% BM25 weight, keyword matching dominates over semantic. Queries that require understanding meaning (not just keywords) will return worse results.</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/advanced_rag.py</code> (line 237)</p>
+      <p>Comment out or modify:</p>
+      <pre><code>bm25_weight: float = 0.4,</code></pre>
+      <p>Replace with:</p>
+      <pre><code>bm25_weight: float = 0.8,</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code>Send a semantically complex query like "Where can I relax after a long journey?" vs a keyword query like "Vampire Manor"</code></pre>
+      <p><strong>Expected:</strong> Keyword queries improve, semantic queries degrade. The system biases toward exact word matching</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>The BM25/dense balance is a fundamental retrieval design decision. Different use cases need different balances.</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>When would you weight BM25 higher than dense?</li>
+        <li>How does query type affect optimal weights?</li>
+        <li>What's a hybrid search tune-up process?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/advanced_rag.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-56" rows="3" onchange="saveNotes(56)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="4" data-nogap="false">
+  <div class="exercise-header" onclick="toggleCard(57)">
+    <input type="checkbox" id="ex-57" onchange="toggleCheck(57)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#57</span>
+    <span class="exercise-title">Disable LLM Fallback Chain</span>
+    <span class="concept-badge">Resilience Pattern</span>
+    <span class="expand-icon" id="icon-57">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-57">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>With fallback disabled, the first provider failure terminates the request. No retry, no alternative providers.</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/llm_providers.py</code> (line 372)</p>
+      <p>Comment out or modify:</p>
+      <pre><code>self.fallback_enabled = fallback_enabled</code></pre>
+      <p>Replace with:</p>
+      <pre><code>self.fallback_enabled = False</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code>Set an invalid OpenAI key, configure multiple providers, send a request</code></pre>
+      <p><strong>Expected:</strong> Immediate failure even though backup providers are available</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>Fallback chains are the simplest resilience pattern. Disabling them tests whether your primary provider is reliable enough to stand alone (spoiler: no provider is).</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>What resilience patterns exist (retry, fallback, circuit breaker, bulkhead)?</li>
+        <li>When should you NOT retry?</li>
+        <li>What's exponential backoff?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/llm_providers.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-57" rows="3" onchange="saveNotes(57)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="4" data-nogap="false">
+  <div class="exercise-header" onclick="toggleCard(58)">
+    <input type="checkbox" id="ex-58" onchange="toggleCheck(58)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#58</span>
+    <span class="exercise-title">Change Summarization Threshold from 12 to 2</span>
+    <span class="concept-badge">Batch Size Tuning</span>
+    <span class="expand-icon" id="icon-58">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-58">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>With threshold at 2, summarization runs after every 2 messages, causing extremely frequent LLM calls and aggressive context compression.</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/memory.py</code> (line 14)</p>
+      <p>Comment out or modify:</p>
+      <pre><code>max_messages_before_summary: int = 12</code></pre>
+      <p>Replace with:</p>
+      <pre><code>max_messages_before_summary: int = 2</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code>Send 4 messages and check how many summarization calls occur in logs</code></pre>
+      <p><strong>Expected:</strong> 2 summarization calls for 4 messages (every 2 messages triggers summarize + delete). Early conversation context is lost almost immediately</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>The batch threshold balances context retention against cost. Too low = expensive and lossy; too high = context overflow and stale summaries.</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>How do you choose summarization frequency?</li>
+        <li>What's the tradeoff between context length and summarization loss?</li>
+        <li>How does this affect LLM costs?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/memory.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-58" rows="3" onchange="saveNotes(58)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="4" data-nogap="false">
+  <div class="exercise-header" onclick="toggleCard(59)">
+    <input type="checkbox" id="ex-59" onchange="toggleCheck(59)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#59</span>
+    <span class="exercise-title">Remove LLM Summarization, Keep Only Cheap Summary</span>
+    <span class="concept-badge">Feature Degradation Analysis</span>
+    <span class="expand-icon" id="icon-59">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-59">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Without LLM summarization, only the regex-based _cheap_summary is used. Summary quality drops dramatically for complex conversations.</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/memory.py</code> (lines 91-114)</p>
+      <p>Comment out the entire OpenAI summarization block:</p>
+      <pre><code>            if openai and openai_api_key:
+                try:
+                    client = openai.OpenAI(api_key=openai_api_key)
+                    prompt = (
+                        "Summarize the following conversation for context retention. "
+                        "Be concise and capture key facts, requests, and names.\n\n"
+                        + "\n".join(lines)
+                    )
+                    resp = client.chat.completions.create(
+                        model=model,
+                        messages=[
+                            {
+                                "role": "system",
+                                "content": "You are a helpful assistant.",
+                            },
+                            {"role": "user", "content": prompt},
+                        ],
+                        max_tokens=128,
+                        temperature=0.2,
+                    )
+                    summary = resp.choices[0].message.content.strip()
+                except Exception as e:
+                    logging.error(f"LLM summarization failed: {e}")
+                    summary = None</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code>Have a multi-topic conversation (booking + amenities + cancellation) and examine the stored summary</code></pre>
+      <p><strong>Expected:</strong> Summary is just "Intents: booking. Mentioned: Count, Vampire, Manor" instead of a coherent narrative</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>The LLM summary captures nuance; the cheap summary captures only keywords and intents. This tests whether the expensive feature justifies its cost.</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>How do you evaluate summarization quality?</li>
+        <li>What's ROUGE score?</li>
+        <li>When is regex-based extraction good enough?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/memory.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-59" rows="3" onchange="saveNotes(59)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="4" data-nogap="false">
+  <div class="exercise-header" onclick="toggleCard(60)">
+    <input type="checkbox" id="ex-60" onchange="toggleCheck(60)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#60</span>
+    <span class="exercise-title">Remove Cache Size Limit (LRU Eviction)</span>
+    <span class="concept-badge">Memory Bounded Data Structures</span>
+    <span class="expand-icon" id="icon-60">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-60">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Without the size limit, the cache grows unbounded, eventually consuming all available memory under sustained load.</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/cache_utils.py</code> (lines 37-38)</p>
+      <p>Comment out:</p>
+      <pre><code>            if len(self._cache) > self._maxsize:
+                self._cache.popitem(last=False)</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code>Run a load test sending many unique queries and monitor memory usage</code></pre>
+      <p><strong>Expected:</strong> Memory grows linearly with unique queries, never plateaus</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>Every cache needs a size limit. Without one, the cache IS the memory leak. LRU eviction ensures bounded memory at the cost of occasional cache misses.</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>What's LRU eviction?</li>
+        <li>How do you size a cache?</li>
+        <li>What's the difference between LRU, LFU, and FIFO eviction?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/cache_utils.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-60" rows="3" onchange="saveNotes(60)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="4" data-nogap="false">
+  <div class="exercise-header" onclick="toggleCard(61)">
+    <input type="checkbox" id="ex-61" onchange="toggleCheck(61)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#61</span>
+    <span class="exercise-title">Remove Cache Key Hashing</span>
+    <span class="concept-badge">Key Space Management</span>
+    <span class="expand-icon" id="icon-61">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-61">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Without MD5 hashing, cache keys are the full raw string. Long queries create very long keys, increasing memory usage and potentially hitting Python dict key limits.</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/cache_utils.py</code> (line 51)</p>
+      <p>Comment out or modify:</p>
+      <pre><code>return hashlib.md5(raw.encode()).hexdigest()</code></pre>
+      <p>Replace with:</p>
+      <pre><code>return raw</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code>Send a very long query (near 5000 chars) and check cache behavior</code></pre>
+      <p><strong>Expected:</strong> Cache keys become extremely long strings instead of fixed-length 32-char hashes. Works but wastes memory</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>Hashing normalizes key length, ensures hashability, and reduces memory overhead. It's a standard pattern for cache key management.</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>Why hash cache keys?</li>
+        <li>What are the collision risks of MD5 for cache keys?</li>
+        <li>When does key length matter?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/cache_utils.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-61" rows="3" onchange="saveNotes(61)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="4" data-nogap="false">
+  <div class="exercise-header" onclick="toggleCard(62)">
+    <input type="checkbox" id="ex-62" onchange="toggleCheck(62)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#62</span>
+    <span class="exercise-title">Remove Config Environment Validation</span>
+    <span class="concept-badge">Configuration Validation</span>
+    <span class="expand-icon" id="icon-62">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-62">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Without validation, typos like "prodd" or "staging2" are accepted, potentially causing misconfigured behavior downstream.</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/config.py</code> (lines 79-85)</p>
+      <p>Comment out the <code>validate_environment</code> field_validator:</p>
+      <pre><code>    @field_validator("environment")
+    @classmethod
+    def validate_environment(cls, v):
+        allowed = ["dev", "staging", "prod", "production"]
+        if v not in allowed:
+            raise ValueError(f"Invalid environment: {v}. Must be one of {allowed}")
+        return v</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code>MRC_ENVIRONMENT=prodd uv run python -c "from app.config import get_settings; print(get_settings().environment)"</code></pre>
+      <p><strong>Expected:</strong> "prodd" accepted instead of raising ValueError — the app runs with an invalid environment name</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>Configuration validation catches errors at startup rather than at runtime. A typo in "prod" vs "prodd" could mean missing security features.</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>When should you validate configuration?</li>
+        <li>What's the fail-fast principle?</li>
+        <li>How do you handle configuration in different environments?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/config.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-62" rows="3" onchange="saveNotes(62)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="4" data-nogap="false">
+  <div class="exercise-header" onclick="toggleCard(63)">
+    <input type="checkbox" id="ex-63" onchange="toggleCheck(63)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#63</span>
+    <span class="exercise-title">Remove OpenAI Key Production Validation</span>
+    <span class="concept-badge">Environment-Specific Validation</span>
+    <span class="expand-icon" id="icon-63">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-63">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Without validation, production can start with no API key or the placeholder "sk-...", causing runtime failures on first chat request instead of startup.</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/config.py</code> (lines 106-114)</p>
+      <p>Comment out the <code>validate_openai_api_key</code> field_validator:</p>
+      <pre><code>    @field_validator("openai_api_key", mode="before")
+    @classmethod
+    def validate_openai_api_key(cls, v, info):
+        env = info.data.get("environment", "dev")
+        if env in ["prod", "production", "staging"] and (not v or v == "sk-..."):
+            raise ValueError(
+                "OPENAI_API_KEY must be set in production/staging environments."
+            )
+        return v</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code>MRC_ENVIRONMENT=prod MRC_OPENAI_API_KEY="sk-..." uv run python -c "from app.config import get_settings; print('started ok')"</code></pre>
+      <p><strong>Expected:</strong> App starts successfully with placeholder key, fails only when first user sends a message</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>Fail-fast validation catches misconfiguration at deploy time. Without it, the first user hits the error — the worst possible time to discover a config issue.</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>What's fail-fast?</li>
+        <li>Why validate differently per environment?</li>
+        <li>How do you test production-like config in staging?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/config.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-63" rows="3" onchange="saveNotes(63)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="4" data-nogap="false">
+  <div class="exercise-header" onclick="toggleCard(64)">
+    <input type="checkbox" id="ex-64" onchange="toggleCheck(64)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#64</span>
+    <span class="exercise-title">Change Sentence Split Regex</span>
+    <span class="concept-badge">Text Segmentation</span>
+    <span class="expand-icon" id="icon-64">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-64">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Using simple ". " split instead of regex handles fewer edge cases — exclamation marks, question marks, and multiple spaces break the split.</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/hallucination.py</code> (line 64)</p>
+      <p>Comment out or modify:</p>
+      <pre><code>sentences = re.split(r"(?&lt;=[.!?])\s+", text.strip())</code></pre>
+      <p>Replace with:</p>
+      <pre><code>sentences = text.strip().split(". ")</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code>Send a response with "Amazing! What a stay? Truly wonderful." and check if it splits into 3 sentences</code></pre>
+      <p><strong>Expected:</strong> Only splits on ". " — "Amazing! What a stay? Truly wonderful" becomes one sentence instead of three</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>Text segmentation quality directly affects downstream NLP tasks. The regex handles .!? terminators; the naive split only handles periods.</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>What are common sentence boundary challenges?</li>
+        <li>How does sentence segmentation affect NLP pipelines?</li>
+        <li>What's the Punkt tokenizer?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/hallucination.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-64" rows="3" onchange="saveNotes(64)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="4" data-nogap="false">
+  <div class="exercise-header" onclick="toggleCard(65)">
+    <input type="checkbox" id="ex-65" onchange="toggleCheck(65)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#65</span>
+    <span class="exercise-title">Remove MLflow Enabled Guard</span>
+    <span class="concept-badge">Feature Flags / Graceful Degradation</span>
+    <span class="expand-icon" id="icon-65">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-65">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Without the guard, disabled MLflow tries to connect to the tracking server, causing connection errors that may slow down or crash the app.</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/mlflow_tracking.py</code> (find the <code>if not self.enabled: return</code> guards)</p>
+      <p>Comment out the early return when disabled in each method:</p>
+      <pre><code>        if not self.enabled:
+            return</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code>Set MRC_MLFLOW_ENABLED=false and send a chat request, check for connection errors</code></pre>
+      <p><strong>Expected:</strong> Connection refused errors to localhost:5000 (MLflow server) logged on every request</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>Feature flags should completely bypass the feature, not just skip the final step. The guard prevents any MLflow API calls when disabled.</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>What are feature flags?</li>
+        <li>How do you implement graceful degradation?</li>
+        <li>What's the difference between a feature flag and a circuit breaker?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/mlflow_tracking.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-65" rows="3" onchange="saveNotes(65)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="4" data-nogap="false">
+  <div class="exercise-header" onclick="toggleCard(66)">
+    <input type="checkbox" id="ex-66" onchange="toggleCheck(66)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#66</span>
+    <span class="exercise-title">Remove Tool Execution Error Handling</span>
+    <span class="concept-badge">Error Boundary</span>
+    <span class="expand-icon" id="icon-66">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-66">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Without the catch, tool failures crash the entire agent loop instead of returning a structured error that the LLM can reason about.</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/tools.py</code> (lines 167-180)</p>
+      <p>Comment out the except block in async_execute_with_timing:</p>
+      <pre><code>        except Exception as e:
+            elapsed_ms = round((time() - start) * 1000, 2)
+
+            logger.exception(
+                "tool_execution_failed",
+                extra={
+                    "tool": name,
+                    "request_id": request_id,
+                    "elapsed_ms": elapsed_ms,
+                    "error": str(e),
+                },
+            )
+
+            return {"ok": False, "error": str(e), "request_id": request_id}</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code>Trigger a tool error (e.g., invalid booking data) and observe behavior</code></pre>
+      <p><strong>Expected:</strong> Unhandled exception crashes the request instead of returning {"ok": false, "error": "..."}</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>Error boundaries define blast radius. The tool registry's error handling ensures one tool failure doesn't kill the entire conversation.</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>What's an error boundary?</li>
+        <li>How do error boundaries differ in sync vs async code?</li>
+        <li>How does error shape affect LLM agent behavior?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/tools.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-66" rows="3" onchange="saveNotes(66)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="exercise-card" data-tier="4" data-nogap="false">
+  <div class="exercise-header" onclick="toggleCard(67)">
+    <input type="checkbox" id="ex-67" onchange="toggleCheck(67)" onclick="event.stopPropagation()">
+    <span class="exercise-number">#67</span>
+    <span class="exercise-title">Remove Clean Kwargs Colon Stripping</span>
+    <span class="concept-badge">Input Normalization / Defensive Parsing</span>
+    <span class="expand-icon" id="icon-67">&#9654;</span>
+  </div>
+  <div class="exercise-body" id="body-67">
+    <div class="panel hypothesis">
+      <div class="panel-label">HYPOTHESIS</div>
+      <p>Without colon stripping, if the LLM generates argument names with trailing colons (e.g., "guest_name:"), the tool function receives unexpected keyword arguments.</p>
+    </div>
+    <div class="panel action">
+      <div class="panel-label">ACTION</div>
+      <p><strong>File:</strong> <code>app/tools.py</code> (line 144)</p>
+      <p>Comment out:</p>
+      <pre><code>clean_kwargs = {k.rstrip(":"): v for k, v in kwargs.items()}</code></pre>
+      <p>Replace with:</p>
+      <pre><code>clean_kwargs = kwargs</code></pre>
+    </div>
+    <div class="panel observe">
+      <div class="panel-label">VERIFY</div>
+      <pre><code>This is defensive against LLM output quirks — test by manually calling with colon-suffixed keys</code></pre>
+      <p><strong>Expected:</strong> TypeError: got an unexpected keyword argument 'guest_name:'</p>
+    </div>
+    <div class="panel why">
+      <div class="panel-label">WHY IT MATTERS</div>
+      <p>LLMs sometimes produce slightly malformed JSON. Defensive parsing handles these edge cases rather than crashing.</p>
+    </div>
+    <div class="panel interview">
+      <div class="panel-label">INTERVIEW PREP</div>
+      <ul>
+        <li>What defensive parsing patterns exist for LLM output?</li>
+        <li>How do you handle malformed tool call arguments?</li>
+        <li>What's the robustness principle (Postel's Law)?</li>
+      </ul>
+    </div>
+    <div class="panel recovery">
+      <div class="panel-label">RECOVERY</div>
+      <pre><code>git checkout -- app/tools.py</code></pre>
+    </div>
+    <div class="notes-section">
+      <label>Your Notes:</label>
+      <textarea id="notes-67" rows="3" onchange="saveNotes(67)" placeholder="What did you observe?"></textarea>
+    </div>
+  </div>
+</div>
+
+</div><!-- end exercisesContainer -->
+
+<!-- ============================================== -->
+<!-- TEST GAP ANALYSIS -->
+<!-- ============================================== -->
+<h2 id="testgaps">Test Gap Analysis</h2>
+<div class="info-panel">
+  <strong>Exercises where no existing test catches the breakage</strong>
+  <p>These represent real coverage gaps in the test suite. Filling them would be excellent portfolio additions.</p>
+</div>
+<table id="testGapTable">
+  <thead><tr><th>#</th><th>Exercise</th><th>File</th><th>Gap Description</th></tr></thead>
+  <tbody id="testGapBody"></tbody>
+</table>
+
+<!-- ============================================== -->
+<!-- JAVASCRIPT ENGINE -->
+<!-- ============================================== -->
+<script>
+const STORAGE_KEY = 'mrc_destruction_lab_v2';
+
+function getState() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
+  catch { return {}; }
+}
+function saveState(s) { localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); }
+
+function updateProgress() {
+  const state = getState();
+  const done = Object.keys(state).filter(k => k.startsWith('ex_') && state[k]).length;
+  const total = document.querySelectorAll('.ex-card').length;
+  document.getElementById('progressText').textContent = done + ' / ' + total;
+  document.getElementById('progressFill').style.width = (total ? (done/total*100) : 0) + '%';
+  // Update card styling
+  document.querySelectorAll('.ex-card').forEach(card => {
+    const id = card.dataset.id;
+    if (state['ex_' + id]) {
+      card.classList.add('completed');
+      card.querySelector('.ex-check').classList.add('checked');
+      card.querySelector('.ex-check').innerHTML = '&#10003;';
+    } else {
+      card.classList.remove('completed');
+      card.querySelector('.ex-check').classList.remove('checked');
+      card.querySelector('.ex-check').innerHTML = '';
+    }
+  });
+}
+
+function toggleCheck(id, ev) {
+  ev.stopPropagation();
+  const state = getState();
+  state['ex_' + id] = !state['ex_' + id];
+  saveState(state);
+  updateProgress();
+}
+
+function toggleCard(header) {
+  const body = header.nextElementSibling;
+  body.classList.toggle('open');
+  header.classList.toggle('open');
+}
+
+function expandAll() {
+  document.querySelectorAll('.ex-body').forEach(b => b.classList.add('open'));
+  document.querySelectorAll('.ex-header').forEach(h => h.classList.add('open'));
+}
+function collapseAll() {
+  document.querySelectorAll('.ex-body').forEach(b => b.classList.remove('open'));
+  document.querySelectorAll('.ex-header').forEach(h => h.classList.remove('open'));
+}
+
+function filterTier(tier, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.ex-card').forEach(card => {
+    card.classList.toggle('hidden', tier !== 'all' && card.dataset.tier !== tier);
+  });
+  document.querySelectorAll('#exercisesContainer > h2').forEach(h => {
+    if (tier === 'all') { h.classList.remove('hidden'); return; }
+    const hTier = h.id.replace('tier', '');
+    h.classList.toggle('hidden', hTier !== tier);
+  });
+}
+
+function saveNotes(id, el) {
+  const state = getState();
+  state['notes_' + id] = el.value;
+  saveState(state);
+}
+
+function loadNotes() {
+  const state = getState();
+  document.querySelectorAll('.notes-area').forEach(ta => {
+    const id = ta.dataset.id;
+    if (state['notes_' + id]) ta.value = state['notes_' + id];
+  });
+}
+
+function exportDamageReport() {
+  const state = getState();
+  let md = '# Destruction Lab v2.0 — Damage Report\n';
+  md += '**Date:** ' + new Date().toISOString().slice(0,10) + '\n\n';
+  const cards = document.querySelectorAll('.ex-card');
+  const done = [...cards].filter(c => state['ex_' + c.dataset.id]);
+  const total = cards.length;
+  md += '**Progress:** ' + done.length + ' / ' + total + ' exercises completed\n\n';
+  md += '## Completed Exercises\n\n';
+  done.forEach(c => {
+    const num = c.querySelector('.ex-num').textContent;
+    const title = c.querySelector('.ex-title').textContent;
+    const notes = state['notes_' + c.dataset.id] || '(no notes)';
+    md += '### ' + num + ' ' + title + '\n';
+    md += '**Notes:** ' + notes + '\n\n';
+  });
+  md += '## Remaining\n\n';
+  [...cards].filter(c => !state['ex_' + c.dataset.id]).forEach(c => {
+    md += '- [ ] ' + c.querySelector('.ex-num').textContent + ' ' + c.querySelector('.ex-title').textContent + '\n';
+  });
+  const blob = new Blob([md], { type: 'text/markdown' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'destruction_lab_damage_report.md';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function buildTestGapTable() {
+  const gaps = [];
+  document.querySelectorAll('.ex-card[data-nogap="false"]').forEach(card => {
+    const num = card.querySelector('.ex-num').textContent;
+    const title = card.querySelector('.ex-title').textContent;
+    const file = card.querySelector('.ex-file')?.textContent || '';
+    const gapDesc = card.dataset.gapdesc || 'No test covers this behavior';
+    gaps.push({num, title, file, gapDesc});
+  });
+  const tbody = document.getElementById('testGapBody');
+  gaps.forEach(g => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = '<td>' + g.num + '</td><td>' + g.title + '</td><td><code>' + g.file + '</code></td><td>' + g.gapDesc + '</td>';
+    tbody.appendChild(tr);
+  });
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  updateProgress();
+  loadNotes();
+  buildTestGapTable();
+});
+</script>
+
+</body>
+</html>

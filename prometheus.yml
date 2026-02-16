@@ -1,0 +1,31 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'monster-resort-concierge'
+    static_configs:
+      - targets: ['api:8000']
+
+
+
+# 📊 prometheus.yml
+# This file tells a monitoring tool where to look.
+# It says: “Check this app every few seconds and record how it’s doing.”
+# It’s used to track performance, errors, and health over time.
+
+
+
+# so its like check and read the electricity every 15 minutes so I can have 
+# better informed idea about its usage, consumption, and maybe query it if I need to 
+# Exactly! ⚡ That’s a perfect, simple analogy.
+
+# * **Prometheus** = the smart electricity meter
+# * **`scrape_interval: 15s`** = “take a reading every 15 seconds” (in your analogy, every 15 minutes is fine too)
+# * **Target (`api:8000`)** = the appliance or system whose electricity you’re measuring
+# * **Collected data** = lets you see usage over time, spot problems, or answer questions like:
+
+#   > “How much electricity did the kitchen use last hour?”
+
+# So in short: **Prometheus continuously “reads the meters” of your app, so you can monitor its performance and health**.
+
+# If you want, we can now do **Grafana in the same analogy**, so you can see how the reading turns into a dashboard.

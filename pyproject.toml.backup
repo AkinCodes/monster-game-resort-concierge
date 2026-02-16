@@ -1,0 +1,57 @@
+[project]
+name = "monster-resort-concierge"
+version = "0.1.0"
+description = "AI-powered concierge service for Monster Resort"
+readme = "README.md"
+requires-python = ">=3.10"  # Updated from 3.9.7 to 3.10 for gradio 5+ compatibility
+dependencies = [
+    # Your existing dependencies (keeping exact versions that work)
+    "bleach>=6.2.0",
+    "chromadb>=1.4.1",
+    "email-validator>=2.3.0",
+    "gradio>=4.44.1,<5.0.0",  # Pin to 4.x to avoid Python 3.10+ requirement
+    "langchain-openai>=0.3.35",
+    "passlib[bcrypt]>=1.7.4",
+    "prometheus-client>=0.24.1",
+    "pydantic-settings>=2.11.0",
+    "pyjwt>=2.10.1",
+    "ragas>=0.4.3",
+    "reportlab>=4.4.9",
+    "requests>=2.32.5",
+    "slowapi>=0.1.9",
+    
+    # Fixed versions for huggingface-hub conflict
+    # CRITICAL: huggingface-hub must be <1.0 for transformers compatibility
+    "huggingface-hub>=0.27.0,<0.28.0",
+    "transformers>=4.48.0,<5.0.0",
+    "sentence-transformers>=3.3.0",
+    "torch>=2.5.0,<2.6.0",
+    
+    # Additional dependencies for the refactored code
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.34.0",
+    "python-multipart>=0.0.20",
+    "pydantic>=2.10.0",
+    "httpx>=0.28.0",
+    "aiofiles>=22.0,<24.0",  # Match gradio's requirement
+    "langchain>=0.3.0",
+    "langchain-community>=0.3.0",
+    "langchain-huggingface>=0.1.0",
+    "datasets>=3.2.0",
+    "python-dotenv>=1.0.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+
+[tool.uv]
+override-dependencies = [
+    "huggingface-hub==0.27.0",
+    "aiofiles==23.2.1",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+

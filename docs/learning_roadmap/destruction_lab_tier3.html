@@ -1,0 +1,1588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Destruction Lab — Tier 3: Expert</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #fafbfc;
+    color: #1e293b;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  code, pre, .mono {
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* ── Header Banner ─────────────────────────────────── */
+  .hero {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 30%, #b45309 60%, #f59e0b 100%);
+    background-size: 200% 200%;
+    animation: gradientShift 8s ease infinite;
+    color: #fff;
+    padding: 3.5rem 2rem 2.5rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.06'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    pointer-events: none;
+  }
+  @keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  .hero-tier-badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.2);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 50px;
+    padding: 0.3rem 1.2rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+  .hero h1 {
+    font-size: 2.8rem;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 2px 12px rgba(0,0,0,0.15);
+  }
+  .hero .subtitle {
+    font-size: 1.15rem;
+    font-weight: 500;
+    opacity: 0.92;
+    margin-bottom: 0.4rem;
+  }
+  .hero .exercise-count {
+    font-size: 0.95rem;
+    opacity: 0.8;
+    font-weight: 600;
+  }
+
+  /* ── Navigation Strip ──────────────────────────────── */
+  .nav-strip {
+    display: flex;
+    justify-content: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    padding: 0.9rem 1rem;
+    background: #fff;
+    border-bottom: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .nav-strip a {
+    text-decoration: none;
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 0.4rem 1rem;
+    border-radius: 8px;
+    color: #64748b;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+  }
+  .nav-strip a:hover {
+    background: #fffbeb;
+    color: #b45309;
+  }
+  .nav-strip a.active {
+    background: #fffbeb;
+    color: #b45309;
+    border-color: #f59e0b;
+  }
+  .nav-strip a.roadmap-link {
+    color: #6366f1;
+  }
+  .nav-strip a.roadmap-link:hover {
+    background: #eef2ff;
+  }
+
+  /* ── Main Container ────────────────────────────────── */
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 1.5rem 1.2rem 3rem;
+  }
+
+  /* ── Progress Bar ──────────────────────────────────── */
+  .progress-section {
+    margin-bottom: 1.5rem;
+  }
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 0.5rem;
+  }
+  .progress-label .tier-progress {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #92400e;
+  }
+  .progress-label .global-progress {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #94a3b8;
+  }
+  .progress-track {
+    height: 14px;
+    background: #f1f5f9;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 10px;
+    background: linear-gradient(90deg, #f59e0b, #d97706, #f59e0b);
+    background-size: 200% 100%;
+    animation: progressPulse 2.5s ease infinite;
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 0%;
+  }
+  @keyframes progressPulse {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  /* ── Controls Row ──────────────────────────────────── */
+  .controls {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+  }
+  .controls button {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 0.5rem 1.1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    color: #475569;
+  }
+  .controls button:hover {
+    background: #fffbeb;
+    border-color: #f59e0b;
+    color: #92400e;
+  }
+  .controls button.export-btn {
+    margin-left: auto;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: #fff;
+    border: none;
+  }
+  .controls button.export-btn:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(245,158,11,0.3);
+  }
+
+  /* ── Info Box ──────────────────────────────────────── */
+  .info-box {
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-left: 4px solid #f59e0b;
+    border-radius: 10px;
+    padding: 1.1rem 1.3rem;
+    margin-bottom: 2rem;
+    font-size: 0.9rem;
+  }
+  .info-box strong {
+    color: #92400e;
+  }
+  .info-box code {
+    background: #fef3c7;
+    padding: 0.15rem 0.5rem;
+    border-radius: 5px;
+    font-size: 0.82rem;
+    color: #92400e;
+  }
+
+  /* ── Exercise Card ─────────────────────────────────── */
+  .exercise-card {
+    background: #fff;
+    border-radius: 12px;
+    border-left: 4px solid #f59e0b;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.03);
+    margin-bottom: 1rem;
+    transition: transform 0.2s, box-shadow 0.2s;
+    overflow: hidden;
+  }
+  .exercise-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(245,158,11,0.12), 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .exercise-card.completed {
+    border-left-color: #22c55e;
+  }
+  .exercise-card.completed .card-header {
+    background: #f0fdf4;
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.9rem 1.1rem;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s;
+  }
+  .card-header:hover {
+    background: #fffbeb;
+  }
+
+  .card-header input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: #f59e0b;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .ex-number {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #94a3b8;
+    flex-shrink: 0;
+  }
+
+  .ex-title {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #1e293b;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .concept-badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.2rem 0.65rem;
+    border-radius: 50px;
+    background: #fffbeb;
+    color: #b45309;
+    border: 1px solid #fde68a;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .nogap-badge {
+    display: inline-block;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 0.15rem 0.55rem;
+    border-radius: 50px;
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+    white-space: nowrap;
+    flex-shrink: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .expand-arrow {
+    font-size: 0.85rem;
+    color: #94a3b8;
+    transition: transform 0.25s;
+    flex-shrink: 0;
+    margin-left: 0.3rem;
+  }
+  .exercise-card.open .expand-arrow {
+    transform: rotate(180deg);
+  }
+
+  .card-body {
+    display: none;
+    padding: 0 1.1rem 1.1rem;
+  }
+  .exercise-card.open .card-body {
+    display: block;
+  }
+
+  /* ── Panels ────────────────────────────────────────── */
+  .panel {
+    border-radius: 8px;
+    padding: 0.85rem 1rem;
+    margin-bottom: 0.7rem;
+    font-size: 0.87rem;
+  }
+  .panel-label {
+    font-weight: 700;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 0.35rem;
+  }
+  .panel-hypothesis  { background: #fefce8; }
+  .panel-hypothesis .panel-label { color: #a16207; }
+  .panel-action      { background: #eff6ff; }
+  .panel-action .panel-label { color: #1d4ed8; }
+  .panel-verify      { background: #f0fdf4; }
+  .panel-verify .panel-label { color: #15803d; }
+  .panel-why         { background: #faf5ff; }
+  .panel-why .panel-label    { color: #7c3aed; }
+  .panel-interview   { background: #fff7ed; }
+  .panel-interview .panel-label { color: #c2410c; }
+  .panel-recovery    { background: #f8fafc; }
+  .panel-recovery .panel-label  { color: #475569; }
+
+  .panel code {
+    background: #f1f5f9;
+    color: #334155;
+    padding: 0.15rem 0.5rem;
+    border-radius: 5px;
+    font-size: 0.8rem;
+  }
+
+  pre.code-block {
+    background: #f1f5f9;
+    color: #334155;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    overflow-x: auto;
+    margin: 0.4rem 0;
+    line-height: 1.5;
+    border: 1px solid #e2e8f0;
+  }
+
+  .panel ul {
+    margin: 0.3rem 0 0 1.2rem;
+    font-size: 0.86rem;
+  }
+  .panel li {
+    margin-bottom: 0.2rem;
+  }
+
+  /* ── Notes ─────────────────────────────────────────── */
+  .notes-section {
+    margin-top: 0.5rem;
+  }
+  .notes-section label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #64748b;
+    display: block;
+    margin-bottom: 0.3rem;
+  }
+  .notes-section textarea {
+    width: 100%;
+    min-height: 65px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 0.6rem 0.8rem;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.84rem;
+    resize: vertical;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    color: #334155;
+    background: #fff;
+  }
+  .notes-section textarea:focus {
+    outline: none;
+    border-color: #f59e0b;
+    box-shadow: 0 0 0 3px rgba(245,158,11,0.15);
+  }
+
+  /* ── Test Gap Analysis Table ───────────────────────── */
+  .gap-section {
+    margin-top: 2.5rem;
+  }
+  .gap-section h2 {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: #1e293b;
+    margin-bottom: 0.3rem;
+  }
+  .gap-section .gap-desc {
+    font-size: 0.88rem;
+    color: #64748b;
+    margin-bottom: 1rem;
+  }
+  .gap-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    font-size: 0.84rem;
+  }
+  .gap-table thead {
+    background: linear-gradient(135deg, #fffbeb, #fef3c7);
+  }
+  .gap-table th {
+    padding: 0.7rem 1rem;
+    text-align: left;
+    font-weight: 700;
+    color: #92400e;
+    border-bottom: 2px solid #fde68a;
+  }
+  .gap-table td {
+    padding: 0.6rem 1rem;
+    border-bottom: 1px solid #f1f5f9;
+    background: #fff;
+  }
+  .gap-table tbody tr:hover td {
+    background: #fffbeb;
+  }
+  .gap-table .badge-missing {
+    display: inline-block;
+    background: #fef2f2;
+    color: #dc2626;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.15rem 0.55rem;
+    border-radius: 50px;
+    border: 1px solid #fecaca;
+  }
+
+  /* ── Footer Nav ────────────────────────────────────── */
+  .footer-nav {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e2e8f0;
+  }
+  .footer-nav a {
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.92rem;
+    color: #b45309;
+    padding: 0.6rem 1.2rem;
+    border-radius: 10px;
+    border: 1px solid #fde68a;
+    background: #fffbeb;
+    transition: all 0.2s;
+  }
+  .footer-nav a:hover {
+    background: #fef3c7;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(245,158,11,0.15);
+  }
+
+  /* ── Utility ───────────────────────────────────────── */
+  .sr-only {
+    position: absolute; width: 1px; height: 1px;
+    padding: 0; margin: -1px; overflow: hidden;
+    clip: rect(0,0,0,0); border: 0;
+  }
+</style>
+</head>
+<body>
+
+<!-- ━━━ Hero Banner ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+<header class="hero">
+  <div class="hero-tier-badge">Destruction Lab</div>
+  <h1>Tier 3: Expert</h1>
+  <p class="subtitle">Security Vulnerabilities &amp; Cascading Failures</p>
+  <p class="exercise-count">17 exercises</p>
+</header>
+
+<!-- ━━━ Navigation Strip ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+<nav class="nav-strip" aria-label="Tier navigation">
+  <a href="destruction_lab_tier1.html">Tier 1</a>
+  <a href="destruction_lab_tier2.html">Tier 2</a>
+  <a href="destruction_lab_tier3.html" class="active">Tier 3</a>
+  <a href="destruction_lab_tier4.html">Tier 4</a>
+  <a href="index.html" class="roadmap-link">Learning Roadmap</a>
+</nav>
+
+<!-- ━━━ Main Content ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+<main class="container">
+
+  <!-- Progress Bar -->
+  <section class="progress-section">
+    <div class="progress-label">
+      <span class="tier-progress" id="tierLabel">0 / 17 this tier</span>
+      <span class="global-progress" id="globalLabel">0 / 67 total</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+  </section>
+
+  <!-- Controls Row -->
+  <div class="controls">
+    <button onclick="expandAll()">Expand All</button>
+    <button onclick="collapseAll()">Collapse All</button>
+    <button class="export-btn" onclick="exportDamageReport()">Export Damage Report</button>
+  </div>
+
+  <!-- Before You Start -->
+  <div class="info-box">
+    <strong>Before You Start:</strong> Create a safe branch for destruction experiments.<br>
+    <code>git checkout -b destruction-lab</code><br>
+    Each exercise includes a recovery command to restore the original code.
+  </div>
+
+  <!-- ━━━ Exercise Cards ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+  <div id="exerciseList">
+
+    <!-- Exercise 35 -->
+    <article class="exercise-card" data-id="35" data-nogap="false">
+      <div class="card-header" onclick="toggleCard(this)">
+        <input type="checkbox" onclick="event.stopPropagation()" onchange="toggleCheck(35, this.checked)">
+        <span class="ex-number">#35</span>
+        <span class="ex-title">Remove the Final 401 Raise (Total Auth Bypass)</span>
+        <span class="concept-badge">Authentication Bypass</span>
+        <span class="nogap-badge">No Test</span>
+        <span class="expand-arrow">&#9662;</span>
+      </div>
+      <div class="card-body">
+        <div class="panel panel-hypothesis">
+          <div class="panel-label">Hypothesis</div>
+          Without the final <code>raise HTTPException(401)</code>, unauthenticated requests will be granted access as "anonymous" instead of being rejected.
+        </div>
+        <div class="panel panel-action">
+          <div class="panel-label">Action</div>
+          File: <code>app/auth_mixins.py</code> (line 57). Replace <code>raise HTTPException(401)</code> with <code>return "anonymous"</code>.
+          <pre class="code-block"># Before
+raise HTTPException(status_code=401, detail="Not authenticated")
+
+# After
+return "anonymous"</pre>
+        </div>
+        <div class="panel panel-verify">
+          <div class="panel-label">Verify</div>
+          <pre class="code-block">curl -s http://localhost:8000/api/protected
+# Expected: 200 OK (instead of 401 Unauthorized)</pre>
+        </div>
+        <div class="panel panel-why">
+          <div class="panel-label">Why It Matters</div>
+          The final <code>raise</code> is the safety net of the auth chain. Removing it means total authentication bypass &mdash; every unauthenticated request gets through as "anonymous."
+        </div>
+        <div class="panel panel-interview">
+          <div class="panel-label">Interview Prep</div>
+          <ul>
+            <li>What does "deny by default" mean in auth design?</li>
+            <li>How do you audit auth chains for gaps?</li>
+            <li>What is OWASP Broken Authentication?</li>
+          </ul>
+        </div>
+        <div class="panel panel-recovery">
+          <div class="panel-label">Recovery</div>
+          <pre class="code-block">git checkout -- app/auth_mixins.py</pre>
+        </div>
+        <div class="notes-section">
+          <label for="notes-35">Your Notes</label>
+          <textarea id="notes-35" placeholder="Observations, questions, insights..." oninput="saveNotes(35, this.value)"></textarea>
+        </div>
+      </div>
+    </article>
+
+    <!-- Exercise 36 -->
+    <article class="exercise-card" data-id="36" data-nogap="false">
+      <div class="card-header" onclick="toggleCard(this)">
+        <input type="checkbox" onclick="event.stopPropagation()" onchange="toggleCheck(36, this.checked)">
+        <span class="ex-number">#36</span>
+        <span class="ex-title">Remove Key Hash Verification</span>
+        <span class="concept-badge">Cryptographic Verification Bypass</span>
+        <span class="nogap-badge">No Test</span>
+        <span class="expand-arrow">&#9662;</span>
+      </div>
+      <div class="card-body">
+        <div class="panel panel-hypothesis">
+          <div class="panel-label">Hypothesis</div>
+          Without hash verification, any string prefixed with <code>mr_</code> will be accepted as a valid API key.
+        </div>
+        <div class="panel panel-action">
+          <div class="panel-label">Action</div>
+          File: <code>app/security.py</code> (lines 60&ndash;69). Skip the hash comparison and directly <code>return "verified_user"</code>.
+          <pre class="code-block"># Before: hash comparison logic
+# After: skip hash check
+return "verified_user"</pre>
+        </div>
+        <div class="panel panel-verify">
+          <div class="panel-label">Verify</div>
+          <pre class="code-block">curl -s -H "X-API-Key: mr_totally_fake_key" http://localhost:8000/api/protected
+# Expected: Request accepted with fake key</pre>
+        </div>
+        <div class="panel panel-why">
+          <div class="panel-label">Why It Matters</div>
+          Hash verification is the core of key-based authentication. Without it, prefix matching alone provides zero security.
+        </div>
+        <div class="panel panel-interview">
+          <div class="panel-label">Interview Prep</div>
+          <ul>
+            <li>Why hash API keys instead of storing them in plaintext?</li>
+            <li>What is the difference between hashing and encryption?</li>
+            <li>What is a rainbow table attack?</li>
+          </ul>
+        </div>
+        <div class="panel panel-recovery">
+          <div class="panel-label">Recovery</div>
+          <pre class="code-block">git checkout -- app/security.py</pre>
+        </div>
+        <div class="notes-section">
+          <label for="notes-36">Your Notes</label>
+          <textarea id="notes-36" placeholder="Observations, questions, insights..." oninput="saveNotes(36, this.value)"></textarea>
+        </div>
+      </div>
+    </article>
+
+    <!-- Exercise 37 -->
+    <article class="exercise-card" data-id="37" data-nogap="false">
+      <div class="card-header" onclick="toggleCard(this)">
+        <input type="checkbox" onclick="event.stopPropagation()" onchange="toggleCheck(37, this.checked)">
+        <span class="ex-number">#37</span>
+        <span class="ex-title">Remove Revoked Key Check</span>
+        <span class="concept-badge">Credential Revocation</span>
+        <span class="nogap-badge">No Test</span>
+        <span class="expand-arrow">&#9662;</span>
+      </div>
+      <div class="card-body">
+        <div class="panel panel-hypothesis">
+          <div class="panel-label">Hypothesis</div>
+          Without the <code>is_active</code> check, revoked API keys will still authenticate successfully.
+        </div>
+        <div class="panel panel-action">
+          <div class="panel-label">Action</div>
+          File: <code>app/security.py</code> (lines 77&ndash;79). Comment out the <code>is_active</code> check.
+          <pre class="code-block"># Comment out:
+# if not key_record.is_active:
+#     raise HTTPException(403, "Key revoked")</pre>
+        </div>
+        <div class="panel panel-verify">
+          <div class="panel-label">Verify</div>
+          <pre class="code-block"># Use a previously revoked key
+curl -s -H "X-API-Key: mr_revoked_key" http://localhost:8000/api/protected
+# Expected: Revoked key still works</pre>
+        </div>
+        <div class="panel panel-why">
+          <div class="panel-label">Why It Matters</div>
+          Revocation is a critical incident response mechanism. If compromised keys cannot be disabled, breaches cannot be contained.
+        </div>
+        <div class="panel panel-interview">
+          <div class="panel-label">Interview Prep</div>
+          <ul>
+            <li>How do you handle credential compromise?</li>
+            <li>What is a CRL in TLS?</li>
+            <li>How does key revocation work in distributed systems?</li>
+          </ul>
+        </div>
+        <div class="panel panel-recovery">
+          <div class="panel-label">Recovery</div>
+          <pre class="code-block">git checkout -- app/security.py</pre>
+        </div>
+        <div class="notes-section">
+          <label for="notes-37">Your Notes</label>
+          <textarea id="notes-37" placeholder="Observations, questions, insights..." oninput="saveNotes(37, this.value)"></textarea>
+        </div>
+      </div>
+    </article>
+
+    <!-- Exercise 38 -->
+    <article class="exercise-card" data-id="38" data-nogap="false">
+      <div class="card-header" onclick="toggleCard(this)">
+        <input type="checkbox" onclick="event.stopPropagation()" onchange="toggleCheck(38, this.checked)">
+        <span class="ex-number">#38</span>
+        <span class="ex-title">Remove Rate Limiter Installation</span>
+        <span class="concept-badge">Rate Limiting / DoS Prevention</span>
+        <span class="nogap-badge">No Test</span>
+        <span class="expand-arrow">&#9662;</span>
+      </div>
+      <div class="card-body">
+        <div class="panel panel-hypothesis">
+          <div class="panel-label">Hypothesis</div>
+          Without rate limiting, there is no protection against request flooding &mdash; all requests are served regardless of volume.
+        </div>
+        <div class="panel panel-action">
+          <div class="panel-label">Action</div>
+          File: <code>app/main.py</code> (line 114). Comment out <code>install_rate_limiter(app, settings)</code>.
+          <pre class="code-block"># install_rate_limiter(app, settings)</pre>
+        </div>
+        <div class="panel panel-verify">
+          <div class="panel-label">Verify</div>
+          <pre class="code-block">for i in $(seq 1 100); do curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8000/api/health; done | sort | uniq -c
+# Expected: 100x 200, zero 429s</pre>
+        </div>
+        <div class="panel panel-why">
+          <div class="panel-label">Why It Matters</div>
+          Rate limiting prevents abuse, protects backend resources, and is a first line of defense against denial-of-service attacks.
+        </div>
+        <div class="panel panel-interview">
+          <div class="panel-label">Interview Prep</div>
+          <ul>
+            <li>What rate limiting algorithms exist (token bucket, sliding window, etc.)?</li>
+            <li>Where should rate limiting be applied?</li>
+            <li>What is the difference between rate limiting and throttling?</li>
+          </ul>
+        </div>
+        <div class="panel panel-recovery">
+          <div class="panel-label">Recovery</div>
+          <pre class="code-block">git checkout -- app/main.py</pre>
+        </div>
+        <div class="notes-section">
+          <label for="notes-38">Your Notes</label>
+          <textarea id="notes-38" placeholder="Observations, questions, insights..." oninput="saveNotes(38, this.value)"></textarea>
+        </div>
+      </div>
+    </article>
+
+    <!-- Exercise 39 -->
+    <article class="exercise-card" data-id="39" data-nogap="false">
+      <div class="card-header" onclick="toggleCard(this)">
+        <input type="checkbox" onclick="event.stopPropagation()" onchange="toggleCheck(39, this.checked)">
+        <span class="ex-number">#39</span>
+        <span class="ex-title">Remove JWT Expiration from Token Creation</span>
+        <span class="concept-badge">Token Expiration / Stateless Auth</span>
+        <span class="nogap-badge">No Test</span>
+        <span class="expand-arrow">&#9662;</span>
+      </div>
+      <div class="card-body">
+        <div class="panel panel-hypothesis">
+          <div class="panel-label">Hypothesis</div>
+          Without the <code>exp</code> claim, JWT tokens will never expire and remain valid indefinitely.
+        </div>
+        <div class="panel panel-action">
+          <div class="panel-label">Action</div>
+          File: <code>app/auth.py</code> (lines 89&ndash;91). Comment out the expire and exp update lines.
+          <pre class="code-block"># expire = datetime.utcnow() + timedelta(minutes=30)
+# payload.update({"exp": expire})</pre>
+        </div>
+        <div class="panel panel-verify">
+          <div class="panel-label">Verify</div>
+          <pre class="code-block"># Decode the JWT and verify no "exp" field exists
+# Token remains valid indefinitely</pre>
+        </div>
+        <div class="panel panel-why">
+          <div class="panel-label">Why It Matters</div>
+          JWT expiration is the primary security mechanism for stateless tokens. Without it, a stolen token grants permanent access.
+        </div>
+        <div class="panel panel-interview">
+          <div class="panel-label">Interview Prep</div>
+          <ul>
+            <li>Why do JWTs need expiration?</li>
+            <li>What is the refresh token pattern?</li>
+            <li>How do you invalidate a JWT before expiration?</li>
+          </ul>
+        </div>
+        <div class="panel panel-recovery">
+          <div class="panel-label">Recovery</div>
+          <pre class="code-block">git checkout -- app/auth.py</pre>
+        </div>
+        <div class="notes-section">
+          <label for="notes-39">Your Notes</label>
+          <textarea id="notes-39" placeholder="Observations, questions, insights..." oninput="saveNotes(39, this.value)"></textarea>
+        </div>
+      </div>
+    </article>
+
+    <!-- Exercise 40 -->
+    <article class="exercise-card" data-id="40" data-nogap="true">
+      <div class="card-header" onclick="toggleCard(this)">
+        <input type="checkbox" onclick="event.stopPropagation()" onchange="toggleCheck(40, this.checked)">
+        <span class="ex-number">#40</span>
+        <span class="ex-title">Remove SECRET_KEY Length Validation</span>
+        <span class="concept-badge">Secret Strength Enforcement</span>
+        <span class="expand-arrow">&#9662;</span>
+      </div>
+      <div class="card-body">
+        <div class="panel panel-hypothesis">
+          <div class="panel-label">Hypothesis</div>
+          Without length validation, dangerously weak secrets like <code>"abc"</code> will be accepted for JWT signing.
+        </div>
+        <div class="panel panel-action">
+          <div class="panel-label">Action</div>
+          File: <code>app/auth.py</code> (lines 74&ndash;79). Comment out the length check.
+          <pre class="code-block"># if len(secret_key) < 32:
+#     raise ValueError("SECRET_KEY must be at least 32 characters")</pre>
+        </div>
+        <div class="panel panel-verify">
+          <div class="panel-label">Verify</div>
+          <pre class="code-block">uv run pytest tests/ -k "auth" -v
+# Expected: Weak secrets like "abc" accepted without error</pre>
+        </div>
+        <div class="panel panel-why">
+          <div class="panel-label">Why It Matters</div>
+          A short JWT secret can be brute-forced. Length validation ensures minimum entropy for HS256 signing keys.
+        </div>
+        <div class="panel panel-interview">
+          <div class="panel-label">Interview Prep</div>
+          <ul>
+            <li>How much entropy is needed for HS256?</li>
+            <li>Can you brute-force a JWT secret?</li>
+            <li>What key lengths are recommended for HMAC?</li>
+          </ul>
+        </div>
+        <div class="panel panel-recovery">
+          <div class="panel-label">Recovery</div>
+          <pre class="code-block">git checkout -- app/auth.py</pre>
+        </div>
+        <div class="notes-section">
+          <label for="notes-40">Your Notes</label>
+          <textarea id="notes-40" placeholder="Observations, questions, insights..." oninput="saveNotes(40, this.value)"></textarea>
+        </div>
+      </div>
+    </article>
+
+    <!-- Exercise 41 -->
+    <article class="exercise-card" data-id="41" data-nogap="true">
+      <div class="card-header" onclick="toggleCard(this)">
+        <input type="checkbox" onclick="event.stopPropagation()" onchange="toggleCheck(41, this.checked)">
+        <span class="ex-number">#41</span>
+        <span class="ex-title">Remove Default Secret Rejection</span>
+        <span class="concept-badge">Secure Defaults</span>
+        <span class="expand-arrow">&#9662;</span>
+      </div>
+      <div class="card-body">
+        <div class="panel panel-hypothesis">
+          <div class="panel-label">Hypothesis</div>
+          Without the check, the default placeholder secret (e.g., <code>"changeme"</code>) will be used in production.
+        </div>
+        <div class="panel panel-action">
+          <div class="panel-label">Action</div>
+          File: <code>app/auth.py</code> (lines 68&ndash;72). Comment out the changeme check.
+          <pre class="code-block"># if secret_key == "changeme":
+#     raise ValueError("Do not use default secret in production")</pre>
+        </div>
+        <div class="panel panel-verify">
+          <div class="panel-label">Verify</div>
+          <pre class="code-block"># Set SECRET_KEY=changeme and start the app
+# Expected: Placeholder secret accepted without error</pre>
+        </div>
+        <div class="panel panel-why">
+          <div class="panel-label">Why It Matters</div>
+          Secure defaults prevent insecure configurations from reaching production. Every open-source project with a "changeme" default is a target.
+        </div>
+        <div class="panel panel-interview">
+          <div class="panel-label">Interview Prep</div>
+          <ul>
+            <li>What is the secure defaults principle?</li>
+            <li>How does credential leakage happen in open-source projects?</li>
+            <li>What secrets management tools exist (Vault, AWS Secrets Manager)?</li>
+          </ul>
+        </div>
+        <div class="panel panel-recovery">
+          <div class="panel-label">Recovery</div>
+          <pre class="code-block">git checkout -- app/auth.py</pre>
+        </div>
+        <div class="notes-section">
+          <label for="notes-41">Your Notes</label>
+          <textarea id="notes-41" placeholder="Observations, questions, insights..." oninput="saveNotes(41, this.value)"></textarea>
+        </div>
+      </div>
+    </article>
+
+    <!-- Exercise 42 -->
+    <article class="exercise-card" data-id="42" data-nogap="false">
+      <div class="card-header" onclick="toggleCard(this)">
+        <input type="checkbox" onclick="event.stopPropagation()" onchange="toggleCheck(42, this.checked)">
+        <span class="ex-number">#42</span>
+        <span class="ex-title">Destroy the Agent Tool Loop</span>
+        <span class="concept-badge">Agent Loop / ReAct Pattern</span>
+        <span class="nogap-badge">No Test</span>
+        <span class="expand-arrow">&#9662;</span>
+      </div>
+      <div class="card-body">
+        <div class="panel panel-hypothesis">
+          <div class="panel-label">Hypothesis</div>
+          Without the tool execution block, the LLM will request tools but they will never actually execute &mdash; intent without action.
+        </div>
+        <div class="panel panel-action">
+          <div class="panel-label">Action</div>
+          File: <code>app/main.py</code> (lines 189&ndash;215). Comment out the entire tool execution block.
+          <pre class="code-block"># Comment out the entire tool execution while-loop
+# The LLM will still "think" about using tools, but none will run</pre>
+        </div>
+        <div class="panel panel-verify">
+          <div class="panel-label">Verify</div>
+          <pre class="code-block">curl -X POST http://localhost:8000/api/chat \
+  -H "Content-Type: application/json" \
+  -d '{"message":"Book a room for tonight"}'
+# Expected: AI talks about booking but never actually books</pre>
+        </div>
+        <div class="panel panel-why">
+          <div class="panel-label">Why It Matters</div>
+          The tool loop is the "Act" in the ReAct (Reason + Act) pattern. Without it, the agent becomes a chatbot that can only talk about doing things.
+        </div>
+        <div class="panel panel-interview">
+          <div class="panel-label">Interview Prep</div>
+          <ul>
+            <li>What is the ReAct pattern in LLM agents?</li>
+            <li>How do LLM agent loops work?</li>
+            <li>What is the difference between a chatbot and an agent?</li>
+          </ul>
+        </div>
+        <div class="panel panel-recovery">
+          <div class="panel-label">Recovery</div>
+          <pre class="code-block">git checkout -- app/main.py</pre>
+        </div>
+        <div class="notes-section">
+          <label for="notes-42">Your Notes</label>
+          <textarea id="notes-42" placeholder="Observations, questions, insights..." oninput="saveNotes(42, this.value)"></textarea>
+        </div>
+      </div>
+    </article>
+
+    <!-- Exercise 43 -->
+    <article class="exercise-card" data-id="43" data-nogap="false">
+      <div class="card-header" onclick="toggleCard(this)">
+        <input type="checkbox" onclick="event.stopPropagation()" onchange="toggleCheck(43, this.checked)">
+        <span class="ex-number">#43</span>
+        <span class="ex-title">Remove Memory Persistence</span>
+        <span class="concept-badge">State Persistence</span>
+        <span class="nogap-badge">No Test</span>
+        <span class="expand-arrow">&#9662;</span>
+      </div>
+      <div class="card-body">
+        <div class="panel panel-hypothesis">
+          <div class="panel-label">Hypothesis</div>
+          Without saving messages, the AI will have no memory between requests &mdash; each request is completely isolated.
+        </div>
+        <div class="panel panel-action">
+          <div class="panel-label">Action</div>
+          File: <code>app/main.py</code> (lines 267&ndash;268). Comment out the <code>memory.add_message</code> calls.
+          <pre class="code-block"># memory.add_message(session_id, "user", message)
+# memory.add_message(session_id, "assistant", response)</pre>
+        </div>
+        <div class="panel panel-verify">
+          <div class="panel-label">Verify</div>
+          <pre class="code-block"># Message 1: "My name is Alice"
+# Message 2: "What is my name?"
+# Expected: AI cannot recall the name</pre>
+        </div>
+        <div class="panel panel-why">
+          <div class="panel-label">Why It Matters</div>
+          Stateless HTTP + persistent storage = stateful conversations. Without saving, each turn is isolated.
+        </div>
+        <div class="panel panel-interview">
+          <div class="panel-label">Interview Prep</div>
+          <ul>
+            <li>How do stateless protocols maintain state?</li>
+            <li>What is session scope vs request scope?</li>
+            <li>How does memory affect horizontal scaling?</li>
+          </ul>
+        </div>
+        <div class="panel panel-recovery">
+          <div class="panel-label">Recovery</div>
+          <pre class="code-block">git checkout -- app/main.py</pre>
+        </div>
+        <div class="notes-section">
+          <label for="notes-43">Your Notes</label>
+          <textarea id="notes-43" placeholder="Observations, questions, insights..." oninput="saveNotes(43, this.value)"></textarea>
+        </div>
+      </div>
+    </article>
+
+    <!-- Exercise 44 -->
+    <article class="exercise-card" data-id="44" data-nogap="false">
+      <div class="card-header" onclick="toggleCard(this)">
+        <input type="checkbox" onclick="event.stopPropagation()" onchange="toggleCheck(44, this.checked)">
+        <span class="ex-number">#44</span>
+        <span class="ex-title">Remove Hallucination Detection</span>
+        <span class="concept-badge">Observability / Quality Monitoring</span>
+        <span class="nogap-badge">No Test</span>
+        <span class="expand-arrow">&#9662;</span>
+      </div>
+      <div class="card-body">
+        <div class="panel panel-hypothesis">
+          <div class="panel-label">Hypothesis</div>
+          Without hallucination detection, responses will lack confidence scores and quality metrics.
+        </div>
+        <div class="panel panel-action">
+          <div class="panel-label">Action</div>
+          File: <code>app/main.py</code> (lines 224&ndash;226, 239&ndash;242). Comment out the confidence scoring logic.
+          <pre class="code-block"># Comment out confidence score calculation
+# Comment out confidence field assignment in response</pre>
+        </div>
+        <div class="panel panel-verify">
+          <div class="panel-label">Verify</div>
+          <pre class="code-block">curl -X POST http://localhost:8000/api/chat \
+  -d '{"message":"Tell me about the resort"}'
+# Expected: No "confidence" field in response JSON</pre>
+        </div>
+        <div class="panel panel-why">
+          <div class="panel-label">Why It Matters</div>
+          This is a quality monitoring layer. Without it, you have no signal on whether the AI is making things up.
+        </div>
+        <div class="panel panel-interview">
+          <div class="panel-label">Interview Prep</div>
+          <ul>
+            <li>How do you monitor LLM quality in production?</li>
+            <li>What is online vs offline evaluation?</li>
+            <li>How do you alert on quality degradation?</li>
+          </ul>
+        </div>
+        <div class="panel panel-recovery">
+          <div class="panel-label">Recovery</div>
+          <pre class="code-block">git checkout -- app/main.py</pre>
+        </div>
+        <div class="notes-section">
+          <label for="notes-44">Your Notes</label>
+          <textarea id="notes-44" placeholder="Observations, questions, insights..." oninput="saveNotes(44, this.value)"></textarea>
+        </div>
+      </div>
+    </article>
+
+    <!-- Exercise 45 -->
+    <article class="exercise-card" data-id="45" data-nogap="false">
+      <div class="card-header" onclick="toggleCard(this)">
+        <input type="checkbox" onclick="event.stopPropagation()" onchange="toggleCheck(45, this.checked)">
+        <span class="ex-number">#45</span>
+        <span class="ex-title">Remove Validate Message Call</span>
+        <span class="concept-badge">Input Validation Gate</span>
+        <span class="nogap-badge">No Test</span>
+        <span class="expand-arrow">&#9662;</span>
+      </div>
+      <div class="card-body">
+        <div class="panel panel-hypothesis">
+          <div class="panel-label">Hypothesis</div>
+          Without the validation call, any input &mdash; including script injection &mdash; passes through to the system.
+        </div>
+        <div class="panel panel-action">
+          <div class="panel-label">Action</div>
+          File: <code>app/main.py</code> (line 141). Comment out the <code>validate_message</code> call.
+          <pre class="code-block"># validate_message(request.message)</pre>
+        </div>
+        <div class="panel panel-verify">
+          <div class="panel-label">Verify</div>
+          <pre class="code-block">curl -X POST http://localhost:8000/api/chat \
+  -d '{"message":"&lt;script&gt;alert(1)&lt;/script&gt;"}'
+# Expected: Input accepted without validation error</pre>
+        </div>
+        <div class="panel panel-why">
+          <div class="panel-label">Why It Matters</div>
+          This is the single entry point for ALL input validation. Removing it opens the door to injection, XSS, and prompt injection attacks.
+        </div>
+        <div class="panel panel-interview">
+          <div class="panel-label">Interview Prep</div>
+          <ul>
+            <li>Why validate at the boundary?</li>
+            <li>What is validation vs sanitization?</li>
+            <li>What does OWASP say about input validation?</li>
+          </ul>
+        </div>
+        <div class="panel panel-recovery">
+          <div class="panel-label">Recovery</div>
+          <pre class="code-block">git checkout -- app/main.py</pre>
+        </div>
+        <div class="notes-section">
+          <label for="notes-45">Your Notes</label>
+          <textarea id="notes-45" placeholder="Observations, questions, insights..." oninput="saveNotes(45, this.value)"></textarea>
+        </div>
+      </div>
+    </article>
+
+    <!-- Exercise 46 -->
+    <article class="exercise-card" data-id="46" data-nogap="false">
+      <div class="card-header" onclick="toggleCard(this)">
+        <input type="checkbox" onclick="event.stopPropagation()" onchange="toggleCheck(46, this.checked)">
+        <span class="ex-number">#46</span>
+        <span class="ex-title">Remove Knowledge Ingestion at Startup</span>
+        <span class="concept-badge">Data Pipeline / ETL</span>
+        <span class="nogap-badge">No Test</span>
+        <span class="expand-arrow">&#9662;</span>
+      </div>
+      <div class="card-body">
+        <div class="panel panel-hypothesis">
+          <div class="panel-label">Hypothesis</div>
+          Without knowledge ingestion at startup, the RAG knowledge base will be completely empty.
+        </div>
+        <div class="panel panel-action">
+          <div class="panel-label">Action</div>
+          File: <code>app/main.py</code> (lines 280&ndash;283). Comment out the knowledge ingestion block.
+          <pre class="code-block"># Comment out the startup knowledge ingestion block
+# knowledge_base.ingest(...)
+# logger.info("Knowledge base loaded")</pre>
+        </div>
+        <div class="panel panel-verify">
+          <div class="panel-label">Verify</div>
+          <pre class="code-block">curl -X POST http://localhost:8000/api/chat \
+  -d '{"message":"What amenities does the resort have?"}'
+# Expected: "I do not have specific details" for everything</pre>
+        </div>
+        <div class="panel panel-why">
+          <div class="panel-label">Why It Matters</div>
+          A RAG pipeline needs both an ingest phase and a query phase. Without ingestion, the vector store is empty and retrieval returns nothing.
+        </div>
+        <div class="panel panel-interview">
+          <div class="panel-label">Interview Prep</div>
+          <ul>
+            <li>What is ETL (Extract, Transform, Load)?</li>
+            <li>When should you ingest data (startup vs background job)?</li>
+            <li>How do you handle ingestion failures?</li>
+          </ul>
+        </div>
+        <div class="panel panel-recovery">
+          <div class="panel-label">Recovery</div>
+          <pre class="code-block">git checkout -- app/main.py</pre>
+        </div>
+        <div class="notes-section">
+          <label for="notes-46">Your Notes</label>
+          <textarea id="notes-46" placeholder="Observations, questions, insights..." oninput="saveNotes(46, this.value)"></textarea>
+        </div>
+      </div>
+    </article>
+
+    <!-- Exercise 47 -->
+    <article class="exercise-card" data-id="47" data-nogap="false">
+      <div class="card-header" onclick="toggleCard(this)">
+        <input type="checkbox" onclick="event.stopPropagation()" onchange="toggleCheck(47, this.checked)">
+        <span class="ex-number">#47</span>
+        <span class="ex-title">Remove Session ID Generation Fallback</span>
+        <span class="concept-badge">Identifier Generation</span>
+        <span class="nogap-badge">No Test</span>
+        <span class="expand-arrow">&#9662;</span>
+      </div>
+      <div class="card-body">
+        <div class="panel panel-hypothesis">
+          <div class="panel-label">Hypothesis</div>
+          Without the UUID fallback, requests that omit <code>session_id</code> will get <code>None</code>, causing downstream errors.
+        </div>
+        <div class="panel panel-action">
+          <div class="panel-label">Action</div>
+          File: <code>app/main.py</code> (line 262). Remove <code>or str(uuid.uuid4())</code>.
+          <pre class="code-block"># Before
+session_id = request.session_id or str(uuid.uuid4())
+
+# After
+session_id = request.session_id</pre>
+        </div>
+        <div class="panel panel-verify">
+          <div class="panel-label">Verify</div>
+          <pre class="code-block">curl -X POST http://localhost:8000/api/chat \
+  -d '{"message":"Hello"}'
+# Expected: Error when session_id is None</pre>
+        </div>
+        <div class="panel panel-why">
+          <div class="panel-label">Why It Matters</div>
+          Convention over configuration &mdash; the server generates sensible defaults so clients can be simpler.
+        </div>
+        <div class="panel panel-interview">
+          <div class="panel-label">Interview Prep</div>
+          <ul>
+            <li>Should the server or client generate IDs?</li>
+            <li>What are UUID collision probabilities?</li>
+            <li>What is the difference between UUID v4 and v7?</li>
+          </ul>
+        </div>
+        <div class="panel panel-recovery">
+          <div class="panel-label">Recovery</div>
+          <pre class="code-block">git checkout -- app/main.py</pre>
+        </div>
+        <div class="notes-section">
+          <label for="notes-47">Your Notes</label>
+          <textarea id="notes-47" placeholder="Observations, questions, insights..." oninput="saveNotes(47, this.value)"></textarea>
+        </div>
+      </div>
+    </article>
+
+    <!-- Exercise 48 -->
+    <article class="exercise-card" data-id="48" data-nogap="false">
+      <div class="card-header" onclick="toggleCard(this)">
+        <input type="checkbox" onclick="event.stopPropagation()" onchange="toggleCheck(48, this.checked)">
+        <span class="ex-number">#48</span>
+        <span class="ex-title">Remove Provider Logging in ModelRouter</span>
+        <span class="concept-badge">Operational Visibility</span>
+        <span class="nogap-badge">No Test</span>
+        <span class="expand-arrow">&#9662;</span>
+      </div>
+      <div class="card-body">
+        <div class="panel panel-hypothesis">
+          <div class="panel-label">Hypothesis</div>
+          Without logging, there is no visibility into which LLM provider was tried, succeeded, or failed.
+        </div>
+        <div class="panel panel-action">
+          <div class="panel-label">Action</div>
+          File: <code>app/llm_providers.py</code> (lines 384, 386, 390). Comment out the <code>logger</code> calls.
+          <pre class="code-block"># logger.info(f"Trying provider: {provider}")
+# logger.info(f"Provider {provider} succeeded")
+# logger.warning(f"Provider {provider} failed: {e}")</pre>
+        </div>
+        <div class="panel panel-verify">
+          <div class="panel-label">Verify</div>
+          <pre class="code-block"># Make a request and check logs
+# Expected: No log entries about provider selection</pre>
+        </div>
+        <div class="panel panel-why">
+          <div class="panel-label">Why It Matters</div>
+          Logging is the minimum viable observability. Without it, debugging production issues in a multi-provider setup becomes guesswork.
+        </div>
+        <div class="panel panel-interview">
+          <div class="panel-label">Interview Prep</div>
+          <ul>
+            <li>What is structured logging?</li>
+            <li>What log levels are there and when do you use each?</li>
+            <li>What is the tradeoff between logging detail and performance?</li>
+          </ul>
+        </div>
+        <div class="panel panel-recovery">
+          <div class="panel-label">Recovery</div>
+          <pre class="code-block">git checkout -- app/llm_providers.py</pre>
+        </div>
+        <div class="notes-section">
+          <label for="notes-48">Your Notes</label>
+          <textarea id="notes-48" placeholder="Observations, questions, insights..." oninput="saveNotes(48, this.value)"></textarea>
+        </div>
+      </div>
+    </article>
+
+    <!-- Exercise 49 -->
+    <article class="exercise-card" data-id="49" data-nogap="false">
+      <div class="card-header" onclick="toggleCard(this)">
+        <input type="checkbox" onclick="event.stopPropagation()" onchange="toggleCheck(49, this.checked)">
+        <span class="ex-number">#49</span>
+        <span class="ex-title">Remove Database Error Wrapping</span>
+        <span class="concept-badge">Error Abstraction</span>
+        <span class="nogap-badge">No Test</span>
+        <span class="expand-arrow">&#9662;</span>
+      </div>
+      <div class="card-body">
+        <div class="panel panel-hypothesis">
+          <div class="panel-label">Hypothesis</div>
+          Without error wrapping, raw <code>sqlite3</code> errors will leak directly to callers, breaking abstraction boundaries.
+        </div>
+        <div class="panel panel-action">
+          <div class="panel-label">Action</div>
+          File: <code>app/database.py</code> (lines 81&ndash;83). Comment out the except block that wraps errors.
+          <pre class="code-block"># except sqlite3.IntegrityError as e:
+#     raise DatabaseError(f"Integrity constraint violated: {e}")
+#     # callers now see raw sqlite3.IntegrityError</pre>
+        </div>
+        <div class="panel panel-verify">
+          <div class="panel-label">Verify</div>
+          <pre class="code-block"># Trigger a duplicate insert
+# Expected: Raw sqlite3.IntegrityError instead of DatabaseError</pre>
+        </div>
+        <div class="panel panel-why">
+          <div class="panel-label">Why It Matters</div>
+          Clean abstraction boundaries mean callers never depend on implementation details. Leaking raw errors couples callers to the database engine.
+        </div>
+        <div class="panel panel-interview">
+          <div class="panel-label">Interview Prep</div>
+          <ul>
+            <li>Why wrap errors at abstraction boundaries?</li>
+            <li>What are checked vs unchecked exceptions?</li>
+            <li>How do you design error hierarchies?</li>
+          </ul>
+        </div>
+        <div class="panel panel-recovery">
+          <div class="panel-label">Recovery</div>
+          <pre class="code-block">git checkout -- app/database.py</pre>
+        </div>
+        <div class="notes-section">
+          <label for="notes-49">Your Notes</label>
+          <textarea id="notes-49" placeholder="Observations, questions, insights..." oninput="saveNotes(49, this.value)"></textarea>
+        </div>
+      </div>
+    </article>
+
+    <!-- Exercise 50 -->
+    <article class="exercise-card" data-id="50" data-nogap="false">
+      <div class="card-header" onclick="toggleCard(this)">
+        <input type="checkbox" onclick="event.stopPropagation()" onchange="toggleCheck(50, this.checked)">
+        <span class="ex-number">#50</span>
+        <span class="ex-title">Remove Schema Migration Version Tracking</span>
+        <span class="concept-badge">Database Migrations</span>
+        <span class="nogap-badge">No Test</span>
+        <span class="expand-arrow">&#9662;</span>
+      </div>
+      <div class="card-body">
+        <div class="panel panel-hypothesis">
+          <div class="panel-label">Hypothesis</div>
+          Without version tracking, there is no way to detect when database schemas need upgrading after code changes.
+        </div>
+        <div class="panel panel-action">
+          <div class="panel-label">Action</div>
+          File: <code>app/database.py</code> (lines 98&ndash;109). Comment out the schema version check block.
+          <pre class="code-block"># Comment out the entire schema version tracking block
+# No version recorded, no upgrade detection</pre>
+        </div>
+        <div class="panel panel-verify">
+          <div class="panel-label">Verify</div>
+          <pre class="code-block"># Check database metadata
+# Expected: No schema_version recorded anywhere</pre>
+        </div>
+        <div class="panel panel-why">
+          <div class="panel-label">Why It Matters</div>
+          Schema migrations are how production databases evolve safely. Without version tracking, you cannot know if a migration is needed.
+        </div>
+        <div class="panel panel-interview">
+          <div class="panel-label">Interview Prep</div>
+          <ul>
+            <li>What are database migrations and why do they matter?</li>
+            <li>What tools exist for migrations (Alembic, Flyway, Prisma)?</li>
+            <li>How do you make backwards-compatible schema changes?</li>
+          </ul>
+        </div>
+        <div class="panel panel-recovery">
+          <div class="panel-label">Recovery</div>
+          <pre class="code-block">git checkout -- app/database.py</pre>
+        </div>
+        <div class="notes-section">
+          <label for="notes-50">Your Notes</label>
+          <textarea id="notes-50" placeholder="Observations, questions, insights..." oninput="saveNotes(50, this.value)"></textarea>
+        </div>
+      </div>
+    </article>
+
+    <!-- Exercise 51 -->
+    <article class="exercise-card" data-id="51" data-nogap="false">
+      <div class="card-header" onclick="toggleCard(this)">
+        <input type="checkbox" onclick="event.stopPropagation()" onchange="toggleCheck(51, this.checked)">
+        <span class="ex-number">#51</span>
+        <span class="ex-title">Remove AdvancedRAG Reranker Lazy Loading</span>
+        <span class="concept-badge">Lazy Initialization</span>
+        <span class="nogap-badge">No Test</span>
+        <span class="expand-arrow">&#9662;</span>
+      </div>
+      <div class="card-body">
+        <div class="panel panel-hypothesis">
+          <div class="panel-label">Hypothesis</div>
+          Without the guard, every search call will instantiate a new CrossEncoder model, causing memory to spike repeatedly.
+        </div>
+        <div class="panel panel-action">
+          <div class="panel-label">Action</div>
+          File: <code>app/advanced_rag.py</code> (lines 68&ndash;71). Remove the <code>if self.reranker is None</code> guard.
+          <pre class="code-block"># Before
+if self.reranker is None:
+    self.reranker = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
+
+# After (always loads)
+self.reranker = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")</pre>
+        </div>
+        <div class="panel panel-verify">
+          <div class="panel-label">Verify</div>
+          <pre class="code-block"># Monitor memory while sending multiple queries
+# Expected: Memory spikes with each query instead of staying flat</pre>
+        </div>
+        <div class="panel panel-why">
+          <div class="panel-label">Why It Matters</div>
+          Lazy loading + singleton pattern prevents expensive resource recreation. Loading an ML model per request is a memory and latency disaster.
+        </div>
+        <div class="panel panel-interview">
+          <div class="panel-label">Interview Prep</div>
+          <ul>
+            <li>What is lazy initialization and when is it appropriate?</li>
+            <li>When should you use eager vs lazy loading?</li>
+            <li>What is the memory impact of loading ML models multiple times?</li>
+          </ul>
+        </div>
+        <div class="panel panel-recovery">
+          <div class="panel-label">Recovery</div>
+          <pre class="code-block">git checkout -- app/advanced_rag.py</pre>
+        </div>
+        <div class="notes-section">
+          <label for="notes-51">Your Notes</label>
+          <textarea id="notes-51" placeholder="Observations, questions, insights..." oninput="saveNotes(51, this.value)"></textarea>
+        </div>
+      </div>
+    </article>
+
+  </div><!-- /exerciseList -->
+
+  <!-- ━━━ Test Gap Analysis Table ━━━━━━━━━━━━━━━━━━━━ -->
+  <section class="gap-section">
+    <h2>Test Gap Analysis</h2>
+    <p class="gap-desc">These Tier 3 exercises have <strong>no existing test</strong> to catch the breakage. Prime candidates for writing new tests.</p>
+    <table class="gap-table" id="gapTable">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Exercise</th>
+          <th>Concept</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <!-- ━━━ Footer Navigation ━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+  <nav class="footer-nav">
+    <a href="destruction_lab_tier2.html">&larr; Tier 2: Intermediate</a>
+    <a href="destruction_lab_tier4.html">Tier 4: Master &rarr;</a>
+  </nav>
+
+</main>
+
+<!-- ━━━ JavaScript ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+<script>
+(function() {
+  'use strict';
+
+  const STORAGE_KEY = 'destruction_lab_v3';
+  const TIER_IDS = Array.from({length: 17}, (_, i) => i + 35); // 35..51
+  const TOTAL_EXERCISES = 67;
+  const TIER_COUNT = 17;
+
+  // ── State management ─────────────────────────────
+  function loadState() {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+    } catch { return {}; }
+  }
+
+  function saveState(state) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }
+
+  function getState() {
+    const s = loadState();
+    if (!s.checked) s.checked = {};
+    if (!s.notes) s.notes = {};
+    return s;
+  }
+
+  // ── Checkbox ─────────────────────────────────────
+  window.toggleCheck = function(id, checked) {
+    const state = getState();
+    state.checked[id] = checked;
+    saveState(state);
+    const card = document.querySelector(`.exercise-card[data-id="${id}"]`);
+    if (card) card.classList.toggle('completed', checked);
+    updateProgress();
+  };
+
+  // ── Notes ────────────────────────────────────────
+  window.saveNotes = function(id, value) {
+    const state = getState();
+    state.notes[id] = value;
+    saveState(state);
+  };
+
+  // ── Expand / Collapse ────────────────────────────
+  window.toggleCard = function(headerEl) {
+    const card = headerEl.closest('.exercise-card');
+    card.classList.toggle('open');
+  };
+
+  window.expandAll = function() {
+    document.querySelectorAll('.exercise-card').forEach(c => c.classList.add('open'));
+  };
+
+  window.collapseAll = function() {
+    document.querySelectorAll('.exercise-card').forEach(c => c.classList.remove('open'));
+  };
+
+  // ── Progress ─────────────────────────────────────
+  function updateProgress() {
+    const state = getState();
+    let tierDone = 0;
+    let globalDone = 0;
+
+    TIER_IDS.forEach(id => {
+      if (state.checked[id]) tierDone++;
+    });
+
+    // Count all 67 exercises (IDs 1-67)
+    for (let i = 1; i <= TOTAL_EXERCISES; i++) {
+      if (state.checked[i]) globalDone++;
+    }
+
+    document.getElementById('tierLabel').textContent = `${tierDone} / ${TIER_COUNT} this tier`;
+    document.getElementById('globalLabel').textContent = `${globalDone} / ${TOTAL_EXERCISES} total`;
+    document.getElementById('progressFill').style.width = `${(tierDone / TIER_COUNT) * 100}%`;
+  }
+
+  // ── Export Damage Report ─────────────────────────
+  window.exportDamageReport = function() {
+    const state = getState();
+    let report = '# Destruction Lab — Tier 3: Expert — Damage Report\n';
+    report += `# Generated: ${new Date().toISOString()}\n\n`;
+
+    let tierDone = 0;
+    TIER_IDS.forEach(id => { if (state.checked[id]) tierDone++; });
+    report += `## Progress: ${tierDone}/${TIER_COUNT} completed\n\n`;
+
+    document.querySelectorAll('.exercise-card').forEach(card => {
+      const id = card.dataset.id;
+      const title = card.querySelector('.ex-title').textContent;
+      const concept = card.querySelector('.concept-badge').textContent;
+      const done = state.checked[id] ? '[x]' : '[ ]';
+      const notes = state.notes[id] || '';
+      report += `${done} #${id}: ${title} (${concept})\n`;
+      if (notes.trim()) report += `   Notes: ${notes}\n`;
+      report += '\n';
+    });
+
+    const blob = new Blob([report], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'destruction_lab_tier3_report.md';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // ── Test Gap Analysis Table ──────────────────────
+  function buildGapTable() {
+    const tbody = document.querySelector('#gapTable tbody');
+    document.querySelectorAll('.exercise-card').forEach(card => {
+      if (card.dataset.nogap === 'true') return; // skip exercises WITH tests
+      const id = card.dataset.id;
+      const title = card.querySelector('.ex-title').textContent;
+      const concept = card.querySelector('.concept-badge').textContent;
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><span class="mono">#${id}</span></td>
+        <td>${title}</td>
+        <td>${concept}</td>
+        <td><span class="badge-missing">NO TEST</span></td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  // ── Init ─────────────────────────────────────────
+  function init() {
+    const state = getState();
+
+    // Restore checkboxes and notes
+    TIER_IDS.forEach(id => {
+      const card = document.querySelector(`.exercise-card[data-id="${id}"]`);
+      if (!card) return;
+      const cb = card.querySelector('input[type="checkbox"]');
+      if (state.checked[id]) {
+        cb.checked = true;
+        card.classList.add('completed');
+      }
+      const textarea = card.querySelector('textarea');
+      if (textarea && state.notes[id]) {
+        textarea.value = state.notes[id];
+      }
+    });
+
+    updateProgress();
+    buildGapTable();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+
+</body>
+</html>
