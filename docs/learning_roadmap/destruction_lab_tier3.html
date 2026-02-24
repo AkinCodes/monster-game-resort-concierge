@@ -351,6 +351,27 @@
   .panel-interview .panel-label { color: #c2410c; }
   .panel-recovery    { background: #f8fafc; }
   .panel-recovery .panel-label  { color: #475569; }
+  /* New Panel Types (v4.0) */
+  .panel-experiments { background: #ecfeff; border-color: #a5f3fc; }
+  .panel-experiments .panel-label { color: #0e7490; }
+  .panel-queries { background: #eef2ff; border-color: #c7d2fe; }
+  .panel-queries .panel-label { color: #4338ca; }
+  .panel-combined { background: #fff1f2; border-color: #fecdd3; }
+  .panel-combined .panel-label { color: #be123c; }
+  .panel-tips { background: #ecfdf5; border-color: #a7f3d0; }
+  .panel-tips .panel-label { color: #047857; }
+  .panel-analogy { background: #fffbeb; border-color: #fde68a; }
+  .panel-analogy .panel-label { color: #b45309; }
+  .panel-outcomes { background: #f8fafc; border-color: #cbd5e1; }
+  .panel-outcomes .panel-label { color: #334155; }
+
+  .experiment-block { background: rgba(255,255,255,0.6); border: 1px solid #a5f3fc; border-radius: 6px; padding: 0.65rem 0.85rem; margin-bottom: 0.5rem; }
+  .experiment-block h5 { font-size: 0.78rem; font-weight: 700; color: #0e7490; margin-bottom: 0.3rem; }
+  .experiment-block p, .experiment-block .code-block { font-size: 0.82rem; }
+  .outcome-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; margin-top: 0.4rem; }
+  .outcome-table th { text-align: left; font-weight: 700; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.04em; color: #475569; padding: 0.35rem 0.5rem; border-bottom: 2px solid #e2e8f0; background: #f1f5f9; }
+  .outcome-table td { padding: 0.3rem 0.5rem; border-bottom: 1px solid #e2e8f0; color: #334155; }
+  .outcome-table tr:hover td { background: #f8fafc; }
 
   .panel code {
     background: #f1f5f9;
@@ -570,6 +591,61 @@ raise HTTPException(status_code=401, detail="Not authenticated")
 # After
 return "anonymous"</pre>
         </div>
+    <div class="panel panel-experiments">
+      <div class="panel-label">Experiments</div>
+      <div class="experiment-block">
+        <h5>Experiment A: Return 'guest' with limited perms</h5>
+        <p>Return a guest role instead of anonymous</p>
+        <div class="code-block">return {"user": "guest", "role": "read_only"}</div>
+        <p><strong>Observe:</strong> API accessible but write operations fail. Partially secure but still bypasses authentication.</p>
+      </div>
+      <div class="experiment-block">
+        <h5>Experiment B: Log bypass but allow</h5>
+        <p>Log the unauthorized access but let it through</p>
+        <div class="code-block">logger.critical(f"Auth bypass: {request.url}"); return "anonymous"</div>
+        <p><strong>Observe:</strong> Creates audit trail but doesn&rsquo;t enforce. Useful for detection, dangerous as permanent state.</p>
+      </div>
+      <div class="experiment-block">
+        <h5>Experiment C: Return 403 instead of 401</h5>
+        <p>Return Forbidden instead of Unauthorized</p>
+        <div class="code-block">raise HTTPException(status_code=403, detail='Forbidden')</div>
+        <p><strong>Observe:</strong> Different error semantics. 401 = 'who are you?', 403 = 'I know you but you can&rsquo;t'. Changes client retry behavior.</p>
+      </div>
+    </div>
+    <div class="panel panel-outcomes">
+      <div class="panel-label">Expected Outcomes</div>
+      <table class="outcome-table">
+        <thead><tr><th>Metric</th><th>Baseline</th><th>After Break</th><th>Experiment A</th><th>Experiment B</th></tr></thead>
+        <tbody>
+        <tr><td>overall_score</td><td>0.72</td><td>0.72</td><td>0.72</td><td>0.72</td></tr>
+        <tr><td>auth_enforcement</td><td>PASS</td><td>BYPASS</td><td>read_only</td><td>blocked</td></tr>
+        <tr><td>unauth_access</td><td>denied</td><td>ALLOWED</td><td>partial</td><td>denied</td></tr>
+        <tr><td>security_posture</td><td>strong</td><td>none</td><td>weak</td><td>strong</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="panel panel-queries">
+      <div class="panel-label">Query Variations</div>
+      <ul>
+        <li><strong>Keyword query:</strong> <code>Access protected endpoint without auth</code></li>
+        <li><strong>Semantic query:</strong> <code>What happens when I connect without credentials?</code></li>
+        <li><strong>Edge case:</strong> <code>Send request with empty Authorization header</code></li>
+        <li><strong>Adversarial:</strong> <code>curl http://localhost:8000/api/admin/delete_all</code></li>
+      </ul>
+    </div>
+    <div class="panel panel-combined">
+      <div class="panel-label">Combined Breaks</div>
+      <p><strong>Combine with Exercise #36 &mdash; Remove Key Hash Verification:</strong> No final 401 + no hash verification = totally open API. Any request is allowed, authenticated or not.</p>
+      <p><strong>Production Impact:</strong> Complete authentication bypass. Every endpoint is publicly accessible. All data operations are unprotected.</p>
+    </div>
+    <div class="panel panel-tips">
+      <div class="panel-label">Cache &amp; Environment Tips</div>
+      <p>No server restart needed. Test with: <code>curl http://localhost:8000/api/protected</code> (no auth headers). Compare response code before and after the change.</p>
+    </div>
+    <div class="panel panel-analogy">
+      <div class="panel-label">Analogy</div>
+      <p>Like a security guard who waves everyone through the checkpoint &mdash; the guard post exists, but without enforcement, it&rsquo;s just decoration. Anyone can walk into restricted areas.</p>
+    </div>
         <div class="panel panel-verify">
           <div class="panel-label">Verify</div>
           <pre class="code-block">curl -s http://localhost:8000/api/protected
@@ -620,6 +696,61 @@ return "anonymous"</pre>
 # After: skip hash check
 return "verified_user"</pre>
         </div>
+    <div class="panel panel-experiments">
+      <div class="panel-label">Experiments</div>
+      <div class="experiment-block">
+        <h5>Experiment A: Compare first 8 chars only</h5>
+        <p>Truncated hash comparison</p>
+        <div class="code-block">if stored_hash[:8] == provided_hash[:8]: return True</div>
+        <p><strong>Observe:</strong> Dramatically reduces keyspace. Collisions become likely. Multiple keys map to the same truncated hash.</p>
+      </div>
+      <div class="experiment-block">
+        <h5>Experiment B: Use MD5 instead of SHA-256</h5>
+        <p>Weaker hash algorithm</p>
+        <div class="code-block">import hashlib; return hashlib.md5(key.encode()).hexdigest()</div>
+        <p><strong>Observe:</strong> MD5 is cryptographically broken. Known collision attacks exist. Not suitable for security.</p>
+      </div>
+      <div class="experiment-block">
+        <h5>Experiment C: Compare key directly</h5>
+        <p>Skip hashing, compare raw key to stored value</p>
+        <div class="code-block">return provided_key == stored_key</div>
+        <p><strong>Observe:</strong> Keys stored in plaintext in the database. Any DB breach exposes all API keys directly.</p>
+      </div>
+    </div>
+    <div class="panel panel-outcomes">
+      <div class="panel-label">Expected Outcomes</div>
+      <table class="outcome-table">
+        <thead><tr><th>Metric</th><th>Baseline</th><th>After Break</th><th>Experiment A</th><th>Experiment B</th></tr></thead>
+        <tbody>
+        <tr><td>overall_score</td><td>0.72</td><td>0.72</td><td>0.72</td><td>0.72</td></tr>
+        <tr><td>hash_security</td><td>SHA-256</td><td>none</td><td>truncated</td><td>MD5</td></tr>
+        <tr><td>collision_risk</td><td>negligible</td><td>N/A</td><td>high</td><td>known_attacks</td></tr>
+        <tr><td>db_breach_impact</td><td>keys_safe</td><td>keys_exposed</td><td>keys_safe</td><td>keys_safe</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="panel panel-queries">
+      <div class="panel-label">Query Variations</div>
+      <ul>
+        <li><strong>Keyword query:</strong> <code>Verify my API key</code></li>
+        <li><strong>Semantic query:</strong> <code>How does the system validate my credentials?</code></li>
+        <li><strong>Edge case:</strong> <code>Send two different keys that share the same first 8 hash chars</code></li>
+        <li><strong>Adversarial:</strong> <code>Submit a key crafted to produce an MD5 collision</code></li>
+      </ul>
+    </div>
+    <div class="panel panel-combined">
+      <div class="panel-label">Combined Breaks</div>
+      <p><strong>Combine with Exercise #35 &mdash; Remove Final 401 Raise:</strong> No hash verification + no final 401 = authentication theater. The auth system exists in code but enforces nothing.</p>
+      <p><strong>Production Impact:</strong> A security audit would flag this as a critical vulnerability. The system has the appearance of security without substance.</p>
+    </div>
+    <div class="panel panel-tips">
+      <div class="panel-label">Cache &amp; Environment Tips</div>
+      <p>No server restart needed. Test by submitting invalid API keys and checking whether they&rsquo;re accepted. Compare hashing behavior with: <code>python3 -c "import hashlib; print(hashlib.sha256(b'test').hexdigest())"</code></p>
+    </div>
+    <div class="panel panel-analogy">
+      <div class="panel-label">Analogy</div>
+      <p>Like a bank vault that accepts any key shape &mdash; the lock mechanism exists, but it doesn&rsquo;t actually verify that the right key was used.</p>
+    </div>
         <div class="panel panel-verify">
           <div class="panel-label">Verify</div>
           <pre class="code-block">curl -s -H "X-API-Key: mr_totally_fake_key" http://localhost:8000/api/protected
@@ -670,6 +801,61 @@ return "verified_user"</pre>
 # if not key_record.is_active:
 #     raise HTTPException(403, "Key revoked")</pre>
         </div>
+    <div class="panel panel-experiments">
+      <div class="panel-label">Experiments</div>
+      <div class="experiment-block">
+        <h5>Experiment A: Log-only revocation</h5>
+        <p>Check revoked but only log</p>
+        <div class="code-block">if key.revoked: logger.warning(f'Revoked key {key.id} used')</div>
+        <p><strong>Observe:</strong> Detection without enforcement. Useful for monitoring but doesn&rsquo;t protect.</p>
+      </div>
+      <div class="experiment-block">
+        <h5>Experiment B: Cached revocation check</h5>
+        <p>Check revoked list with 5-minute cache</p>
+        <div class="code-block">if key.id in self._revoked_cache: return False  # cached for 5min</div>
+        <p><strong>Observe:</strong> Reduces DB load but creates a 5-minute window where a just-revoked key still works.</p>
+      </div>
+      <div class="experiment-block">
+        <h5>Experiment C: Soft-revoke with warning</h5>
+        <p>Allow but add warning header</p>
+        <div class="code-block">response.headers['X-Key-Warning'] = 'Key scheduled for revocation'</div>
+        <p><strong>Observe:</strong> Gives clients time to rotate but doesn&rsquo;t enforce. Graceful deprecation pattern.</p>
+      </div>
+    </div>
+    <div class="panel panel-outcomes">
+      <div class="panel-label">Expected Outcomes</div>
+      <table class="outcome-table">
+        <thead><tr><th>Metric</th><th>Baseline</th><th>After Break</th><th>Experiment A</th><th>Experiment B</th></tr></thead>
+        <tbody>
+        <tr><td>overall_score</td><td>0.72</td><td>0.72</td><td>0.72</td><td>0.72</td></tr>
+        <tr><td>revoked_key_blocked</td><td>yes</td><td>NO</td><td>delayed</td><td>no</td></tr>
+        <tr><td>audit_trail</td><td>full</td><td>none</td><td>full</td><td>full</td></tr>
+        <tr><td>incident_response_time</td><td>instant</td><td>never</td><td>up_to_5min</td><td>never</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="panel panel-queries">
+      <div class="panel-label">Query Variations</div>
+      <ul>
+        <li><strong>Keyword query:</strong> <code>Use a revoked API key</code></li>
+        <li><strong>Semantic query:</strong> <code>What happens when a compromised key is used after revocation?</code></li>
+        <li><strong>Edge case:</strong> <code>Revoke a key while a long-running request is using it</code></li>
+        <li><strong>Adversarial:</strong> <code>Use a key that was revoked, re-activated, then revoked again</code></li>
+      </ul>
+    </div>
+    <div class="panel panel-combined">
+      <div class="panel-label">Combined Breaks</div>
+      <p><strong>Combine with Exercise #36 &mdash; Remove Hash Verification:</strong> No revocation + no hash = any key works, even disabled ones. The key lifecycle is completely broken.</p>
+      <p><strong>Production Impact:</strong> Compromised keys cannot be stopped. Even after revocation, the key continues to work because neither revocation nor verification is enforced.</p>
+    </div>
+    <div class="panel panel-tips">
+      <div class="panel-label">Cache &amp; Environment Tips</div>
+      <p>Test by marking a key as revoked in the database: <code>UPDATE api_keys SET revoked=1 WHERE key_id='test'</code>. Then attempt to use the key.</p>
+    </div>
+    <div class="panel panel-analogy">
+      <div class="panel-label">Analogy</div>
+      <p>Like a company that deactivates employee badges but doesn&rsquo;t update the door locks &mdash; former employees can still walk in because the revocation isn&rsquo;t enforced at the point of access.</p>
+    </div>
         <div class="panel panel-verify">
           <div class="panel-label">Verify</div>
           <pre class="code-block"># Use a previously revoked key
@@ -719,6 +905,61 @@ curl -s -H "X-API-Key: mr_revoked_key" http://localhost:8000/api/protected
           File: <code>app/main.py</code> (line 114). Comment out <code>install_rate_limiter(app, settings)</code>.
           <pre class="code-block"># install_rate_limiter(app, settings)</pre>
         </div>
+    <div class="panel panel-experiments">
+      <div class="panel-label">Experiments</div>
+      <div class="experiment-block">
+        <h5>Experiment A: 1 request per minute</h5>
+        <p>Set very strict rate limiting</p>
+        <div class="code-block">limiter.add_rule('1/minute')</div>
+        <p><strong>Observe:</strong> System is protected but nearly unusable. Single users hit the limit immediately.</p>
+      </div>
+      <div class="experiment-block">
+        <h5>Experiment B: 10000 requests per minute</h5>
+        <p>Set very generous rate limiting</p>
+        <div class="code-block">limiter.add_rule('10000/minute')</div>
+        <p><strong>Observe:</strong> Effectively no rate limiting. Only extremely aggressive bots would be caught.</p>
+      </div>
+      <div class="experiment-block">
+        <h5>Experiment C: Per-endpoint rate limits</h5>
+        <p>Different limits for different endpoints</p>
+        <div class="code-block">limiter.add_rule('10/minute', endpoint='/api/chat')</div>
+        <p><strong>Observe:</strong> More nuanced. High-cost endpoints (chat) are limited while low-cost ones (health) are not.</p>
+      </div>
+    </div>
+    <div class="panel panel-outcomes">
+      <div class="panel-label">Expected Outcomes</div>
+      <table class="outcome-table">
+        <thead><tr><th>Metric</th><th>Baseline</th><th>After Break</th><th>Experiment A</th><th>Experiment B</th></tr></thead>
+        <tbody>
+        <tr><td>overall_score</td><td>0.72</td><td>0.72</td><td>0.72</td><td>0.72</td></tr>
+        <tr><td>dos_protection</td><td>strong</td><td>none</td><td>too_strict</td><td>weak</td></tr>
+        <tr><td>legitimate_users</td><td>unaffected</td><td>unaffected</td><td>blocked</td><td>unaffected</td></tr>
+        <tr><td>api_abuse</td><td>blocked</td><td>unblocked</td><td>blocked</td><td>unblocked</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="panel panel-queries">
+      <div class="panel-label">Query Variations</div>
+      <ul>
+        <li><strong>Keyword query:</strong> <code>Send 100 requests in 1 second</code></li>
+        <li><strong>Semantic query:</strong> <code>What happens under heavy load?</code></li>
+        <li><strong>Edge case:</strong> <code>Send requests from 1000 different IP addresses simultaneously</code></li>
+        <li><strong>Adversarial:</strong> <code>Script that sends 10 requests/second for 10 minutes</code></li>
+      </ul>
+    </div>
+    <div class="panel panel-combined">
+      <div class="panel-label">Combined Breaks</div>
+      <p><strong>Combine with Exercise #35 &mdash; Remove Final 401 Raise:</strong> No rate limit + no auth = totally open and unlimited access. Anyone can send unlimited requests without authentication.</p>
+      <p><strong>Production Impact:</strong> The system is vulnerable to resource exhaustion. A single attacker can consume all API quota and overwhelm the LLM provider, causing cost explosion.</p>
+    </div>
+    <div class="panel panel-tips">
+      <div class="panel-label">Cache &amp; Environment Tips</div>
+      <p>Server restart required after middleware changes. Test rate limiting with: <code>for i in $(seq 1 20); do curl -s http://localhost:8000/chat -X POST -d '{"message":"test"}' -H 'Content-Type: application/json' &amp; done</code></p>
+    </div>
+    <div class="panel panel-analogy">
+      <div class="panel-label">Analogy</div>
+      <p>Like a buffet restaurant with no plate limit &mdash; one customer could take all the food, leaving nothing for everyone else. Rate limiting ensures fair resource distribution.</p>
+    </div>
         <div class="panel panel-verify">
           <div class="panel-label">Verify</div>
           <pre class="code-block">for i in $(seq 1 100); do curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8000/api/health; done | sort | uniq -c
@@ -768,6 +1009,61 @@ curl -s -H "X-API-Key: mr_revoked_key" http://localhost:8000/api/protected
           <pre class="code-block"># expire = datetime.utcnow() + timedelta(minutes=30)
 # payload.update({"exp": expire})</pre>
         </div>
+    <div class="panel panel-experiments">
+      <div class="panel-label">Experiments</div>
+      <div class="experiment-block">
+        <h5>Experiment A: 5-second expiration</h5>
+        <p>Set JWT to expire in 5 seconds</p>
+        <div class="code-block">exp = datetime.utcnow() + timedelta(seconds=5)</div>
+        <p><strong>Observe:</strong> Tokens expire almost immediately. Users must re-authenticate constantly. UX is terrible but security is very tight.</p>
+      </div>
+      <div class="experiment-block">
+        <h5>Experiment B: 30-day expiration</h5>
+        <p>Set JWT to expire in 30 days</p>
+        <div class="code-block">exp = datetime.utcnow() + timedelta(days=30)</div>
+        <p><strong>Observe:</strong> Convenient for users but 30-day window for stolen tokens. Balance between UX and security.</p>
+      </div>
+      <div class="experiment-block">
+        <h5>Experiment C: Add exp but don&rsquo;t validate</h5>
+        <p>Include exp claim but skip server-side check</p>
+        <div class="code-block"># jwt.decode(..., options={'verify_exp': False})</div>
+        <p><strong>Observe:</strong> Token has expiration metadata but server ignores it. Provides false sense of security.</p>
+      </div>
+    </div>
+    <div class="panel panel-outcomes">
+      <div class="panel-label">Expected Outcomes</div>
+      <table class="outcome-table">
+        <thead><tr><th>Metric</th><th>Baseline</th><th>After Break</th><th>Experiment A</th><th>Experiment B</th></tr></thead>
+        <tbody>
+        <tr><td>overall_score</td><td>0.72</td><td>0.72</td><td>0.72</td><td>0.72</td></tr>
+        <tr><td>token_lifetime</td><td>1hr</td><td>infinite</td><td>5sec</td><td>30days</td></tr>
+        <tr><td>stolen_token_risk</td><td>1hr_window</td><td>permanent</td><td>5sec_window</td><td>30day_window</td></tr>
+        <tr><td>user_experience</td><td>normal</td><td>normal</td><td>constant_reauth</td><td>convenient</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="panel panel-queries">
+      <div class="panel-label">Query Variations</div>
+      <ul>
+        <li><strong>Keyword query:</strong> <code>Generate a JWT token</code></li>
+        <li><strong>Semantic query:</strong> <code>How long will my session last?</code></li>
+        <li><strong>Edge case:</strong> <code>Use a token that expired 1 millisecond ago</code></li>
+        <li><strong>Adversarial:</strong> <code>Forge a JWT with exp set to year 2100</code></li>
+      </ul>
+    </div>
+    <div class="panel panel-combined">
+      <div class="panel-label">Combined Breaks</div>
+      <p><strong>Combine with Exercise #37 &mdash; Remove Revoked Key Check:</strong> No JWT exp + no revocation = tokens live forever and can&rsquo;t be killed. Once issued, a token is permanent and irrevocable.</p>
+      <p><strong>Production Impact:</strong> A single leaked token provides permanent access. There is no mechanism to invalidate it, ever.</p>
+    </div>
+    <div class="panel panel-tips">
+      <div class="panel-label">Cache &amp; Environment Tips</div>
+      <p>Server restart needed after security.py changes. Generate test tokens and verify expiration with: <code>python3 -c "import jwt; print(jwt.decode(token, key, algorithms=['HS256']))"</code></p>
+    </div>
+    <div class="panel panel-analogy">
+      <div class="panel-label">Analogy</div>
+      <p>Like issuing a lifetime parking pass with no serial number &mdash; once it&rsquo;s out there, you can&rsquo;t expire it, track it, or cancel it. JWT expiration is the built-in self-destruct timer.</p>
+    </div>
         <div class="panel panel-verify">
           <div class="panel-label">Verify</div>
           <pre class="code-block"># Decode the JWT and verify no "exp" field exists
@@ -816,6 +1112,61 @@ curl -s -H "X-API-Key: mr_revoked_key" http://localhost:8000/api/protected
           <pre class="code-block"># if len(secret_key) < 32:
 #     raise ValueError("SECRET_KEY must be at least 32 characters")</pre>
         </div>
+    <div class="panel panel-experiments">
+      <div class="panel-label">Experiments</div>
+      <div class="experiment-block">
+        <h5>Experiment A: Minimum 4 chars</h5>
+        <p>Allow very short secrets</p>
+        <div class="code-block">if len(secret_key) < 4: raise ValueError('Too short')</div>
+        <p><strong>Observe:</strong> Trivially brute-forceable. 4-char key has ~1M possibilities &mdash; crackable in seconds.</p>
+      </div>
+      <div class="experiment-block">
+        <h5>Experiment B: Minimum 128 chars</h5>
+        <p>Require very long secrets</p>
+        <div class="code-block">if len(secret_key) < 128: raise ValueError('Too short')</div>
+        <p><strong>Observe:</strong> Extremely secure but operationally painful. Hard to manage, rotate, and store.</p>
+      </div>
+      <div class="experiment-block">
+        <h5>Experiment C: Warn but don&rsquo;t reject</h5>
+        <p>Log warning for short keys</p>
+        <div class="code-block">if len(secret_key) < 32: logger.warning('Weak secret key')</div>
+        <p><strong>Observe:</strong> Allows weak keys with audit trail. Developers see warnings but can ignore them.</p>
+      </div>
+    </div>
+    <div class="panel panel-outcomes">
+      <div class="panel-label">Expected Outcomes</div>
+      <table class="outcome-table">
+        <thead><tr><th>Metric</th><th>Baseline</th><th>After Break</th><th>Experiment A</th><th>Experiment B</th></tr></thead>
+        <tbody>
+        <tr><td>overall_score</td><td>0.72</td><td>0.72</td><td>0.72</td><td>0.72</td></tr>
+        <tr><td>key_strength</td><td>strong</td><td>any</td><td>trivial</td><td>very_strong</td></tr>
+        <tr><td>brute_force_time</td><td>centuries</td><td>instant</td><td>seconds</td><td>heat_death</td></tr>
+        <tr><td>operational_burden</td><td>moderate</td><td>none</td><td>none</td><td>high</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="panel panel-queries">
+      <div class="panel-label">Query Variations</div>
+      <ul>
+        <li><strong>Keyword query:</strong> <code>Set a new secret key</code></li>
+        <li><strong>Semantic query:</strong> <code>How secure is the JWT signing key?</code></li>
+        <li><strong>Edge case:</strong> <code>Set SECRET_KEY to a single character</code></li>
+        <li><strong>Adversarial:</strong> <code>Set SECRET_KEY to 'a' and try to forge tokens</code></li>
+      </ul>
+    </div>
+    <div class="panel panel-combined">
+      <div class="panel-label">Combined Breaks</div>
+      <p><strong>Combine with Exercise #41 &mdash; Remove Default Secret Rejection:</strong> No length check + default secret = trivially crackable auth. The system uses a known, short secret.</p>
+      <p><strong>Production Impact:</strong> Anyone who reads the source code or documentation can forge valid JWT tokens. Authentication is completely compromised.</p>
+    </div>
+    <div class="panel panel-tips">
+      <div class="panel-label">Cache &amp; Environment Tips</div>
+      <p>Server restart required after config changes. Test by setting <code>SECRET_KEY=abc</code> in .env and checking if the app starts without errors.</p>
+    </div>
+    <div class="panel panel-analogy">
+      <div class="panel-label">Analogy</div>
+      <p>Like a password policy that allows '123' as a valid password &mdash; technically it&rsquo;s a password, but it provides zero actual security. Length requirements exist because short secrets are trivially crackable.</p>
+    </div>
         <div class="panel panel-verify">
           <div class="panel-label">Verify</div>
           <pre class="code-block">uv run pytest tests/ -k "auth" -v
@@ -864,6 +1215,61 @@ curl -s -H "X-API-Key: mr_revoked_key" http://localhost:8000/api/protected
           <pre class="code-block"># if secret_key == "changeme":
 #     raise ValueError("Do not use default secret in production")</pre>
         </div>
+    <div class="panel panel-experiments">
+      <div class="panel-label">Experiments</div>
+      <div class="experiment-block">
+        <h5>Experiment A: Block 'change-me' but allow 'password'</h5>
+        <p>Partial default detection</p>
+        <div class="code-block">if secret_key == 'change-me': raise ValueError()</div>
+        <p><strong>Observe:</strong> Catches one default but misses others. Attackers try 'password', 'secret', 'default' instead.</p>
+      </div>
+      <div class="experiment-block">
+        <h5>Experiment B: Warn but don&rsquo;t reject</h5>
+        <p>Log warning for default secret</p>
+        <div class="code-block">if secret_key in DEFAULTS: logger.critical('DEFAULT SECRET IN USE')</div>
+        <p><strong>Observe:</strong> Creates loud alerts but doesn&rsquo;t enforce. Developers may ignore critical logs.</p>
+      </div>
+      <div class="experiment-block">
+        <h5>Experiment C: Auto-generate random secret</h5>
+        <p>Replace default with auto-generated secret</p>
+        <div class="code-block">if secret_key in DEFAULTS: secret_key = secrets.token_hex(32)</div>
+        <p><strong>Observe:</strong> Self-healing but unpredictable. Key changes on every restart, invalidating all existing tokens.</p>
+      </div>
+    </div>
+    <div class="panel panel-outcomes">
+      <div class="panel-label">Expected Outcomes</div>
+      <table class="outcome-table">
+        <thead><tr><th>Metric</th><th>Baseline</th><th>After Break</th><th>Experiment A</th><th>Experiment B</th></tr></thead>
+        <tbody>
+        <tr><td>overall_score</td><td>0.72</td><td>0.72</td><td>0.72</td><td>0.72</td></tr>
+        <tr><td>default_secret</td><td>rejected</td><td>accepted</td><td>partial</td><td>auto_replaced</td></tr>
+        <tr><td>token_forgery_risk</td><td>none</td><td>trivial</td><td>partial</td><td>none</td></tr>
+        <tr><td>deploy_safety</td><td>fail_safe</td><td>fail_open</td><td>partial</td><td>self_healing</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="panel panel-queries">
+      <div class="panel-label">Query Variations</div>
+      <ul>
+        <li><strong>Keyword query:</strong> <code>Check JWT configuration</code></li>
+        <li><strong>Semantic query:</strong> <code>Is the authentication system properly configured?</code></li>
+        <li><strong>Edge case:</strong> <code>Set SECRET_KEY to 'CHANGE-ME' (different case)</code></li>
+        <li><strong>Adversarial:</strong> <code>Forge a JWT using 'change-me' as the signing key</code></li>
+      </ul>
+    </div>
+    <div class="panel panel-combined">
+      <div class="panel-label">Combined Breaks</div>
+      <p><strong>Combine with Exercise #40 &mdash; Remove Length Validation:</strong> Default secret + no length check = anyone can forge tokens. The secret is both known and short.</p>
+      <p><strong>Production Impact:</strong> Authentication becomes trivially compromisable. Any developer who reads the docs knows the secret. Any attacker who guesses 'change-me' has full access.</p>
+    </div>
+    <div class="panel panel-tips">
+      <div class="panel-label">Cache &amp; Environment Tips</div>
+      <p>Server restart required. Check .env for SECRET_KEY value. Test with: <code>python3 -c "import jwt; print(jwt.encode({'user':'admin'}, 'change-me', algorithm='HS256'))"</code></p>
+    </div>
+    <div class="panel panel-analogy">
+      <div class="panel-label">Analogy</div>
+      <p>Like a house with the factory-default lock code still set &mdash; the lock works, but everyone who reads the manual knows the combination. Default secrets are documented secrets.</p>
+    </div>
         <div class="panel panel-verify">
           <div class="panel-label">Verify</div>
           <pre class="code-block"># Set SECRET_KEY=changeme and start the app
@@ -913,6 +1319,61 @@ curl -s -H "X-API-Key: mr_revoked_key" http://localhost:8000/api/protected
           <pre class="code-block"># Comment out the entire tool execution while-loop
 # The LLM will still "think" about using tools, but none will run</pre>
         </div>
+    <div class="panel panel-experiments">
+      <div class="panel-label">Experiments</div>
+      <div class="experiment-block">
+        <h5>Experiment A: Single tool call only</h5>
+        <p>Allow only 1 tool call per turn</p>
+        <div class="code-block">tool_result = execute_tool(tool_call); break  # exit after one</div>
+        <p><strong>Observe:</strong> Agent can perform one action but can&rsquo;t chain. Booking works but can&rsquo;t search-then-book.</p>
+      </div>
+      <div class="experiment-block">
+        <h5>Experiment B: Max 10 iterations</h5>
+        <p>Cap tool loop at 10 iterations</p>
+        <div class="code-block">for i in range(10): ...  # bounded loop</div>
+        <p><strong>Observe:</strong> Prevents infinite loops but allows reasonable multi-step reasoning. Safety vs capability tradeoff.</p>
+      </div>
+      <div class="experiment-block">
+        <h5>Experiment C: Execute but don&rsquo;t feed back</h5>
+        <p>Run tools but don&rsquo;t give results to LLM</p>
+        <div class="code-block">result = execute_tool(call)  # don't append to messages</div>
+        <p><strong>Observe:</strong> Tools execute but LLM doesn&rsquo;t know the outcome. It can&rsquo;t reason about results or handle errors.</p>
+      </div>
+    </div>
+    <div class="panel panel-outcomes">
+      <div class="panel-label">Expected Outcomes</div>
+      <table class="outcome-table">
+        <thead><tr><th>Metric</th><th>Baseline</th><th>After Break</th><th>Experiment A</th><th>Experiment B</th></tr></thead>
+        <tbody>
+        <tr><td>overall_score</td><td>0.72</td><td>0.35</td><td>0.60</td><td>0.40</td></tr>
+        <tr><td>multi_step_tasks</td><td>PASS</td><td>FAIL</td><td>1_step_only</td><td>FAIL</td></tr>
+        <tr><td>tool_chaining</td><td>works</td><td>broken</td><td>impossible</td><td>blind</td></tr>
+        <tr><td>booking_flow</td><td>complete</td><td>search_or_book</td><td>book_only</td><td>unreliable</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="panel panel-queries">
+      <div class="panel-label">Query Variations</div>
+      <ul>
+        <li><strong>Keyword query:</strong> <code>Search for rooms then book the cheapest one</code></li>
+        <li><strong>Semantic query:</strong> <code>Find me a room, check availability, and complete the booking</code></li>
+        <li><strong>Edge case:</strong> <code>Task requiring 5 sequential tool calls</code></li>
+        <li><strong>Adversarial:</strong> <code>Instruct the agent to call tools in an infinite loop</code></li>
+      </ul>
+    </div>
+    <div class="panel panel-combined">
+      <div class="panel-label">Combined Breaks</div>
+      <p><strong>Combine with Exercise #29 &mdash; Remove Knowledge Injection (Tier 2):</strong> No tool loop + no knowledge injection = agent can&rsquo;t act or know. It has no domain knowledge and can&rsquo;t perform actions.</p>
+      <p><strong>Production Impact:</strong> The agent is reduced to a generic chatbot that can neither answer resort-specific questions nor perform any operations.</p>
+    </div>
+    <div class="panel panel-tips">
+      <div class="panel-label">Cache &amp; Environment Tips</div>
+      <p>Server restart needed after main.py changes. Test multi-step tasks like 'search for rooms and book the best one'. Check logs for tool call sequence.</p>
+    </div>
+    <div class="panel panel-analogy">
+      <div class="panel-label">Analogy</div>
+      <p>Like a chef who can only do one step per dish &mdash; they can chop vegetables OR cook them, but never both in the same meal preparation. The tool loop enables multi-step reasoning.</p>
+    </div>
         <div class="panel panel-verify">
           <div class="panel-label">Verify</div>
           <pre class="code-block">curl -X POST http://localhost:8000/api/chat \
@@ -964,6 +1425,61 @@ curl -s -H "X-API-Key: mr_revoked_key" http://localhost:8000/api/protected
           <pre class="code-block"># memory.add_message(session_id, "user", message)
 # memory.add_message(session_id, "assistant", response)</pre>
         </div>
+    <div class="panel panel-experiments">
+      <div class="panel-label">Experiments</div>
+      <div class="experiment-block">
+        <h5>Experiment A: In-memory only</h5>
+        <p>Save to dict instead of database</p>
+        <div class="code-block">self._memory = {}; self._memory[session_id] = messages</div>
+        <p><strong>Observe:</strong> Works during server lifetime but all memory lost on restart. Fine for dev, catastrophic for production.</p>
+      </div>
+      <div class="experiment-block">
+        <h5>Experiment B: Wrong session ID</h5>
+        <p>Save with a different session ID</p>
+        <div class="code-block">db.save(f'wrong_{session_id}', messages)</div>
+        <p><strong>Observe:</strong> Messages are saved but can never be retrieved because the lookup key doesn&rsquo;t match.</p>
+      </div>
+      <div class="experiment-block">
+        <h5>Experiment C: Async with race condition</h5>
+        <p>Save asynchronously without locking</p>
+        <div class="code-block">asyncio.create_task(self._async_save(session_id, messages))</div>
+        <p><strong>Observe:</strong> May lose messages if server shuts down before async write completes. Order not guaranteed.</p>
+      </div>
+    </div>
+    <div class="panel panel-outcomes">
+      <div class="panel-label">Expected Outcomes</div>
+      <table class="outcome-table">
+        <thead><tr><th>Metric</th><th>Baseline</th><th>After Break</th><th>Experiment A</th><th>Experiment B</th></tr></thead>
+        <tbody>
+        <tr><td>overall_score</td><td>0.72</td><td>0.72</td><td>0.72</td><td>0.72</td></tr>
+        <tr><td>persistence</td><td>durable</td><td>none</td><td>orphaned</td><td>eventual</td></tr>
+        <tr><td>server_restart</td><td>data_kept</td><td>data_lost</td><td>data_kept</td><td>data_maybe_lost</td></tr>
+        <tr><td>session_continuity</td><td>full</td><td>none</td><td>broken</td><td>unreliable</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="panel panel-queries">
+      <div class="panel-label">Query Variations</div>
+      <ul>
+        <li><strong>Keyword query:</strong> <code>Remember my name is Dracula</code></li>
+        <li><strong>Semantic query:</strong> <code>Will you remember our conversation if I come back tomorrow?</code></li>
+        <li><strong>Edge case:</strong> <code>Restart the server and continue the same session</code></li>
+        <li><strong>Adversarial:</strong> <code>Save a message then immediately try to retrieve it</code></li>
+      </ul>
+    </div>
+    <div class="panel panel-combined">
+      <div class="panel-label">Combined Breaks</div>
+      <p><strong>Combine with Exercise #30 &mdash; Remove Chat History (Tier 2):</strong> No persistence + no history loading = complete amnesia. Messages are neither saved nor loaded.</p>
+      <p><strong>Production Impact:</strong> The agent has zero memory across messages AND across sessions. Every single message is treated as a brand new conversation.</p>
+    </div>
+    <div class="panel panel-tips">
+      <div class="panel-label">Cache &amp; Environment Tips</div>
+      <p>Server restart required to test persistence. Check the database for saved messages: <code>sqlite3 monster_resort.db 'SELECT * FROM memory LIMIT 5'</code></p>
+    </div>
+    <div class="panel panel-analogy">
+      <div class="panel-label">Analogy</div>
+      <p>Like writing notes on a whiteboard but erasing them before the next meeting &mdash; you did the work of capturing information, but it&rsquo;s gone when you need it.</p>
+    </div>
         <div class="panel panel-verify">
           <div class="panel-label">Verify</div>
           <pre class="code-block"># Message 1: "My name is Alice"
@@ -1014,6 +1530,61 @@ curl -s -H "X-API-Key: mr_revoked_key" http://localhost:8000/api/protected
           <pre class="code-block"># Comment out confidence score calculation
 # Comment out confidence field assignment in response</pre>
         </div>
+    <div class="panel panel-experiments">
+      <div class="panel-label">Experiments</div>
+      <div class="experiment-block">
+        <h5>Experiment A: Run but ignore results</h5>
+        <p>Compute hallucination score but don&rsquo;t use it</p>
+        <div class="code-block">score = detector.check(response); # ignore score</div>
+        <p><strong>Observe:</strong> CPU cycles wasted on detection that doesn&rsquo;t affect output. Cost without benefit.</p>
+      </div>
+      <div class="experiment-block">
+        <h5>Experiment B: Only check long responses</h5>
+        <p>Only check responses over 200 words</p>
+        <div class="code-block">if len(response.split()) > 200: score = detector.check(response)</div>
+        <p><strong>Observe:</strong> Short hallucinated responses slip through. Long well-grounded responses get checked unnecessarily.</p>
+      </div>
+      <div class="experiment-block">
+        <h5>Experiment C: Keyword-based checker</h5>
+        <p>Use simple keyword matching instead of embedding-based</p>
+        <div class="code-block">suspicious = any(w in response for w in ['I think', 'probably', 'might'])</div>
+        <p><strong>Observe:</strong> Catches hedging language but misses confident hallucinations. High false positive rate on legitimate uncertainty.</p>
+      </div>
+    </div>
+    <div class="panel panel-outcomes">
+      <div class="panel-label">Expected Outcomes</div>
+      <table class="outcome-table">
+        <thead><tr><th>Metric</th><th>Baseline</th><th>After Break</th><th>Experiment A</th><th>Experiment B</th></tr></thead>
+        <tbody>
+        <tr><td>overall_score</td><td>0.72</td><td>0.72</td><td>0.72</td><td>0.72</td></tr>
+        <tr><td>hallucination_check</td><td>active</td><td>disabled</td><td>ignored</td><td>partial</td></tr>
+        <tr><td>confidence_signal</td><td>accurate</td><td>missing</td><td>wasted</td><td>keyword_only</td></tr>
+        <tr><td>user_trust</td><td>calibrated</td><td>uncalibrated</td><td>uncalibrated</td><td>noisy</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="panel panel-queries">
+      <div class="panel-label">Query Variations</div>
+      <ul>
+        <li><strong>Keyword query:</strong> <code>Tell me about resort features</code></li>
+        <li><strong>Semantic query:</strong> <code>What makes this resort different from a regular hotel?</code></li>
+        <li><strong>Edge case:</strong> <code>Ask about a feature that doesn't exist in the knowledge base</code></li>
+        <li><strong>Adversarial:</strong> <code>Convince the bot to assert false information confidently</code></li>
+      </ul>
+    </div>
+    <div class="panel panel-combined">
+      <div class="panel-label">Combined Breaks</div>
+      <p><strong>Combine with Exercise #34 &mdash; Remove Confidence Classification (Tier 2):</strong> No detection + no classification = zero hallucination guardrails. The system produces unverified, unclassified responses.</p>
+      <p><strong>Production Impact:</strong> Every response is treated as equally trustworthy. The LLM could confidently state false information with no warning to the user.</p>
+    </div>
+    <div class="panel panel-tips">
+      <div class="panel-label">Cache &amp; Environment Tips</div>
+      <p>No server restart needed. Compare responses with and without hallucination detection. Check the <code>confidence</code> field in response JSON.</p>
+    </div>
+    <div class="panel panel-analogy">
+      <div class="panel-label">Analogy</div>
+      <p>Like a fact-checker who never reads the articles &mdash; the quality control department exists on the org chart, but nobody is actually checking anything.</p>
+    </div>
         <div class="panel panel-verify">
           <div class="panel-label">Verify</div>
           <pre class="code-block">curl -X POST http://localhost:8000/api/chat \
@@ -1063,6 +1634,61 @@ curl -s -H "X-API-Key: mr_revoked_key" http://localhost:8000/api/protected
           File: <code>app/main.py</code> (line 141). Comment out the <code>validate_message</code> call.
           <pre class="code-block"># validate_message(request.message)</pre>
         </div>
+    <div class="panel panel-experiments">
+      <div class="panel-label">Experiments</div>
+      <div class="experiment-block">
+        <h5>Experiment A: Validate but log only</h5>
+        <p>Run validation but only log warnings</p>
+        <div class="code-block">issues = validate_message(msg); if issues: logger.warning(issues)</div>
+        <p><strong>Observe:</strong> Detects problems but doesn&rsquo;t prevent them. Useful for monitoring without disrupting users.</p>
+      </div>
+      <div class="experiment-block">
+        <h5>Experiment B: Validate length only</h5>
+        <p>Check only message length, skip content validation</p>
+        <div class="code-block">if len(msg) > MAX_LEN: raise ValueError('Too long')</div>
+        <p><strong>Observe:</strong> Prevents DoS via long messages but allows SQL injection, XSS, and other content-based attacks.</p>
+      </div>
+      <div class="experiment-block">
+        <h5>Experiment C: Validate response not request</h5>
+        <p>Check the LLM&rsquo;s response instead of user input</p>
+        <div class="code-block">validated_response = validate_message(llm_response)</div>
+        <p><strong>Observe:</strong> Catches LLM-generated harmful content but allows malicious user input to reach the LLM.</p>
+      </div>
+    </div>
+    <div class="panel panel-outcomes">
+      <div class="panel-label">Expected Outcomes</div>
+      <table class="outcome-table">
+        <thead><tr><th>Metric</th><th>Baseline</th><th>After Break</th><th>Experiment A</th><th>Experiment B</th></tr></thead>
+        <tbody>
+        <tr><td>overall_score</td><td>0.72</td><td>0.72</td><td>0.72</td><td>0.72</td></tr>
+        <tr><td>input_validation</td><td>full</td><td>none</td><td>log_only</td><td>length_only</td></tr>
+        <tr><td>sql_injection</td><td>blocked</td><td>ALLOWED</td><td>detected</td><td>ALLOWED</td></tr>
+        <tr><td>xss_protection</td><td>active</td><td>none</td><td>logged</td><td>none</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="panel panel-queries">
+      <div class="panel-label">Query Variations</div>
+      <ul>
+        <li><strong>Keyword query:</strong> <code>Hello, tell me about rooms</code></li>
+        <li><strong>Semantic query:</strong> <code>Can you help me find the perfect room for a werewolf?</code></li>
+        <li><strong>Edge case:</strong> <code>'; DROP TABLE bookings; --</code></li>
+        <li><strong>Adversarial:</strong> <code>&lt;script&gt;document.location='http://evil.com'&lt;/script&gt;</code></li>
+      </ul>
+    </div>
+    <div class="panel panel-combined">
+      <div class="panel-label">Combined Breaks</div>
+      <p><strong>Combine with Exercise #4 &mdash; Remove SQL Detection (Tier 1):</strong> No validate_message + no SQL detection = zero input security. Both the gateway and the specific pattern checks are removed.</p>
+      <p><strong>Production Impact:</strong> Any payload reaches the LLM and database layers unfiltered. The attack surface is maximized.</p>
+    </div>
+    <div class="panel panel-tips">
+      <div class="panel-label">Cache &amp; Environment Tips</div>
+      <p>No server restart needed. Test by sending dangerous payloads and checking whether they&rsquo;re rejected or processed. Monitor logs for validation warnings.</p>
+    </div>
+    <div class="panel panel-analogy">
+      <div class="panel-label">Analogy</div>
+      <p>Like a nightclub with an open door and no bouncer &mdash; anyone can walk in regardless of age, dress code, or intentions. Validation is the bouncer.</p>
+    </div>
         <div class="panel panel-verify">
           <div class="panel-label">Verify</div>
           <pre class="code-block">curl -X POST http://localhost:8000/api/chat \
@@ -1114,6 +1740,61 @@ curl -s -H "X-API-Key: mr_revoked_key" http://localhost:8000/api/protected
 # knowledge_base.ingest(...)
 # logger.info("Knowledge base loaded")</pre>
         </div>
+    <div class="panel panel-experiments">
+      <div class="panel-label">Experiments</div>
+      <div class="experiment-block">
+        <h5>Experiment A: Ingest half the documents</h5>
+        <p>Only ingest the first 50% of knowledge documents</p>
+        <div class="code-block">documents = load_documents()[:len(documents)//2]</div>
+        <p><strong>Observe:</strong> Half the knowledge base is available. Queries about missing documents return generic/hallucinated responses.</p>
+      </div>
+      <div class="experiment-block">
+        <h5>Experiment B: Wrong chunk size</h5>
+        <p>Use very large chunks (4000 tokens) instead of standard</p>
+        <div class="code-block">chunker = TextChunker(chunk_size=4000)</div>
+        <p><strong>Observe:</strong> Fewer, larger chunks. BM25 loses granularity. Dense retrieval may hit token limits.</p>
+      </div>
+      <div class="experiment-block">
+        <h5>Experiment C: Async ingestion after first request</h5>
+        <p>Ingest in background after server starts serving</p>
+        <div class="code-block">threading.Thread(target=ingest_knowledge, daemon=True).start()</div>
+        <p><strong>Observe:</strong> Server starts fast but first N requests have no knowledge. Race condition during ingestion.</p>
+      </div>
+    </div>
+    <div class="panel panel-outcomes">
+      <div class="panel-label">Expected Outcomes</div>
+      <table class="outcome-table">
+        <thead><tr><th>Metric</th><th>Baseline</th><th>After Break</th><th>Experiment A</th><th>Experiment B</th></tr></thead>
+        <tbody>
+        <tr><td>overall_score</td><td>0.72</td><td>0.25</td><td>0.50</td><td>varies</td></tr>
+        <tr><td>knowledge_coverage</td><td>100%</td><td>0%</td><td>50%</td><td>100%</td></tr>
+        <tr><td>cold_start_time</td><td>5sec</td><td>instant</td><td>5sec</td><td>instant</td></tr>
+        <tr><td>first_request_quality</td><td>high</td><td>hallucinated</td><td>partial</td><td>hallucinated</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="panel panel-queries">
+      <div class="panel-label">Query Variations</div>
+      <ul>
+        <li><strong>Keyword query:</strong> <code>Tell me about Vampire Manor</code></li>
+        <li><strong>Semantic query:</strong> <code>What are all the accommodation options?</code></li>
+        <li><strong>Edge case:</strong> <code>Query about a document that was in the second half</code></li>
+        <li><strong>Adversarial:</strong> <code>Send a query during startup before ingestion completes</code></li>
+      </ul>
+    </div>
+    <div class="panel panel-combined">
+      <div class="panel-label">Combined Breaks</div>
+      <p><strong>Combine with Exercise #29 &mdash; Remove Context Injection (Tier 2):</strong> No ingestion + no context injection = RAG pipeline is empty. Even if context injection code runs, there&rsquo;s nothing to inject.</p>
+      <p><strong>Production Impact:</strong> The system has the RAG architecture but zero content. It&rsquo;s a search engine with no index and a library with no books.</p>
+    </div>
+    <div class="panel panel-tips">
+      <div class="panel-label">Cache &amp; Environment Tips</div>
+      <p>Server restart required &mdash; ingestion runs at startup. Monitor startup logs for ingestion progress. Check document count with: <code>python3 -c "from app.advanced_rag import rag; print(len(rag.documents))"</code></p>
+    </div>
+    <div class="panel panel-analogy">
+      <div class="panel-label">Analogy</div>
+      <p>Like opening a library without putting any books on the shelves &mdash; the building is beautiful, the catalog system works, but there&rsquo;s nothing to find.</p>
+    </div>
         <div class="panel panel-verify">
           <div class="panel-label">Verify</div>
           <pre class="code-block">curl -X POST http://localhost:8000/api/chat \
@@ -1167,6 +1848,61 @@ session_id = request.session_id or str(uuid.uuid4())
 # After
 session_id = request.session_id</pre>
         </div>
+    <div class="panel panel-experiments">
+      <div class="panel-label">Experiments</div>
+      <div class="experiment-block">
+        <h5>Experiment A: Fixed session ID for all</h5>
+        <p>Use the same session ID for every request</p>
+        <div class="code-block">session_id = "global_session"</div>
+        <p><strong>Observe:</strong> All users share one conversation. Messages from different users interleave. Privacy nightmare.</p>
+      </div>
+      <div class="experiment-block">
+        <h5>Experiment B: Timestamp as session ID</h5>
+        <p>Use current timestamp as session</p>
+        <div class="code-block">session_id = str(int(time.time()))</div>
+        <p><strong>Observe:</strong> New session every second. Rapid requests within the same second share a session. No continuity.</p>
+      </div>
+      <div class="experiment-block">
+        <h5>Experiment C: IP address as session ID</h5>
+        <p>Use client IP as session identifier</p>
+        <div class="code-block">session_id = request.client.host</div>
+        <p><strong>Observe:</strong> Users behind the same NAT share a session. Different devices from same user get different sessions.</p>
+      </div>
+    </div>
+    <div class="panel panel-outcomes">
+      <div class="panel-label">Expected Outcomes</div>
+      <table class="outcome-table">
+        <thead><tr><th>Metric</th><th>Baseline</th><th>After Break</th><th>Experiment A</th><th>Experiment B</th></tr></thead>
+        <tbody>
+        <tr><td>overall_score</td><td>0.72</td><td>CRASH</td><td>0.72</td><td>0.72</td></tr>
+        <tr><td>session_isolation</td><td>per_user</td><td>none</td><td>shared_global</td><td>per_second</td></tr>
+        <tr><td>memory_continuity</td><td>works</td><td>broken</td><td>cross_contaminated</td><td>none</td></tr>
+        <tr><td>privacy</td><td>safe</td><td>N/A</td><td>VIOLATED</td><td>time_based</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="panel panel-queries">
+      <div class="panel-label">Query Variations</div>
+      <ul>
+        <li><strong>Keyword query:</strong> <code>My name is Count Dracula</code></li>
+        <li><strong>Semantic query:</strong> <code>Continue our earlier conversation about room booking</code></li>
+        <li><strong>Edge case:</strong> <code>Send a request without any session identifier</code></li>
+        <li><strong>Adversarial:</strong> <code>Set session_id to another user's session</code></li>
+      </ul>
+    </div>
+    <div class="panel panel-combined">
+      <div class="panel-label">Combined Breaks</div>
+      <p><strong>Combine with Exercise #43 &mdash; Remove Memory Persistence:</strong> No session fallback + no persistence = sessions break completely. No session ID is generated AND messages aren&rsquo;t saved.</p>
+      <p><strong>Production Impact:</strong> Every request is completely isolated. No identity, no memory, no continuity.</p>
+    </div>
+    <div class="panel panel-tips">
+      <div class="panel-label">Cache &amp; Environment Tips</div>
+      <p>No server restart needed. Test by sending requests without the session_id header. Check what session ID is assigned in the response or logs.</p>
+    </div>
+    <div class="panel panel-analogy">
+      <div class="panel-label">Analogy</div>
+      <p>Like a hotel that doesn&rsquo;t assign room numbers &mdash; guests check in, but nobody knows which room belongs to whom, and your belongings might end up in someone else&rsquo;s room.</p>
+    </div>
         <div class="panel panel-verify">
           <div class="panel-label">Verify</div>
           <pre class="code-block">curl -X POST http://localhost:8000/api/chat \
@@ -1218,6 +1954,61 @@ session_id = request.session_id</pre>
 # logger.info(f"Provider {provider} succeeded")
 # logger.warning(f"Provider {provider} failed: {e}")</pre>
         </div>
+    <div class="panel panel-experiments">
+      <div class="panel-label">Experiments</div>
+      <div class="experiment-block">
+        <h5>Experiment A: Log provider but not model</h5>
+        <p>Log which provider was selected but not the model name</p>
+        <div class="code-block">logger.info(f'Using provider: {provider.name}')</div>
+        <p><strong>Observe:</strong> Know which provider handled the request but not which model. Useful for failover tracking, not model debugging.</p>
+      </div>
+      <div class="experiment-block">
+        <h5>Experiment B: Log only on errors</h5>
+        <p>Skip logging for successful requests</p>
+        <div class="code-block">except Exception as e: logger.error(f'Provider {name} failed: {e}')</div>
+        <p><strong>Observe:</strong> Silent on success. You only see failures. Can&rsquo;t track normal provider distribution or latency.</p>
+      </div>
+      <div class="experiment-block">
+        <h5>Experiment C: Log to separate file</h5>
+        <p>Write provider logs to a dedicated file</p>
+        <div class="code-block">provider_logger = logging.getLogger('provider'); provider_logger.addHandler(FileHandler('provider.log'))</div>
+        <p><strong>Observe:</strong> Separates concerns. Provider logs don&rsquo;t clutter main log. But requires monitoring a second file.</p>
+      </div>
+    </div>
+    <div class="panel panel-outcomes">
+      <div class="panel-label">Expected Outcomes</div>
+      <table class="outcome-table">
+        <thead><tr><th>Metric</th><th>Baseline</th><th>After Break</th><th>Experiment A</th><th>Experiment B</th></tr></thead>
+        <tbody>
+        <tr><td>overall_score</td><td>0.72</td><td>0.72</td><td>0.72</td><td>0.72</td></tr>
+        <tr><td>provider_visibility</td><td>full</td><td>none</td><td>partial</td><td>error_only</td></tr>
+        <tr><td>debugging_ability</td><td>high</td><td>none</td><td>moderate</td><td>reactive</td></tr>
+        <tr><td>audit_trail</td><td>complete</td><td>none</td><td>partial</td><td>errors_only</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="panel panel-queries">
+      <div class="panel-label">Query Variations</div>
+      <ul>
+        <li><strong>Keyword query:</strong> <code>Which LLM provider is being used?</code></li>
+        <li><strong>Semantic query:</strong> <code>How does the system choose between different AI providers?</code></li>
+        <li><strong>Edge case:</strong> <code>Trigger a provider failover and check logs</code></li>
+        <li><strong>Adversarial:</strong> <code>Force all providers to fail and check error logging</code></li>
+      </ul>
+    </div>
+    <div class="panel panel-combined">
+      <div class="panel-label">Combined Breaks</div>
+      <p><strong>Combine with Exercise #31 &mdash; Remove ModelRouter Fallback (Tier 2):</strong> No logging + no fallback = invisible provider failures. Providers fail silently and there&rsquo;s no fallback to catch them.</p>
+      <p><strong>Production Impact:</strong> You don&rsquo;t know which provider failed, why it failed, or that it failed at all. Debugging production issues becomes guesswork.</p>
+    </div>
+    <div class="panel panel-tips">
+      <div class="panel-label">Cache &amp; Environment Tips</div>
+      <p>No server restart needed. Set <code>LOG_LEVEL=DEBUG</code> to see provider selection logging. Check logs after sending requests: <code>tail -f monster_resort.log</code></p>
+    </div>
+    <div class="panel panel-analogy">
+      <div class="panel-label">Analogy</div>
+      <p>Like a switchboard operator who connects calls but never notes who called whom &mdash; when something goes wrong, there&rsquo;s no trail to follow.</p>
+    </div>
         <div class="panel panel-verify">
           <div class="panel-label">Verify</div>
           <pre class="code-block"># Make a request and check logs
@@ -1268,6 +2059,61 @@ session_id = request.session_id</pre>
 #     raise DatabaseError(f"Integrity constraint violated: {e}")
 #     # callers now see raw sqlite3.IntegrityError</pre>
         </div>
+    <div class="panel panel-experiments">
+      <div class="panel-label">Experiments</div>
+      <div class="experiment-block">
+        <h5>Experiment A: Wrap only IntegrityError</h5>
+        <p>Catch only constraint violations</p>
+        <div class="code-block">except sqlite3.IntegrityError as e: raise DatabaseError(str(e))</div>
+        <p><strong>Observe:</strong> Handles duplicate keys and constraint violations. Other errors (disk full, corruption) propagate raw.</p>
+      </div>
+      <div class="experiment-block">
+        <h5>Experiment B: Include raw SQL in message</h5>
+        <p>Wrap error but include the query text</p>
+        <div class="code-block">raise DatabaseError(f'Query failed: {sql} Error: {e}')</div>
+        <p><strong>Observe:</strong> Helpful for debugging but leaks SQL in error messages. Potential information disclosure vulnerability.</p>
+      </div>
+      <div class="experiment-block">
+        <h5>Experiment C: Return None on error</h5>
+        <p>Silently return None instead of raising</p>
+        <div class="code-block">except Exception: return None</div>
+        <p><strong>Observe:</strong> No error propagation. Caller gets None and must handle it. Silent failures are hard to debug.</p>
+      </div>
+    </div>
+    <div class="panel panel-outcomes">
+      <div class="panel-label">Expected Outcomes</div>
+      <table class="outcome-table">
+        <thead><tr><th>Metric</th><th>Baseline</th><th>After Break</th><th>Experiment A</th><th>Experiment B</th></tr></thead>
+        <tbody>
+        <tr><td>overall_score</td><td>0.72</td><td>0.72</td><td>0.72</td><td>0.72</td></tr>
+        <tr><td>error_messages</td><td>clean</td><td>raw_sqlite3</td><td>clean</td><td>sql_exposed</td></tr>
+        <tr><td>debugging</td><td>good</td><td>cryptic</td><td>good</td><td>detailed</td></tr>
+        <tr><td>info_disclosure</td><td>none</td><td>internal_errors</td><td>none</td><td>sql_visible</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="panel panel-queries">
+      <div class="panel-label">Query Variations</div>
+      <ul>
+        <li><strong>Keyword query:</strong> <code>Book a room that's already booked</code></li>
+        <li><strong>Semantic query:</strong> <code>What happens when a database operation fails?</code></li>
+        <li><strong>Edge case:</strong> <code>Trigger a unique constraint violation</code></li>
+        <li><strong>Adversarial:</strong> <code>Cause a database error and examine the error message for SQL details</code></li>
+      </ul>
+    </div>
+    <div class="panel panel-combined">
+      <div class="panel-label">Combined Breaks</div>
+      <p><strong>Combine with Exercise #17 &mdash; Remove Transaction Rollback (Tier 1):</strong> No error wrapping + no rollback = raw DB errors leak everywhere. Internal sqlite3 exceptions reach the user, and failed operations leave partial writes.</p>
+      <p><strong>Production Impact:</strong> Error messages expose internal database structure. Attackers learn table names, column names, and query patterns from error responses.</p>
+    </div>
+    <div class="panel panel-tips">
+      <div class="panel-label">Cache &amp; Environment Tips</div>
+      <p>No server restart needed. Trigger database errors by attempting duplicate inserts or violating constraints. Check the error response for raw vs. wrapped error messages.</p>
+    </div>
+    <div class="panel panel-analogy">
+      <div class="panel-label">Analogy</div>
+      <p>Like a hospital that gives patients raw lab results without interpretation &mdash; the data is accurate but incomprehensible and potentially alarming without context.</p>
+    </div>
         <div class="panel panel-verify">
           <div class="panel-label">Verify</div>
           <pre class="code-block"># Trigger a duplicate insert
@@ -1317,6 +2163,61 @@ session_id = request.session_id</pre>
           <pre class="code-block"># Comment out the entire schema version tracking block
 # No version recorded, no upgrade detection</pre>
         </div>
+    <div class="panel panel-experiments">
+      <div class="panel-label">Experiments</div>
+      <div class="experiment-block">
+        <h5>Experiment A: Track but don&rsquo;t check</h5>
+        <p>Store version but don&rsquo;t validate on startup</p>
+        <div class="code-block">db.set_version(CURRENT_VERSION)  # but skip check on startup</div>
+        <p><strong>Observe:</strong> Version is recorded but never verified. Migrations might be missed or run twice.</p>
+      </div>
+      <div class="experiment-block">
+        <h5>Experiment B: Run all migrations every time</h5>
+        <p>Apply every migration on every startup</p>
+        <div class="code-block">for migration in ALL_MIGRATIONS: migration.apply()</div>
+        <p><strong>Observe:</strong> Idempotent migrations work fine. Non-idempotent ones (ADD COLUMN) crash on second run.</p>
+      </div>
+      <div class="experiment-block">
+        <h5>Experiment C: File hash instead of version</h5>
+        <p>Hash schema file and compare</p>
+        <div class="code-block">current_hash = hashlib.sha256(schema_sql.encode()).hexdigest()</div>
+        <p><strong>Observe:</strong> Detects any schema change but doesn&rsquo;t know which migrations to apply. All-or-nothing approach.</p>
+      </div>
+    </div>
+    <div class="panel panel-outcomes">
+      <div class="panel-label">Expected Outcomes</div>
+      <table class="outcome-table">
+        <thead><tr><th>Metric</th><th>Baseline</th><th>After Break</th><th>Experiment A</th><th>Experiment B</th></tr></thead>
+        <tbody>
+        <tr><td>overall_score</td><td>0.72</td><td>0.72</td><td>0.72</td><td>0.72</td></tr>
+        <tr><td>schema_tracking</td><td>versioned</td><td>none</td><td>unverified</td><td>hash_based</td></tr>
+        <tr><td>migration_safety</td><td>ordered</td><td>untracked</td><td>unverified</td><td>rerun_all</td></tr>
+        <tr><td>upgrade_path</td><td>clear</td><td>unknown</td><td>unknown</td><td>rebuild</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="panel panel-queries">
+      <div class="panel-label">Query Variations</div>
+      <ul>
+        <li><strong>Keyword query:</strong> <code>Check database schema version</code></li>
+        <li><strong>Semantic query:</strong> <code>How does the database handle schema upgrades?</code></li>
+        <li><strong>Edge case:</strong> <code>Deploy a new version with schema changes</code></li>
+        <li><strong>Adversarial:</strong> <code>Manually modify the schema_version table</code></li>
+      </ul>
+    </div>
+    <div class="panel panel-combined">
+      <div class="panel-label">Combined Breaks</div>
+      <p><strong>Combine with Exercise #49 &mdash; Remove Database Error Wrapping:</strong> No version tracking + no error wrapping = DB schema chaos. Migrations aren&rsquo;t tracked and errors aren&rsquo;t handled.</p>
+      <p><strong>Production Impact:</strong> Database upgrades become terrifying. You don&rsquo;t know what version you&rsquo;re on, and any error during migration leaks raw internals.</p>
+    </div>
+    <div class="panel panel-tips">
+      <div class="panel-label">Cache &amp; Environment Tips</div>
+      <p>Server restart required to test migration behavior. Check current schema version: <code>sqlite3 monster_resort.db 'SELECT * FROM schema_version'</code></p>
+    </div>
+    <div class="panel panel-analogy">
+      <div class="panel-label">Analogy</div>
+      <p>Like renovating a house without blueprints &mdash; you might accidentally tear down a load-bearing wall because you didn&rsquo;t know the house&rsquo;s structural history.</p>
+    </div>
         <div class="panel panel-verify">
           <div class="panel-label">Verify</div>
           <pre class="code-block"># Check database metadata
@@ -1370,6 +2271,61 @@ if self.reranker is None:
 # After (always loads)
 self.reranker = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")</pre>
         </div>
+    <div class="panel panel-experiments">
+      <div class="panel-label">Experiments</div>
+      <div class="experiment-block">
+        <h5>Experiment A: Load at import time</h5>
+        <p>Load reranker model at module import</p>
+        <div class="code-block">reranker = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')  # module level</div>
+        <p><strong>Observe:</strong> Slows down startup by 5-10 seconds. Every import of the module loads the model, even if never used.</p>
+      </div>
+      <div class="experiment-block">
+        <h5>Experiment B: Load in __init__ with timeout</h5>
+        <p>Load in constructor with a timeout</p>
+        <div class="code-block">self.reranker = load_with_timeout(CrossEncoder, timeout=10)</div>
+        <p><strong>Observe:</strong> Startup fails fast if model loading is slow. Better than hanging indefinitely.</p>
+      </div>
+      <div class="experiment-block">
+        <h5>Experiment C: Background thread loading</h5>
+        <p>Load model in a background thread</p>
+        <div class="code-block">self._reranker_future = executor.submit(load_reranker)</div>
+        <p><strong>Observe:</strong> Server starts immediately. Reranker available after loading completes. Queries before loading get unranked results.</p>
+      </div>
+    </div>
+    <div class="panel panel-outcomes">
+      <div class="panel-label">Expected Outcomes</div>
+      <table class="outcome-table">
+        <thead><tr><th>Metric</th><th>Baseline</th><th>After Break</th><th>Experiment A</th><th>Experiment B</th></tr></thead>
+        <tbody>
+        <tr><td>overall_score</td><td>0.72</td><td>0.50</td><td>0.72</td><td>0.72</td></tr>
+        <tr><td>startup_time</td><td>fast</td><td>broken</td><td>slow</td><td>fast</td></tr>
+        <tr><td>first_query_latency</td><td>normal</td><td>crash</td><td>+5sec</td><td>depends</td></tr>
+        <tr><td>memory_usage</td><td>on_demand</td><td>N/A</td><td>always_loaded</td><td>on_demand</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="panel panel-queries">
+      <div class="panel-label">Query Variations</div>
+      <ul>
+        <li><strong>Keyword query:</strong> <code>Search for rooms</code></li>
+        <li><strong>Semantic query:</strong> <code>Find the best room for a vampire family</code></li>
+        <li><strong>Edge case:</strong> <code>Query immediately after server restart</code></li>
+        <li><strong>Adversarial:</strong> <code>Send 100 requests during model loading</code></li>
+      </ul>
+    </div>
+    <div class="panel panel-combined">
+      <div class="panel-label">Combined Breaks</div>
+      <p><strong>Combine with Exercise #19 &mdash; Remove Cross-Encoder Reranking (Tier 2):</strong> No lazy loading + no reranking = reranker permanently broken. The model is never loaded AND the reranking step is skipped.</p>
+      <p><strong>Production Impact:</strong> The two-stage retrieval architecture collapses to single-stage. Quality drops for all queries, especially ambiguous ones.</p>
+    </div>
+    <div class="panel panel-tips">
+      <div class="panel-label">Cache &amp; Environment Tips</div>
+      <p>Server restart required. Monitor startup logs for model loading messages. Check memory usage before and after reranker initialization: <code>ps aux | grep uvicorn</code></p>
+    </div>
+    <div class="panel panel-analogy">
+      <div class="panel-label">Analogy</div>
+      <p>Like a restaurant that lists a specialty dish on the menu but never hired the chef who knows how to make it &mdash; the menu promises it, but the kitchen can never deliver.</p>
+    </div>
         <div class="panel panel-verify">
           <div class="panel-label">Verify</div>
           <pre class="code-block"># Monitor memory while sending multiple queries
