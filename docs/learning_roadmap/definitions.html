@@ -1366,7 +1366,7 @@ results = collection.query(
   },
   {
     id: 10, category: 'rag', name: 'Semantic Search', shortName: 'Semantic Search',
-    definition: 'Search based on meaning/concepts rather than exact keyword matches. Finds "vampire accommodation" when you search "bloodsucker lodging".',
+    definition: 'Search based on meaning/concepts rather than exact keyword matches. Finds "vampire accommodation" when you search "creature of the night lodging".',
     inProject: {
       summary: 'Powers your RAG retrieval. Finds "Electric Massage Therapy" when user asks about "electricity spa treatments" — even without exact keyword overlap.',
       code: `# Query: "electricity spa treatments"
@@ -1456,7 +1456,7 @@ chunks = [
       tradeoffs: { pros: ['No GPU needed', 'Perfect recall for exact terms', 'Interpretable scores'], cons: ['No semantic understanding', 'Fails on synonyms', 'Needs inverted index'] },
       alternatives: 'TF-IDF, BM25+, BM25L, semantic search'
     },
-    analogy: 'Like a library card catalog — finds exactly what you ask for, but can\'t suggest that "bloodsucker lodging" = "Vampire Manor".',
+    analogy: 'Like a library card catalog — finds exactly what you ask for, but can\'t suggest that "creature of the night lodging" = "Vampire Manor".',
     keywords: ['TF-IDF', 'inverted index', 'keyword search', 'sparse retrieval'],
     relatesTo: [14]
   },
@@ -1538,7 +1538,7 @@ score = cross_encoder.predict([
 # Retrieved 5 chunks:
 #   1. "Lightning Spa services: Electric Massage..." ✅ Relevant
 #   2. "Castle Frankenstein room rates..."         ✅ Relevant
-#   3. "Vampire Manor blood types..."              ❌ Not relevant
+#   3. "Vampire Manor elixir varieties..."         ❌ Not relevant
 #   4. "Lightning Spa hours..."                   ✅ Relevant
 #   5. "Check-in policy..."                       ❌ Not relevant
 # Context Precision = 3/5 = 0.60 (before reranking)
