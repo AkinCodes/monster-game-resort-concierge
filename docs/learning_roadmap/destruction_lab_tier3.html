@@ -515,7 +515,23 @@
     padding: 0; margin: -1px; overflow: hidden;
     clip: rect(0,0,0,0); border: 0;
   }
-</style>
+
+    .shell-cmd {
+      font-family: 'JetBrains Mono', monospace;
+      background: #0d1117;
+      color: #58a6ff;
+      padding: 0.35rem 0.7rem;
+      border-radius: 4px;
+      font-size: 0.78rem;
+      margin-top: 0.35rem;
+      display: block;
+      border-left: 3px solid #3b82f6;
+      cursor: pointer;
+      user-select: all;
+    }
+    .shell-cmd::before { content: '$ '; color: #8b949e; }
+
+  </style>
 </head>
 <body>
 
@@ -627,10 +643,14 @@ return "anonymous"</pre>
     <div class="panel panel-queries">
       <div class="panel-label">Query Variations</div>
       <ul>
-        <li><strong>Keyword query:</strong> <code>Access protected endpoint without auth</code></li>
-        <li><strong>Semantic query:</strong> <code>What happens when I connect without credentials?</code></li>
-        <li><strong>Edge case:</strong> <code>Send request with empty Authorization header</code></li>
-        <li><strong>Adversarial:</strong> <code>curl http://localhost:8000/api/admin/delete_all</code></li>
+        <li><strong>Keyword query:</strong> <code>Access protected endpoint without auth</code><br>
+        <span class="shell-cmd">bash test_chat.sh "Access protected endpoint without auth"</span></li>
+        <li><strong>Semantic query:</strong> <code>What happens when I connect without credentials?</code><br>
+        <span class="shell-cmd">bash test_chat.sh "What happens when I connect without credentials?"</span></li>
+        <li><strong>Edge case:</strong> <code>Send request with empty Authorization header</code><br>
+        <span class="shell-cmd">bash test_chat.sh "Send request with empty Authorization header"</span></li>
+        <li><strong>Adversarial:</strong> <code>curl http://localhost:8000/api/admin/delete_all</code><br>
+        <span class="shell-cmd">bash test_chat.sh "curl http://localhost:8000/api/admin/delete_all"</span></li>
       </ul>
     </div>
     <div class="panel panel-combined">
@@ -732,10 +752,14 @@ return "verified_user"</pre>
     <div class="panel panel-queries">
       <div class="panel-label">Query Variations</div>
       <ul>
-        <li><strong>Keyword query:</strong> <code>Verify my API key</code></li>
-        <li><strong>Semantic query:</strong> <code>How does the system validate my credentials?</code></li>
-        <li><strong>Edge case:</strong> <code>Send two different keys that share the same first 8 hash chars</code></li>
-        <li><strong>Adversarial:</strong> <code>Submit a key crafted to produce an MD5 collision</code></li>
+        <li><strong>Keyword query:</strong> <code>Verify my API key</code><br>
+        <span class="shell-cmd">bash test_chat.sh "Verify my API key"</span></li>
+        <li><strong>Semantic query:</strong> <code>How does the system validate my credentials?</code><br>
+        <span class="shell-cmd">bash test_chat.sh "How does the system validate my credentials?"</span></li>
+        <li><strong>Edge case:</strong> <code>Send two different keys that share the same first 8 hash chars</code><br>
+        <span class="shell-cmd">bash test_chat.sh "Send two different keys that share the same first 8 hash chars"</span></li>
+        <li><strong>Adversarial:</strong> <code>Submit a key crafted to produce an MD5 collision</code><br>
+        <span class="shell-cmd">bash test_chat.sh "Submit a key crafted to produce an MD5 collision"</span></li>
       </ul>
     </div>
     <div class="panel panel-combined">
@@ -837,10 +861,14 @@ return "verified_user"</pre>
     <div class="panel panel-queries">
       <div class="panel-label">Query Variations</div>
       <ul>
-        <li><strong>Keyword query:</strong> <code>Use a revoked API key</code></li>
-        <li><strong>Semantic query:</strong> <code>What happens when a compromised key is used after revocation?</code></li>
-        <li><strong>Edge case:</strong> <code>Revoke a key while a long-running request is using it</code></li>
-        <li><strong>Adversarial:</strong> <code>Use a key that was revoked, re-activated, then revoked again</code></li>
+        <li><strong>Keyword query:</strong> <code>Use a revoked API key</code><br>
+        <span class="shell-cmd">bash test_chat.sh "Use a revoked API key"</span></li>
+        <li><strong>Semantic query:</strong> <code>What happens when a compromised key is used after revocation?</code><br>
+        <span class="shell-cmd">bash test_chat.sh "What happens when a compromised key is used after revocation?"</span></li>
+        <li><strong>Edge case:</strong> <code>Revoke a key while a long-running request is using it</code><br>
+        <span class="shell-cmd">bash test_chat.sh "Revoke a key while a long-running request is using it"</span></li>
+        <li><strong>Adversarial:</strong> <code>Use a key that was revoked, re-activated, then revoked again</code><br>
+        <span class="shell-cmd">bash test_chat.sh "Use a key that was revoked, re-activated, then revoked again"</span></li>
       </ul>
     </div>
     <div class="panel panel-combined">
@@ -941,10 +969,14 @@ curl -s -H "X-API-Key: mr_revoked_key" http://localhost:8000/api/protected
     <div class="panel panel-queries">
       <div class="panel-label">Query Variations</div>
       <ul>
-        <li><strong>Keyword query:</strong> <code>Send 100 requests in 1 second</code></li>
-        <li><strong>Semantic query:</strong> <code>What happens under heavy load?</code></li>
-        <li><strong>Edge case:</strong> <code>Send requests from 1000 different IP addresses simultaneously</code></li>
-        <li><strong>Adversarial:</strong> <code>Script that sends 10 requests/second for 10 minutes</code></li>
+        <li><strong>Keyword query:</strong> <code>Send 100 requests in 1 second</code><br>
+        <span class="shell-cmd">bash test_chat.sh "Send 100 requests in 1 second"</span></li>
+        <li><strong>Semantic query:</strong> <code>What happens under heavy load?</code><br>
+        <span class="shell-cmd">bash test_chat.sh "What happens under heavy load?"</span></li>
+        <li><strong>Edge case:</strong> <code>Send requests from 1000 different IP addresses simultaneously</code><br>
+        <span class="shell-cmd">bash test_chat.sh "Send requests from 1000 different IP addresses simultaneously"</span></li>
+        <li><strong>Adversarial:</strong> <code>Script that sends 10 requests/second for 10 minutes</code><br>
+        <span class="shell-cmd">bash test_chat.sh "Script that sends 10 requests/second for 10 minutes"</span></li>
       </ul>
     </div>
     <div class="panel panel-combined">
@@ -1045,10 +1077,14 @@ curl -s -H "X-API-Key: mr_revoked_key" http://localhost:8000/api/protected
     <div class="panel panel-queries">
       <div class="panel-label">Query Variations</div>
       <ul>
-        <li><strong>Keyword query:</strong> <code>Generate a JWT token</code></li>
-        <li><strong>Semantic query:</strong> <code>How long will my session last?</code></li>
-        <li><strong>Edge case:</strong> <code>Use a token that expired 1 millisecond ago</code></li>
-        <li><strong>Adversarial:</strong> <code>Forge a JWT with exp set to year 2100</code></li>
+        <li><strong>Keyword query:</strong> <code>Generate a JWT token</code><br>
+        <span class="shell-cmd">bash test_chat.sh "Generate a JWT token"</span></li>
+        <li><strong>Semantic query:</strong> <code>How long will my session last?</code><br>
+        <span class="shell-cmd">bash test_chat.sh "How long will my session last?"</span></li>
+        <li><strong>Edge case:</strong> <code>Use a token that expired 1 millisecond ago</code><br>
+        <span class="shell-cmd">bash test_chat.sh "Use a token that expired 1 millisecond ago"</span></li>
+        <li><strong>Adversarial:</strong> <code>Forge a JWT with exp set to year 2100</code><br>
+        <span class="shell-cmd">bash test_chat.sh "Forge a JWT with exp set to year 2100"</span></li>
       </ul>
     </div>
     <div class="panel panel-combined">
@@ -1148,10 +1184,14 @@ curl -s -H "X-API-Key: mr_revoked_key" http://localhost:8000/api/protected
     <div class="panel panel-queries">
       <div class="panel-label">Query Variations</div>
       <ul>
-        <li><strong>Keyword query:</strong> <code>Set a new secret key</code></li>
-        <li><strong>Semantic query:</strong> <code>How secure is the JWT signing key?</code></li>
-        <li><strong>Edge case:</strong> <code>Set SECRET_KEY to a single character</code></li>
-        <li><strong>Adversarial:</strong> <code>Set SECRET_KEY to 'a' and try to forge tokens</code></li>
+        <li><strong>Keyword query:</strong> <code>Set a new secret key</code><br>
+        <span class="shell-cmd">bash test_chat.sh "Set a new secret key"</span></li>
+        <li><strong>Semantic query:</strong> <code>How secure is the JWT signing key?</code><br>
+        <span class="shell-cmd">bash test_chat.sh "How secure is the JWT signing key?"</span></li>
+        <li><strong>Edge case:</strong> <code>Set SECRET_KEY to a single character</code><br>
+        <span class="shell-cmd">bash test_chat.sh "Set SECRET_KEY to a single character"</span></li>
+        <li><strong>Adversarial:</strong> <code>Set SECRET_KEY to 'a' and try to forge tokens</code><br>
+        <span class="shell-cmd">bash test_chat.sh "Set SECRET_KEY to 'a' and try to forge tokens"</span></li>
       </ul>
     </div>
     <div class="panel panel-combined">
@@ -1251,10 +1291,14 @@ curl -s -H "X-API-Key: mr_revoked_key" http://localhost:8000/api/protected
     <div class="panel panel-queries">
       <div class="panel-label">Query Variations</div>
       <ul>
-        <li><strong>Keyword query:</strong> <code>Check JWT configuration</code></li>
-        <li><strong>Semantic query:</strong> <code>Is the authentication system properly configured?</code></li>
-        <li><strong>Edge case:</strong> <code>Set SECRET_KEY to 'CHANGE-ME' (different case)</code></li>
-        <li><strong>Adversarial:</strong> <code>Forge a JWT using 'change-me' as the signing key</code></li>
+        <li><strong>Keyword query:</strong> <code>Check JWT configuration</code><br>
+        <span class="shell-cmd">bash test_chat.sh "Check JWT configuration"</span></li>
+        <li><strong>Semantic query:</strong> <code>Is the authentication system properly configured?</code><br>
+        <span class="shell-cmd">bash test_chat.sh "Is the authentication system properly configured?"</span></li>
+        <li><strong>Edge case:</strong> <code>Set SECRET_KEY to 'CHANGE-ME' (different case)</code><br>
+        <span class="shell-cmd">bash test_chat.sh "Set SECRET_KEY to 'CHANGE-ME' (different case)"</span></li>
+        <li><strong>Adversarial:</strong> <code>Forge a JWT using 'change-me' as the signing key</code><br>
+        <span class="shell-cmd">bash test_chat.sh "Forge a JWT using 'change-me' as the signing key"</span></li>
       </ul>
     </div>
     <div class="panel panel-combined">
@@ -1355,10 +1399,14 @@ curl -s -H "X-API-Key: mr_revoked_key" http://localhost:8000/api/protected
     <div class="panel panel-queries">
       <div class="panel-label">Query Variations</div>
       <ul>
-        <li><strong>Keyword query:</strong> <code>Search for rooms then book the cheapest one</code></li>
-        <li><strong>Semantic query:</strong> <code>Find me a room, check availability, and complete the booking</code></li>
-        <li><strong>Edge case:</strong> <code>Task requiring 5 sequential tool calls</code></li>
-        <li><strong>Adversarial:</strong> <code>Instruct the agent to call tools in an infinite loop</code></li>
+        <li><strong>Keyword query:</strong> <code>Search for rooms then book the cheapest one</code><br>
+        <span class="shell-cmd">bash test_chat.sh "Search for rooms then book the cheapest one"</span></li>
+        <li><strong>Semantic query:</strong> <code>Find me a room, check availability, and complete the booking</code><br>
+        <span class="shell-cmd">bash test_chat.sh "Find me a room, check availability, and complete the booking"</span></li>
+        <li><strong>Edge case:</strong> <code>Task requiring 5 sequential tool calls</code><br>
+        <span class="shell-cmd">bash test_chat.sh "Task requiring 5 sequential tool calls"</span></li>
+        <li><strong>Adversarial:</strong> <code>Instruct the agent to call tools in an infinite loop</code><br>
+        <span class="shell-cmd">bash test_chat.sh "Instruct the agent to call tools in an infinite loop"</span></li>
       </ul>
     </div>
     <div class="panel panel-combined">
@@ -1461,10 +1509,14 @@ curl -s -H "X-API-Key: mr_revoked_key" http://localhost:8000/api/protected
     <div class="panel panel-queries">
       <div class="panel-label">Query Variations</div>
       <ul>
-        <li><strong>Keyword query:</strong> <code>Remember my name is Dracula</code></li>
-        <li><strong>Semantic query:</strong> <code>Will you remember our conversation if I come back tomorrow?</code></li>
-        <li><strong>Edge case:</strong> <code>Restart the server and continue the same session</code></li>
-        <li><strong>Adversarial:</strong> <code>Save a message then immediately try to retrieve it</code></li>
+        <li><strong>Keyword query:</strong> <code>Remember my name is Dracula</code><br>
+        <span class="shell-cmd">bash test_chat.sh "Remember my name is Dracula"</span></li>
+        <li><strong>Semantic query:</strong> <code>Will you remember our conversation if I come back tomorrow?</code><br>
+        <span class="shell-cmd">bash test_chat.sh "Will you remember our conversation if I come back tomorrow?"</span></li>
+        <li><strong>Edge case:</strong> <code>Restart the server and continue the same session</code><br>
+        <span class="shell-cmd">bash test_chat.sh "Restart the server and continue the same session"</span></li>
+        <li><strong>Adversarial:</strong> <code>Save a message then immediately try to retrieve it</code><br>
+        <span class="shell-cmd">bash test_chat.sh "Save a message then immediately try to retrieve it"</span></li>
       </ul>
     </div>
     <div class="panel panel-combined">
@@ -1566,10 +1618,14 @@ curl -s -H "X-API-Key: mr_revoked_key" http://localhost:8000/api/protected
     <div class="panel panel-queries">
       <div class="panel-label">Query Variations</div>
       <ul>
-        <li><strong>Keyword query:</strong> <code>Tell me about resort features</code></li>
-        <li><strong>Semantic query:</strong> <code>What makes this resort different from a regular hotel?</code></li>
-        <li><strong>Edge case:</strong> <code>Ask about a feature that doesn't exist in the knowledge base</code></li>
-        <li><strong>Adversarial:</strong> <code>Convince the bot to assert false information confidently</code></li>
+        <li><strong>Keyword query:</strong> <code>Tell me about resort features</code><br>
+        <span class="shell-cmd">bash test_chat.sh "Tell me about resort features"</span></li>
+        <li><strong>Semantic query:</strong> <code>What makes this resort different from a regular hotel?</code><br>
+        <span class="shell-cmd">bash test_chat.sh "What makes this resort different from a regular hotel?"</span></li>
+        <li><strong>Edge case:</strong> <code>Ask about a feature that doesn't exist in the knowledge base</code><br>
+        <span class="shell-cmd">bash test_chat.sh "Ask about a feature that doesn't exist in the knowledge base"</span></li>
+        <li><strong>Adversarial:</strong> <code>Convince the bot to assert false information confidently</code><br>
+        <span class="shell-cmd">bash test_chat.sh "Convince the bot to assert false information confidently"</span></li>
       </ul>
     </div>
     <div class="panel panel-combined">
@@ -1670,10 +1726,14 @@ curl -s -H "X-API-Key: mr_revoked_key" http://localhost:8000/api/protected
     <div class="panel panel-queries">
       <div class="panel-label">Query Variations</div>
       <ul>
-        <li><strong>Keyword query:</strong> <code>Hello, tell me about rooms</code></li>
-        <li><strong>Semantic query:</strong> <code>Can you help me find the perfect room for a werewolf?</code></li>
-        <li><strong>Edge case:</strong> <code>'; DROP TABLE bookings; --</code></li>
-        <li><strong>Adversarial:</strong> <code>&lt;script&gt;document.location='http://evil.com'&lt;/script&gt;</code></li>
+        <li><strong>Keyword query:</strong> <code>Hello, tell me about rooms</code><br>
+        <span class="shell-cmd">bash test_chat.sh "Hello, tell me about rooms"</span></li>
+        <li><strong>Semantic query:</strong> <code>Can you help me find the perfect room for a werewolf?</code><br>
+        <span class="shell-cmd">bash test_chat.sh "Can you help me find the perfect room for a werewolf?"</span></li>
+        <li><strong>Edge case:</strong> <code>'; DROP TABLE bookings; --</code><br>
+        <span class="shell-cmd">bash test_chat.sh "'; DROP TABLE bookings; --"</span></li>
+        <li><strong>Adversarial:</strong> <code>&lt;script&gt;document.location='http://evil.com'&lt;/script&gt;</code><br>
+        <span class="shell-cmd">bash test_chat.sh "&lt;script&gt;document.location='http://evil.com'&lt;/script&gt;"</span></li>
       </ul>
     </div>
     <div class="panel panel-combined">
@@ -1776,10 +1836,14 @@ curl -s -H "X-API-Key: mr_revoked_key" http://localhost:8000/api/protected
     <div class="panel panel-queries">
       <div class="panel-label">Query Variations</div>
       <ul>
-        <li><strong>Keyword query:</strong> <code>Tell me about Vampire Manor</code></li>
-        <li><strong>Semantic query:</strong> <code>What are all the accommodation options?</code></li>
-        <li><strong>Edge case:</strong> <code>Query about a document that was in the second half</code></li>
-        <li><strong>Adversarial:</strong> <code>Send a query during startup before ingestion completes</code></li>
+        <li><strong>Keyword query:</strong> <code>Tell me about Vampire Manor</code><br>
+        <span class="shell-cmd">bash test_chat.sh "Tell me about Vampire Manor"</span></li>
+        <li><strong>Semantic query:</strong> <code>What are all the accommodation options?</code><br>
+        <span class="shell-cmd">bash test_chat.sh "What are all the accommodation options?"</span></li>
+        <li><strong>Edge case:</strong> <code>Query about a document that was in the second half</code><br>
+        <span class="shell-cmd">bash test_chat.sh "Query about a document that was in the second half"</span></li>
+        <li><strong>Adversarial:</strong> <code>Send a query during startup before ingestion completes</code><br>
+        <span class="shell-cmd">bash test_chat.sh "Send a query during startup before ingestion completes"</span></li>
       </ul>
     </div>
     <div class="panel panel-combined">
@@ -1884,10 +1948,14 @@ session_id = request.session_id</pre>
     <div class="panel panel-queries">
       <div class="panel-label">Query Variations</div>
       <ul>
-        <li><strong>Keyword query:</strong> <code>My name is Count Dracula</code></li>
-        <li><strong>Semantic query:</strong> <code>Continue our earlier conversation about room booking</code></li>
-        <li><strong>Edge case:</strong> <code>Send a request without any session identifier</code></li>
-        <li><strong>Adversarial:</strong> <code>Set session_id to another user's session</code></li>
+        <li><strong>Keyword query:</strong> <code>My name is Count Dracula</code><br>
+        <span class="shell-cmd">bash test_chat.sh "My name is Count Dracula"</span></li>
+        <li><strong>Semantic query:</strong> <code>Continue our earlier conversation about room booking</code><br>
+        <span class="shell-cmd">bash test_chat.sh "Continue our earlier conversation about room booking"</span></li>
+        <li><strong>Edge case:</strong> <code>Send a request without any session identifier</code><br>
+        <span class="shell-cmd">bash test_chat.sh "Send a request without any session identifier"</span></li>
+        <li><strong>Adversarial:</strong> <code>Set session_id to another user's session</code><br>
+        <span class="shell-cmd">bash test_chat.sh "Set session_id to another user's session"</span></li>
       </ul>
     </div>
     <div class="panel panel-combined">
@@ -1990,10 +2058,14 @@ session_id = request.session_id</pre>
     <div class="panel panel-queries">
       <div class="panel-label">Query Variations</div>
       <ul>
-        <li><strong>Keyword query:</strong> <code>Which LLM provider is being used?</code></li>
-        <li><strong>Semantic query:</strong> <code>How does the system choose between different AI providers?</code></li>
-        <li><strong>Edge case:</strong> <code>Trigger a provider failover and check logs</code></li>
-        <li><strong>Adversarial:</strong> <code>Force all providers to fail and check error logging</code></li>
+        <li><strong>Keyword query:</strong> <code>Which LLM provider is being used?</code><br>
+        <span class="shell-cmd">bash test_chat.sh "Which LLM provider is being used?"</span></li>
+        <li><strong>Semantic query:</strong> <code>How does the system choose between different AI providers?</code><br>
+        <span class="shell-cmd">bash test_chat.sh "How does the system choose between different AI providers?"</span></li>
+        <li><strong>Edge case:</strong> <code>Trigger a provider failover and check logs</code><br>
+        <span class="shell-cmd">bash test_chat.sh "Trigger a provider failover and check logs"</span></li>
+        <li><strong>Adversarial:</strong> <code>Force all providers to fail and check error logging</code><br>
+        <span class="shell-cmd">bash test_chat.sh "Force all providers to fail and check error logging"</span></li>
       </ul>
     </div>
     <div class="panel panel-combined">
@@ -2095,10 +2167,14 @@ session_id = request.session_id</pre>
     <div class="panel panel-queries">
       <div class="panel-label">Query Variations</div>
       <ul>
-        <li><strong>Keyword query:</strong> <code>Book a room that's already booked</code></li>
-        <li><strong>Semantic query:</strong> <code>What happens when a database operation fails?</code></li>
-        <li><strong>Edge case:</strong> <code>Trigger a unique constraint violation</code></li>
-        <li><strong>Adversarial:</strong> <code>Cause a database error and examine the error message for SQL details</code></li>
+        <li><strong>Keyword query:</strong> <code>Book a room that's already booked</code><br>
+        <span class="shell-cmd">bash test_chat.sh "Book a room that's already booked"</span></li>
+        <li><strong>Semantic query:</strong> <code>What happens when a database operation fails?</code><br>
+        <span class="shell-cmd">bash test_chat.sh "What happens when a database operation fails?"</span></li>
+        <li><strong>Edge case:</strong> <code>Trigger a unique constraint violation</code><br>
+        <span class="shell-cmd">bash test_chat.sh "Trigger a unique constraint violation"</span></li>
+        <li><strong>Adversarial:</strong> <code>Cause a database error and examine the error message for SQL details</code><br>
+        <span class="shell-cmd">bash test_chat.sh "Cause a database error and examine the error message for SQL details"</span></li>
       </ul>
     </div>
     <div class="panel panel-combined">
@@ -2199,10 +2275,14 @@ session_id = request.session_id</pre>
     <div class="panel panel-queries">
       <div class="panel-label">Query Variations</div>
       <ul>
-        <li><strong>Keyword query:</strong> <code>Check database schema version</code></li>
-        <li><strong>Semantic query:</strong> <code>How does the database handle schema upgrades?</code></li>
-        <li><strong>Edge case:</strong> <code>Deploy a new version with schema changes</code></li>
-        <li><strong>Adversarial:</strong> <code>Manually modify the schema_version table</code></li>
+        <li><strong>Keyword query:</strong> <code>Check database schema version</code><br>
+        <span class="shell-cmd">bash test_chat.sh "Check database schema version"</span></li>
+        <li><strong>Semantic query:</strong> <code>How does the database handle schema upgrades?</code><br>
+        <span class="shell-cmd">bash test_chat.sh "How does the database handle schema upgrades?"</span></li>
+        <li><strong>Edge case:</strong> <code>Deploy a new version with schema changes</code><br>
+        <span class="shell-cmd">bash test_chat.sh "Deploy a new version with schema changes"</span></li>
+        <li><strong>Adversarial:</strong> <code>Manually modify the schema_version table</code><br>
+        <span class="shell-cmd">bash test_chat.sh "Manually modify the schema_version table"</span></li>
       </ul>
     </div>
     <div class="panel panel-combined">
@@ -2307,10 +2387,14 @@ self.reranker = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")</pre>
     <div class="panel panel-queries">
       <div class="panel-label">Query Variations</div>
       <ul>
-        <li><strong>Keyword query:</strong> <code>Search for rooms</code></li>
-        <li><strong>Semantic query:</strong> <code>Find the best room for a vampire family</code></li>
-        <li><strong>Edge case:</strong> <code>Query immediately after server restart</code></li>
-        <li><strong>Adversarial:</strong> <code>Send 100 requests during model loading</code></li>
+        <li><strong>Keyword query:</strong> <code>Search for rooms</code><br>
+        <span class="shell-cmd">bash test_chat.sh "Search for rooms"</span></li>
+        <li><strong>Semantic query:</strong> <code>Find the best room for a vampire family</code><br>
+        <span class="shell-cmd">bash test_chat.sh "Find the best room for a vampire family"</span></li>
+        <li><strong>Edge case:</strong> <code>Query immediately after server restart</code><br>
+        <span class="shell-cmd">bash test_chat.sh "Query immediately after server restart"</span></li>
+        <li><strong>Adversarial:</strong> <code>Send 100 requests during model loading</code><br>
+        <span class="shell-cmd">bash test_chat.sh "Send 100 requests during model loading"</span></li>
       </ul>
     </div>
     <div class="panel panel-combined">
