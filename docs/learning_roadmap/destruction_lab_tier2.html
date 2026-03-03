@@ -687,6 +687,40 @@
     box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
   }
   .reflection-input::placeholder { color: #94a3b8; }
+
+  /* ── ShockEngine Styles ── */
+  .shock-overlay{position:fixed;inset:0;pointer-events:none;z-index:9999;animation:shock-fade 0.4s ease forwards;}
+  .shock-mild{background:rgba(239,68,68,0.25);}
+  .shock-medium{background:rgba(239,68,68,0.55);}
+  .shock-nuclear{background:rgba(239,68,68,0.80);}
+  @keyframes shock-fade{0%{opacity:1;}100%{opacity:0;}}
+  @keyframes shake{
+    0%,100%{transform:translateX(0) rotate(0deg);}
+    10%,50%,90%{transform:translateX(-10px) rotate(-1.5deg);}
+    20%,60%{transform:translateX(10px) rotate(1.5deg);}
+    30%,70%{transform:translateX(-8px) rotate(-1deg);}
+    40%,80%{transform:translateX(8px) rotate(1deg);}
+  }
+  body.shaking{animation:shake 0.45s ease;}
+  .praise-flash{position:fixed;inset:0;pointer-events:none;z-index:9999;background:rgba(34,197,94,0.35);animation:shock-fade 0.5s ease forwards;}
+  .lockout-msg{background:#fef2f2;border:2px solid #ef4444;border-radius:8px;padding:12px 16px;margin-top:12px;color:#b91c1c;font-weight:600;text-align:center;}
+  .predict-panel{border:2px solid #fbbf24;border-radius:12px;background:#fffbeb;padding:20px;margin-bottom:16px;}
+  .predict-header{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+  .predict-badge{background:#f59e0b;color:#fff;font-weight:700;font-size:0.75rem;padding:3px 10px;border-radius:20px;letter-spacing:.05em;}
+  .predict-label{font-weight:600;color:#92400e;font-size:0.9rem;flex:1;}
+  .wrong-tally{font-size:0.78rem;color:#ef4444;font-weight:700;background:#fef2f2;padding:2px 8px;border-radius:12px;}
+  .predict-question{font-weight:600;color:#1e293b;margin-bottom:14px;line-height:1.5;}
+  .predict-option{border:2px solid #e2e8f0;border-radius:8px;padding:10px 14px;margin-bottom:8px;cursor:pointer;transition:all .2s;background:#fff;color:#374151;font-size:0.88rem;}
+  .predict-option:hover{border-color:#f59e0b;background:#fffbeb;}
+  .predict-option.selected{border-color:#f59e0b;background:#fef3c7;font-weight:600;}
+  .predict-option.correct-reveal{border-color:#22c55e!important;background:#f0fdf4!important;color:#166534!important;font-weight:700;}
+  .predict-option.wrong-reveal{border-color:#ef4444!important;background:#fef2f2!important;color:#991b1b!important;}
+  .predict-submit{margin-top:10px;padding:9px 22px;background:#f59e0b;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;transition:background .2s;}
+  .predict-submit:disabled{background:#d1d5db;cursor:not-allowed;}
+  .predict-submit:not(:disabled):hover{background:#d97706;}
+  .predict-result{margin-top:10px;font-weight:600;min-height:1.5rem;}
+  .action-gated.locked{filter:blur(3px);pointer-events:none;user-select:none;position:relative;}
+  .action-gated.locked::after{content:"⚡ Answer the prediction to unlock";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#1d4ed8;font-weight:700;font-size:0.9rem;background:rgba(239,246,255,0.7);border-radius:8px;}
 </style>
 </head>
 <body>
@@ -752,7 +786,21 @@
       <div class="panel-label">Hypothesis</div>
       <p>Without BM25 scores in RRF, fusion becomes dense-only, losing keyword matching capability. Queries that depend on exact keyword matches will return significantly worse results.</p>
     </div>
-    <div class="panel panel-action">
+    <div id="predict-18" class="predict-panel" data-correct="B">
+      <div class="predict-header">
+        <span class="predict-badge">⚡ Predict</span>
+        <span class="predict-label">Before you break it — what will happen?</span>
+        <span id="tally-18" class="wrong-tally" style="display:none"></span>
+      </div>
+      <p class="predict-question">If you comment out the BM25 weight loop in RRF, what happens to keyword-specific queries?</p>
+      <div class="predict-option" data-val="A" onclick="selectOption(18,'A')"><strong>A.</strong> Dense scores double to compensate for missing BM25</div>
+      <div class="predict-option" data-val="B" onclick="selectOption(18,'B')"><strong>B.</strong> Keyword queries return much weaker results—only dense semantic matching applies</div>
+      <div class="predict-option" data-val="C" onclick="selectOption(18,'C')"><strong>C.</strong> The system raises a ValueError since BM25 weight must not be zero</div>
+      <div class="predict-option" data-val="D" onclick="selectOption(18,'D')"><strong>D.</strong> RRF scores become negative, causing a sort reversal</div>
+      <button class="predict-submit" onclick="submitPrediction(18)" disabled>Lock In Answer ⚡</button>
+      <div class="predict-result"></div>
+    </div>
+    <div id="action-panel-18" class="panel panel-action action-gated locked">
       <div class="panel-label">Action</div>
       <p>File: <span class="file-ref">app/advanced_rag.py</span> (lines 188&ndash;190)</p>
       <p>Comment out the BM25 weight loop in the RRF calculation:</p>
@@ -887,7 +935,21 @@
       <div class="panel-label">Hypothesis</div>
       <p>Without reranking, retrieval quality drops because the cross-encoder's fine-grained relevance scoring is skipped. The initial retrieval results pass through unrefined.</p>
     </div>
-    <div class="panel panel-action">
+    <div id="predict-19" class="predict-panel" data-correct="B">
+      <div class="predict-header">
+        <span class="predict-badge">⚡ Predict</span>
+        <span class="predict-label">Before you break it — what will happen?</span>
+        <span id="tally-19" class="wrong-tally" style="display:none"></span>
+      </div>
+      <p class="predict-question">If you remove the cross-encoder reranking step, what changes in the returned results?</p>
+      <div class="predict-option" data-val="A" onclick="selectOption(19,'A')"><strong>A.</strong> Results are re-ranked by BM25 score alone</div>
+      <div class="predict-option" data-val="B" onclick="selectOption(19,'B')"><strong>B.</strong> Fusion scores determine final order—no fine-grained relevance refinement occurs</div>
+      <div class="predict-option" data-val="C" onclick="selectOption(19,'C')"><strong>C.</strong> The server crashes because reranker.predict() is called on None</div>
+      <div class="predict-option" data-val="D" onclick="selectOption(19,'D')"><strong>D.</strong> Retrieval switches to keyword-only BM25 mode</div>
+      <button class="predict-submit" onclick="submitPrediction(19)" disabled>Lock In Answer ⚡</button>
+      <div class="predict-result"></div>
+    </div>
+    <div id="action-panel-19" class="panel panel-action action-gated locked">
       <div class="panel-label">Action</div>
       <p>File: <span class="file-ref">app/advanced_rag.py</span> (lines 263&ndash;264)</p>
       <p>Disable the reranker by forcing the condition to false:</p>
@@ -1022,7 +1084,21 @@
       <div class="panel-label">Hypothesis</div>
       <p>Without <span class="inline-code">.lower()</span>, BM25 queries become case-sensitive. Uppercase queries won't match lowercase-indexed documents, returning zero results.</p>
     </div>
-    <div class="panel panel-action">
+    <div id="predict-20" class="predict-panel" data-correct="B">
+      <div class="predict-header">
+        <span class="predict-badge">⚡ Predict</span>
+        <span class="predict-label">Before you break it — what will happen?</span>
+        <span id="tally-20" class="wrong-tally" style="display:none"></span>
+      </div>
+      <p class="predict-question">If BM25 is case-sensitive (no .lower()), what happens when a user types "Vampire"?</p>
+      <div class="predict-option" data-val="A" onclick="selectOption(20,'A')"><strong>A.</strong> The query is automatically lowercased by ChromaDB before BM25 runs</div>
+      <div class="predict-option" data-val="B" onclick="selectOption(20,'B')"><strong>B.</strong> "Vampire" fails to match indexed "vampire"—keyword retrieval misses the document</div>
+      <div class="predict-option" data-val="C" onclick="selectOption(20,'C')"><strong>C.</strong> BM25 raises a KeyError for unknown tokens</div>
+      <div class="predict-option" data-val="D" onclick="selectOption(20,'D')"><strong>D.</strong> Dense retrieval is disabled to avoid conflicts with case-sensitive BM25</div>
+      <button class="predict-submit" onclick="submitPrediction(20)" disabled>Lock In Answer ⚡</button>
+      <div class="predict-result"></div>
+    </div>
+    <div id="action-panel-20" class="panel panel-action action-gated locked">
       <div class="panel-label">Action</div>
       <p>File: <span class="file-ref">app/advanced_rag.py</span> (line 139)</p>
       <p>Remove <span class="inline-code">.lower()</span> from the tokenized_query construction:</p>
@@ -1157,7 +1233,21 @@
       <div class="panel-label">Hypothesis</div>
       <p>Setting semantic similarity to always return 0.0 removes 50% of the confidence signal. Confidence scores will drop dramatically, even for well-grounded responses.</p>
     </div>
-    <div class="panel panel-action">
+    <div id="predict-21" class="predict-panel" data-correct="B">
+      <div class="predict-header">
+        <span class="predict-badge">⚡ Predict</span>
+        <span class="predict-label">Before you break it — what will happen?</span>
+        <span id="tally-21" class="wrong-tally" style="display:none"></span>
+      </div>
+      <p class="predict-question">Removing semantic_similarity (50% weight) from confidence scoring leaves what weights?</p>
+      <div class="predict-option" data-val="A" onclick="selectOption(21,'A')"><strong>A.</strong> Context overlap 50%, source attribution 50%</div>
+      <div class="predict-option" data-val="B" onclick="selectOption(21,'B')"><strong>B.</strong> Context overlap 30%, source attribution 20%—total only 50%, scores halved</div>
+      <div class="predict-option" data-val="C" onclick="selectOption(21,'C')"><strong>C.</strong> The detector defaults to 100% source attribution</div>
+      <div class="predict-option" data-val="D" onclick="selectOption(21,'D')"><strong>D.</strong> Confidence always returns HIGH since remaining weights normalise to 1.0</div>
+      <button class="predict-submit" onclick="submitPrediction(21)" disabled>Lock In Answer ⚡</button>
+      <div class="predict-result"></div>
+    </div>
+    <div id="action-panel-21" class="panel panel-action action-gated locked">
       <div class="panel-label">Action</div>
       <p>File: <span class="file-ref">app/hallucination.py</span> (lines 109&ndash;134)</p>
       <p>Replace the entire method body with a single return:</p>
@@ -1291,7 +1381,21 @@
       <div class="panel-label">Hypothesis</div>
       <p>Without translation, Anthropic receives OpenAI-format tool schemas. The different format causes tool calls to fail with malformed schema errors.</p>
     </div>
-    <div class="panel panel-action">
+    <div id="predict-22" class="predict-panel" data-correct="B">
+      <div class="predict-header">
+        <span class="predict-badge">⚡ Predict</span>
+        <span class="predict-label">Before you break it — what will happen?</span>
+        <span id="tally-22" class="wrong-tally" style="display:none"></span>
+      </div>
+      <p class="predict-question">Removing the Anthropic tool schema translation causes what when Claude is the active provider?</p>
+      <div class="predict-option" data-val="A" onclick="selectOption(22,'A')"><strong>A.</strong> Claude silently ignores all tool definitions and answers without tools</div>
+      <div class="predict-option" data-val="B" onclick="selectOption(22,'B')"><strong>B.</strong> Claude receives malformed tool schemas and cannot call any tools</div>
+      <div class="predict-option" data-val="C" onclick="selectOption(22,'C')"><strong>C.</strong> OpenAI format schemas are accepted natively by the Anthropic API</div>
+      <div class="predict-option" data-val="D" onclick="selectOption(22,'D')"><strong>D.</strong> The ModelRouter automatically falls back to Ollama for tool calls</div>
+      <button class="predict-submit" onclick="submitPrediction(22)" disabled>Lock In Answer ⚡</button>
+      <div class="predict-result"></div>
+    </div>
+    <div id="action-panel-22" class="panel panel-action action-gated locked">
       <div class="panel-label">Action</div>
       <p>File: <span class="file-ref">app/llm_providers.py</span> (lines 171&ndash;185)</p>
       <p>Return raw OpenAI schemas unchanged instead of translating:</p>
@@ -1426,7 +1530,21 @@
       <div class="panel-label">Hypothesis</div>
       <p>Without <span class="inline-code">stream=False</span>, Ollama defaults to streaming mode and returns NDJSON (newline-delimited JSON) instead of a single JSON object, breaking the parser.</p>
     </div>
-    <div class="panel panel-action">
+    <div id="predict-23" class="predict-panel" data-correct="B">
+      <div class="predict-header">
+        <span class="predict-badge">⚡ Predict</span>
+        <span class="predict-label">Before you break it — what will happen?</span>
+        <span id="tally-23" class="wrong-tally" style="display:none"></span>
+      </div>
+      <p class="predict-question">Removing stream=False from the Ollama call means the response is a streaming generator. What breaks?</p>
+      <div class="predict-option" data-val="A" onclick="selectOption(23,'A')"><strong>A.</strong> Ollama stops responding entirely and the request times out</div>
+      <div class="predict-option" data-val="B" onclick="selectOption(23,'B')"><strong>B.</strong> The code tries to access .text or parse JSON from a generator object, raising an AttributeError</div>
+      <div class="predict-option" data-val="C" onclick="selectOption(23,'C')"><strong>C.</strong> The LLM response is returned as raw bytes instead of a string</div>
+      <div class="predict-option" data-val="D" onclick="selectOption(23,'D')"><strong>D.</strong> The server switches to server-sent events (SSE) automatically</div>
+      <button class="predict-submit" onclick="submitPrediction(23)" disabled>Lock In Answer ⚡</button>
+      <div class="predict-result"></div>
+    </div>
+    <div id="action-panel-23" class="panel panel-action action-gated locked">
       <div class="panel-label">Action</div>
       <p>File: <span class="file-ref">app/llm_providers.py</span> (line 330)</p>
       <p>Comment out the stream parameter:</p>
@@ -1559,7 +1677,21 @@
       <div class="panel-label">Hypothesis</div>
       <p>Without the message-count threshold, every single message triggers summarization. This wastes API calls and adds latency to every interaction.</p>
     </div>
-    <div class="panel panel-action">
+    <div id="predict-24" class="predict-panel" data-correct="B">
+      <div class="predict-header">
+        <span class="predict-badge">⚡ Predict</span>
+        <span class="predict-label">Before you break it — what will happen?</span>
+        <span id="tally-24" class="wrong-tally" style="display:none"></span>
+      </div>
+      <p class="predict-question">Removing the memory summarization threshold causes summarization to run on every message. What is the risk?</p>
+      <div class="predict-option" data-val="A" onclick="selectOption(24,'A')"><strong>A.</strong> The conversation history is cleared after every message</div>
+      <div class="predict-option" data-val="B" onclick="selectOption(24,'B')"><strong>B.</strong> API costs spike dramatically—an LLM call is made for every single user message</div>
+      <div class="predict-option" data-val="C" onclick="selectOption(24,'C')"><strong>C.</strong> Memory compression causes older messages to be duplicated instead of summarised</div>
+      <div class="predict-option" data-val="D" onclick="selectOption(24,'D')"><strong>D.</strong> The chat endpoint raises a RecursionError from nested summarisation calls</div>
+      <button class="predict-submit" onclick="submitPrediction(24)" disabled>Lock In Answer ⚡</button>
+      <div class="predict-result"></div>
+    </div>
+    <div id="action-panel-24" class="panel panel-action action-gated locked">
       <div class="panel-label">Action</div>
       <p>File: <span class="file-ref">app/memory.py</span> (lines 79&ndash;80)</p>
       <p>Comment out the threshold check so summarization always triggers:</p>
@@ -1692,7 +1824,21 @@
       <div class="panel-label">Hypothesis</div>
       <p>Without the cheap_summary fallback, if the LLM summarization call fails, the summary becomes <span class="inline-code">None</span>. Downstream code expecting a string may break or produce nonsensical context.</p>
     </div>
-    <div class="panel panel-action">
+    <div id="predict-25" class="predict-panel" data-correct="B">
+      <div class="predict-header">
+        <span class="predict-badge">⚡ Predict</span>
+        <span class="predict-label">Before you break it — what will happen?</span>
+        <span id="tally-25" class="wrong-tally" style="display:none"></span>
+      </div>
+      <p class="predict-question">Removing the cheap summary fallback means if the LLM summarisation call fails, what happens?</p>
+      <div class="predict-option" data-val="A" onclick="selectOption(25,'A')"><strong>A.</strong> The original conversation text is used unchanged as a fallback</div>
+      <div class="predict-option" data-val="B" onclick="selectOption(25,'B')"><strong>B.</strong> An unhandled exception propagates and the entire chat request fails with 500</div>
+      <div class="predict-option" data-val="C" onclick="selectOption(25,'C')"><strong>C.</strong> The system switches to BM25 search to rebuild context from the knowledge base</div>
+      <div class="predict-option" data-val="D" onclick="selectOption(25,'D')"><strong>D.</strong> Summarisation is skipped silently and an empty string is stored as memory</div>
+      <button class="predict-submit" onclick="submitPrediction(25)" disabled>Lock In Answer ⚡</button>
+      <div class="predict-result"></div>
+    </div>
+    <div id="action-panel-25" class="panel panel-action action-gated locked">
       <div class="panel-label">Action</div>
       <p>File: <span class="file-ref">app/memory.py</span> (lines 115&ndash;116)</p>
       <p>Comment out the cheap_summary fallback:</p>
@@ -1825,7 +1971,21 @@
       <div class="panel-label">Hypothesis</div>
       <p>Without the receipt generation code, bookings still succeed but the PDF invoice is missing. The response will show <span class="inline-code">invoice_url: null</span>.</p>
     </div>
-    <div class="panel panel-action">
+    <div id="predict-26" class="predict-panel" data-correct="B">
+      <div class="predict-header">
+        <span class="predict-badge">⚡ Predict</span>
+        <span class="predict-label">Before you break it — what will happen?</span>
+        <span id="tally-26" class="wrong-tally" style="display:none"></span>
+      </div>
+      <p class="predict-question">Removing PDF receipt generation means booking confirmations return what instead of a PDF?</p>
+      <div class="predict-option" data-val="A" onclick="selectOption(26,'A')"><strong>A.</strong> A plain-text email is sent automatically as a substitute</div>
+      <div class="predict-option" data-val="B" onclick="selectOption(26,'B')"><strong>B.</strong> The booking endpoint returns JSON data only—no downloadable receipt is produced</div>
+      <div class="predict-option" data-val="C" onclick="selectOption(26,'C')"><strong>C.</strong> The server raises an ImportError since the PDF library is unloaded</div>
+      <div class="predict-option" data-val="D" onclick="selectOption(26,'D')"><strong>D.</strong> Bookings are stored in the DB but never confirmed to the user</div>
+      <button class="predict-submit" onclick="submitPrediction(26)" disabled>Lock In Answer ⚡</button>
+      <div class="predict-result"></div>
+    </div>
+    <div id="action-panel-26" class="panel panel-action action-gated locked">
       <div class="panel-label">Action</div>
       <p>File: <span class="file-ref">app/tools.py</span> (lines 233&ndash;262)</p>
       <p>Comment out the entire PDF receipt try block:</p>
@@ -1958,7 +2118,21 @@
       <div class="panel-label">Hypothesis</div>
       <p>Without source attribution, 20% of the confidence signal is lost. The source attribution score will always be 0.0 regardless of how well-grounded the response is.</p>
     </div>
-    <div class="panel panel-action">
+    <div id="predict-27" class="predict-panel" data-correct="B">
+      <div class="predict-header">
+        <span class="predict-badge">⚡ Predict</span>
+        <span class="predict-label">Before you break it — what will happen?</span>
+        <span id="tally-27" class="wrong-tally" style="display:none"></span>
+      </div>
+      <p class="predict-question">Removing source attribution (20% weight) from confidence scoring and recalculating, the max possible score is?</p>
+      <div class="predict-option" data-val="A" onclick="selectOption(27,'A')"><strong>A.</strong> 1.0—the remaining weights auto-scale to fill the gap</div>
+      <div class="predict-option" data-val="B" onclick="selectOption(27,'B')"><strong>B.</strong> 0.8—only context overlap (30%) and semantic similarity (50%) remain</div>
+      <div class="predict-option" data-val="C" onclick="selectOption(27,'C')"><strong>C.</strong> 0.5—semantic similarity alone dominates</div>
+      <div class="predict-option" data-val="D" onclick="selectOption(27,'D')"><strong>D.</strong> 0.0—attribution is required or the score is zeroed</div>
+      <button class="predict-submit" onclick="submitPrediction(27)" disabled>Lock In Answer ⚡</button>
+      <div class="predict-result"></div>
+    </div>
+    <div id="action-panel-27" class="panel panel-action action-gated locked">
       <div class="panel-label">Action</div>
       <p>File: <span class="file-ref">app/hallucination.py</span> (lines 136&ndash;160)</p>
       <p>Replace the method to always return 0.0:</p>
@@ -2092,7 +2266,21 @@
       <div class="panel-label">Hypothesis</div>
       <p>With the threshold changed from 0.3 to 0.0, every sentence counts as grounded regardless of actual similarity. Attribution scores will approach 1.0 even for hallucinated content.</p>
     </div>
-    <div class="panel panel-action">
+    <div id="predict-28" class="predict-panel" data-correct="B">
+      <div class="predict-header">
+        <span class="predict-badge">⚡ Predict</span>
+        <span class="predict-label">Before you break it — what will happen?</span>
+        <span id="tally-28" class="wrong-tally" style="display:none"></span>
+      </div>
+      <p class="predict-question">Removing the 0.3 grounding threshold means the system passes responses to the user even when confidence is very low. What is the observable effect?</p>
+      <div class="predict-option" data-val="A" onclick="selectOption(28,'A')"><strong>A.</strong> The LLM refuses to answer any query below 0.3 confidence</div>
+      <div class="predict-option" data-val="B" onclick="selectOption(28,'B')"><strong>B.</strong> Hallucinated or ungrounded responses are returned without any warning label</div>
+      <div class="predict-option" data-val="C" onclick="selectOption(28,'C')"><strong>C.</strong> The confidence detector raises a ValueError when score < 0.3</div>
+      <div class="predict-option" data-val="D" onclick="selectOption(28,'D')"><strong>D.</strong> The RAG system re-queries ChromaDB automatically when threshold is not met</div>
+      <button class="predict-submit" onclick="submitPrediction(28)" disabled>Lock In Answer ⚡</button>
+      <div class="predict-result"></div>
+    </div>
+    <div id="action-panel-28" class="panel panel-action action-gated locked">
       <div class="panel-label">Action</div>
       <p>File: <span class="file-ref">app/hallucination.py</span> (line 157)</p>
       <p>Change the grounding threshold:</p>
@@ -2226,7 +2414,21 @@
       <div class="panel-label">Hypothesis</div>
       <p>Without RAG context injected into the system prompt, the LLM can only respond from its training data. Resort-specific knowledge will be replaced by generic or hallucinated information.</p>
     </div>
-    <div class="panel panel-action">
+    <div id="predict-29" class="predict-panel" data-correct="B">
+      <div class="predict-header">
+        <span class="predict-badge">⚡ Predict</span>
+        <span class="predict-label">Before you break it — what will happen?</span>
+        <span id="tally-29" class="wrong-tally" style="display:none"></span>
+      </div>
+      <p class="predict-question">Removing system prompt knowledge base injection means the LLM receives no resort context. What happens?</p>
+      <div class="predict-option" data-val="A" onclick="selectOption(29,'A')"><strong>A.</strong> The LLM uses its training data to answer—responses remain accurate but verbose</div>
+      <div class="predict-option" data-val="B" onclick="selectOption(29,'B')"><strong>B.</strong> The LLM answers from general knowledge, likely hallucinating resort-specific details</div>
+      <div class="predict-option" data-val="C" onclick="selectOption(29,'C')"><strong>C.</strong> The /chat endpoint raises a PromptTooShortError</div>
+      <div class="predict-option" data-val="D" onclick="selectOption(29,'D')"><strong>D.</strong> ChromaDB is queried twice to compensate for the missing system context</div>
+      <button class="predict-submit" onclick="submitPrediction(29)" disabled>Lock In Answer ⚡</button>
+      <div class="predict-result"></div>
+    </div>
+    <div id="action-panel-29" class="panel panel-action action-gated locked">
       <div class="panel-label">Action</div>
       <p>File: <span class="file-ref">app/main.py</span> (lines 152&ndash;156)</p>
       <p>Comment out the context_text injection into the system prompt:</p>
@@ -2360,7 +2562,21 @@
       <div class="panel-label">Hypothesis</div>
       <p>Without chat history, every message is treated as the first message in a conversation. The agent cannot reference previous turns, losing conversational context entirely.</p>
     </div>
-    <div class="panel panel-action">
+    <div id="predict-30" class="predict-panel" data-correct="B">
+      <div class="predict-header">
+        <span class="predict-badge">⚡ Predict</span>
+        <span class="predict-label">Before you break it — what will happen?</span>
+        <span id="tally-30" class="wrong-tally" style="display:none"></span>
+      </div>
+      <p class="predict-question">Removing chat history from the agent context means every message is processed in isolation. What is the symptom?</p>
+      <div class="predict-option" data-val="A" onclick="selectOption(30,'A')"><strong>A.</strong> The LLM raises a ContextWindowError on multi-turn conversations</div>
+      <div class="predict-option" data-val="B" onclick="selectOption(30,'B')"><strong>B.</strong> The agent cannot refer to previous messages—follow-up questions receive no-context answers</div>
+      <div class="predict-option" data-val="C" onclick="selectOption(30,'C')"><strong>C.</strong> Conversation history is stored in ChromaDB as fallback context</div>
+      <div class="predict-option" data-val="D" onclick="selectOption(30,'D')"><strong>D.</strong> Session tokens expire immediately since history is not tracked</div>
+      <button class="predict-submit" onclick="submitPrediction(30)" disabled>Lock In Answer ⚡</button>
+      <div class="predict-result"></div>
+    </div>
+    <div id="action-panel-30" class="panel panel-action action-gated locked">
       <div class="panel-label">Action</div>
       <p>File: <span class="file-ref">app/main.py</span> (lines 171&ndash;179)</p>
       <p>Comment out past_messages loading:</p>
@@ -2494,7 +2710,21 @@
       <div class="panel-label">Hypothesis</div>
       <p>Without the fallback mechanism, if the primary provider fails, the request dies immediately even though alternative providers are available and healthy.</p>
     </div>
-    <div class="panel panel-action">
+    <div id="predict-31" class="predict-panel" data-correct="B">
+      <div class="predict-header">
+        <span class="predict-badge">⚡ Predict</span>
+        <span class="predict-label">Before you break it — what will happen?</span>
+        <span id="tally-31" class="wrong-tally" style="display:none"></span>
+      </div>
+      <p class="predict-question">Removing the ModelRouter fallback chain means if OpenAI fails, what happens?</p>
+      <div class="predict-option" data-val="A" onclick="selectOption(31,'A')"><strong>A.</strong> The system automatically retries OpenAI three times before giving up</div>
+      <div class="predict-option" data-val="B" onclick="selectOption(31,'B')"><strong>B.</strong> The request fails immediately with an error—no Anthropic or Ollama fallback is attempted</div>
+      <div class="predict-option" data-val="C" onclick="selectOption(31,'C')"><strong>C.</strong> Anthropic becomes the primary provider and OpenAI is treated as backup</div>
+      <div class="predict-option" data-val="D" onclick="selectOption(31,'D')"><strong>D.</strong> The router selects the cheapest available provider at runtime</div>
+      <button class="predict-submit" onclick="submitPrediction(31)" disabled>Lock In Answer ⚡</button>
+      <div class="predict-result"></div>
+    </div>
+    <div id="action-panel-31" class="panel panel-action action-gated locked">
       <div class="panel-label">Action</div>
       <p>File: <span class="file-ref">app/llm_providers.py</span> (lines 391&ndash;392)</p>
       <p>Replace the fallback logic with immediate failure:</p>
@@ -2627,7 +2857,21 @@
       <div class="panel-label">Hypothesis</div>
       <p>Without the TTL expiry check, cached entries live forever. The cache will serve stale results indefinitely, even after the underlying data changes.</p>
     </div>
-    <div class="panel panel-action">
+    <div id="predict-32" class="predict-panel" data-correct="B">
+      <div class="predict-header">
+        <span class="predict-badge">⚡ Predict</span>
+        <span class="predict-label">Before you break it — what will happen?</span>
+        <span id="tally-32" class="wrong-tally" style="display:none"></span>
+      </div>
+      <p class="predict-question">Removing TTL expiry check from cache means stale responses are served indefinitely. What is the risk?</p>
+      <div class="predict-option" data-val="A" onclick="selectOption(32,'A')"><strong>A.</strong> Cache memory grows unboundedly causing an OOM crash after a few days</div>
+      <div class="predict-option" data-val="B" onclick="selectOption(32,'B')"><strong>B.</strong> Users receive outdated answers even after knowledge base updates or server restarts</div>
+      <div class="predict-option" data-val="C" onclick="selectOption(32,'C')"><strong>C.</strong> The cache raises a KeyError when accessing entries older than 5 minutes</div>
+      <div class="predict-option" data-val="D" onclick="selectOption(32,'D')"><strong>D.</strong> Query results are duplicated in ChromaDB for each cache miss</div>
+      <button class="predict-submit" onclick="submitPrediction(32)" disabled>Lock In Answer ⚡</button>
+      <div class="predict-result"></div>
+    </div>
+    <div id="action-panel-32" class="panel panel-action action-gated locked">
       <div class="panel-label">Action</div>
       <p>File: <span class="file-ref">app/cache_utils.py</span> (lines 25&ndash;28)</p>
       <p>Comment out the TTL check:</p>
@@ -2760,7 +3004,21 @@
       <div class="panel-label">Hypothesis</div>
       <p>Without the thread lock, concurrent requests can corrupt the OrderedDict. Race conditions may cause KeyError exceptions, lost entries, or corrupted state.</p>
     </div>
-    <div class="panel panel-action">
+    <div id="predict-33" class="predict-panel" data-correct="B">
+      <div class="predict-header">
+        <span class="predict-badge">⚡ Predict</span>
+        <span class="predict-label">Before you break it — what will happen?</span>
+        <span id="tally-33" class="wrong-tally" style="display:none"></span>
+      </div>
+      <p class="predict-question">Removing the threading lock from the cache allows concurrent writes. What can go wrong?</p>
+      <div class="predict-option" data-val="A" onclick="selectOption(33,'A')"><strong>A.</strong> All threads block indefinitely waiting for the missing lock, causing a deadlock</div>
+      <div class="predict-option" data-val="B" onclick="selectOption(33,'B')"><strong>B.</strong> Two threads may write simultaneously, corrupting cache entries with partial data</div>
+      <div class="predict-option" data-val="C" onclick="selectOption(33,'C')"><strong>C.</strong> Python's GIL prevents concurrent writes, so nothing changes in practice</div>
+      <div class="predict-option" data-val="D" onclick="selectOption(33,'D')"><strong>D.</strong> The cache automatically switches to read-only mode under concurrent load</div>
+      <button class="predict-submit" onclick="submitPrediction(33)" disabled>Lock In Answer ⚡</button>
+      <div class="predict-result"></div>
+    </div>
+    <div id="action-panel-33" class="panel panel-action action-gated locked">
       <div class="panel-label">Action</div>
       <p>File: <span class="file-ref">app/cache_utils.py</span> (lines 22, 33)</p>
       <p>Comment out both <span class="inline-code">with self._lock:</span> statements in the get and set methods:</p>
@@ -2895,7 +3153,21 @@
       <div class="panel-label">Hypothesis</div>
       <p>Without proper classification, every response is labeled "HIGH" confidence regardless of the actual score. Users and downstream systems lose the ability to distinguish trustworthy from untrustworthy responses.</p>
     </div>
-    <div class="panel panel-action">
+    <div id="predict-34" class="predict-panel" data-correct="B">
+      <div class="predict-header">
+        <span class="predict-badge">⚡ Predict</span>
+        <span class="predict-label">Before you break it — what will happen?</span>
+        <span id="tally-34" class="wrong-tally" style="display:none"></span>
+      </div>
+      <p class="predict-question">Removing confidence level classification (HIGH/MEDIUM/LOW) from the detector means responses include what?</p>
+      <div class="predict-option" data-val="A" onclick="selectOption(34,'A')"><strong>A.</strong> Raw probability scores between 0 and 1 instead of labels</div>
+      <div class="predict-option" data-val="B" onclick="selectOption(34,'B')"><strong>B.</strong> No confidence label—the API response omits the confidence_level field entirely</div>
+      <div class="predict-option" data-val="C" onclick="selectOption(34,'C')"><strong>C.</strong> The detector defaults to HIGH for all responses to avoid breaking downstream logic</div>
+      <div class="predict-option" data-val="D" onclick="selectOption(34,'D')"><strong>D.</strong> Confidence scoring is disabled entirely and no score is computed</div>
+      <button class="predict-submit" onclick="submitPrediction(34)" disabled>Lock In Answer ⚡</button>
+      <div class="predict-result"></div>
+    </div>
+    <div id="action-panel-34" class="panel panel-action action-gated locked">
       <div class="panel-label">Action</div>
       <p>File: <span class="file-ref">app/hallucination.py</span> (lines 178&ndash;183)</p>
       <p>Replace the classification logic to always return HIGH:</p>
@@ -3116,6 +3388,103 @@
     const pct = TIER_COUNT > 0 ? (tierDone / TIER_COUNT * 100) : 0;
     document.getElementById('progressFill').style.width = pct + '%';
   }
+
+
+  // ── ShockEngine ──
+  const ShockEngine = {
+    wrongCount: JSON.parse(localStorage.getItem('t2_shock_wrongs') || '{}'),
+    _save() { localStorage.setItem('t2_shock_wrongs', JSON.stringify(this.wrongCount)); },
+    trigger(exerciseId, intensity) {
+      this.wrongCount[exerciseId] = (this.wrongCount[exerciseId] || 0) + 1;
+      this._save();
+      const tally = document.getElementById('tally-' + exerciseId);
+      if (tally) { tally.textContent = '⚡ ' + this.wrongCount[exerciseId] + ' wrong'; tally.style.display = 'inline'; }
+      this._visualShock(intensity);
+      this._audioShock(intensity);
+      if (this.wrongCount[exerciseId] >= 3) { this._showLockout(exerciseId); }
+    },
+    _visualShock(intensity) {
+      const cls = intensity === 'mild' ? 'shock-mild' : intensity === 'medium' ? 'shock-medium' : 'shock-nuclear';
+      const el = document.createElement('div');
+      el.className = 'shock-overlay ' + cls;
+      document.body.appendChild(el);
+      document.body.classList.add('shaking');
+      setTimeout(() => { el.remove(); document.body.classList.remove('shaking'); }, 500);
+    },
+    _audioShock(level) {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.type = level === 'mild' ? 'sine' : 'sawtooth';
+        osc.frequency.value = level === 'mild' ? 220 : level === 'medium' ? 180 : 120;
+        gain.gain.setValueAtTime(level === 'mild' ? 0.3 : level === 'medium' ? 0.5 : 0.8, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + (level === 'mild' ? 0.3 : level === 'medium' ? 0.5 : 0.7));
+        osc.start(); osc.stop(ctx.currentTime + 0.7);
+      } catch(e) {}
+    },
+    _showLockout(exerciseId) {
+      const panel = document.getElementById('predict-' + exerciseId);
+      if (!panel) return;
+      let msg = panel.querySelector('.lockout-msg');
+      if (!msg) {
+        msg = document.createElement('div');
+        msg.className = 'lockout-msg';
+        msg.textContent = '🔒 Nuclear lock! Re-read the hypothesis carefully before trying again.';
+        panel.appendChild(msg);
+      }
+    },
+    praise() {
+      const el = document.createElement('div');
+      el.className = 'praise-flash';
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 600);
+    }
+  };
+
+  window.selectOption = function(exerciseId, key) {
+    const panel = document.getElementById('predict-' + exerciseId);
+    if (!panel) return;
+    panel.querySelectorAll('.predict-option').forEach(o => o.classList.remove('selected'));
+    const chosen = panel.querySelector('.predict-option[data-val="' + key + '"]');
+    if (chosen) chosen.classList.add('selected');
+    const btn = panel.querySelector('.predict-submit');
+    if (btn) btn.disabled = false;
+  };
+
+  window.submitPrediction = function(exerciseId) {
+    const panel = document.getElementById('predict-' + exerciseId);
+    if (!panel) return;
+    const correct = panel.dataset.correct;
+    const selected = panel.querySelector('.predict-option.selected');
+    if (!selected) return;
+    const answer = selected.dataset.val;
+    const resultEl = panel.querySelector('.predict-result');
+    panel.querySelectorAll('.predict-option').forEach(o => {
+      o.style.pointerEvents = 'none';
+      if (o.dataset.val === correct) o.classList.add('correct-reveal');
+      else if (o.dataset.val === answer && answer !== correct) o.classList.add('wrong-reveal');
+    });
+    panel.querySelector('.predict-submit').disabled = true;
+    const actionPanel = document.getElementById('action-panel-' + exerciseId);
+    if (answer === correct) {
+      resultEl.innerHTML = '<span style="color:#16a34a">✅ Correct! Action panel unlocked.</span>';
+      ShockEngine.praise();
+      if (actionPanel) actionPanel.classList.remove('locked');
+    } else {
+      const wrongs = (ShockEngine.wrongCount[exerciseId] || 0) + 1;
+      const intensity = wrongs === 1 ? 'mild' : wrongs === 2 ? 'medium' : 'nuclear';
+      ShockEngine.trigger(exerciseId, intensity);
+      resultEl.innerHTML = '<span style="color:#dc2626">⚡ Wrong! Study the hypothesis again.</span>';
+      panel.querySelectorAll('.predict-option').forEach(o => {
+        o.classList.remove('selected', 'wrong-reveal', 'correct-reveal');
+        o.style.pointerEvents = '';
+      });
+      panel.querySelector('.predict-submit').disabled = true;
+      setTimeout(() => { panel.querySelector('.predict-submit').disabled = true; resultEl.innerHTML = ''; }, 1200);
+    }
+  };
 
   // ── 5-3-1 Reflection ──
   window.saveReflection = function(id, field, value) {
