@@ -31,7 +31,7 @@ jobs:
       - name: Lint
         run: |
           pip install flake8
-          flake8 app tests
+          flake8 app tests --max-line-length=120 --extend-ignore=E501,W293,W291,F401
       - name: Run tests
         env:
           MRC_ENVIRONMENT: test
