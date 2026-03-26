@@ -39,6 +39,11 @@ jobs:
         mypy app/ --ignore-missing-imports
     
     - name: Run tests
+      env:
+        MRC_ENVIRONMENT: test
+        MRC_DATABASE_URL: sqlite:///./test_ci.db
+        MRC_OPENAI_API_KEY: dummy
+        MRC_API_KEY: dummy
       run: |
         pytest tests/ -v --cov=app --cov-report=xml --cov-report=term-missing
     
