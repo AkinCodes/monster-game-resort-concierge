@@ -1,13 +1,55 @@
+# Python
 __pycache__/
 *.pyc
-.env
-.venv/
+*.pyo
 dist/
 build/
 *.egg-info/
+
+# Environment & secrets
+.env
+.venv/
+
+# Database
+*.db
+*.sqlite3
+
+# Logs
+*.log
+
+# Testing & coverage
 .pytest_cache/
 .coverage
-monster_resort.db
-backups/
-generated_pdfs/
+.coverage.*
+htmlcov/
+test_pdfs/
+
+# RAG stores
 .rag_store/
+.rag_store_test/
+
+# Generated files
+generated_pdfs/
+backups/
+
+# Package manager cache
+.uv-cache/
+
+# Documentation (excluded from repo)
+*.md
+*.html
+
+# IDE & tool config
+.claude/
+
+# One-off scripts
+fix_dependencies_final.py
+
+# Backup files
+*.backup
+
+# Notebooks output logs
+notebooks/*.log
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
