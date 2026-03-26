@@ -17,7 +17,7 @@ This isn't a wrapper around an API call. It's a fully wired backend: retrieval p
 ## What the Agent Actually Does
 
 ```
-Guest: "I'd like to book a coffin suite at Vampire Manor for two nights"
+Guest: "What's the spa situation at the Mummy Resort? Asking for a friend who's been wrapped up in work lately."
 ```
 
 1. Message is validated, sanitized, and authenticated (JWT or API key)
