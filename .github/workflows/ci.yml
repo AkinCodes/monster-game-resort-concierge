@@ -38,6 +38,7 @@ jobs:
           MRC_DATABASE_URL: sqlite:///./test_ci.db
           MRC_OPENAI_API_KEY: dummy
           MRC_API_KEY: dummy
+          MRC_JWT_SECRET_KEY: test-dummy-secret-key-for-ci-only-1234567890
         run: |
           pytest --cov=app --cov-report=term-missing
       - name: Upload coverage report
