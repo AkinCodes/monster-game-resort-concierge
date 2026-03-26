@@ -42,7 +42,7 @@ jobs:
         MRC_API_KEY: dummy
         MRC_JWT_SECRET_KEY: test-dummy-secret-key-for-ci-only-1234567890
       run: |
-        pytest tests/ -v --cov=app --cov-report=term-missing -k "not test_health_endpoint" || true
+        pytest tests/ -v --cov=app --cov-report=term-missing
 
   build:
     runs-on: ubuntu-latest

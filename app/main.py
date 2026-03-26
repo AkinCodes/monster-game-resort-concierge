@@ -124,6 +124,11 @@ def build_app() -> FastAPI:
     install_rate_limiter(app, settings)
     app.include_router(admin_router)
 
+    @app.get("/health")
+    def health():
+        return {"status": "alive", "service": settings.app_name}
+
+
     # Build multi-model router
     router = _build_router(settings)
 
