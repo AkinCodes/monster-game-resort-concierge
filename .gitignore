@@ -37,6 +37,7 @@ backups/
 
 # Documentation (excluded from repo)
 *.md
+!README.md
 *.html
 
 # IDE & tool config
