@@ -13,7 +13,10 @@
 This isn't a wrapper around an API call. It's a fully wired backend: retrieval pipeline, agent loop, tool execution, hallucination scoring, conversation memory, database persistence, and CI/CD to AWS -- built to demonstrate how these systems work together in production.
 
 <p align="center">
-  <img src="assets/chat_ui.png" alt="Monster Game Resort Concierge Chat UI" width="700" />
+  <img src="assets/chat_ui_1.png" alt="Monster Game Resort Concierge — Spa Query" width="700" />
+</p>
+<p align="center">
+  <img src="assets/chat_ui_2.png" alt="Monster Game Resort Concierge — Hotel Listing" width="700" />
 </p>
 
 ---
