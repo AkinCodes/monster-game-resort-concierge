@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Understanding def build_app() -> FastAPI:</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --gold-bright: #ffd700;
+  --gold-warm: #e8a317;
+  --gold-deep: #b8860b;
+  --gold-glow: rgba(255, 215, 0, 0.3);
+  --blue-bright: #00d4ff;
+  --blue-cool: #0099cc;
+  --blue-deep: #006688;
+  --blue-glow: rgba(0, 212, 255, 0.3);
+  --navy-top: #0a0e1a;
+  --purple-bottom: #1a0a2e;
+  --card-bg: rgba(15, 18, 35, 0.85);
+  --text-primary: #e8e8f0;
+  --text-muted: #8888aa;
+  --line-color: rgba(255, 215, 0, 0.15);
+  --line-active: linear-gradient(180deg, var(--gold-bright), var(--blue-bright));
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  color: var(--text-primary);
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+/* Gradient background that transitions navy -> purple */
+.page-bg {
+  position: fixed; inset: 0; z-index: -2;
+  background: linear-gradient(180deg, var(--navy-top) 0%, #0f0a24 40%, var(--purple-bottom) 100%);
+}
+
+/* Particle canvas */
+#particles { position: fixed; inset: 0; z-index: -1; pointer-events: none; }
+
+/* ===== HEADER ===== */
+.hero {
+  min-height: 100vh;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  text-align: center;
+  padding: 2rem;
+  position: relative;
+}
+.hero::after {
+  content: '';
+  position: absolute; bottom: 0; left: 0; right: 0; height: 200px;
+  background: linear-gradient(transparent, var(--navy-top));
+  pointer-events: none;
+}
+.hero-badge {
+  display: inline-block;
+  font-size: 0.75rem; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase;
+  color: var(--gold-bright);
+  border: 1px solid var(--gold-deep);
+  padding: 0.4em 1.2em; border-radius: 999px;
+  margin-bottom: 1.5rem;
+  animation: fadeInDown 0.8s ease-out;
+}
+.hero h1 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: clamp(1.4rem, 4vw, 2.6rem);
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--gold-bright), #fff, var(--blue-bright));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 1rem;
+  animation: fadeInDown 0.8s ease-out 0.15s both;
+}
+.hero-subtitle {
+  font-size: clamp(0.95rem, 2vw, 1.2rem);
+  color: var(--text-muted); max-width: 600px; line-height: 1.6;
+  animation: fadeInDown 0.8s ease-out 0.3s both;
+}
+.hero-cta {
+  margin-top: 2rem;
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  background: linear-gradient(135deg, var(--gold-deep), var(--gold-warm));
+  color: #000; font-weight: 700; font-size: 0.95rem;
+  padding: 0.8em 2em; border-radius: 999px; border: none; cursor: pointer;
+  text-decoration: none;
+  animation: fadeInDown 0.8s ease-out 0.45s both;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.hero-cta:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px var(--gold-glow);
+}
+.scroll-hint {
+  position: absolute; bottom: 60px;
+  animation: bounce 2s infinite;
+  color: var(--gold-bright); font-size: 1.5rem;
+}
+
+/* ===== NAV DOTS ===== */
+.nav-dots {
+  position: fixed; right: 1.2rem; top: 50%; transform: translateY(-50%);
+  z-index: 100; display: flex; flex-direction: column; gap: 0.7rem;
+}
+.nav-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.2);
+  cursor: pointer; transition: all 0.3s;
+  position: relative;
+}
+.nav-dot.active {
+  background: var(--gold-bright);
+  border-color: var(--gold-bright);
+  box-shadow: 0 0 10px var(--gold-glow);
+  transform: scale(1.3);
+}
+.nav-dot .dot-label {
+  position: absolute; right: 20px; top: 50%; transform: translateY(-50%);
+  white-space: nowrap; font-size: 0.7rem; color: var(--text-muted);
+  opacity: 0; transition: opacity 0.2s; pointer-events: none;
+  background: rgba(0,0,0,0.7); padding: 0.2em 0.6em; border-radius: 4px;
+}
+.nav-dot:hover .dot-label { opacity: 1; }
+
+/* ===== TIMELINE ===== */
+.timeline-section {
+  position: relative;
+  max-width: 1100px; margin: 0 auto;
+  padding: 4rem 1rem 6rem;
+}
+.timeline-track {
+  position: absolute;
+  left: 50%; top: 0; bottom: 0;
+  width: 3px;
+  background: var(--line-color);
+  transform: translateX(-50%);
+}
+.timeline-track-fill {
+  position: fixed;
+  left: 50%; top: 0;
+  width: 3px; height: 0;
+  background: var(--line-active);
+  transform: translateX(-50%);
+  z-index: 1;
+  transition: none;
+  box-shadow: 0 0 12px var(--gold-glow), 0 0 4px var(--blue-glow);
+  pointer-events: none;
+}
+
+/* ===== TIMELINE NODE ===== */
+.tl-node {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 60px 1fr;
+  gap: 0;
+  margin-bottom: 5rem;
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+.tl-node.visible {
+  opacity: 1; transform: translateY(0);
+}
+
+/* Center dot */
+.tl-dot-col {
+  display: flex; align-items: flex-start; justify-content: center;
+  padding-top: 1.2rem;
+  position: relative; z-index: 2;
+}
+.tl-dot {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--navy-top);
+  border: 3px solid var(--line-color);
+  cursor: pointer;
+  transition: all 0.4s;
+  position: relative;
+}
+.tl-node.visible .tl-dot {
+  border-color: var(--gold-bright);
+  animation: dotPulse 2s ease-in-out;
+}
+.tl-dot::after {
+  content: ''; position: absolute; inset: -6px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  transition: border-color 0.3s;
+}
+.tl-node.visible .tl-dot::after {
+  border-color: var(--gold-glow);
+}
+.tl-dot:hover {
+  transform: scale(1.3);
+  box-shadow: 0 0 20px var(--gold-glow);
+}
+
+/* Step number badge */
+.step-num {
+  position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+  font-size: 0.6rem; font-weight: 800; color: var(--gold-bright);
+  background: var(--navy-top); padding: 0.1em 0.45em; border-radius: 4px;
+  border: 1px solid var(--gold-deep);
+  pointer-events: none;
+}
+
+/* Cards */
+.tl-card {
+  border-radius: 14px;
+  padding: 1.5rem;
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.06);
+  transition: transform 0.3s, box-shadow 0.3s;
+  cursor: pointer;
+}
+.tl-card:hover {
+  transform: translateY(-3px);
+}
+.tl-card--metaphor {
+  background: linear-gradient(135deg, rgba(232,163,23,0.08), rgba(184,134,11,0.04));
+  border-color: rgba(232,163,23,0.15);
+}
+.tl-card--metaphor:hover {
+  box-shadow: 0 8px 40px rgba(232,163,23,0.1);
+}
+.tl-card--code {
+  background: linear-gradient(135deg, rgba(0,212,255,0.06), rgba(0,102,136,0.04));
+  border-color: rgba(0,212,255,0.12);
+}
+.tl-card--code:hover {
+  box-shadow: 0 8px 40px rgba(0,212,255,0.1);
+}
+
+.card-icon { font-size: 1.6rem; margin-bottom: 0.6rem; }
+.card-label {
+  font-size: 0.65rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+  margin-bottom: 0.3rem;
+}
+.card-label--gold { color: var(--gold-warm); }
+.card-label--blue { color: var(--blue-bright); }
+
+.card-title {
+  font-size: 1.1rem; font-weight: 700; margin-bottom: 0.4rem;
+  line-height: 1.3;
+}
+.card-desc {
+  font-size: 0.85rem; color: var(--text-muted); line-height: 1.55;
+}
+
+/* ===== EXPANDED DETAIL ===== */
+.tl-detail {
+  grid-column: 1 / -1;
+  max-height: 0; overflow: hidden;
+  transition: max-height 0.5s ease, opacity 0.4s ease, margin 0.4s ease;
+  opacity: 0; margin-top: 0;
+}
+.tl-node.expanded .tl-detail {
+  max-height: 800px; opacity: 1; margin-top: 1.5rem;
+}
+.detail-inner {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;
+  background: var(--card-bg);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px; padding: 1.8rem;
+  position: relative;
+  overflow: hidden;
+}
+.detail-inner::before {
+  content: ''; position: absolute; top: 0; left: 50%;
+  width: 1px; height: 100%;
+  background: linear-gradient(180deg, var(--gold-deep), transparent, var(--blue-deep));
+  opacity: 0.3;
+}
+.detail-side h3 {
+  font-size: 0.9rem; font-weight: 700; margin-bottom: 0.7rem;
+}
+.detail-side h3.gold { color: var(--gold-bright); }
+.detail-side h3.blue { color: var(--blue-bright); }
+.detail-side p {
+  font-size: 0.85rem; line-height: 1.6; color: var(--text-muted);
+}
+.detail-code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  background: rgba(0,0,0,0.4);
+  border: 1px solid rgba(0,212,255,0.1);
+  border-radius: 8px; padding: 1rem;
+  overflow-x: auto; white-space: pre;
+  line-height: 1.6;
+  color: #b8c9e0;
+  margin-top: 0.6rem;
+}
+.detail-code .kw { color: #c792ea; }
+.detail-code .fn { color: #82aaff; }
+.detail-code .str { color: #c3e88d; }
+.detail-code .cm { color: #546e7a; }
+.detail-code .var { color: #ffcb6b; }
+.detail-code .op { color: #89ddff; }
+
+/* ===== ALTERNATING LAYOUT ===== */
+.tl-node.layout-right .tl-card--metaphor { grid-column: 1; grid-row: 1; }
+.tl-node.layout-right .tl-dot-col { grid-column: 2; grid-row: 1; }
+.tl-node.layout-right .tl-card--code { grid-column: 3; grid-row: 1; }
+
+.tl-node.layout-left .tl-card--code { grid-column: 1; grid-row: 1; }
+.tl-node.layout-left .tl-dot-col { grid-column: 2; grid-row: 1; }
+.tl-node.layout-left .tl-card--metaphor { grid-column: 3; grid-row: 1; }
+
+/* ===== FINAL BANNER ===== */
+.final-banner {
+  position: relative;
+  max-width: 800px; margin: 0 auto 4rem;
+  text-align: center;
+  padding: 3rem 2rem;
+  background: linear-gradient(135deg, rgba(255,215,0,0.05), rgba(0,212,255,0.05));
+  border: 1px solid rgba(255,215,0,0.15);
+  border-radius: 20px;
+  opacity: 0; transform: scale(0.95);
+  transition: opacity 0.8s, transform 0.8s;
+}
+.final-banner.visible { opacity: 1; transform: scale(1); }
+.final-banner .quote {
+  font-size: clamp(1rem, 2.5vw, 1.4rem);
+  font-weight: 300; font-style: italic;
+  line-height: 1.7;
+  background: linear-gradient(90deg, var(--gold-bright), #fff, var(--blue-bright));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.final-banner .quote-attr {
+  display: block; margin-top: 1rem;
+  font-size: 0.8rem; color: var(--text-muted); font-style: normal;
+}
+
+/* ===== FOOTER ===== */
+.page-footer {
+  text-align: center; padding: 2rem;
+  font-size: 0.75rem; color: var(--text-muted);
+  border-top: 1px solid rgba(255,255,255,0.05);
+}
+
+/* ===== ANIMATIONS ===== */
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-10px); }
+  60% { transform: translateY(-5px); }
+}
+@keyframes dotPulse {
+  0% { box-shadow: 0 0 0 0 var(--gold-glow); }
+  50% { box-shadow: 0 0 0 12px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .tl-node {
+    grid-template-columns: 30px 1fr;
+    gap: 0.8rem;
+  }
+  .tl-node.layout-right .tl-card--metaphor,
+  .tl-node.layout-left .tl-card--code { grid-column: 2; grid-row: 1; }
+  .tl-node.layout-right .tl-card--code,
+  .tl-node.layout-left .tl-card--metaphor { grid-column: 2; grid-row: 2; }
+  .tl-node.layout-right .tl-dot-col,
+  .tl-node.layout-left .tl-dot-col { grid-column: 1; grid-row: 1 / 3; }
+  .tl-detail { grid-column: 1 / -1; }
+  .detail-inner { grid-template-columns: 1fr; }
+  .detail-inner::before { display: none; }
+  .timeline-track, .timeline-track-fill { left: 16px; }
+  .nav-dots { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="page-bg"></div>
+<canvas id="particles"></canvas>
+
+<!-- ===== HERO ===== -->
+<section class="hero" id="hero">
+  <span class="hero-badge">Monster Resort Concierge &mdash; Build Journey</span>
+  <h1>Understanding def build_app() -&gt; FastAPI:</h1>
+  <p class="hero-subtitle">
+    Every great game show needs a crew. Walk through the backstage of <code>build_app()</code>,
+    where each line of code maps to a role on <em>Who Wants to Be a Millionaire?</em>
+  </p>
+  <a href="#timeline" class="hero-cta">Begin the Journey &#9660;</a>
+  <div class="scroll-hint">&#8964;</div>
+</section>
+
+<!-- ===== NAV DOTS ===== -->
+<nav class="nav-dots" id="navDots"></nav>
+
+<!-- ===== TIMELINE ===== -->
+<section class="timeline-section" id="timeline">
+  <div class="timeline-track"></div>
+  <div class="timeline-track-fill" id="trackFill"></div>
+  <div id="timelineNodes"></div>
+</section>
+
+<!-- ===== FINAL BANNER ===== -->
+<div class="final-banner" id="finalBanner">
+  <div class="quote">
+    "Every line in <code style="-webkit-text-fill-color:inherit;">build_app()</code> wires one crew member
+    into their station. When the lights go up, the whole game show runs itself &mdash; from
+    question research to the final dramatic answer."
+    <span class="quote-attr">&mdash; The Grand Chamberlain</span>
+  </div>
+</div>
+
+<footer class="page-footer">
+  Monster Resort Concierge &bull; Learning Roadmap &bull; build_app() Journey
+</footer>
+
+<script>
+// ============================
+// DATA
+// ============================
+const STEPS = [
+  {
+    id: "settings",
+    icon: "📋",
+    metaphor: { title: "The Game Manual", short: "Rules, stakes, and the clock. Before the cameras roll, the production team reviews every detail." },
+    code: { title: "settings = get_settings()", short: "Loads all configuration: app name, thresholds, API keys, paths. The single source of truth." },
+    detail: {
+      metaphor: "Before filming begins, the executive producer opens the Game Manual. It specifies the prize tiers, time limits per question, lifeline rules, and audience capacity. Without it, nobody knows what show they're producing. <strong>Settings</strong> is that manual — every other component reads from it.",
+      code: `<span class="var">settings</span> <span class="op">=</span> <span class="fn">get_settings</span>()
+<span class="var">app</span> <span class="op">=</span> <span class="fn">FastAPI</span>(
+    <span class="var">title</span><span class="op">=</span><span class="var">settings</span>.app_name,
+    <span class="var">version</span><span class="op">=</span><span class="str">"1.0.0"</span>
+)`
+    }
+  },
+  {
+    id: "db",
+    icon: "🗄️",
+    metaphor: { title: "The Question Bank", short: "Thousands of trivia questions, sorted by difficulty, sealed in a vault until showtime." },
+    code: { title: "db = DatabaseManager(settings)", short: "SQLite manager for sessions, bookings, and API keys. Persistent structured storage." },
+    detail: {
+      metaphor: "Locked in a secure vault backstage, the Question Bank holds every trivia question ever written for the show. Organized by category and difficulty, it's the raw material the host draws from. The <strong>DatabaseManager</strong> is that vault — sessions, bookings, and keys all live here.",
+      code: `<span class="var">db</span> <span class="op">=</span> <span class="fn">DatabaseManager</span>(<span class="var">settings</span>)
+<span class="var">api_key_manager</span> <span class="op">=</span> <span class="fn">APIKeyManager</span>(<span class="var">db</span>)
+<span class="var">app</span>.state.api_key_manager <span class="op">=</span> <span class="var">api_key_manager</span>`
+    }
+  },
+  {
+    id: "pdf",
+    icon: "🏆",
+    metaphor: { title: "The Official Check", short: "When someone wins, you need to print the giant check. This is the prize generator." },
+    code: { title: "pdf = PDFGenerator(...)", short: "Generates PDF documents (booking confirmations, invoices) on demand." },
+    detail: {
+      metaphor: "The moment a contestant wins, the giant novelty check appears. Someone backstage had it ready — printed, signed, camera-ready. The <strong>PDFGenerator</strong> is the person holding that check. When a booking is confirmed, it produces the official document.",
+      code: `<span class="var">pdf</span> <span class="op">=</span> <span class="fn">PDFGenerator</span>(
+    <span class="var">settings</span>.pdf_output_dir
+)`
+    }
+  },
+  {
+    id: "rag",
+    icon: "📚",
+    metaphor: { title: "The Deep Encyclopedia", short: "That massive backstage reference library for the obscure questions nobody memorized." },
+    code: { title: "rag = AdvancedRAG(...)", short: "Hybrid search: BM25 + semantic embeddings + cross-encoder reranking over ChromaDB." },
+    detail: {
+      metaphor: "For those impossibly obscure questions — \"What year was the Treaty of Tordesillas signed?\" — the show keeps a Deep Encyclopedia backstage. Not just a simple index, but a research team that searches, cross-references, and ranks the best answers. That's <strong>AdvancedRAG</strong>: hybrid search with a reranker.",
+      code: `<span class="var">rag</span> <span class="op">=</span> <span class="fn">AdvancedRAG</span>(
+    <span class="var">settings</span>.rag_persist_dir,
+    <span class="var">settings</span>.rag_collection,
+    <span class="var">embedding_model</span><span class="op">=</span><span class="str">"all-MiniLM-L6-v2"</span>,
+    <span class="var">reranker_model</span><span class="op">=</span><span class="str">"BAAI/bge-reranker-base"</span>,
+    <span class="var">ingestion_token</span><span class="op">=</span><span class="var">settings</span>.rag_ingestion_token,
+)`
+    }
+  },
+  {
+    id: "memory",
+    icon: "🧠",
+    metaphor: { title: "Contestant's Progress", short: "Tracks which lifelines are used, what's been answered, and where they stand." },
+    code: { title: "memory = MemoryStore(db=db)", short: "Conversation memory backed by the database. Tracks chat history per session." },
+    detail: {
+      metaphor: "The scoreboard behind the host tracks everything: which lifelines remain, how many questions answered, current winnings. The contestant can glance up and remember their journey. <strong>MemoryStore</strong> does the same — it remembers every exchange in a session so the AI has full context.",
+      code: `<span class="var">memory</span> <span class="op">=</span> <span class="fn">MemoryStore</span>(<span class="var">db</span><span class="op">=</span><span class="var">db</span>)`
+    }
+  },
+  {
+    id: "registry",
+    icon: "☎️",
+    metaphor: { title: "The Lifelines", short: "Phone-a-Friend, Ask the Audience, 50:50 — each one a registered tool ready to help." },
+    code: { title: "registry = make_registry(...)", short: "ToolRegistry with all callable tools: DB queries, PDF gen, RAG search." },
+    detail: {
+      metaphor: "Lifelines are the contestant's secret weapons. Phone-a-Friend dials an expert, Ask the Audience polls the crowd, 50:50 eliminates wrong answers. Each is a distinct capability, pre-registered and ready. The <strong>ToolRegistry</strong> holds every tool the AI agent can invoke — booking lookups, PDF generation, knowledge search.",
+      code: `<span class="var">registry</span> <span class="op">=</span> <span class="fn">make_registry</span>(
+    <span class="var">db</span><span class="op">=</span><span class="var">db</span>,
+    <span class="var">pdf</span><span class="op">=</span><span class="var">pdf</span>,
+    <span class="var">rag_search_fn</span><span class="op">=</span><span class="kw">lambda</span> <span class="var">query</span>, <span class="var">k</span><span class="op">=</span>5:
+        <span class="var">rag</span>.<span class="fn">search</span>(<span class="var">query</span><span class="op">=</span><span class="var">query</span>, <span class="var">k</span><span class="op">=</span><span class="var">k</span>)
+)`
+    }
+  },
+  {
+    id: "router",
+    icon: "🎬",
+    metaphor: { title: "The Floor Manager", short: "Decides who answers — main host or backup — and keeps the show moving." },
+    code: { title: "router = _build_router(settings)", short: "ModelRouter: OpenAI -> Anthropic -> Ollama fallback chain with retry logic." },
+    detail: {
+      metaphor: "The Floor Manager stands between the cameras and the talent. If the main host stumbles, they cue the backup. If a camera fails, they switch feeds. They keep the show running no matter what. The <strong>ModelRouter</strong> does exactly this — tries OpenAI first, falls back to Anthropic, then Ollama. The show must go on.",
+      code: `<span class="cm"># Build multi-model router</span>
+<span class="var">router</span> <span class="op">=</span> <span class="fn">_build_router</span>(<span class="var">settings</span>)
+<span class="cm"># OpenAI → Anthropic → Ollama fallback</span>`
+    }
+  },
+  {
+    id: "detector",
+    icon: "🔍",
+    metaphor: { title: "Final Answer Verifier", short: "The compliance officer who double-checks every answer before the prize is awarded." },
+    code: { title: "detector = HallucinationDetector(...)", short: "Scores responses HIGH/MEDIUM/LOW confidence against source context." },
+    detail: {
+      metaphor: "Before a million-dollar answer is accepted, a Verifier backstage cross-checks it against the official answer key. Is this really correct? How confident are we? The <strong>HallucinationDetector</strong> scores every AI response against source material — HIGH, MEDIUM, or LOW confidence — catching fabricated answers before they reach the contestant.",
+      code: `<span class="var">detector</span> <span class="op">=</span> <span class="fn">HallucinationDetector</span>(
+    <span class="var">high_threshold</span><span class="op">=</span><span class="var">settings</span>.hallucination_high_threshold,
+    <span class="var">medium_threshold</span><span class="op">=</span><span class="var">settings</span>.hallucination_medium_threshold,
+)`
+    }
+  },
+  {
+    id: "tracker",
+    icon: "📡",
+    metaphor: { title: "The Control Room", short: "Banks of monitors tracking ratings, pacing, and every metric that matters." },
+    code: { title: "tracker = MLflowTracker(...)", short: "MLflow experiment tracking: latency, token usage, model performance." },
+    detail: {
+      metaphor: "Up in the Control Room, producers watch a wall of screens. Audience engagement, pacing metrics, ad break timing — everything is measured in real time. The <strong>MLflowTracker</strong> is that room. It logs every request's latency, token count, and model used, creating an experiment trail you can analyze later.",
+      code: `<span class="var">tracker</span> <span class="op">=</span> <span class="fn">MLflowTracker</span>(
+    <span class="var">tracking_uri</span><span class="op">=</span><span class="var">settings</span>.mlflow_tracking_uri,
+    <span class="var">experiment_name</span><span class="op">=</span><span class="var">settings</span>.mlflow_experiment_name,
+    <span class="var">enabled</span><span class="op">=</span><span class="var">settings</span>.mlflow_enabled,
+)`
+    }
+  },
+  {
+    id: "agent",
+    icon: "🎤",
+    metaphor: { title: "The Host", short: "\"Is that your final answer?\" The host ties it all together — drama, knowledge, and delivery." },
+    code: { title: "_agent_reply(session_id, user_text)", short: "The async agent loop: RAG search -> LLM call -> tool execution -> hallucination check -> response." },
+    detail: {
+      metaphor: "Finally, the Host steps into the spotlight. They don't write the questions, verify the answers, or manage the cameras — but they orchestrate everything. They pull from the Encyclopedia, consult the Verifier, use the Lifelines, and deliver the final answer with flair. <strong>_agent_reply</strong> is the star of the show, wiring every component into one dramatic moment.",
+      code: `<span class="kw">async def</span> <span class="fn">_agent_reply</span>(
+    <span class="var">session_id</span>: <span class="var">str</span>,
+    <span class="var">user_text</span>: <span class="var">str</span>
+) <span class="op">-></span> <span class="var">dict</span>:
+    <span class="var">knowledge</span> <span class="op">=</span> <span class="var">rag</span>.<span class="fn">search</span>(<span class="var">user_text</span>)
+    <span class="cm"># ... build prompt, call router,</span>
+    <span class="cm"># execute tools, check hallucination,</span>
+    <span class="cm"># return final response</span>`
+    }
+  }
+];
+
+// ============================
+// BUILD TIMELINE HTML
+// ============================
+const container = document.getElementById('timelineNodes');
+const dotsNav = document.getElementById('navDots');
+
+STEPS.forEach((step, i) => {
+  const layout = i % 2 === 0 ? 'layout-right' : 'layout-left';
+  const node = document.createElement('div');
+  node.className = `tl-node ${layout}`;
+  node.id = `step-${step.id}`;
+  node.dataset.index = i;
+
+  node.innerHTML = `
+    <div class="tl-card tl-card--metaphor" onclick="toggleNode(${i})">
+      <div class="card-icon">${step.icon}</div>
+      <div class="card-label card-label--gold">Game Show</div>
+      <div class="card-title">${step.metaphor.title}</div>
+      <div class="card-desc">${step.metaphor.short}</div>
+    </div>
+    <div class="tl-dot-col">
+      <div class="tl-dot" onclick="toggleNode(${i})">
+        <span class="step-num">${i + 1}</span>
+      </div>
+    </div>
+    <div class="tl-card tl-card--code" onclick="toggleNode(${i})">
+      <div class="card-icon">&#60;/&#62;</div>
+      <div class="card-label card-label--blue">Code Reality</div>
+      <div class="card-title" style="font-family:'JetBrains Mono',monospace;font-size:0.95rem;">${step.code.title}</div>
+      <div class="card-desc">${step.code.short}</div>
+    </div>
+    <div class="tl-detail">
+      <div class="detail-inner">
+        <div class="detail-side">
+          <h3 class="gold">${step.icon} ${step.metaphor.title}</h3>
+          <p>${step.detail.metaphor}</p>
+        </div>
+        <div class="detail-side">
+          <h3 class="blue">&#60;/&#62; Code</h3>
+          <div class="detail-code">${step.detail.code}</div>
+        </div>
+      </div>
+    </div>
+  `;
+  container.appendChild(node);
+
+  // Nav dot
+  const dot = document.createElement('div');
+  dot.className = 'nav-dot';
+  dot.dataset.index = i;
+  dot.innerHTML = `<span class="dot-label">${step.metaphor.title}</span>`;
+  dot.onclick = () => document.getElementById(`step-${step.id}`).scrollIntoView({ behavior: 'smooth', block: 'center' });
+  dotsNav.appendChild(dot);
+});
+
+// ============================
+// TOGGLE EXPAND
+// ============================
+let expandedIndex = -1;
+function toggleNode(i) {
+  const nodes = document.querySelectorAll('.tl-node');
+  if (expandedIndex === i) {
+    nodes[i].classList.remove('expanded');
+    expandedIndex = -1;
+  } else {
+    if (expandedIndex >= 0) nodes[expandedIndex].classList.remove('expanded');
+    nodes[i].classList.add('expanded');
+    expandedIndex = i;
+  }
+}
+
+// ============================
+// INTERSECTION OBSERVER
+// ============================
+const nodes = document.querySelectorAll('.tl-node');
+const dots = document.querySelectorAll('.nav-dot');
+const banner = document.getElementById('finalBanner');
+
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('visible');
+      const idx = e.target.dataset.index;
+      if (idx !== undefined) {
+        dots.forEach(d => d.classList.remove('active'));
+        if (dots[idx]) dots[idx].classList.add('active');
+      }
+    }
+  });
+}, { threshold: 0.2 });
+
+nodes.forEach(n => observer.observe(n));
+
+const bannerObs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.3 });
+bannerObs.observe(banner);
+
+// ============================
+// TIMELINE FILL ON SCROLL
+// ============================
+const timelineSection = document.getElementById('timeline');
+const trackFill = document.getElementById('trackFill');
+
+function updateTrackFill() {
+  const rect = timelineSection.getBoundingClientRect();
+  const sectionTop = rect.top + window.scrollY;
+  const sectionHeight = rect.height;
+  const scrolled = window.scrollY + window.innerHeight * 0.5 - sectionTop;
+  const pct = Math.max(0, Math.min(1, scrolled / sectionHeight));
+  const fillHeight = pct * sectionHeight;
+
+  trackFill.style.position = 'absolute';
+  trackFill.style.top = '0';
+  trackFill.style.height = fillHeight + 'px';
+}
+
+window.addEventListener('scroll', updateTrackFill, { passive: true });
+window.addEventListener('resize', updateTrackFill, { passive: true });
+updateTrackFill();
+
+// ============================
+// PARTICLE SYSTEM
+// ============================
+const canvas = document.getElementById('particles');
+const ctx = canvas.getContext('2d');
+let particles = [];
+const PARTICLE_COUNT = 60;
+
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+class Particle {
+  constructor() { this.reset(); }
+  reset() {
+    this.x = Math.random() * canvas.width;
+    this.y = Math.random() * canvas.height;
+    this.size = Math.random() * 2 + 0.5;
+    this.speedY = -(Math.random() * 0.3 + 0.1);
+    this.speedX = (Math.random() - 0.5) * 0.2;
+    this.opacity = Math.random() * 0.5 + 0.1;
+    this.fadeDir = Math.random() > 0.5 ? 1 : -1;
+    this.isGold = Math.random() > 0.4;
+  }
+  update() {
+    this.y += this.speedY;
+    this.x += this.speedX;
+    this.opacity += this.fadeDir * 0.003;
+    if (this.opacity > 0.6) this.fadeDir = -1;
+    if (this.opacity < 0.05) this.reset();
+    if (this.y < -10) this.reset();
+  }
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fillStyle = this.isGold
+      ? `rgba(255, 215, 0, ${this.opacity})`
+      : `rgba(0, 212, 255, ${this.opacity * 0.6})`;
+    ctx.fill();
+    // Glow
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size * 3, 0, Math.PI * 2);
+    ctx.fillStyle = this.isGold
+      ? `rgba(255, 215, 0, ${this.opacity * 0.1})`
+      : `rgba(0, 212, 255, ${this.opacity * 0.06})`;
+    ctx.fill();
+  }
+}
+
+for (let i = 0; i < PARTICLE_COUNT; i++) particles.push(new Particle());
+
+function animateParticles() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  particles.forEach(p => { p.update(); p.draw(); });
+  requestAnimationFrame(animateParticles);
+}
+animateParticles();
+</script>
+</body>
+</html>

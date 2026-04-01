@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Monster Resort — Learning Roadmap</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface2: #1a1a26;
+    --border: #2a2a3a;
+    --text: #d4d0cc;
+    --text-dim: #6b6872;
+    --accent: #c9a227;
+    --accent-dim: #8a7020;
+    --red: #c44040;
+    --green: #4a9a6e;
+    --blue: #5a8abf;
+    --purple: #8a6abf;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 40px 20px 80px;
+    line-height: 1.5;
+  }
+
+  /* HEADER */
+  .header {
+    text-align: center;
+    max-width: 700px;
+    margin: 0 auto 60px;
+  }
+  .header h1 {
+    font-family: 'Cinzel', serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+    margin-bottom: 8px;
+  }
+  .header p {
+    color: var(--text-dim);
+    font-size: 0.92rem;
+    max-width: 520px;
+    margin: 0 auto;
+  }
+
+  /* STATS BAR */
+  .stats {
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+    flex-wrap: wrap;
+    margin-bottom: 52px;
+  }
+  .stat {
+    text-align: center;
+  }
+  .stat-num {
+    font-family: 'Cinzel', serif;
+    font-size: 1.6rem;
+    font-weight: 600;
+    color: var(--accent);
+  }
+  .stat-label {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-top: 2px;
+  }
+
+  /* PHASE CONTAINER */
+  .phases { max-width: 740px; margin: 0 auto; }
+
+  /* PHASE HEADER */
+  .phase-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 16px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .phase-num {
+    font-family: 'Cinzel', serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .phase-num.p1 { background: var(--green); color: #0a0a0f; }
+  .phase-num.p2 { background: var(--blue); color: #0a0a0f; }
+  .phase-num.p3 { background: var(--purple); color: #fff; }
+  .phase-num.p4 { background: var(--accent); color: #0a0a0f; }
+  .phase-num.p5 { background: var(--red); color: #fff; }
+  .phase-num.p6 { background: #5a9abf; color: #0a0a0f; }
+
+  .phase-title { font-family: 'Cinzel', serif; font-size: 1.15rem; font-weight: 600; }
+  .phase-meta { font-size: 0.78rem; color: var(--text-dim); margin-top: 2px; }
+  .phase-toggle { margin-left: auto; color: var(--text-dim); font-size: 1.2rem; transition: transform 0.25s; }
+  .phase-header.open .phase-toggle { transform: rotate(180deg); }
+
+  /* PHASE BODY */
+  .phase-body {
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 0.4s cubic-bezier(.4,0,.2,1);
+  }
+  .phase-body.open { max-height: 5000px; }
+
+  /* INTRO TEXT */
+  .phase-intro {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin-bottom: 14px;
+    font-size: 0.88rem;
+    color: var(--text);
+  }
+  .phase-intro strong { color: var(--accent); }
+
+  /* FILE CARDS */
+  .file-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin-bottom: 10px;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    transition: border-color 0.2s;
+  }
+  .file-card:hover { border-color: var(--accent-dim); }
+
+  .file-icon {
+    font-size: 1.3rem;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .file-name {
+    font-family: 'Inter', monospace;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 3px;
+  }
+  .file-desc {
+    font-size: 0.84rem;
+    color: var(--text);
+  }
+  .file-why {
+    font-size: 0.79rem;
+    color: var(--text-dim);
+    margin-top: 4px;
+    font-style: italic;
+  }
+
+  .file-badge {
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 2px 7px;
+    border-radius: 3px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+  .badge-start { background: #1e3a2a; color: var(--green); }
+  .badge-core { background: #1a2540; color: var(--blue); }
+  .badge-deep { background: #2a1e40; color: var(--purple); }
+  .badge-advanced { background: #3a2a10; color: var(--accent); }
+  .badge-deploy { background: #1a2a3a; color: #5a9abf; }
+
+  /* CONNECTOR LINE between phases */
+  .connector {
+    width: 2px;
+    height: 28px;
+    background: var(--border);
+    margin: 6px 0 6px 17px;
+  }
+
+  /* READING TIP */
+  .tip-box {
+    background: #1a1610;
+    border: 1px solid #3a3020;
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-top: 40px;
+    font-size: 0.85rem;
+  }
+  .tip-box strong { color: var(--accent); }
+
+  /* BOTTOM NOTE */
+  .bottom-note {
+    text-align: center;
+    margin-top: 44px;
+    color: var(--text-dim);
+    font-size: 0.8rem;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🏚️ Monster Resort Concierge</h1>
+  <p>A phased reading roadmap. Don't memorize everything — understand the <em>flow</em>. Each phase builds on the last.</p>
+</div>
+
+<div class="stats">
+  <div class="stat"><div class="stat-num">~55</div><div class="stat-label">Files Total</div></div>
+  <div class="stat"><div class="stat-num">6</div><div class="stat-label">Phases</div></div>
+  <div class="stat"><div class="stat-num">28</div><div class="stat-label">App Modules</div></div>
+  <div class="stat"><div class="stat-num">~14hrs</div><div class="stat-label">Total Reading</div></div>
+</div>
+
+<div class="phases">
+
+  <!-- ─── PHASE 1 ─── -->
+  <div class="phase-header open" onclick="toggle(this)">
+    <div class="phase-num p1">1</div>
+    <div><div class="phase-title">The Skeleton</div><div class="phase-meta">Read these first · 4 files · ~1 hr</div></div>
+    <div class="phase-toggle">▼</div>
+  </div>
+  <div class="phase-body open">
+    <div class="phase-intro">
+      These four files are the <strong>backbone</strong>. Every other file in the project exists to serve one of them. Read config first (it sets up all providers, thresholds, and feature flags), then database, then memory (how conversations persist), then main. After this phase you'll understand: what the app does, how data is stored, and how a request flows end to end.
+    </div>
+    <div class="file-card">
+      <div class="file-icon">⚙️</div>
+      <div>
+        <div class="file-name">app/config.py <span class="file-badge badge-start">Read First</span></div>
+        <div class="file-desc">All settings live here — API keys for OpenAI/Anthropic, Ollama config, LLM provider priority and fallback, hallucination thresholds, MLflow tracking, database path, and more (~160 lines). The central nervous system for every feature flag and credential.</div>
+        <div class="file-why">Why: Everything references config. Reading it first means nothing else will confuse you.</div>
+      </div>
+    </div>
+    <div class="file-card">
+      <div class="file-icon">🗄️</div>
+      <div>
+        <div class="file-name">app/database.py <span class="file-badge badge-start">Read Second</span></div>
+        <div class="file-desc">SQLite database. Creates the bookings table, handles create/read/update/delete. This is where guest bookings actually get saved to disk.</div>
+        <div class="file-why">Why: main.py calls into this when someone books a room. You need to know what "saving a booking" actually means.</div>
+      </div>
+    </div>
+    <div class="file-card">
+      <div class="file-icon">💭</div>
+      <div>
+        <div class="file-name">app/memory.py <span class="file-badge badge-start">Read Third</span></div>
+        <div class="file-desc">MemoryStore class. Manages conversation sessions and message history in the database. Auto-summarises old messages when a session gets too long, keeping context window usage efficient.</div>
+        <div class="file-why">Why: Every /chat call reads and writes through MemoryStore. Without this, the AI has no memory of what you said 30 seconds ago. main.py depends on it directly.</div>
+      </div>
+    </div>
+    <div class="file-card">
+      <div class="file-icon">🏗️</div>
+      <div>
+        <div class="file-name">app/main.py <span class="file-badge badge-start">The Big One</span></div>
+        <div class="file-desc">The FastAPI server. Routes, the agent loop (where the LLM decides what to do via ModelRouter), the system prompt, hallucination scoring, MLflow logging. This is the orchestrator — it pulls in every other module.</div>
+        <div class="file-why">Why: Focus on the /chat route and the agent loop. Notice how _build_router() sets up multi-provider LLM routing, and how every response gets a confidence score from HallucinationDetector.</div>
+      </div>
+    </div>
+  </div>
+  <div class="connector"></div>
+
+  <!-- ─── PHASE 2 ─── -->
+  <div class="phase-header" onclick="toggle(this)">
+    <div class="phase-num p2">2</div>
+    <div><div class="phase-title">The Brain</div><div class="phase-meta">How the AI actually works · 8 files · ~3 hrs</div></div>
+    <div class="phase-toggle">▼</div>
+  </div>
+  <div class="phase-body">
+    <div class="phase-intro">
+      This is the RAG + LLM orchestration + tool calling layer — the part that makes it an <strong>AI system</strong> instead of just a website. Start with llm_providers.py (how the app talks to any LLM), then read rag.py before advanced_rag.py (parent → child). Then langchain_rag.py (the LangChain alternative for benchmarking). Finally tools.py to see what actions the AI can take.
+    </div>
+    <div class="file-card">
+      <div class="file-icon">🔀</div>
+      <div>
+        <div class="file-name">app/llm_providers.py <span class="file-badge badge-core">Read First</span></div>
+        <div class="file-desc">Multi-model LLM abstraction. Defines LLMMessage/LLMResponse (normalised formats), LLMProvider ABC, and three implementations: OpenAIProvider, AnthropicProvider, OllamaProvider. ModelRouter tries providers in priority order with automatic fallback.</div>
+        <div class="file-why">Why: Every LLM call in the app flows through this file. main.py's agent loop depends entirely on ModelRouter. Without reading this, you won't understand how chat requests reach any LLM.</div>
+      </div>
+    </div>
+    <div class="file-card">
+      <div class="file-icon">🧬</div>
+      <div>
+        <div class="file-name">app/rag.py <span class="file-badge badge-core">Foundation</span></div>
+        <div class="file-desc">VectorRAG class. Sets up ChromaDB, embeds documents with HuggingFace, does semantic search. This is the base class that advanced_rag inherits from.</div>
+        <div class="file-why">Why: advanced_rag.py calls super() constantly. If you skip this, advanced_rag makes no sense.</div>
+      </div>
+    </div>
+    <div class="file-card">
+      <div class="file-icon">🧠</div>
+      <div>
+        <div class="file-name">app/advanced_rag.py <span class="file-badge badge-core">The Upgrade</span></div>
+        <div class="file-desc">Adds BM25 keyword search, Reciprocal Rank Fusion, and BGE cross-encoder reranking on top of VectorRAG. Three-stage pipeline: retrieve → fuse → rerank.</div>
+        <div class="file-why">Why: This is what made the project go from "generic chatbot" to "actually accurate." The hybrid search is your biggest technical achievement.</div>
+      </div>
+    </div>
+    <div class="file-card">
+      <div class="file-icon">🔗</div>
+      <div>
+        <div class="file-name">app/langchain_rag.py <span class="file-badge badge-core">Benchmark</span></div>
+        <div class="file-desc">LangChain-based RAG with the same interface as AdvancedRAG (ingest_texts, ingest_folder, search). Uses LangChain's Chroma + HuggingFaceEmbeddings + RecursiveCharacterTextSplitter. Exists for head-to-head benchmarking.</div>
+        <div class="file-why">Why: Shows why you'd build custom RAG instead of using LangChain. Read this after advanced_rag.py to compare the two approaches.</div>
+      </div>
+    </div>
+    <div class="file-card">
+      <div class="file-icon">🔧</div>
+      <div>
+        <div class="file-name">app/tools.py <span class="file-badge badge-core">Tool System</span></div>
+        <div class="file-desc">ToolRegistry class + all the tools: book_room, get_booking, generate_pdf, search_knowledge. Each tool has a JSON schema that tells the LLM how to call it.</div>
+        <div class="file-why">Why: When the AI decides to "book a room," this file is where that decision becomes a real database operation. It's the bridge between language and action.</div>
+      </div>
+    </div>
+    <div class="file-card">
+      <div class="file-icon">📄</div>
+      <div>
+        <div class="file-name">data/knowledge/ <span class="file-badge badge-core">The Knowledge</span></div>
+        <div class="file-desc">4 .txt files (63KB total): amenities, policies, FAQ, seasonal events. This is what the RAG system searches through to answer questions.</div>
+        <div class="file-why">Why: Read one file fully. It shows you exactly what information the AI has access to — and why it can't answer things that aren't in here.</div>
+      </div>
+    </div>
+    <div class="file-card">
+      <div class="file-icon">📥</div>
+      <div>
+        <div class="file-name">app/ingest_knowledge.py <span class="file-badge badge-core">CLI Tool</span></div>
+        <div class="file-desc">Command-line script for ingesting knowledge documents into the RAG vector store. Takes a folder path, initialises VectorRAG, and chunks + embeds all .txt files into ChromaDB.</div>
+        <div class="file-why">Why: This is how data gets INTO the RAG system. main.py calls rag.ingest_folder() at startup, but this script lets you re-ingest manually.</div>
+      </div>
+    </div>
+    <div class="file-card">
+      <div class="file-icon">🔄</div>
+      <div>
+        <div class="file-name">app/refresh_store.py</div>
+        <div class="file-desc">Minimal in-memory dictionary for storing refresh tokens. A development/demo utility — would be replaced by Redis or a database table in production.</div>
+      </div>
+    </div>
+  </div>
+  <div class="connector"></div>
+
+  <!-- ─── PHASE 3 ─── -->
+  <div class="phase-header" onclick="toggle(this)">
+    <div class="phase-num p3">3</div>
+    <div><div class="phase-title">The Guardrails</div><div class="phase-meta">Security, auth, caching, observability, hallucination detection · 13 files · ~3.5 hrs</div></div>
+    <div class="phase-toggle">▼</div>
+  </div>
+  <div class="phase-body">
+    <div class="phase-intro">
+      Production systems need more than "it works." These files handle <strong>security, authentication, performance, visibility, and response quality</strong>. Each does one job well. They're plugged into main.py as middleware, dependencies, or scoring layers. Read the auth chain first (auth.py → auth_mixins.py → security.py → admin_routes.py) to understand the full authentication picture, then the observability stack.
+    </div>
+    <div class="file-card">
+      <div class="file-icon">🔑</div>
+      <div>
+        <div class="file-name">app/auth.py <span class="file-badge badge-deep">Auth Chain 1/4</span></div>
+        <div class="file-desc">JWT authentication. Creates and verifies JSON Web Tokens with HS256 + bcrypt password hashing. Enforces strong secret key at startup (min 32 chars, rejects default placeholders). Defines create_access_token, verify_token, hash_password, verify_password.</div>
+        <div class="file-why">Why: This is authentication for human users (login flow). Read this before auth_mixins.py — it provides the JWT primitives that the mixin calls.</div>
+      </div>
+    </div>
+    <div class="file-card">
+      <div class="file-icon">🔀</div>
+      <div>
+        <div class="file-name">app/auth_mixins.py <span class="file-badge badge-deep">Auth Chain 2/4</span></div>
+        <div class="file-desc">The jwt_or_api_key dependency — FastAPI's auth gatekeeper. Checks X-API-Key header (static key, then managed mr_ keys) and Bearer tokens (static, managed, then JWT). Logs managed-key usage for audit trail. Every protected route depends on this.</div>
+        <div class="file-why">Why: This is the single function that decides "are you allowed in?" Understanding the priority chain (static → managed → JWT) is key to the whole auth architecture.</div>
+      </div>
+    </div>
+    <div class="file-card">
+      <div class="file-icon">🔐</div>
+      <div>
+        <div class="file-name">app/security.py <span class="file-badge badge-deep">Auth Chain 3/4</span></div>
+        <div class="file-desc">Two responsibilities: (1) APIKeyManager class — creates, verifies, revokes, and audits managed API keys with SHA-256 hashing, expiry, and soft-delete revocation. (2) Rate limiting via slowapi (60 req/min per IP). The manager stores only hashes, never raw keys.</div>
+        <div class="file-why">Why: The APIKeyManager is a complete key lifecycle system — creation, rotation, revocation, audit logging. Portfolio-worthy security pattern. Rate limiting is the second defense layer.</div>
+      </div>
+    </div>
+    <div class="file-card">
+      <div class="file-icon">🛠️</div>
+      <div>
+        <div class="file-name">app/admin_routes.py <span class="file-badge badge-deep">Auth Chain 4/4</span></div>
+        <div class="file-desc">Admin REST API for API key management. POST /admin/api-keys (create), GET (list), DELETE (revoke), GET /usage (audit log). Pydantic request/response models. All endpoints require auth. Extracts APIKeyManager from app.state.</div>
+        <div class="file-why">Why: The admin-facing surface for the APIKeyManager. Shows how to build a separate admin router with its own prefix, dependency injection, and Pydantic validation.</div>
+      </div>
+    </div>
+    <div class="file-card">
+      <div class="file-icon">👤</div>
+      <div>
+        <div class="file-name">app/users_db.py</div>
+        <div class="file-desc">In-memory user database for demo/development. Contains a single demo user with hashed password credentials. Would be replaced by a real database table in production.</div>
+      </div>
+    </div>
+    <div class="file-card">
+      <div class="file-icon">✅</div>
+      <div>
+        <div class="file-name">app/validation.py</div>
+        <div class="file-desc">Sanitizes user input. Catches SQL injection patterns, strips XSS via Bleach, enforces message length limits. Runs before anything touches the database or the LLM.</div>
+        <div class="file-why">Why: Defence-in-depth layer. Auth controls who gets in; validation controls what they can send. Together they're a complete defense.</div>
+      </div>
+    </div>
+    <div class="file-card">
+      <div class="file-icon">⚡</div>
+      <div>
+        <div class="file-name">app/cache_utils.py</div>
+        <div class="file-desc">TTL-based in-memory cache. Decorates RAG search with @cache_response(ttl=300). Avoids redundant ChromaDB queries.</div>
+        <div class="file-why">Why: The 27% cost reduction came from caching + better context selection. This is half of that story.</div>
+      </div>
+    </div>
+    <div class="file-card">
+      <div class="file-icon">📊</div>
+      <div>
+        <div class="file-name">app/monitoring.py</div>
+        <div class="file-desc">Prometheus counters and histograms. Tracks requests, latency, token usage, bookings, active sessions. Exposed at /metrics.</div>
+        <div class="file-why">Why: This is how you'd prove the system is healthy in production. Every metric here is an interview talking point.</div>
+      </div>
+    </div>
+    <div class="file-card">
+      <div class="file-icon">📈</div>
+      <div>
+        <div class="file-name">app/metrics_dashboard.py</div>
+        <div class="file-desc">Gradio-based web dashboard that fetches and displays Prometheus metrics from the /metrics endpoint. Refresh button for real-time monitoring. A lightweight alternative to full Grafana setup.</div>
+        <div class="file-why">Why: Pairs with monitoring.py — one collects metrics, this one visualises them. Quick demo-friendly way to show observability without deploying Grafana.</div>
+      </div>
+    </div>
+    <div class="file-card">
+      <div class="file-icon">🛡️</div>
+      <div>
+        <div class="file-name">app/hallucination.py <span class="file-badge badge-deep">Quality</span></div>
+        <div class="file-desc">Scores every LLM response for hallucination risk. Three signals: token overlap (30%), semantic similarity via SentenceTransformer (50%), sentence-level source attribution (20%). Returns HIGH/MEDIUM/LOW confidence. Feeds Prometheus metrics.</div>
+        <div class="file-why">Why: This is how you prove the AI isn't making things up. Every /chat response includes a confidence score from this module. Crucial for production trust.</div>
+      </div>
+    </div>
+    <div class="file-card">
+      <div class="file-icon">📝</div>
+      <div>
+        <div class="file-name">app/logging_utils.py</div>
+        <div class="file-desc">Structured JSON logging with request IDs. Makes debugging possible when things go wrong at 2am.</div>
+      </div>
+    </div>
+    <div class="file-card">
+      <div class="file-icon">⏱️</div>
+      <div>
+        <div class="file-name">app/profile_utils.py</div>
+        <div class="file-desc">@profile decorator that times function execution. Used on RAG search to measure latency.</div>
+      </div>
+    </div>
+  </div>
+  <div class="connector"></div>
+
+  <!-- ─── PHASE 4 ─── -->
+  <div class="phase-header" onclick="toggle(this)">
+    <div class="phase-num p4">4</div>
+    <div><div class="phase-title">The Features</div><div class="phase-meta">PDF generation, streaming, the UI · 3 files · ~1 hr</div></div>
+    <div class="phase-toggle">▼</div>
+  </div>
+  <div class="phase-body">
+    <div class="phase-intro">
+      These are the "user-facing" pieces. The PDF generator creates booking confirmation documents, the stream client enables real-time chat, and the chat UI is the Gradio interface people actually interact with. All relatively self-contained.
+    </div>
+    <div class="file-card">
+      <div class="file-icon">📑</div>
+      <div>
+        <div class="file-name">app/pdf_generator.py</div>
+        <div class="file-desc">Generates booking confirmation PDFs. Called by the generate_pdf tool when a guest wants their confirmation emailed/downloaded.</div>
+        <div class="file-why">Why: Shows how tools can produce real outputs — not just text, but files. It's a complete feature end to end.</div>
+      </div>
+    </div>
+    <div class="file-card">
+      <div class="file-icon">📡</div>
+      <div>
+        <div class="file-name">app/stream_client.py</div>
+        <div class="file-desc">Client utility for streaming chat responses from the API using Server-Sent Events (SSE). Connects to /chat/stream and prints tokens in real-time as they arrive. Shows how to consume a streaming AI endpoint.</div>
+        <div class="file-why">Why: Demonstrates the SSE streaming pattern — essential for ChatGPT-style "typing" UX. Short file (~18 lines), but the concept is interview gold.</div>
+      </div>
+    </div>
+    <div class="file-card">
+      <div class="file-icon">💬</div>
+      <div>
+        <div class="file-name">chat_ui.py</div>
+        <div class="file-desc">Gradio-based chat interface. Connects to the FastAPI backend. This is the thing you'd demo.</div>
+        <div class="file-why">Why: Short and simple (~150 lines). Shows how to wrap an API in a UI fast. Good Gradio vs React talking point.</div>
+      </div>
+    </div>
+  </div>
+  <div class="connector"></div>
+
+  <!-- ─── PHASE 5 ─── -->
+  <div class="phase-header" onclick="toggle(this)">
+    <div class="phase-num p5">5</div>
+    <div><div class="phase-title">The ML Layer</div><div class="phase-meta">Fine-tuning, evaluation, MLOps + benchmarking · 9 files · ~4 hrs</div></div>
+    <div class="phase-toggle">▼</div>
+  </div>
+  <div class="phase-body">
+    <div class="phase-intro">
+      This is the advanced ML engineering layer. LoRA fine-tuning, synthetic data generation, quality evaluation, <strong>MLflow experiment tracking</strong>, and <strong>RAG benchmarking</strong>. The MLflow tracker integrates into the main app for live metrics, while the experiment/benchmark scripts run as standalone workflows.
+    </div>
+    <div class="file-card">
+      <div class="file-icon">🧪</div>
+      <div>
+        <div class="file-name">scripts/generate_synthetic_dataset.py <span class="file-badge badge-advanced">ML</span></div>
+        <div class="file-desc">Calls GPT-4o to generate 150 Q&A pairs from templates + knowledge base. Outputs the training dataset.</div>
+        <div class="file-why">Why: Shows how to create training data programmatically. The dataset it produces is what trains the LoRA model.</div>
+      </div>
+    </div>
+    <div class="file-card">
+      <div class="file-icon">🎓</div>
+      <div>
+        <div class="file-name">scripts/finetune_lora.py <span class="file-badge badge-advanced">ML</span></div>
+        <div class="file-desc">LoRA fine-tuning on Phi-3-mini. Loads dataset, configures PEFT adapters, runs training loop. Only trains 0.5% of parameters.</div>
+        <div class="file-why">Why: The centrepiece ML engineering file. Understanding this means you understand parameter-efficient fine-tuning.</div>
+      </div>
+    </div>
+    <div class="file-card">
+      <div class="file-icon">🔬</div>
+      <div>
+        <div class="file-name">scripts/test_lora.py <span class="file-badge badge-advanced">ML</span></div>
+        <div class="file-desc">Tests the fine-tuned model. Compares outputs against the base model. Interactive and batch modes.</div>
+      </div>
+    </div>
+    <div class="file-card">
+      <div class="file-icon">📈</div>
+      <div>
+        <div class="file-name">notebooks/ragas_evaluation.ipynb <span class="file-badge badge-advanced">ML</span></div>
+        <div class="file-desc">RAGAS framework evaluation. Measures faithfulness, answer relevancy, context precision. This is where the +26% accuracy number comes from.</div>
+        <div class="file-why">Why: The metrics that prove the system works. Know these numbers cold for interviews.</div>
+      </div>
+    </div>
+    <div class="file-card">
+      <div class="file-icon">📊</div>
+      <div>
+        <div class="file-name">app/ragas_eval.py <span class="file-badge badge-advanced">Eval</span></div>
+        <div class="file-desc">Python module for running RAGAS evaluation programmatically. Uses HuggingFace embeddings locally (no OpenAI dependency for evals). Computes faithfulness and answer relevancy on batch samples. Callable from scripts or tests.</div>
+        <div class="file-why">Why: The notebook is for exploration; this module is for automation. Import it in CI/CD or benchmarking scripts to run quality checks without Jupyter.</div>
+      </div>
+    </div>
+    <div class="file-card">
+      <div class="file-icon">⚖️</div>
+      <div>
+        <div class="file-name">app/lora_integration.py <span class="file-badge badge-advanced">ML</span></div>
+        <div class="file-desc">Plugs the fine-tuned model into the main app as a fallback when OpenAI is unavailable. Lazy-loads the model to save memory.</div>
+        <div class="file-why">Why: The bridge between "trained a model" and "it's actually running in production."</div>
+      </div>
+    </div>
+    <div class="file-card">
+      <div class="file-icon">📡</div>
+      <div>
+        <div class="file-name">app/mlflow_tracking.py <span class="file-badge badge-advanced">MLOps</span></div>
+        <div class="file-desc">MLflowTracker class — logs RAG evaluations, model configs, confidence metrics, and benchmark results to MLflow. Gracefully degrades to a no-op when MLflow is not installed or unreachable.</div>
+        <div class="file-why">Why: This is how you track experiments and compare model/RAG configurations over time. Integrated into main.py for live confidence logging.</div>
+      </div>
+    </div>
+    <div class="file-card">
+      <div class="file-icon">🧪</div>
+      <div>
+        <div class="file-name">scripts/run_rag_experiment.py <span class="file-badge badge-advanced">MLOps</span></div>
+        <div class="file-desc">Runs RAG evaluation experiments with different configurations and logs results to MLflow for comparison. Systematic way to test RAG parameter changes.</div>
+        <div class="file-why">Why: Shows how to run reproducible ML experiments. Pair with MLflow UI (localhost:5000) to visualise results.</div>
+      </div>
+    </div>
+    <div class="file-card">
+      <div class="file-icon">⚖️</div>
+      <div>
+        <div class="file-name">scripts/benchmark_rag.py <span class="file-badge badge-advanced">Benchmark</span></div>
+        <div class="file-desc">Head-to-head comparison of custom AdvancedRAG vs LangChain RAG. Ingests same data into both, runs identical queries, measures latency and quality. Logs results to MLflow.</div>
+        <div class="file-why">Why: Proves why you built custom RAG. The numbers from this benchmark justify the architectural decision over using off-the-shelf LangChain.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="connector"></div>
+
+  <!-- ─── PHASE 6 ─── -->
+  <div class="phase-header" onclick="toggle(this)">
+    <div class="phase-num p6">6</div>
+    <div><div class="phase-title">The Deployment</div><div class="phase-meta">AWS infrastructure + CI/CD · 7 files · ~1.5 hrs</div></div>
+    <div class="phase-toggle">▼</div>
+  </div>
+  <div class="phase-body">
+    <div class="phase-intro">
+      The cloud deployment layer. These files take the app from "running on my laptop" to <strong>"running on AWS with automated CI/CD."</strong> ECS Fargate for containers, ECR for images, Secrets Manager for credentials, CloudWatch for logs. Plus the FEATURES_GUIDE.md that documents everything.
+    </div>
+    <div class="file-card">
+      <div class="file-icon">📦</div>
+      <div>
+        <div class="file-name">deploy/aws/ecs-task-definition.json <span class="file-badge badge-deploy">AWS</span></div>
+        <div class="file-desc">ECS Fargate task definition. 1 vCPU, 2GB RAM, health checks, secrets from AWS Secrets Manager, CloudWatch logging. This is the blueprint for how your container runs in the cloud.</div>
+        <div class="file-why">Why: Understanding task definitions is essential for any AWS container deployment. Every field maps to a production concern.</div>
+      </div>
+    </div>
+    <div class="file-card">
+      <div class="file-icon">🚀</div>
+      <div>
+        <div class="file-name">deploy/aws/ecr-push.sh <span class="file-badge badge-deploy">AWS</span></div>
+        <div class="file-desc">Shell script that authenticates with ECR, builds the Docker image, tags it, and pushes it to your private container registry.</div>
+      </div>
+    </div>
+    <div class="file-card">
+      <div class="file-icon">🔄</div>
+      <div>
+        <div class="file-name">deploy/aws/deploy.sh <span class="file-badge badge-deploy">AWS</span></div>
+        <div class="file-desc">Registers the task definition with ECS, updates the service to use the new image, and waits for stability. Zero-downtime rolling deployment.</div>
+      </div>
+    </div>
+    <div class="file-card">
+      <div class="file-icon">📋</div>
+      <div>
+        <div class="file-name">deploy/aws/cloudwatch-log-group.json <span class="file-badge badge-deploy">AWS</span></div>
+        <div class="file-desc">CloudWatch log group config with 30-day retention. All container stdout/stderr goes here for debugging in production.</div>
+      </div>
+    </div>
+    <div class="file-card">
+      <div class="file-icon">🐳</div>
+      <div>
+        <div class="file-name">deploy/aws/docker-compose.prod.yml <span class="file-badge badge-deploy">AWS</span></div>
+        <div class="file-desc">Production Docker Compose with awslogs driver, CPU/memory resource limits, and health checks. For EC2-based deployments as an alternative to Fargate.</div>
+      </div>
+    </div>
+    <div class="file-card">
+      <div class="file-icon">⚙️</div>
+      <div>
+        <div class="file-name">.github/workflows/ci.yml <span class="file-badge badge-deploy">CI/CD</span></div>
+        <div class="file-desc">GitHub Actions workflow with test + deploy jobs. On push to main: lint, test, build Docker image, push to ECR, deploy to ECS. Full automated pipeline.</div>
+        <div class="file-why">Why: This is the glue. Every git push triggers tests, and successful merges to main trigger production deployment.</div>
+      </div>
+    </div>
+    <div class="file-card">
+      <div class="file-icon">📖</div>
+      <div>
+        <div class="file-name">FEATURES_GUIDE.md <span class="file-badge badge-deploy">Docs</span></div>
+        <div class="file-desc">Comprehensive documentation covering all 6 features — architecture diagrams, configuration tables, CLI commands, troubleshooting. The single reference for everything.</div>
+        <div class="file-why">Why: Read this as a companion to the code. It explains the "why" behind every architectural choice and how to verify each feature.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TIP BOX -->
+  <div class="tip-box">
+    <strong>💡 How to actually do this:</strong> One file per day. Read it, then open the app and try to find where that file gets called. Ask yourself "what breaks if I delete this?" That one question teaches you more than re-reading the code three times. The tests/ folder is your cheat sheet — the test names literally describe what each piece of the system does.
+  </div>
+
+  <div class="bottom-note">
+    Roadmap covers all 28 app/ modules + scripts, notebooks, and deploy configs across 6 phases · At 1 file/day you'll have this mastered in 8 weeks
+  </div>
+</div>
+
+<script>
+function toggle(header) {
+  const body = header.nextElementSibling;
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  header.classList.toggle('open', !isOpen);
+}
+</script>
+</body>
+</html>

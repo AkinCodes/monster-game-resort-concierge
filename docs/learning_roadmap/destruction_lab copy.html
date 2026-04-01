@@ -1,0 +1,1481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Monster Resort — Destruction Lab: What Breaks If I Delete This?</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #ffffff;
+    --surface: #f7f8fa;
+    --surface2: #edf0f5;
+    --border: #dfe1e6;
+    --border-accent: #0052cc;
+    --text: #172b4d;
+    --text-dim: #6b778c;
+    --text-link: #0052cc;
+    --accent: #0052cc;
+    --accent-light: #deebff;
+    --red: #de350b;
+    --red-light: #ffebe6;
+    --green: #00875a;
+    --green-light: #e3fcef;
+    --yellow: #ff991f;
+    --yellow-light: #fffae6;
+    --purple: #6554c0;
+    --purple-light: #eae6ff;
+    --teal: #00b8d9;
+    --teal-light: #e6fcff;
+    --code-bg: #f4f5f7;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 32px 24px 120px;
+  }
+
+  /* CONFLUENCE HEADER */
+  .page-header {
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 16px;
+    margin-bottom: 32px;
+  }
+  .page-header h1 {
+    font-size: 1.7rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .page-header .subtitle {
+    color: var(--text-dim);
+    font-size: 0.9rem;
+  }
+  .breadcrumb {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+  }
+  .breadcrumb a { color: var(--text-link); text-decoration: none; }
+  .breadcrumb a:hover { text-decoration: underline; }
+
+  /* TABLE OF CONTENTS */
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 16px 24px;
+    margin-bottom: 32px;
+  }
+  .toc h3 {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+  }
+  .toc ul { list-style: none; }
+  .toc li { margin-bottom: 4px; }
+  .toc a {
+    color: var(--text-link);
+    text-decoration: none;
+    font-size: 0.88rem;
+  }
+  .toc a:hover { text-decoration: underline; }
+  .toc .toc-sub { padding-left: 18px; }
+
+  /* SECTION HEADERS */
+  h2 {
+    font-size: 1.35rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-top: 48px;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-top: 28px;
+    margin-bottom: 10px;
+  }
+  h4 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-top: 16px;
+    margin-bottom: 8px;
+  }
+
+  /* STATUS MACROS (Confluence-style) */
+  .status {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 2px 8px;
+    border-radius: 3px;
+    vertical-align: middle;
+    margin-left: 6px;
+  }
+  .status-red { background: var(--red-light); color: var(--red); }
+  .status-yellow { background: var(--yellow-light); color: #974f0c; }
+  .status-green { background: var(--green-light); color: var(--green); }
+  .status-blue { background: var(--accent-light); color: var(--accent); }
+  .status-purple { background: var(--purple-light); color: var(--purple); }
+
+  /* INFO/WARNING/TIP PANELS (Confluence-style) */
+  .panel {
+    border-radius: 4px;
+    padding: 14px 18px;
+    margin: 16px 0;
+    font-size: 0.88rem;
+    border-left: 3px solid;
+  }
+  .panel-info { background: var(--accent-light); border-color: var(--accent); }
+  .panel-warning { background: var(--yellow-light); border-color: var(--yellow); }
+  .panel-error { background: var(--red-light); border-color: var(--red); }
+  .panel-success { background: var(--green-light); border-color: var(--green); }
+  .panel-tip { background: var(--purple-light); border-color: var(--purple); }
+  .panel strong { display: block; margin-bottom: 4px; }
+
+  /* FILE DESTRUCTION CARD */
+  .file-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin-bottom: 20px;
+    overflow: hidden;
+    transition: box-shadow 0.2s;
+  }
+  .file-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+  .file-card-header {
+    background: var(--surface);
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .file-card-header:hover { background: var(--surface2); }
+  .file-card-header .fname {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--accent);
+  }
+  .file-card-header .toggle {
+    margin-left: auto;
+    color: var(--text-dim);
+    font-size: 0.8rem;
+    transition: transform 0.2s;
+  }
+  .file-card-header.open .toggle { transform: rotate(180deg); }
+  .file-card-body {
+    padding: 18px;
+    display: none;
+  }
+  .file-card-body.open { display: block; }
+
+  /* DESTRUCTION CHAIN */
+  .break-chain {
+    background: var(--red-light);
+    border: 1px solid #ffbdad;
+    border-radius: 4px;
+    padding: 12px 16px;
+    margin: 10px 0;
+    font-size: 0.85rem;
+  }
+  .break-chain-title {
+    font-weight: 700;
+    color: var(--red);
+    margin-bottom: 6px;
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .break-chain ul { padding-left: 18px; margin: 0; }
+  .break-chain li { margin-bottom: 3px; }
+
+  /* TEST LINK */
+  .test-link {
+    background: var(--green-light);
+    border: 1px solid #abf5d1;
+    border-radius: 4px;
+    padding: 12px 16px;
+    margin: 10px 0;
+    font-size: 0.85rem;
+  }
+  .test-link-title {
+    font-weight: 700;
+    color: var(--green);
+    margin-bottom: 6px;
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  /* INTERVIEW Q */
+  .interview-q {
+    background: var(--purple-light);
+    border: 1px solid #c0b6f2;
+    border-radius: 4px;
+    padding: 12px 16px;
+    margin: 10px 0;
+    font-size: 0.85rem;
+  }
+  .interview-q-title {
+    font-weight: 700;
+    color: var(--purple);
+    margin-bottom: 6px;
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  /* DEPENDENCY */
+  .dep-box {
+    background: var(--accent-light);
+    border: 1px solid #b3d4ff;
+    border-radius: 4px;
+    padding: 12px 16px;
+    margin: 10px 0;
+    font-size: 0.85rem;
+  }
+  .dep-box-title {
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 6px;
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  /* TABLES */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0;
+    font-size: 0.85rem;
+  }
+  th, td {
+    text-align: left;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+  }
+  th {
+    background: var(--surface);
+    font-weight: 600;
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--text-dim);
+  }
+  tr:hover td { background: #fafbfc; }
+
+  /* CODE */
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    background: var(--code-bg);
+    padding: 2px 6px;
+    border-radius: 3px;
+  }
+  pre {
+    background: #1e1e2e;
+    color: #cdd6f4;
+    padding: 16px;
+    border-radius: 6px;
+    overflow-x: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    margin: 10px 0;
+  }
+  pre .kw { color: #cba6f7; }
+  pre .fn { color: #89b4fa; }
+  pre .str { color: #a6e3a1; }
+  pre .cm { color: #6c7086; }
+  pre .num { color: #fab387; }
+
+  /* EXPAND ALL */
+  .controls {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .controls button {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 6px 14px;
+    font-size: 0.82rem;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .controls button:hover { background: var(--surface2); }
+
+  /* SEVERITY METER */
+  .severity {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 6px 0;
+  }
+  .severity-bar {
+    height: 6px;
+    border-radius: 3px;
+    flex-grow: 1;
+    max-width: 120px;
+  }
+  .severity-critical .severity-bar { background: var(--red); }
+  .severity-high .severity-bar { background: #ff7452; width: 80%; }
+  .severity-medium .severity-bar { background: var(--yellow); width: 60%; }
+  .severity-low .severity-bar { background: var(--green); width: 30%; }
+  .severity-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  p { margin-bottom: 10px; }
+  ul, ol { padding-left: 22px; margin-bottom: 10px; }
+  li { margin-bottom: 4px; }
+
+  .highlight { background: #fff3cd; padding: 1px 4px; border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<div class="breadcrumb">
+  <a href="#">Monster Resort</a> / <a href="#">Engineering</a> / Destruction Lab
+</div>
+
+<div class="page-header">
+  <h1>Destruction Lab: What Breaks If I Delete This?</h1>
+  <div class="subtitle">A comprehensive destruction-driven learning guide for every file in the Monster Resort Concierge. Delete, observe, understand.</div>
+</div>
+
+<div class="panel panel-tip">
+  <strong>How to use this guide</strong>
+  For each file: (1) Read the "What Breaks" section. (2) Actually delete or comment out the file. (3) Run <code>pytest tests/</code> and observe what fails. (4) Try to start the server with <code>uvicorn app.main:app</code>. (5) Restore the file. You will learn more in 1 hour of breaking things than in 3 hours of reading.
+</div>
+
+<div class="toc">
+  <h3>Table of Contents</h3>
+  <ul>
+    <li><a href="#overview">System Overview &amp; Dependency Graph</a></li>
+    <li><a href="#phase1">Phase 1 — The Skeleton (4 files)</a></li>
+    <li><a href="#phase2">Phase 2 — The Brain (8 files)</a></li>
+    <li><a href="#phase3">Phase 3 — The Guardrails (13 files)</a></li>
+    <li><a href="#phase4">Phase 4 — The Features (3 files)</a></li>
+    <li><a href="#phase5">Phase 5 — The ML Layer (9 files)</a></li>
+    <li><a href="#phase6">Phase 6 — The Deployment (7 files)</a></li>
+    <li><a href="#interview">Interview Cheat Sheet</a></li>
+    <li><a href="#exercises">Destruction Exercises</a></li>
+  </ul>
+</div>
+
+<!-- ============================================== -->
+<!-- OVERVIEW -->
+<!-- ============================================== -->
+<h2 id="overview">System Overview &amp; Dependency Graph</h2>
+
+<div class="panel panel-info">
+  <strong>Architecture at a glance</strong>
+  The app is a FastAPI server that acts as an AI concierge. A user sends a message to <code>/chat</code>. The message gets validated, the RAG system retrieves relevant knowledge, the LLM generates a response (possibly calling tools like <code>book_room</code>), and the response gets scored for hallucination confidence. Everything is logged to Prometheus and optionally MLflow.
+</div>
+
+<pre>
+<span class="cm">// Request Flow</span>
+User Message
+  -> <span class="fn">validate_message()</span>           <span class="cm">// validation.py</span>
+  -> <span class="fn">jwt_or_api_key()</span>             <span class="cm">// auth_mixins.py (Depends)</span>
+  -> <span class="fn">rag.search()</span>                 <span class="cm">// advanced_rag.py (BM25 + Dense + Rerank)</span>
+  -> <span class="fn">router.chat()</span>                <span class="cm">// llm_providers.py (OpenAI -> Anthropic -> Ollama)</span>
+  -> <span class="fn">registry.execute()</span>           <span class="cm">// tools.py (book_room, get_booking, search_amenities)</span>
+  -> <span class="fn">router.chat()</span>                <span class="cm">// Phase 2: synthesis with tool results</span>
+  -> <span class="fn">detector.score_response()</span>    <span class="cm">// hallucination.py (30% overlap + 50% semantic + 20% attribution)</span>
+  -> <span class="fn">tracker.log_confidence()</span>     <span class="cm">// mlflow_tracking.py (optional)</span>
+  -> <span class="fn">memory.add_message()</span>         <span class="cm">// memory.py -> database.py (SQLite)</span>
+  -> JSON Response
+</pre>
+
+<h3>Dependency Tree (What imports what)</h3>
+<pre>
+main.py (ENTRYPOINT - imports everything)
+  |-- config.py           <span class="cm"># Settings singleton (no deps)</span>
+  |-- logging_utils.py    <span class="cm"># Logger + exceptions (no deps)</span>
+  |-- database.py         <span class="cm"># SQLite (config, logging_utils)</span>
+  |-- memory.py           <span class="cm"># Sessions (database)</span>
+  |-- auth.py             <span class="cm"># JWT (no app deps, validates env on import!)</span>
+  |-- auth_mixins.py      <span class="cm"># Auth gateway (auth, config)</span>
+  |-- security.py         <span class="cm"># API keys + rate limit (config, logging_utils)</span>
+  |-- admin_routes.py     <span class="cm"># Admin API (auth_mixins, security)</span>
+  |-- monitoring.py       <span class="cm"># Prometheus (logging_utils)</span>
+  |-- rag.py              <span class="cm"># Base RAG (logging_utils, profile_utils, cache_utils, monitoring)</span>
+  |-- advanced_rag.py     <span class="cm"># Hybrid RAG (rag, logging_utils, cache_utils)</span>
+  |-- llm_providers.py    <span class="cm"># Multi-LLM (logging_utils)</span>
+  |-- tools.py            <span class="cm"># Tool registry (database, pdf_generator, logging_utils, monitoring)</span>
+  |-- hallucination.py    <span class="cm"># Confidence (logging_utils)</span>
+  |-- validation.py       <span class="cm"># Input sanitization (logging_utils)</span>
+  |-- mlflow_tracking.py  <span class="cm"># MLOps (logging_utils)</span>
+  |-- pdf_generator.py    <span class="cm"># PDF receipts (no app deps)</span>
+  |-- users_db.py         <span class="cm"># Demo users (no deps)</span>
+  |-- profile_utils.py    <span class="cm"># Timing decorator (no deps)</span>
+  |-- cache_utils.py      <span class="cm"># TTL cache (no deps)</span>
+</pre>
+
+<div class="controls">
+  <button onclick="expandAll()">Expand All Files</button>
+  <button onclick="collapseAll()">Collapse All Files</button>
+</div>
+
+<!-- ============================================== -->
+<!-- PHASE 1 -->
+<!-- ============================================== -->
+<h2 id="phase1">Phase 1 — The Skeleton <span class="status status-red">Critical</span></h2>
+
+<div class="panel panel-warning">
+  <strong>Destruction severity: TOTAL SYSTEM FAILURE</strong>
+  Deleting any Phase 1 file kills the entire application. These are the bones — nothing stands without them.
+</div>
+
+<!-- config.py -->
+<div class="file-card">
+  <div class="file-card-header" onclick="toggleCard(this)">
+    <span class="fname">app/config.py</span>
+    <span class="status status-red">Fatal</span>
+    <span class="toggle">&#9660;</span>
+  </div>
+  <div class="file-card-body">
+    <p><strong>Purpose:</strong> Central nervous system. All settings, API keys, feature flags, thresholds. Uses Pydantic <code>BaseSettings</code> with <code>MRC_</code> env prefix. Singleton via <code>@lru_cache</code>.</p>
+
+    <div class="break-chain">
+      <div class="break-chain-title">What breaks if you delete this</div>
+      <ul>
+        <li><strong>ImportError in main.py line 18:</strong> <code>from .config import get_settings</code> — server won't start</li>
+        <li><strong>ImportError in security.py:</strong> needs <code>Settings</code> type + <code>get_settings()</code></li>
+        <li><strong>ImportError in auth_mixins.py:</strong> needs <code>get_settings()</code> for API key comparison</li>
+        <li><strong>ImportError in ingest_knowledge.py:</strong> needs <code>get_settings()</code></li>
+        <li><strong>Every test fails:</strong> <code>test_unit_core.py::test_settings_load</code> directly tests Settings</li>
+        <li><strong>No database path, no RAG dir, no API keys, no hallucination thresholds</strong></li>
+      </ul>
+    </div>
+
+    <div class="dep-box">
+      <div class="dep-box-title">Who depends on this file</div>
+      <code>main.py</code>, <code>security.py</code>, <code>auth_mixins.py</code>, <code>ingest_knowledge.py</code> — 4 direct importers. But since main.py imports everything, this is effectively a dependency of ALL files.
+    </div>
+
+    <div class="test-link">
+      <div class="test-link-title">Tests that break</div>
+      <code>test_unit_core.py::test_settings_load</code> — asserts <code>Settings()</code> has <code>app_name</code>, <code>database_url</code>, <code>rag_collection</code><br>
+      <code>test_api_basic.py::*</code> — all tests (can't build app)<br>
+      <code>test_api_endpoints.py::*</code> — all tests<br>
+      <code>test_api_key_manager.py::*</code> — all tests
+    </div>
+
+    <div class="interview-q">
+      <div class="interview-q-title">Interview questions this prepares you for</div>
+      <ul>
+        <li>"How do you manage configuration in a production Python app?" — Pydantic BaseSettings, env vars, .env files, validation at startup</li>
+        <li>"What's the difference between dev and prod config?" — Validators enforce strong API keys and real OpenAI keys in prod</li>
+        <li>"Why @lru_cache on get_settings()?" — Singleton pattern. Config is loaded once, shared across all requests. No re-parsing env vars per request.</li>
+      </ul>
+    </div>
+
+    <h4>Key code to understand</h4>
+<pre>
+<span class="cm"># Singleton pattern — config loaded once</span>
+<span class="kw">@lru_cache</span>
+<span class="kw">def</span> <span class="fn">get_settings</span>() -> Settings:
+    <span class="kw">return</span> Settings()
+
+<span class="cm"># Production validator — crashes on weak secrets</span>
+<span class="kw">@field_validator</span>(<span class="str">"api_key"</span>, mode=<span class="str">"before"</span>)
+<span class="kw">def</span> <span class="fn">validate_api_key_strength</span>(cls, v, info):
+    <span class="kw">if</span> env <span class="kw">in</span> [<span class="str">"prod"</span>] <span class="kw">and</span> len(v) < <span class="num">32</span>:
+        <span class="kw">raise</span> ValueError(<span class="str">"API_KEY must be at least 32 chars in production"</span>)
+</pre>
+  </div>
+</div>
+
+<!-- database.py -->
+<div class="file-card">
+  <div class="file-card-header" onclick="toggleCard(this)">
+    <span class="fname">app/database.py</span>
+    <span class="status status-red">Fatal</span>
+    <span class="toggle">&#9660;</span>
+  </div>
+  <div class="file-card-body">
+    <p><strong>Purpose:</strong> SQLite database manager. Creates tables (bookings, sessions, messages, schema_migrations). Context manager for connections with automatic commit/rollback. Thread-safe.</p>
+
+    <div class="break-chain">
+      <div class="break-chain-title">What breaks if you delete this</div>
+      <ul>
+        <li><strong>ImportError in main.py line 19:</strong> <code>from .database import DatabaseManager</code></li>
+        <li><strong>ImportError in memory.py:</strong> MemoryStore takes <code>DatabaseManager</code> as its <code>db</code> parameter</li>
+        <li><strong>ImportError in tools.py:</strong> <code>make_registry(db=...)</code> needs DatabaseManager</li>
+        <li><strong>ImportError in security.py:</strong> APIKeyManager takes <code>db</code> to create api_keys table</li>
+        <li><strong>No bookings can be saved.</strong> book_room tool calls <code>db.create_booking()</code></li>
+        <li><strong>No memory.</strong> MemoryStore can't store/retrieve messages</li>
+        <li><strong>No API key management.</strong> APIKeyManager needs db for key storage</li>
+      </ul>
+    </div>
+
+    <div class="test-link">
+      <div class="test-link-title">Tests that break</div>
+      <code>test_unit_core.py::test_tool_registry</code> — creates DatabaseManager<br>
+      <code>test_unit_core.py::test_memory_store</code> — creates DatabaseManager<br>
+      <code>test_api_key_manager.py::*</code> — all (unit + integration)<br>
+      <code>test_booking.py::test_chat_booking_flow</code> — needs working DB<br>
+      <code>conftest.py::reset_db</code> fixture — clears tables
+    </div>
+
+    <div class="interview-q">
+      <div class="interview-q-title">Interview questions this prepares you for</div>
+      <ul>
+        <li>"Explain the context manager pattern." — <code>@contextmanager</code> with <code>yield</code>. Connection opens, caller uses it, cleanup (commit/rollback/close) is guaranteed.</li>
+        <li>"Why <code>conn.row_factory = sqlite3.Row</code>?" — Returns dict-like rows. Without it, you get plain tuples and have to access by index.</li>
+        <li>"How do you handle schema migrations?" — schema_migrations table tracks version. DDL runs on init. Idempotent with <code>CREATE TABLE IF NOT EXISTS</code>.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- memory.py -->
+<div class="file-card">
+  <div class="file-card-header" onclick="toggleCard(this)">
+    <span class="fname">app/memory.py</span>
+    <span class="status status-red">Fatal</span>
+    <span class="toggle">&#9660;</span>
+  </div>
+  <div class="file-card-body">
+    <p><strong>Purpose:</strong> Conversation memory. Stores messages per session, auto-summarises old conversations when they exceed 12 messages (using LLM or cheap regex fallback). This is how the AI remembers what you said.</p>
+
+    <div class="break-chain">
+      <div class="break-chain-title">What breaks if you delete this</div>
+      <ul>
+        <li><strong>ImportError in main.py line 20:</strong> <code>from .memory import MemoryStore</code></li>
+        <li><strong>/chat breaks completely:</strong> <code>_agent_reply()</code> calls <code>memory.get_messages(session_id)</code> to build chat history</li>
+        <li><strong>No conversation continuity:</strong> every message would be treated as the first message. AI can't reference previous context.</li>
+        <li><strong>No session tracking:</strong> <code>memory.add_message()</code> is called after every /chat response</li>
+      </ul>
+    </div>
+
+    <div class="test-link">
+      <div class="test-link-title">Tests that break</div>
+      <code>test_unit_core.py::test_memory_store</code> — directly tests MemoryStore init<br>
+      <code>test_api_endpoints.py::test_chat_endpoint_creates_session</code> — verifies session creation<br>
+      <code>test_booking.py::test_chat_booking_flow</code> — checks session messages
+    </div>
+
+    <div class="interview-q">
+      <div class="interview-q-title">Interview questions this prepares you for</div>
+      <ul>
+        <li>"How do you manage conversation context with LLMs?" — Store messages in DB, load last N messages into prompt, auto-summarise old ones to keep context window efficient.</li>
+        <li>"What's the summarisation strategy?" — Try LLM summarisation first (OpenAI). If unavailable, fall back to regex-based extraction of intents and named entities. Merge with previous summary.</li>
+        <li>"Why not just keep all messages?" — Token limits. GPT-4o has a context window. Summarisation compresses 12 messages into ~2 sentences, saving ~90% of tokens.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- main.py -->
+<div class="file-card">
+  <div class="file-card-header" onclick="toggleCard(this)">
+    <span class="fname">app/main.py</span>
+    <span class="status status-red">Fatal</span>
+    <span class="toggle">&#9660;</span>
+  </div>
+  <div class="file-card-body">
+    <p><strong>Purpose:</strong> The orchestrator. FastAPI app factory, the <code>/chat</code> route, the agent loop (LLM call -> tool execution -> synthesis -> confidence scoring), startup knowledge ingestion. Imports every other module.</p>
+
+    <div class="break-chain">
+      <div class="break-chain-title">What breaks if you delete this</div>
+      <ul>
+        <li><strong>There is no application.</strong> <code>uvicorn app.main:app</code> has nothing to run.</li>
+        <li><strong>Every single test fails.</strong> conftest.py calls <code>build_app()</code></li>
+        <li><strong>No routes, no agent loop, no startup ingestion.</strong> The entire system ceases to exist.</li>
+      </ul>
+    </div>
+
+    <div class="test-link">
+      <div class="test-link-title">Tests that break</div>
+      ALL 89 tests — every test depends on <code>build_app()</code> via conftest.py's <code>client</code> fixture.
+    </div>
+
+    <div class="interview-q">
+      <div class="interview-q-title">Interview questions this prepares you for</div>
+      <ul>
+        <li>"Walk me through a request from start to finish." — Message -> validate -> auth check -> RAG search -> LLM call -> tool execution -> LLM synthesis -> confidence scoring -> memory storage -> response</li>
+        <li>"What is the agent loop pattern?" — Phase 1: LLM decides what to do (may call tools). Phase 2: tool results are fed back, LLM synthesises final answer. This is the ReAct pattern.</li>
+        <li>"How does multi-provider fallback work?" — <code>_build_router(settings)</code> reads <code>llm_provider_priority</code> (e.g., "openai,anthropic,ollama"), creates providers in order, ModelRouter tries each sequentially.</li>
+      </ul>
+    </div>
+
+    <h4>The Agent Loop (most important code in the project)</h4>
+<pre>
+<span class="cm"># Phase 1: Initial LLM call (may include tool calls)</span>
+llm_resp = <span class="kw">await</span> router.chat(chat_history, tools=tool_schemas)
+
+<span class="kw">if</span> llm_resp.tool_calls:
+    <span class="cm"># Execute each tool</span>
+    <span class="kw">for</span> tc <span class="kw">in</span> llm_resp.tool_calls:
+        res = <span class="kw">await</span> registry.async_execute_with_timing(tc.name, **args)
+        chat_history.append(LLMMessage(role=<span class="str">"tool"</span>, content=json.dumps(res)))
+
+    <span class="cm"># Phase 2: Synthesis call (LLM incorporates tool results)</span>
+    llm_resp2 = <span class="kw">await</span> router.chat(chat_history)
+
+<span class="cm"># Score for hallucination</span>
+confidence = detector.score_response(final_message, rag_contexts, user_text)
+</pre>
+  </div>
+</div>
+
+<!-- ============================================== -->
+<!-- PHASE 2 -->
+<!-- ============================================== -->
+<h2 id="phase2">Phase 2 — The Brain <span class="status status-yellow">High Impact</span></h2>
+
+<div class="panel panel-info">
+  <strong>Destruction severity: AI CAPABILITIES LOST</strong>
+  Deleting Phase 2 files doesn't crash the server, but the AI becomes useless — no knowledge, no reasoning, no actions.
+</div>
+
+<!-- llm_providers.py -->
+<div class="file-card">
+  <div class="file-card-header" onclick="toggleCard(this)">
+    <span class="fname">app/llm_providers.py</span>
+    <span class="status status-red">Fatal</span>
+    <span class="toggle">&#9660;</span>
+  </div>
+  <div class="file-card-body">
+    <p><strong>Purpose:</strong> Multi-model LLM abstraction. Normalized message format (<code>LLMMessage</code>, <code>LLMResponse</code>, <code>LLMToolCall</code>). Three providers: OpenAI, Anthropic, Ollama. <code>ModelRouter</code> tries providers in priority order with automatic fallback.</p>
+
+    <div class="break-chain">
+      <div class="break-chain-title">What breaks if you delete this</div>
+      <ul>
+        <li><strong>ImportError in main.py line 28-36:</strong> imports ModelRouter, LLMMessage, all providers</li>
+        <li><strong>No LLM calls possible.</strong> The agent loop dies. AI returns "AI services are offline."</li>
+        <li><strong>No tool calling.</strong> LLMToolCall is the bridge between LLM decisions and tool execution</li>
+        <li><strong>No multi-provider fallback.</strong> If OpenAI is down, nothing catches it</li>
+      </ul>
+    </div>
+
+    <div class="test-link">
+      <div class="test-link-title">Tests that break</div>
+      <code>test_llm_providers.py</code> — all 10 tests (data classes, schema translation, ModelRouter fallback)<br>
+      <code>test_api_endpoints.py::test_chat_endpoint_creates_session</code> — needs working LLM
+    </div>
+
+    <div class="interview-q">
+      <div class="interview-q-title">Interview questions this prepares you for</div>
+      <ul>
+        <li>"How do you handle multiple LLM providers?" — Abstract base class <code>LLMProvider</code> with unified <code>chat()</code> method. Each provider translates to/from normalized format. Router tries in priority order.</li>
+        <li>"How does Anthropic tool calling differ from OpenAI?" — OpenAI uses <code>tool_calls[].function.arguments</code>, Anthropic uses <code>content[].type=="tool_use"</code> with <code>input</code> dict. <code>translate_tool_schemas()</code> handles conversion.</li>
+        <li>"What's the fallback strategy?" — ModelRouter iterates providers. If provider N fails, catch exception, log warning, try N+1. If all fail, raise RuntimeError.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- rag.py -->
+<div class="file-card">
+  <div class="file-card-header" onclick="toggleCard(this)">
+    <span class="fname">app/rag.py</span>
+    <span class="status status-red">Fatal</span>
+    <span class="toggle">&#9660;</span>
+  </div>
+  <div class="file-card-body">
+    <p><strong>Purpose:</strong> Base RAG class. ChromaDB + HuggingFace sentence-transformers (<code>all-MiniLM-L6-v2</code>). Handles document ingestion and semantic search. Parent class that <code>AdvancedRAG</code> inherits from.</p>
+
+    <div class="break-chain">
+      <div class="break-chain-title">What breaks if you delete this</div>
+      <ul>
+        <li><strong>ImportError in advanced_rag.py line 23:</strong> <code>from .rag import VectorRAG</code> — AdvancedRAG can't inherit</li>
+        <li><strong>No vector search.</strong> ChromaDB collection never gets created</li>
+        <li><strong>No document ingestion.</strong> <code>ingest_texts()</code> and <code>ingest_folder()</code> base implementations gone</li>
+        <li><strong>Knowledge base is empty.</strong> AI has no information about the resort</li>
+      </ul>
+    </div>
+
+    <div class="test-link">
+      <div class="test-link-title">Tests that break</div>
+      <code>test_rag.py</code> — all 4 tests (ingest, search, empty folder, no results)<br>
+      <code>test_unit_core.py::test_vector_rag_initialization</code><br>
+      <code>test_unit_core.py::test_tool_registry</code> — creates VectorRAG for rag_search_fn
+    </div>
+
+    <div class="interview-q">
+      <div class="interview-q-title">Interview questions this prepares you for</div>
+      <ul>
+        <li>"Explain RAG." — Retrieval-Augmented Generation. Instead of relying on LLM's training data, retrieve relevant documents from a vector database and include them in the prompt context.</li>
+        <li>"What embedding model do you use and why?" — <code>all-MiniLM-L6-v2</code>. 384-dimensional embeddings. Fast, lightweight, good for short text. Trade-off: less accurate on long documents vs larger models.</li>
+        <li>"How does ChromaDB store embeddings?" — PersistentClient writes to disk. Documents are embedded on ingestion. Queries are embedded at search time. Distance = cosine similarity.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- advanced_rag.py -->
+<div class="file-card">
+  <div class="file-card-header" onclick="toggleCard(this)">
+    <span class="fname">app/advanced_rag.py</span>
+    <span class="status status-red">Fatal</span>
+    <span class="toggle">&#9660;</span>
+  </div>
+  <div class="file-card-body">
+    <p><strong>Purpose:</strong> The upgrade. Three-stage pipeline: (1) Hybrid retrieval — BM25 keyword search + dense embedding search, (2) Reciprocal Rank Fusion to merge both result sets, (3) BGE cross-encoder reranking for final ranking. This is what made the project go from "generic chatbot" to "actually accurate."</p>
+
+    <div class="severity severity-critical">
+      <span class="severity-label" style="color:var(--red)">Impact: Critical</span>
+      <div class="severity-bar"></div>
+    </div>
+
+    <div class="break-chain">
+      <div class="break-chain-title">What breaks if you delete this</div>
+      <ul>
+        <li><strong>ImportError in main.py line 23:</strong> <code>from .advanced_rag import AdvancedRAG</code></li>
+        <li><strong>Server won't start.</strong> <code>build_app()</code> creates <code>AdvancedRAG</code> instance</li>
+        <li><strong>No hybrid search.</strong> Falls back to basic VectorRAG if you change the import</li>
+        <li><strong>40% accuracy drop on proper nouns</strong> (e.g., "Vampire Manor" — BM25 catches exact matches that embeddings miss)</li>
+        <li><strong>30% more irrelevant context sent to LLM</strong> — no reranking to filter noise</li>
+      </ul>
+    </div>
+
+    <div class="test-link">
+      <div class="test-link-title">Tests that break</div>
+      All integration tests via <code>build_app()</code> — server can't start<br>
+      <em>Note: There's no dedicated test_advanced_rag.py — this is a gap you could fill!</em>
+    </div>
+
+    <div class="interview-q">
+      <div class="interview-q-title">Interview questions this prepares you for</div>
+      <ul>
+        <li>"Why hybrid search instead of just embeddings?" — Embeddings are great for semantic similarity but miss exact keyword matches. BM25 catches "Vampire Manor" exactly. RRF combines both strengths.</li>
+        <li>"Explain Reciprocal Rank Fusion." — <code>score = sum(1/(k + rank))</code> for each result list. k=60 is standard. BM25 gets 40% weight, dense gets 60%. Documents appearing in both lists get boosted.</li>
+        <li>"What's a cross-encoder reranker?" — Unlike bi-encoders (encode query and doc separately), cross-encoders encode query+doc together. Slower but much more accurate. Used as final-stage filter on top-20 candidates.</li>
+        <li>"Why is BM25 in-memory only?" — Designed for long-running server process. BM25 is rebuilt on startup from ingested documents. ChromaDB persists to disk, BM25 doesn't. This is intentional — the server keeps it in RAM.</li>
+      </ul>
+    </div>
+
+    <h4>The Three-Stage Pipeline</h4>
+<pre>
+<span class="cm"># Stage 1: Retrieve candidates from both indices</span>
+bm25_results = self._bm25_search(query, k=<span class="num">20</span>)     <span class="cm"># keyword</span>
+dense_results = self._dense_search(query, k=<span class="num">20</span>)    <span class="cm"># semantic</span>
+
+<span class="cm"># Stage 2: Merge with Reciprocal Rank Fusion</span>
+fused = self._reciprocal_rank_fusion(bm25_results, dense_results,
+    k=<span class="num">60</span>, bm25_weight=<span class="num">0.4</span>)
+
+<span class="cm"># Stage 3: Rerank top candidates with cross-encoder</span>
+reranked = self._rerank(query, fused, top_k=<span class="num">5</span>)
+</pre>
+
+    <table>
+      <tr><th>Metric</th><th>Basic RAG</th><th>Advanced RAG</th><th>Improvement</th></tr>
+      <tr><td>Proper noun accuracy</td><td>~60%</td><td>~100%</td><td>+40%</td></tr>
+      <tr><td>Irrelevant context</td><td>~30%</td><td>~0%</td><td>-30%</td></tr>
+      <tr><td>LLM cost (better context)</td><td>baseline</td><td>-25%</td><td>-25%</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- tools.py -->
+<div class="file-card">
+  <div class="file-card-header" onclick="toggleCard(this)">
+    <span class="fname">app/tools.py</span>
+    <span class="status status-red">Fatal</span>
+    <span class="toggle">&#9660;</span>
+  </div>
+  <div class="file-card-body">
+    <p><strong>Purpose:</strong> Tool system. <code>ToolRegistry</code> manages tools (book_room, get_booking, search_amenities). Each tool has an OpenAI-compatible JSON schema so the LLM knows how to call it. <code>make_registry()</code> wires tools to database, PDF generator, and RAG search.</p>
+
+    <div class="break-chain">
+      <div class="break-chain-title">What breaks if you delete this</div>
+      <ul>
+        <li><strong>ImportError in main.py line 27:</strong> <code>from .tools import make_registry</code></li>
+        <li><strong>No tool calling.</strong> LLM can't book rooms, look up bookings, or search amenities</li>
+        <li><strong>No OpenAI tool schemas.</strong> <code>get_openai_tool_schemas()</code> returns the JSON the LLM needs to decide tool usage</li>
+        <li><strong>AI becomes read-only.</strong> It can talk but can't DO anything</li>
+      </ul>
+    </div>
+
+    <div class="test-link">
+      <div class="test-link-title">Tests that break</div>
+      <code>test_unit_core.py::test_tool_registry</code> — tests make_registry, list(), get()<br>
+      <code>test_booking.py::test_chat_booking_flow</code> — needs book_room tool<br>
+      <code>test_api_endpoints.py::test_booking_flow_end_to_end</code>
+    </div>
+
+    <div class="interview-q">
+      <div class="interview-q-title">Interview questions this prepares you for</div>
+      <ul>
+        <li>"How does the LLM decide when to call a tool?" — We send tool schemas with the chat request. The LLM returns <code>tool_calls</code> in its response when it determines a tool is needed. This is OpenAI's function calling / tool use protocol.</li>
+        <li>"Explain the decorator pattern for tool registration." — <code>@registry.register("book_room", "Create a new booking")</code> wraps a function, stores it with its name and description. Clean separation between tool logic and registration.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================== -->
+<!-- PHASE 3 -->
+<!-- ============================================== -->
+<h2 id="phase3">Phase 3 — The Guardrails <span class="status status-yellow">High Impact</span></h2>
+
+<div class="panel panel-info">
+  <strong>Destruction severity: SECURITY & QUALITY COMPROMISED</strong>
+  Deleting Phase 3 files leaves the app running but vulnerable, unmonitored, and unreliable.
+</div>
+
+<!-- auth.py -->
+<div class="file-card">
+  <div class="file-card-header" onclick="toggleCard(this)">
+    <span class="fname">app/auth.py</span>
+    <span class="status status-red">Fatal</span>
+    <span class="toggle">&#9660;</span>
+  </div>
+  <div class="file-card-body">
+    <p><strong>Purpose:</strong> JWT authentication primitives. Creates/verifies tokens with HS256 + bcrypt password hashing. <strong>CRITICAL:</strong> Validates <code>MRC_JWT_SECRET_KEY</code> at import time — rejects missing, weak, or default secrets.</p>
+
+    <div class="break-chain">
+      <div class="break-chain-title">What breaks if you delete this</div>
+      <ul>
+        <li><strong>ImportError in main.py line 46:</strong> <code>from .auth import create_access_token, verify_token</code></li>
+        <li><strong>ImportError in auth_mixins.py line 4:</strong> <code>from .auth import SECRET_KEY, ALGORITHM</code></li>
+        <li><strong>No JWT tokens.</strong> Can't create or verify them. User login flow dead.</li>
+        <li><strong>auth_mixins can't decode tokens.</strong> The entire auth chain collapses.</li>
+      </ul>
+    </div>
+
+    <div class="panel panel-warning">
+      <strong>Side effect on import!</strong>
+      This file runs validation at module level. If <code>MRC_JWT_SECRET_KEY</code> is missing or weak, the entire app crashes on startup with <code>ValueError</code>. This is intentional — fail fast on security misconfiguration.
+    </div>
+
+    <div class="interview-q">
+      <div class="interview-q-title">Interview questions this prepares you for</div>
+      <ul>
+        <li>"How do you handle JWT security?" — HS256 algorithm, 32-char minimum secret enforced at startup, 30-min expiry, bcrypt for passwords. Reject default/placeholder secrets.</li>
+        <li>"Why validate the secret at import time instead of at first use?" — Fail fast. If the secret is weak, we want to know at deploy time, not when the first user tries to log in at 2am.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- auth_mixins.py -->
+<div class="file-card">
+  <div class="file-card-header" onclick="toggleCard(this)">
+    <span class="fname">app/auth_mixins.py</span>
+    <span class="status status-red">Fatal</span>
+    <span class="toggle">&#9660;</span>
+  </div>
+  <div class="file-card-body">
+    <p><strong>Purpose:</strong> The single auth gatekeeper function: <code>jwt_or_api_key()</code>. Checks authentication in priority order: (1) Static API key in X-API-Key header, (2) Managed <code>mr_</code> keys, (3) JWT Bearer token. Every protected route depends on this.</p>
+
+    <div class="break-chain">
+      <div class="break-chain-title">What breaks if you delete this</div>
+      <ul>
+        <li><strong>ImportError in main.py line 26:</strong> <code>from .auth_mixins import jwt_or_api_key</code></li>
+        <li><strong>ImportError in admin_routes.py line 5:</strong> same import</li>
+        <li><strong>/chat endpoint unprotected or broken.</strong> It uses <code>Depends(jwt_or_api_key)</code></li>
+        <li><strong>All admin endpoints unprotected.</strong></li>
+      </ul>
+    </div>
+
+    <div class="interview-q">
+      <div class="interview-q-title">Interview questions this prepares you for</div>
+      <ul>
+        <li>"Explain your authentication chain." — Priority: Static API key (fast, for services) -> Managed keys with <code>mr_</code> prefix (rotatable, audited) -> JWT tokens (for human users). Single dependency function checks all three.</li>
+        <li>"What's the difference between authentication and authorization?" — This file handles authentication (who are you?). Authorization (what can you do?) would be a next step (role-based access).</li>
+      </ul>
+    </div>
+
+    <h4>The Auth Priority Chain</h4>
+<pre>
+<span class="cm"># 1. X-API-Key header</span>
+<span class="kw">if</span> x_api_key:
+    <span class="kw">if</span> token == settings.api_key:  <span class="cm"># Static key (fast path)</span>
+        <span class="kw">return</span> <span class="str">"api_key_user"</span>
+    <span class="kw">if</span> token.startswith(<span class="str">"mr_"</span>):   <span class="cm"># Managed key (audited)</span>
+        user_id = manager.verify_key(token)
+
+<span class="cm"># 2. Authorization: Bearer header</span>
+<span class="kw">if</span> credentials:
+    <span class="cm"># Same checks: static -> managed -> JWT decode</span>
+    payload = pyjwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+</pre>
+  </div>
+</div>
+
+<!-- security.py -->
+<div class="file-card">
+  <div class="file-card-header" onclick="toggleCard(this)">
+    <span class="fname">app/security.py</span>
+    <span class="status status-yellow">High</span>
+    <span class="toggle">&#9660;</span>
+  </div>
+  <div class="file-card-body">
+    <p><strong>Purpose:</strong> Two jobs: (1) <code>APIKeyManager</code> — full lifecycle for managed API keys (create with <code>mr_</code> prefix, SHA-256 hashing, verify, revoke with soft-delete, audit logging). (2) <code>install_rate_limiter()</code> — slowapi rate limiting at 60 req/min per IP.</p>
+
+    <div class="break-chain">
+      <div class="break-chain-title">What breaks if you delete this</div>
+      <ul>
+        <li><strong>ImportError in main.py line 24:</strong> <code>from .security import install_rate_limiter, APIKeyManager</code></li>
+        <li><strong>No managed API keys.</strong> Can't create, verify, or revoke <code>mr_</code> keys</li>
+        <li><strong>No rate limiting.</strong> API is open to abuse</li>
+        <li><strong>Admin endpoints useless.</strong> admin_routes.py imports APIKeyManager</li>
+        <li><strong>No audit trail.</strong> Key usage logging disappears</li>
+      </ul>
+    </div>
+
+    <div class="test-link">
+      <div class="test-link-title">Tests that break</div>
+      <code>test_api_key_manager.py</code> — all 14 tests (create, verify, revoke, list, usage logging, admin endpoints)<br>
+      <code>test_api_endpoints.py::test_rate_limiting</code> — tests 429 response after threshold
+    </div>
+
+    <div class="interview-q">
+      <div class="interview-q-title">Interview questions this prepares you for</div>
+      <ul>
+        <li>"How do you store API keys securely?" — Never store raw keys. SHA-256 hash on creation, store only the hash. Key shown once to user, never again. Verification: hash the incoming key, compare to stored hash.</li>
+        <li>"How does key revocation work?" — Soft delete: <code>is_active = 0</code>. Key still exists in DB for audit trail but fails verification. No hard delete.</li>
+        <li>"What's your rate limiting strategy?" — slowapi (built on limits library). 60 requests/minute per IP. Returns 429 when exceeded. Middleware-based, applies to all routes.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- hallucination.py -->
+<div class="file-card">
+  <div class="file-card-header" onclick="toggleCard(this)">
+    <span class="fname">app/hallucination.py</span>
+    <span class="status status-yellow">High</span>
+    <span class="toggle">&#9660;</span>
+  </div>
+  <div class="file-card-body">
+    <p><strong>Purpose:</strong> Scores every LLM response for hallucination risk. Three signals weighted: token overlap (30%), semantic similarity via SentenceTransformer (50%), sentence-level source attribution (20%). Returns HIGH/MEDIUM/LOW confidence. Feeds Prometheus metrics.</p>
+
+    <div class="break-chain">
+      <div class="break-chain-title">What breaks if you delete this</div>
+      <ul>
+        <li><strong>ImportError in main.py line 37:</strong> <code>from .hallucination import HallucinationDetector</code></li>
+        <li><strong>No confidence scoring.</strong> Every /chat response loses its <code>confidence</code> field</li>
+        <li><strong>No hallucination metrics.</strong> Prometheus <code>mrc_response_confidence</code> and <code>mrc_hallucinations_detected</code> disappear</li>
+        <li><strong>Can't prove the AI isn't making things up.</strong> This is the trust layer.</li>
+      </ul>
+    </div>
+
+    <div class="test-link">
+      <div class="test-link-title">Tests that break</div>
+      <code>test_hallucination.py</code> — all 13 tests (tokenize, split_sentences, overlap, semantic similarity, source attribution, score_response, to_dict)
+    </div>
+
+    <div class="interview-q">
+      <div class="interview-q-title">Interview questions this prepares you for</div>
+      <ul>
+        <li>"How do you detect hallucinations?" — Three-signal scoring: (1) Token overlap between response and RAG contexts (30% weight), (2) Cosine similarity of embeddings (50%), (3) Sentence-level grounding — what fraction of response sentences have >30% overlap with context (20%).</li>
+        <li>"Why three signals instead of one?" — Each catches different things. Token overlap catches keyword matching. Semantic similarity catches paraphrasing. Source attribution catches fabricated sentences. Together they're robust.</li>
+        <li>"What are your thresholds?" — HIGH >= 0.7, MEDIUM >= 0.4, LOW < 0.4. Configurable via <code>config.py</code>.</li>
+        <li>"Why lazy-load the SentenceTransformer?" — It's ~90MB. Loading it on every import would slow down startup and waste memory if hallucination detection is disabled.</li>
+      </ul>
+    </div>
+
+    <h4>The Scoring Formula</h4>
+<pre>
+overall = <span class="num">0.3</span> * overlap + <span class="num">0.5</span> * semantic + <span class="num">0.2</span> * attribution
+
+<span class="cm"># Token overlap: what % of response words appear in context</span>
+overlap = len(response_tokens & context_tokens) / len(response_tokens)
+
+<span class="cm"># Semantic: cosine similarity of embeddings (max across contexts)</span>
+semantic = max(cosine_sim(response_emb, ctx_emb) for ctx in contexts)
+
+<span class="cm"># Attribution: fraction of sentences with >30% word overlap</span>
+attribution = grounded_sentences / total_sentences
+</pre>
+  </div>
+</div>
+
+<!-- validation.py -->
+<div class="file-card">
+  <div class="file-card-header" onclick="toggleCard(this)">
+    <span class="fname">app/validation.py</span>
+    <span class="status status-yellow">High</span>
+    <span class="toggle">&#9660;</span>
+  </div>
+  <div class="file-card-body">
+    <p><strong>Purpose:</strong> Input sanitization. Catches SQL injection patterns, strips XSS via Bleach, enforces 5000-char message limit. Runs before anything touches the database or LLM.</p>
+
+    <div class="break-chain">
+      <div class="break-chain-title">What breaks if you delete this</div>
+      <ul>
+        <li><strong>ImportError in main.py line 48:</strong> <code>from .validation import validate_message</code></li>
+        <li><strong>No input sanitization.</strong> Raw user input goes straight to LLM and potentially database</li>
+        <li><strong>SQL injection possible.</strong> Patterns like <code>DROP TABLE</code>, <code>OR 1=1</code> pass through</li>
+        <li><strong>XSS possible.</strong> <code>&lt;script&gt;</code> tags, <code>javascript:</code> URIs pass through</li>
+      </ul>
+    </div>
+
+    <div class="test-link">
+      <div class="test-link-title">Tests that break</div>
+      <code>test_api_endpoints.py::test_sql_injection_prevention</code><br>
+      <code>test_api_endpoints.py::test_xss_prevention</code>
+    </div>
+
+    <div class="interview-q">
+      <div class="interview-q-title">Interview questions this prepares you for</div>
+      <ul>
+        <li>"How do you prevent injection attacks?" — Defence in depth: (1) validate_message() rejects SQL/XSS patterns, (2) Bleach strips HTML, (3) parameterized queries in database.py prevent SQL injection at DB level.</li>
+        <li>"What's defence in depth?" — Multiple layers. Even if validation fails, parameterized queries still protect. Even if both fail, the LLM doesn't execute SQL. No single point of failure.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- monitoring.py, cache_utils.py, logging_utils.py, profile_utils.py -->
+<div class="file-card">
+  <div class="file-card-header" onclick="toggleCard(this)">
+    <span class="fname">app/monitoring.py</span>
+    <span class="status status-blue">Medium</span>
+    <span class="toggle">&#9660;</span>
+  </div>
+  <div class="file-card-body">
+    <p><strong>Purpose:</strong> Prometheus metrics. Counters for requests, errors, bookings, AI tokens. Histograms for latency. Gauge for active sessions. Middleware records every HTTP request. Exposes <code>/metrics</code> endpoint.</p>
+
+    <div class="break-chain">
+      <div class="break-chain-title">What breaks if you delete this</div>
+      <ul>
+        <li><strong>ImportError in main.py line 21:</strong> <code>from .monitoring import install_metrics</code></li>
+        <li><strong>ImportError in rag.py:</strong> imports Counter for <code>RAG_HIT_COUNT</code></li>
+        <li><strong>ImportError in tools.py:</strong> imports Counter for <code>TOOL_CALL_COUNT</code></li>
+        <li><strong>No /metrics endpoint.</strong> Prometheus can't scrape data. Grafana dashboards blank.</li>
+        <li><strong>No request latency tracking.</strong> Can't identify slow endpoints.</li>
+      </ul>
+    </div>
+
+    <div class="interview-q">
+      <div class="interview-q-title">Interview questions this prepares you for</div>
+      <ul>
+        <li>"How do you monitor your application in production?" — Prometheus counters/histograms exposed at /metrics. Track request count, latency (p50/p95/p99), errors by type, bookings by hotel, AI token usage, active sessions.</li>
+        <li>"What's the difference between Counter, Histogram, and Gauge?" — Counter only goes up (total requests). Histogram tracks distributions (latency buckets). Gauge goes up and down (active sessions).</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="file-card">
+  <div class="file-card-header" onclick="toggleCard(this)">
+    <span class="fname">app/cache_utils.py</span>
+    <span class="status status-blue">Medium</span>
+    <span class="toggle">&#9660;</span>
+  </div>
+  <div class="file-card-body">
+    <p><strong>Purpose:</strong> Thread-safe TTL cache with LRU eviction. <code>@cache_response(ttl=300)</code> decorator caches RAG search results for 5 minutes. Max 256 entries. MD5 key hashing for any argument type.</p>
+
+    <div class="break-chain">
+      <div class="break-chain-title">What breaks if you delete this</div>
+      <ul>
+        <li><strong>ImportError in rag.py line 13:</strong> <code>from .cache_utils import cache_response</code></li>
+        <li><strong>ImportError in advanced_rag.py line 25:</strong> same import</li>
+        <li><strong>Every RAG search hits ChromaDB.</strong> Repeated queries re-compute embeddings and search. ~27% cost increase from redundant queries.</li>
+        <li><strong>Higher latency.</strong> Cached responses are instant; uncached require full vector search + reranking.</li>
+      </ul>
+    </div>
+
+    <div class="test-link">
+      <div class="test-link-title">Tests that break</div>
+      <code>test_cache_utils.py</code> — all 20 tests (TTL expiry, LRU eviction, thread safety, decorator, key generation)
+    </div>
+
+    <div class="interview-q">
+      <div class="interview-q-title">Interview questions this prepares you for</div>
+      <ul>
+        <li>"How does your caching work?" — TTL-based LRU cache. OrderedDict for O(1) access/eviction. Thread-safe with <code>threading.Lock()</code>. 5-minute TTL, 256 max entries. Expired entries cleaned on access.</li>
+        <li>"Why not use Redis?" — In-memory cache is simpler for single-process deployment. Redis adds a network hop. For production multi-worker setup, you'd swap to Redis.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="file-card">
+  <div class="file-card-header" onclick="toggleCard(this)">
+    <span class="fname">app/logging_utils.py</span>
+    <span class="status status-red">Fatal</span>
+    <span class="toggle">&#9660;</span>
+  </div>
+  <div class="file-card-body">
+    <p><strong>Purpose:</strong> Structured JSON logging with rotating file handlers. Custom exception hierarchy: <code>MonsterResortError</code> -> <code>DatabaseError</code>, <code>AIServiceError</code>, <code>ValidationError</code>. Module-level <code>logger</code> singleton used by ~12 files.</p>
+
+    <div class="break-chain">
+      <div class="break-chain-title">What breaks if you delete this</div>
+      <ul>
+        <li><strong>ImportError in 12+ files.</strong> Almost every module imports <code>logger</code> or exception classes from here.</li>
+        <li><strong>No logging whatsoever.</strong> Debugging in production becomes impossible.</li>
+        <li><strong>No custom exceptions.</strong> database.py, rag.py, tools.py, validation.py all raise these.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================== -->
+<!-- PHASE 5: ML LAYER -->
+<!-- ============================================== -->
+<h2 id="phase5">Phase 5 — The ML Layer <span class="status status-purple">Interview Gold</span></h2>
+
+<div class="panel panel-tip">
+  <strong>This is what separates you from other candidates.</strong>
+  Most portfolio projects stop at "I connected to OpenAI." You have LoRA fine-tuning, RAGAS evaluation, MLflow experiment tracking, and RAG benchmarking. Know these numbers cold.
+</div>
+
+<!-- LoRA Fine-Tuning Deep Dive -->
+<div class="file-card">
+  <div class="file-card-header" onclick="toggleCard(this)">
+    <span class="fname">scripts/finetune_lora.py</span>
+    <span class="status status-purple">Deep Dive</span>
+    <span class="toggle">&#9660;</span>
+  </div>
+  <div class="file-card-body">
+    <p><strong>Purpose:</strong> LoRA (Low-Rank Adaptation) fine-tuning on Microsoft Phi-3-mini. Trains a domain-specific adapter that knows about Monster Resort without modifying the base model weights.</p>
+
+    <h4>Exact Configuration (memorize these)</h4>
+    <table>
+      <tr><th>Parameter</th><th>Value</th><th>Why</th></tr>
+      <tr><td>Base model</td><td><code>microsoft/phi-3-mini-4k-instruct</code></td><td>3.8B params, small enough for local inference</td></tr>
+      <tr><td>LoRA rank (r)</td><td>16</td><td>Low rank = fewer trainable params. 16 is the sweet spot for domain adaptation.</td></tr>
+      <tr><td>LoRA alpha</td><td>32</td><td>Scaling factor. Alpha/rank = 2x scaling. Standard practice.</td></tr>
+      <tr><td>LoRA dropout</td><td>0.1</td><td>Regularization to prevent overfitting on small dataset.</td></tr>
+      <tr><td>Target modules</td><td>q_proj, k_proj, v_proj, o_proj</td><td>Attention layers only — where domain knowledge is stored.</td></tr>
+      <tr><td>Trainable params</td><td>~0.5% of total</td><td>~19M out of 3.8B. This is the whole point of LoRA — efficiency.</td></tr>
+      <tr><td>Training epochs</td><td>3</td><td>Small dataset, don't want to overfit.</td></tr>
+      <tr><td>Batch size</td><td>4</td><td>Fits in consumer GPU memory.</td></tr>
+      <tr><td>Learning rate</td><td>2e-4</td><td>Standard for LoRA fine-tuning.</td></tr>
+      <tr><td>Quantization</td><td>4-bit (BitsAndBytes)</td><td>Reduces memory from ~15GB to ~4GB. Makes training possible on consumer hardware.</td></tr>
+    </table>
+
+    <div class="break-chain">
+      <div class="break-chain-title">What breaks if you delete this</div>
+      <ul>
+        <li><strong>Can't train new LoRA adapters.</strong> The training pipeline is gone.</li>
+        <li><strong>lora_integration.py has nothing to load.</strong> No <code>lora-concierge/final</code> directory.</li>
+        <li><strong>No local fallback model.</strong> If OpenAI goes down, there's no backup.</li>
+        <li><em>Production impact: LOW.</em> This is a training script, not a runtime dependency.</li>
+      </ul>
+    </div>
+
+    <div class="interview-q">
+      <div class="interview-q-title">Interview questions this prepares you for</div>
+      <ul>
+        <li><strong>"What is LoRA and why use it?"</strong> — LoRA freezes the base model and injects small trainable matrices into attention layers. Instead of fine-tuning 3.8B parameters, you train ~19M (0.5%). Same quality, fraction of the compute. Adapters are ~50MB vs 7GB for full model.</li>
+        <li><strong>"Why Phi-3-mini?"</strong> — 3.8B params is small enough for local inference on a laptop. Phi-3 punches above its weight on reasoning tasks. Good trade-off between quality and deployability.</li>
+        <li><strong>"What are target modules?"</strong> — q_proj, k_proj, v_proj, o_proj are the query, key, value, and output projection matrices in multi-head attention. These are where the model stores "what to pay attention to." Domain knowledge (Monster Resort specifics) is encoded here.</li>
+        <li><strong>"What's 4-bit quantization?"</strong> — BitsAndBytes reduces weight precision from 32-bit float to 4-bit integer. Memory drops from ~15GB to ~4GB. Training uses QLoRA (quantized base + full-precision adapters). Minimal quality loss.</li>
+        <li><strong>"Why only 0.5% of parameters?"</strong> — The base model already knows language. We only need to teach it Monster Resort domain knowledge. LoRA's low-rank matrices capture this efficiently without catastrophic forgetting.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- Synthetic Dataset -->
+<div class="file-card">
+  <div class="file-card-header" onclick="toggleCard(this)">
+    <span class="fname">scripts/generate_synthetic_dataset.py</span>
+    <span class="status status-purple">Deep Dive</span>
+    <span class="toggle">&#9660;</span>
+  </div>
+  <div class="file-card-body">
+    <p><strong>Purpose:</strong> Uses GPT-4o to generate 150 Q&A training pairs from templates + knowledge base. Creates the dataset that trains the LoRA model.</p>
+
+    <h4>How it works</h4>
+    <ol>
+      <li>Loads knowledge base files (amenities, policies, FAQ, seasonal events)</li>
+      <li>Defines question templates by category (amenities, booking, policy, comparison)</li>
+      <li>For each template, calls GPT-4o to generate contextually relevant Q&A pairs</li>
+      <li>Outputs JSONL format: <code>{"instruction": "...", "input": "...", "output": "..."}</code></li>
+    </ol>
+
+    <div class="interview-q">
+      <div class="interview-q-title">Interview questions this prepares you for</div>
+      <ul>
+        <li><strong>"How did you create your training data?"</strong> — Synthetic data generation using GPT-4o. Template-based question generation across categories. 150 Q&A pairs from 63KB of knowledge documents. Cheaper and faster than manual annotation.</li>
+        <li><strong>"Isn't using GPT-4o to train a smaller model 'distillation'?"</strong> — Yes, this is a form of knowledge distillation. GPT-4o generates high-quality answers that the smaller Phi-3 model learns from. The smaller model becomes a domain specialist.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- RAGAS Evaluation -->
+<div class="file-card">
+  <div class="file-card-header" onclick="toggleCard(this)">
+    <span class="fname">notebooks/ragas_evaluation.ipynb + app/ragas_eval.py</span>
+    <span class="status status-purple">Deep Dive</span>
+    <span class="toggle">&#9660;</span>
+  </div>
+  <div class="file-card-body">
+    <p><strong>Purpose:</strong> RAGAS framework evaluation. Measures RAG quality across multiple dimensions. Compares three configurations: Basic RAG, Hybrid RAG, Hybrid + Reranking.</p>
+
+    <h4>RAGAS Metrics (know these cold)</h4>
+    <table>
+      <tr><th>Metric</th><th>What it measures</th><th>How it works</th></tr>
+      <tr><td><strong>Faithfulness</strong></td><td>Does the answer follow from the context?</td><td>Decomposes answer into claims, checks each against context. Score = grounded claims / total claims.</td></tr>
+      <tr><td><strong>Answer Relevancy</strong></td><td>Does the answer address the question?</td><td>Generates N questions from the answer, measures similarity to original question.</td></tr>
+      <tr><td><strong>Context Precision</strong></td><td>Is the retrieved context relevant?</td><td>Checks if retrieved chunks are relevant to the question. Higher = less noise.</td></tr>
+      <tr><td><strong>Context Recall</strong></td><td>Does the context cover the question?</td><td>Checks if all parts of the reference answer can be found in retrieved context.</td></tr>
+    </table>
+
+    <h4>Performance Numbers (from advanced_rag.py docstring)</h4>
+    <table>
+      <tr><th>Configuration</th><th>Proper Noun Accuracy</th><th>Irrelevant Context</th><th>Cost Savings</th></tr>
+      <tr><td>Basic RAG (dense only)</td><td>Baseline</td><td>Baseline</td><td>Baseline</td></tr>
+      <tr><td>Hybrid RAG (BM25 + dense)</td><td>+40%</td><td>-30%</td><td>-25%</td></tr>
+      <tr><td>Hybrid + Reranking (BGE)</td><td>+40%</td><td>-30%</td><td>-27% (with cache)</td></tr>
+    </table>
+
+    <div class="break-chain">
+      <div class="break-chain-title">What breaks if you delete these</div>
+      <ul>
+        <li><strong>ragas_eval.py:</strong> <code>test_ragas_eval.py</code> — all 3 tests fail (evaluate_rag_batch function gone)</li>
+        <li><strong>ragas_evaluation.ipynb:</strong> No tests break. This is a Jupyter notebook for exploration.</li>
+        <li><em>Production impact: NONE.</em> These are evaluation tools, not runtime dependencies.</li>
+      </ul>
+    </div>
+
+    <div class="interview-q">
+      <div class="interview-q-title">Interview questions this prepares you for</div>
+      <ul>
+        <li><strong>"How do you evaluate RAG quality?"</strong> — RAGAS framework with four metrics: faithfulness, answer relevancy, context precision, context recall. Run on batch samples. Uses local HuggingFace embeddings (no OpenAI dependency for evals).</li>
+        <li><strong>"What's the difference between faithfulness and answer relevancy?"</strong> — Faithfulness = "is the answer factually grounded in the provided context?" (prevents hallucination). Answer relevancy = "does the answer actually address the question?" (prevents tangential responses).</li>
+        <li><strong>"How did you get +26% accuracy improvement?"</strong> — Hybrid search (BM25 + dense embeddings) with Reciprocal Rank Fusion + BGE cross-encoder reranking. BM25 catches exact keyword matches that embeddings miss. Reranking filters irrelevant results.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- MLflow + Benchmarking -->
+<div class="file-card">
+  <div class="file-card-header" onclick="toggleCard(this)">
+    <span class="fname">app/mlflow_tracking.py + scripts/benchmark_rag.py</span>
+    <span class="status status-purple">Deep Dive</span>
+    <span class="toggle">&#9660;</span>
+  </div>
+  <div class="file-card-body">
+    <p><strong>Purpose:</strong> MLflow experiment tracking + RAG benchmarking. MLflowTracker logs confidence metrics, RAG evaluations, and benchmark results. Gracefully degrades to no-op when MLflow is unavailable. benchmark_rag.py runs head-to-head comparison of custom AdvancedRAG vs LangChain RAG.</p>
+
+    <div class="break-chain">
+      <div class="break-chain-title">What breaks if you delete mlflow_tracking.py</div>
+      <ul>
+        <li><strong>ImportError in main.py line 38:</strong> <code>from .mlflow_tracking import MLflowTracker</code></li>
+        <li><strong>No experiment tracking.</strong> Can't compare RAG configs over time.</li>
+        <li><em>But:</em> MLflow is disabled by default (<code>mlflow_enabled: bool = False</code>). In dev, this is a no-op anyway.</li>
+      </ul>
+    </div>
+
+    <div class="test-link">
+      <div class="test-link-title">Tests that break</div>
+      <code>test_mlflow_tracking.py</code> — all 7 tests (disabled tracker, enabled tracker logging)
+    </div>
+
+    <div class="interview-q">
+      <div class="interview-q-title">Interview questions this prepares you for</div>
+      <ul>
+        <li><strong>"How do you track ML experiments?"</strong> — MLflow with experiment name "monster-resort-concierge". Logs RAG type, query latency, result count, top score, confidence metrics, provider used. Integrated into main.py's agent loop for live tracking.</li>
+        <li><strong>"Why custom RAG instead of LangChain?"</strong> — Built both and benchmarked. Custom AdvancedRAG with BM25+dense+reranking outperformed LangChain's Chroma implementation on proper noun queries. benchmark_rag.py has the head-to-head comparison.</li>
+        <li><strong>"How does graceful degradation work?"</strong> — Every method checks <code>if not self.enabled: return</code>. If MLflow isn't installed or server is unreachable, tracker silently no-ops. No crashes, no error propagation.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- lora_integration.py -->
+<div class="file-card">
+  <div class="file-card-header" onclick="toggleCard(this)">
+    <span class="fname">app/lora_integration.py</span>
+    <span class="status status-blue">Medium</span>
+    <span class="toggle">&#9660;</span>
+  </div>
+  <div class="file-card-body">
+    <p><strong>Purpose:</strong> Plugs the fine-tuned LoRA model into the main app as a local fallback. Lazy-loads to save memory. Only activates when cloud LLMs are unavailable.</p>
+
+    <div class="break-chain">
+      <div class="break-chain-title">What breaks if you delete this</div>
+      <ul>
+        <li><strong>No local LLM fallback.</strong> If OpenAI + Anthropic + Ollama all fail, there's no last resort.</li>
+        <li><em>Production impact: LOW.</em> Not currently wired into main.py's provider chain. It's available but optional.</li>
+      </ul>
+    </div>
+
+    <div class="interview-q">
+      <div class="interview-q-title">Interview questions this prepares you for</div>
+      <ul>
+        <li><strong>"How do you handle LLM provider outages?"</strong> — Three layers: (1) ModelRouter fallback chain (OpenAI -> Anthropic -> Ollama), (2) LoRA local fallback for complete cloud failure, (3) Graceful "AI services offline" message.</li>
+        <li><strong>"Why lazy-load the model?"</strong> — LoRA model is ~4GB in memory. Loading it on startup wastes resources when cloud LLMs are available. Load on first use only.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================== -->
+<!-- PHASE 4 & 6 (Brief) -->
+<!-- ============================================== -->
+<h2 id="phase4">Phase 4 — The Features <span class="status status-green">Low Impact</span></h2>
+
+<div class="file-card">
+  <div class="file-card-header" onclick="toggleCard(this)">
+    <span class="fname">app/pdf_generator.py, app/stream_client.py, chat_ui.py</span>
+    <span class="status status-green">Non-Fatal</span>
+    <span class="toggle">&#9660;</span>
+  </div>
+  <div class="file-card-body">
+    <p><strong>pdf_generator.py:</strong> ReportLab-based PDF receipt generation. Used by book_room tool. Delete it: booking works but no PDF receipt. <code>tools.py</code> has a try/except that catches the failure gracefully.</p>
+    <p><strong>stream_client.py:</strong> Standalone SSE client for streaming responses. Not imported by anything. Delete it: zero impact.</p>
+    <p><strong>chat_ui.py:</strong> Gradio chat interface. Standalone script. Delete it: no UI, but API still works.</p>
+  </div>
+</div>
+
+<h2 id="phase6">Phase 6 — The Deployment <span class="status status-green">Infrastructure</span></h2>
+
+<div class="file-card">
+  <div class="file-card-header" onclick="toggleCard(this)">
+    <span class="fname">deploy/aws/*, .github/workflows/ci.yml, FEATURES_GUIDE.md</span>
+    <span class="status status-green">Non-Fatal</span>
+    <span class="toggle">&#9660;</span>
+  </div>
+  <div class="file-card-body">
+    <p>Deployment files don't affect the application code. Deleting them means you can't deploy to AWS or run CI/CD, but the app still works locally. Know the architecture for interviews:</p>
+    <ul>
+      <li><strong>ecs-task-definition.json:</strong> ECS Fargate, 1 vCPU, 2GB RAM, secrets from AWS Secrets Manager</li>
+      <li><strong>ci.yml:</strong> GitHub Actions: lint -> test -> build Docker -> push ECR -> deploy ECS</li>
+      <li><strong>ecr-push.sh:</strong> Auth with ECR, build image, tag, push</li>
+      <li><strong>deploy.sh:</strong> Register task def, update service, wait for stability (zero-downtime rolling)</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ============================================== -->
+<!-- INTERVIEW CHEAT SHEET -->
+<!-- ============================================== -->
+<h2 id="interview">Interview Cheat Sheet</h2>
+
+<div class="panel panel-tip">
+  <strong>The 10 questions you'll get asked most</strong>
+  Based on the technical depth of this project, here are the questions and the files that answer them.
+</div>
+
+<table>
+  <tr><th>#</th><th>Question</th><th>Key File(s)</th><th>Your Answer (One Sentence)</th></tr>
+  <tr><td>1</td><td>"Walk me through a request"</td><td>main.py</td><td>Validate -> Auth -> RAG search -> LLM call -> Tool execution -> LLM synthesis -> Confidence score -> Memory store -> Response</td></tr>
+  <tr><td>2</td><td>"Explain your RAG architecture"</td><td>advanced_rag.py</td><td>Three-stage hybrid: BM25 keyword + dense embedding retrieval, Reciprocal Rank Fusion to merge, BGE cross-encoder reranking for final top-5</td></tr>
+  <tr><td>3</td><td>"How do you detect hallucinations?"</td><td>hallucination.py</td><td>Three-signal weighted score: 30% token overlap + 50% semantic similarity + 20% sentence attribution against RAG contexts</td></tr>
+  <tr><td>4</td><td>"What is LoRA?"</td><td>finetune_lora.py</td><td>Low-Rank Adaptation — freeze base model, inject small trainable matrices into attention layers. Train 0.5% of parameters for domain-specific knowledge.</td></tr>
+  <tr><td>5</td><td>"How do you evaluate RAG quality?"</td><td>ragas_eval.py</td><td>RAGAS framework: faithfulness, answer relevancy, context precision, context recall. Automated batch evaluation with HuggingFace embeddings.</td></tr>
+  <tr><td>6</td><td>"How does auth work?"</td><td>auth.py, auth_mixins.py</td><td>Three-tier: static API key (fast) -> managed mr_ keys with SHA-256 hashing (audited) -> JWT Bearer tokens (human users). Single dependency function.</td></tr>
+  <tr><td>7</td><td>"How do you handle multiple LLM providers?"</td><td>llm_providers.py</td><td>Abstract base class with OpenAI/Anthropic/Ollama implementations. ModelRouter tries in priority order with automatic fallback.</td></tr>
+  <tr><td>8</td><td>"How do you monitor in production?"</td><td>monitoring.py</td><td>Prometheus counters/histograms for requests, latency, errors, bookings, AI tokens. /metrics endpoint. MLflow for experiment tracking.</td></tr>
+  <tr><td>9</td><td>"Why custom RAG vs LangChain?"</td><td>benchmark_rag.py</td><td>Built and benchmarked both. Custom hybrid RAG with BM25+reranking outperformed LangChain on proper noun queries by 40%.</td></tr>
+  <tr><td>10</td><td>"How do you manage config?"</td><td>config.py</td><td>Pydantic BaseSettings with MRC_ env prefix, .env file support, validators that crash on weak secrets in production. Singleton via @lru_cache.</td></tr>
+</table>
+
+<!-- ============================================== -->
+<!-- DESTRUCTION EXERCISES -->
+<!-- ============================================== -->
+<h2 id="exercises">Destruction Exercises</h2>
+
+<div class="panel panel-warning">
+  <strong>Before you start:</strong> Make sure you're on a git branch. Run <code>git checkout -b destruction-lab</code> first. You can always restore with <code>git checkout main</code>.
+</div>
+
+<h3>Exercise 1: Kill the RAG (30 min)</h3>
+<ol>
+  <li>Delete <code>app/advanced_rag.py</code></li>
+  <li>Run <code>pytest tests/ -v</code> — note which tests fail and the exact error messages</li>
+  <li>In <code>main.py</code>, change import to use <code>VectorRAG</code> instead of <code>AdvancedRAG</code></li>
+  <li>Run tests again — what passes now?</li>
+  <li>Start the server and ask about "Vampire Manor" — notice the difference in result quality</li>
+  <li><strong>Learning:</strong> Why hybrid search matters for proper nouns</li>
+</ol>
+
+<h3>Exercise 2: Kill the Auth (20 min)</h3>
+<ol>
+  <li>Comment out <code>_: str = Depends(jwt_or_api_key)</code> in main.py's <code>/chat</code> route</li>
+  <li>Try calling <code>/chat</code> without any API key — it now works (it shouldn't!)</li>
+  <li>Run <code>test_api_endpoints.py</code> — which security tests still pass?</li>
+  <li>Restore and observe what <code>Depends()</code> actually does</li>
+  <li><strong>Learning:</strong> How FastAPI dependency injection protects routes</li>
+</ol>
+
+<h3>Exercise 3: Kill the Confidence (20 min)</h3>
+<ol>
+  <li>Delete <code>app/hallucination.py</code></li>
+  <li>Run <code>pytest tests/test_hallucination.py -v</code> — all 13 tests fail</li>
+  <li>In <code>main.py</code>, comment out the confidence scoring lines</li>
+  <li>Start the server, ask a question — notice the response has no <code>confidence</code> field</li>
+  <li><strong>Learning:</strong> What production trust looks like (and what losing it feels like)</li>
+</ol>
+
+<h3>Exercise 4: Kill the Cache (15 min)</h3>
+<ol>
+  <li>Delete <code>app/cache_utils.py</code></li>
+  <li>Run <code>pytest tests/test_cache_utils.py -v</code> — all 20 tests fail</li>
+  <li>Fix imports in <code>rag.py</code> and <code>advanced_rag.py</code> by removing the <code>@cache_response</code> decorator</li>
+  <li>Run the server, send the same query 5 times, check response times</li>
+  <li><strong>Learning:</strong> Why caching matters for cost and latency</li>
+</ol>
+
+<h3>Exercise 5: Kill the Memory (15 min)</h3>
+<ol>
+  <li>In <code>main.py</code>, comment out <code>memory.add_message()</code> calls (lines 249-250)</li>
+  <li>Start the server, have a multi-turn conversation</li>
+  <li>Notice: the AI has no memory of what you said 30 seconds ago</li>
+  <li><strong>Learning:</strong> Why conversation persistence matters for UX</li>
+</ol>
+
+<h3>Exercise 6: Kill a Tool (15 min)</h3>
+<ol>
+  <li>In <code>tools.py</code>, comment out the <code>@registry.register("book_room", ...)</code> block</li>
+  <li>Start the server, try to book a room</li>
+  <li>The LLM will try to call <code>book_room</code> but get "Tool not found" error</li>
+  <li><strong>Learning:</strong> How tool schemas drive LLM decisions, and what happens when the tool doesn't exist</li>
+</ol>
+
+<div class="panel panel-success">
+  <strong>After completing these exercises:</strong>
+  You will understand every dependency in this project not because you read about them, but because you broke them. This is the kind of deep understanding that interviewers can sense. When they ask "what happens if X fails?" you'll answer from experience, not theory.
+</div>
+
+<script>
+function toggleCard(header) {
+  const body = header.nextElementSibling;
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  header.classList.toggle('open', !isOpen);
+}
+
+function expandAll() {
+  document.querySelectorAll('.file-card-body').forEach(b => b.classList.add('open'));
+  document.querySelectorAll('.file-card-header').forEach(h => h.classList.add('open'));
+}
+
+function collapseAll() {
+  document.querySelectorAll('.file-card-body').forEach(b => b.classList.remove('open'));
+  document.querySelectorAll('.file-card-header').forEach(h => h.classList.remove('open'));
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Descent — _agent_reply() Pipeline</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #080a12;
+  --bg-castle: #0c0f1a;
+  --bg-room: #111628;
+  --bg-room-active: #1a2040;
+  --bg-panel: #0e1224;
+  --border: #1e2845;
+  --border-glow: #2a3a60;
+  --text: #e2e8f0;
+  --text-dim: #7a8aaa;
+  --text-bright: #f8fafc;
+  --torch-orange: #f59e0b;
+  --torch-glow: rgba(245,158,11,0.08);
+  --magic-purple: #a78bfa;
+  --magic-cyan: #22d3ee;
+  --magic-green: #10b981;
+  --magic-red: #ef4444;
+  --magic-pink: #f472b6;
+  --magic-amber: #f59e0b;
+  --corridor: #1a1f35;
+  --corridor-lit: #252d4a;
+  --transition: 0.35s cubic-bezier(.4,0,.2,1);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: 'Inter', -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* HEADER */
+.header {
+  text-align: center;
+  padding: 40px 20px 24px;
+  position: relative;
+}
+.header::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: radial-gradient(ellipse at 50% 0%, rgba(167,139,250,0.06) 0%, transparent 60%);
+}
+.header h1 {
+  font-size: 2.2rem;
+  font-weight: 800;
+  letter-spacing: -1px;
+  background: linear-gradient(135deg, #f59e0b, #ef4444, #a78bfa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  position: relative;
+  margin-bottom: 8px;
+}
+.header .subtitle {
+  font-size: 1rem;
+  color: var(--text-dim);
+  position: relative;
+}
+.header .code-ref {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  color: var(--magic-cyan);
+  background: rgba(34,211,238,0.06);
+  padding: 4px 14px;
+  border-radius: 6px;
+  border: 1px solid rgba(34,211,238,0.1);
+  display: inline-block;
+  margin-top: 12px;
+  position: relative;
+}
+
+/* CONTROLS */
+.controls {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  padding: 0 20px 28px;
+  flex-wrap: wrap;
+}
+.ctrl-btn {
+  padding: 10px 22px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-dim);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.ctrl-btn:hover { background: rgba(255,255,255,0.08); color: var(--text); border-color: var(--border-glow); }
+.ctrl-btn.active { background: var(--magic-purple); color: #fff; border-color: var(--magic-purple); }
+.ctrl-btn.play { background: rgba(16,185,129,0.15); border-color: rgba(16,185,129,0.3); color: var(--magic-green); }
+.ctrl-btn.play:hover { background: rgba(16,185,129,0.25); }
+
+/* CASTLE CONTAINER */
+.castle-wrap {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 20px 80px;
+  position: relative;
+}
+
+/* FLOOR */
+.floor {
+  position: relative;
+  margin-bottom: 0;
+}
+.floor-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  opacity: 0.4;
+  margin-bottom: 8px;
+}
+
+/* CORRIDOR between rooms */
+.corridor {
+  width: 4px;
+  height: 40px;
+  background: var(--corridor);
+  margin: 0 auto;
+  position: relative;
+  border-radius: 2px;
+  transition: background 0.5s;
+}
+.corridor.lit {
+  background: var(--corridor-lit);
+  box-shadow: 0 0 12px rgba(245,158,11,0.1);
+}
+.corridor.lit::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 50%; width: 2px; height: 100%;
+  transform: translateX(-50%);
+  background: linear-gradient(180deg, rgba(245,158,11,0.3), transparent);
+  animation: corridorPulse 2s ease-in-out infinite;
+}
+@keyframes corridorPulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+/* ROOM */
+.room {
+  --accent: var(--magic-purple);
+  background: var(--bg-room);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 22px 26px 20px;
+  cursor: pointer;
+  position: relative;
+  transition: all var(--transition);
+  max-width: 600px;
+  margin: 0 auto;
+  overflow: hidden;
+}
+.room::before {
+  content: '';
+  position: absolute;
+  top: -1px; left: 24px; right: 24px;
+  height: 3px;
+  background: var(--accent);
+  border-radius: 0 0 3px 3px;
+  opacity: 0.5;
+  transition: opacity var(--transition);
+}
+.room:hover {
+  background: var(--bg-room-active);
+  border-color: var(--border-glow);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+}
+.room:hover::before { opacity: 1; }
+.room.active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent), 0 0 24px rgba(0,0,0,0.3);
+}
+.room.active::before { opacity: 1; height: 4px; }
+.room.lit {
+  border-color: rgba(245,158,11,0.3);
+}
+.room.dim { opacity: 0.25; pointer-events: none; }
+
+/* Room content */
+.room-top {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 8px;
+}
+.room-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,0.03);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+}
+.room-info { flex: 1; }
+.room-step {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.room-name {
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: var(--text-bright);
+  letter-spacing: -0.3px;
+}
+.room-monster {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  font-style: italic;
+}
+.room-desc {
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  line-height: 1.6;
+  margin-top: 6px;
+}
+.room-code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--magic-cyan);
+  background: rgba(34,211,238,0.05);
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(34,211,238,0.08);
+  margin-top: 10px;
+  display: inline-block;
+}
+
+/* Room accent colors */
+.room[data-step="1"] { --accent: var(--magic-red); }
+.room[data-step="2"] { --accent: var(--magic-cyan); }
+.room[data-step="3"] { --accent: var(--magic-purple); }
+.room[data-step="4"] { --accent: var(--magic-green); }
+.room[data-step="5"] { --accent: var(--magic-pink); }
+.room[data-step="6"] { --accent: var(--magic-amber); }
+.room[data-step="7"] { --accent: var(--magic-amber); }
+.room[data-step="7b"] { --accent: var(--magic-pink); }
+.room[data-step="8"] { --accent: var(--magic-red); }
+.room[data-step="9"] { --accent: var(--magic-green); }
+
+/* THE FORK */
+.fork {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px 0;
+  position: relative;
+}
+.fork-sign {
+  text-align: center;
+  padding: 16px 24px;
+  background: rgba(245,158,11,0.04);
+  border: 1px dashed rgba(245,158,11,0.2);
+  border-radius: 10px;
+  margin-bottom: 16px;
+}
+.fork-sign-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--torch-orange);
+  margin-bottom: 6px;
+}
+.fork-sign-text {
+  font-size: 0.82rem;
+  color: var(--text-dim);
+}
+.fork-paths {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.fork-path {
+  padding: 16px 20px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all var(--transition);
+  text-align: center;
+}
+.fork-path.direct {
+  background: rgba(167,139,250,0.05);
+  border: 1px solid rgba(167,139,250,0.15);
+}
+.fork-path.direct:hover {
+  background: rgba(167,139,250,0.1);
+  border-color: rgba(167,139,250,0.3);
+}
+.fork-path.tools {
+  background: rgba(245,158,11,0.05);
+  border: 1px solid rgba(245,158,11,0.15);
+}
+.fork-path.tools:hover {
+  background: rgba(245,158,11,0.1);
+  border-color: rgba(245,158,11,0.3);
+}
+.fork-path-icon { font-size: 1.6rem; margin-bottom: 6px; }
+.fork-path-label {
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: var(--text-bright);
+  margin-bottom: 4px;
+}
+.fork-path-desc {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+.fork-path.active-path {
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+/* TOOL CORRIDOR (dashed border) */
+.tool-corridor {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 20px;
+  border: 2px dashed rgba(245,158,11,0.15);
+  border-radius: 14px;
+  background: rgba(245,158,11,0.02);
+  position: relative;
+}
+.tool-corridor-label {
+  position: absolute;
+  top: -10px;
+  left: 24px;
+  background: var(--bg);
+  padding: 0 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--torch-orange);
+}
+.tool-corridor .room { max-width: 100%; }
+.tool-corridor .corridor { height: 24px; }
+
+/* CERBERUS GAUGES */
+.cerberus-gauges {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  margin-top: 12px;
+}
+.gauge {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  text-align: center;
+}
+.gauge-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+.gauge-bar {
+  height: 6px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+.gauge-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 1s ease;
+}
+.gauge-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.gauge[data-factor="overlap"] .gauge-label { color: #60a5fa; }
+.gauge[data-factor="overlap"] .gauge-fill { background: #60a5fa; }
+.gauge[data-factor="semantic"] .gauge-label { color: var(--magic-purple); }
+.gauge[data-factor="semantic"] .gauge-fill { background: var(--magic-purple); }
+.gauge[data-factor="attribution"] .gauge-label { color: var(--magic-green); }
+.gauge[data-factor="attribution"] .gauge-fill { background: var(--magic-green); }
+
+/* DETAIL PANEL */
+.detail-panel {
+  position: fixed;
+  top: 0; right: 0;
+  width: 400px; max-width: 90vw;
+  height: 100vh;
+  background: var(--bg-panel);
+  border-left: 1px solid var(--border);
+  z-index: 100;
+  transform: translateX(100%);
+  transition: transform var(--transition);
+  overflow-y: auto;
+  box-shadow: -8px 0 40px rgba(0,0,0,0.5);
+}
+.detail-panel.open { transform: translateX(0); }
+.panel-header {
+  padding: 28px 24px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  position: sticky;
+  top: 0;
+  background: var(--bg-panel);
+  z-index: 2;
+}
+.panel-icon { font-size: 2rem; }
+.panel-title-wrap { flex: 1; margin-left: 14px; }
+.panel-step {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.panel-title {
+  font-weight: 800;
+  font-size: 1.2rem;
+  color: var(--text-bright);
+}
+.panel-monster {
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  font-style: italic;
+}
+.panel-close {
+  width: 32px; height: 32px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  transition: all var(--transition);
+  flex-shrink: 0;
+}
+.panel-close:hover { background: var(--bg-room); color: var(--text-bright); }
+.panel-body { padding: 20px 24px 40px; }
+.panel-section { margin-bottom: 20px; }
+.panel-section-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+}
+.panel-text {
+  font-size: 0.85rem;
+  color: var(--text);
+  line-height: 1.7;
+}
+.panel-code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  color: var(--magic-cyan);
+  background: rgba(34,211,238,0.05);
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(34,211,238,0.08);
+  overflow-x: auto;
+  white-space: pre;
+  line-height: 1.7;
+}
+.panel-file {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  color: var(--torch-orange);
+  background: rgba(245,158,11,0.05);
+  padding: 6px 10px;
+  border-radius: 6px;
+  display: inline-block;
+}
+.panel-flavor {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  font-style: italic;
+  line-height: 1.7;
+  padding: 12px 16px;
+  background: rgba(255,255,255,0.02);
+  border-left: 3px solid var(--border);
+  border-radius: 0 8px 8px 0;
+}
+
+/* BACKDROP */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 99;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+.backdrop.active { opacity: 1; pointer-events: auto; }
+
+/* SCROLL INDICATOR */
+.scroll-indicator {
+  position: fixed;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 50;
+}
+.scroll-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+  transition: all var(--transition);
+  cursor: pointer;
+}
+.scroll-dot.active { background: var(--torch-orange); box-shadow: 0 0 8px var(--torch-orange); }
+.scroll-dot:hover { background: var(--text-dim); }
+
+/* RESPONSIVE */
+@media (max-width: 700px) {
+  .header h1 { font-size: 1.6rem; }
+  .room { padding: 16px 18px 14px; }
+  .fork-paths { grid-template-columns: 1fr; }
+  .cerberus-gauges { grid-template-columns: 1fr; }
+  .scroll-indicator { display: none; }
+  .detail-panel { width: 100vw; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>The Descent</h1>
+  <div class="subtitle">How a message journeys through the haunted pipeline</div>
+  <div class="code-ref">async def _agent_reply(session_id, user_text) -> dict</div>
+</div>
+
+<div class="controls">
+  <button class="ctrl-btn play" onclick="playSequence()">&#9654; Play the Journey</button>
+  <button class="ctrl-btn" onclick="resetAll()">&#8635; Reset</button>
+  <button class="ctrl-btn" id="pathToggle" onclick="togglePath()">Showing: Tool Path</button>
+</div>
+
+<!-- SCROLL INDICATOR -->
+<div class="scroll-indicator" id="scrollNav"></div>
+
+<!-- CASTLE -->
+<div class="castle-wrap" id="castle">
+
+  <!-- FLOOR 1: THE GATE -->
+  <div class="floor">
+    <div class="floor-label">Floor 1 &mdash; The Outer Walls</div>
+    <div class="room" data-step="1" data-id="bouncer" onclick="openRoom('bouncer')">
+      <div class="room-top">
+        <div class="room-icon">&#129704;</div>
+        <div class="room-info">
+          <div class="room-step">Step 01</div>
+          <div class="room-name">The Gate</div>
+          <div class="room-monster">Gorgrath the Gargoyle</div>
+        </div>
+      </div>
+      <div class="room-desc">Nothing enters the castle without the Gargoyle's blessing. He checks your credentials, sniffs for malice, and decides: ENTER or BEGONE.</div>
+      <div class="room-code">validate_message(user_text)</div>
+    </div>
+  </div>
+  <div class="corridor" data-after="bouncer"></div>
+
+  <!-- FLOOR 2: THE ARCHIVES -->
+  <div class="floor">
+    <div class="floor-label">Floor 2 &mdash; The Upper Library</div>
+    <div class="room" data-step="2" data-id="librarian" onclick="openRoom('librarian')">
+      <div class="room-top">
+        <div class="room-icon">&#128218;</div>
+        <div class="room-info">
+          <div class="room-step">Step 02</div>
+          <div class="room-name">The Archives</div>
+          <div class="room-monster">Esmeralda the Ghost Librarian</div>
+        </div>
+      </div>
+      <div class="room-desc">Esmeralda reaches into the walls and pulls knowledge from the stone itself. Three search methods work in parallel: keyword, semantic, and reranking.</div>
+      <div class="room-code">rag.search(user_text)</div>
+    </div>
+  </div>
+  <div class="corridor" data-after="librarian"></div>
+
+  <!-- FLOOR 3: THE SCRIPTORIUM -->
+  <div class="floor">
+    <div class="floor-label">Floor 3 &mdash; The Scriptorium</div>
+    <div class="room" data-step="3" data-id="scriptwriter" onclick="openRoom('scriptwriter')">
+      <div class="room-top">
+        <div class="room-icon">&#128220;</div>
+        <div class="room-info">
+          <div class="room-step">Step 03</div>
+          <div class="room-name">The Scriptorium</div>
+          <div class="room-monster">Quillborn the Ink Wraith</div>
+        </div>
+      </div>
+      <div class="room-desc">Quillborn assembles the sacred script &mdash; binding the guest's request with retrieved lore and 8 mandatory rules. The script is law.</div>
+      <div class="room-code">system_prompt = f"You are the Grand Chamberlain..."</div>
+    </div>
+  </div>
+  <div class="corridor" data-after="scriptwriter"></div>
+
+  <!-- FLOOR 4: THE MEMORY VAULT -->
+  <div class="floor">
+    <div class="floor-label">Floor 4 &mdash; The Memory Vaults</div>
+    <div class="room" data-step="4" data-id="historian" onclick="openRoom('historian')">
+      <div class="room-top">
+        <div class="room-icon">&#129504;</div>
+        <div class="room-info">
+          <div class="room-step">Step 04</div>
+          <div class="room-name">The Memory Vault</div>
+          <div class="room-monster">Mnemovex the Lich</div>
+        </div>
+      </div>
+      <div class="room-desc">Mnemovex has preserved every conversation since the Resort opened. He selects which memories are relevant and binds them into the script.</div>
+      <div class="room-code">memory.get_messages(session_id, limit=50)</div>
+    </div>
+  </div>
+  <div class="corridor" data-after="historian"></div>
+
+  <!-- FLOOR 5: THE THRONE ROOM -->
+  <div class="floor">
+    <div class="floor-label">Floor 5 &mdash; The Throne Room</div>
+    <div class="room" data-step="5" data-id="mouthpiece" onclick="openRoom('mouthpiece')" style="border-width:2px;">
+      <div class="room-top">
+        <div class="room-icon">&#128302;</div>
+        <div class="room-info">
+          <div class="room-step">Step 05 &mdash; Phase 1</div>
+          <div class="room-name">The Throne Room</div>
+          <div class="room-monster">The Oracle</div>
+        </div>
+      </div>
+      <div class="room-desc">The Oracle does not think. The Oracle predicts. It sees the full case file &mdash; system prompt, RAG context, memory, tools &mdash; and decides: speak directly, or summon the servants.</div>
+      <div class="room-code">llm_resp = await router.chat(chat_history, tools=tool_schemas)</div>
+    </div>
+  </div>
+
+  <!-- THE FORK -->
+  <div class="fork">
+    <div class="fork-sign">
+      <div class="fork-sign-title">&#9878; The Crossroads Crypt</div>
+      <div class="fork-sign-text">Did the Oracle request a tool? The path divides here.</div>
+    </div>
+    <div class="fork-paths">
+      <div class="fork-path direct" onclick="setPath('direct')">
+        <div class="fork-path-icon">&#128156;</div>
+        <div class="fork-path-label">Main Hall</div>
+        <div class="fork-path-desc">No tools needed &mdash; skip to the Watchdog</div>
+      </div>
+      <div class="fork-path tools" onclick="setPath('tools')">
+        <div class="fork-path-icon">&#128295;</div>
+        <div class="fork-path-label">The Iron Door</div>
+        <div class="fork-path-desc">Tool calls detected &mdash; enter the secret passage</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOOL CORRIDOR -->
+  <div class="tool-corridor" id="toolCorridor">
+    <div class="tool-corridor-label">&#9881; Secret Passage &mdash; Tool Execution</div>
+
+    <div class="room" data-step="6" data-id="checkpoint" onclick="openRoom('checkpoint')">
+      <div class="room-top">
+        <div class="room-icon">&#128272;</div>
+        <div class="room-info">
+          <div class="room-step">Step 06</div>
+          <div class="room-name">The Checkpoint</div>
+          <div class="room-monster">Validex the Gear Golem</div>
+        </div>
+      </div>
+      <div class="room-desc">The Golem checks the Oracle's tool request against the rulebook. Does the tool exist? Is the hotel in the registry? No mercy for the malformed.</div>
+      <div class="room-code">_validate_tool_call(tool_name, tool_args)</div>
+    </div>
+    <div class="corridor" data-after="checkpoint" style="height:20px;"></div>
+
+    <div class="room" data-step="7" data-id="hands" onclick="openRoom('hands')">
+      <div class="room-top">
+        <div class="room-icon">&#128295;</div>
+        <div class="room-info">
+          <div class="room-step">Step 07</div>
+          <div class="room-name">The Forge</div>
+          <div class="room-monster">Ferrus the Forge Demon</div>
+        </div>
+      </div>
+      <div class="room-desc">Ferrus executes. Bookings are made. PDFs are stamped. Data is fetched. He picks the correct arm, uses the correct tool, and returns the result.</div>
+      <div class="room-code">await registry.async_execute_with_timing(name, **args)</div>
+    </div>
+    <div class="corridor" data-after="hands" style="height:20px;"></div>
+
+    <div class="room" data-step="7b" data-id="synthesis" onclick="openRoom('synthesis')">
+      <div class="room-top">
+        <div class="room-icon">&#129497;</div>
+        <div class="room-info">
+          <div class="room-step">Step 7B &mdash; Phase 2</div>
+          <div class="room-name">The Witch's Den</div>
+          <div class="room-monster">Syntha the Weaving Witch</div>
+        </div>
+      </div>
+      <div class="room-desc">Syntha takes the Oracle's original words and the Forge's raw results and weaves them into one. This is LLM call #2 &mdash; the Oracle speaks again, now informed.</div>
+      <div class="room-code">llm_resp2 = await router.chat(chat_history)</div>
+    </div>
+  </div>
+
+  <div class="corridor" data-after="synthesis"></div>
+
+  <!-- FLOOR 6: THE TRUTH-PIT -->
+  <div class="floor">
+    <div class="floor-label">Floor 6 &mdash; The Catacombs</div>
+    <div class="room" data-step="8" data-id="watchdog" onclick="openRoom('watchdog')">
+      <div class="room-top">
+        <div class="room-icon">&#128058;</div>
+        <div class="room-info">
+          <div class="room-step">Step 08</div>
+          <div class="room-name">The Truth-Pit</div>
+          <div class="room-monster">Verdict &mdash; The Three-Headed Dog</div>
+        </div>
+      </div>
+      <div class="room-desc">Three heads. Three checks. All three must nod before the scroll may pass.</div>
+      <div class="cerberus-gauges">
+        <div class="gauge" data-factor="overlap">
+          <div class="gauge-label">Overlap (30%)</div>
+          <div class="gauge-bar"><div class="gauge-fill" id="gauge-overlap" style="width:0%;"></div></div>
+          <div class="gauge-value" id="gauge-overlap-val">--</div>
+        </div>
+        <div class="gauge" data-factor="semantic">
+          <div class="gauge-label">Semantic (50%)</div>
+          <div class="gauge-bar"><div class="gauge-fill" id="gauge-semantic" style="width:0%;"></div></div>
+          <div class="gauge-value" id="gauge-semantic-val">--</div>
+        </div>
+        <div class="gauge" data-factor="attribution">
+          <div class="gauge-label">Attribution (20%)</div>
+          <div class="gauge-bar"><div class="gauge-fill" id="gauge-attribution" style="width:0%;"></div></div>
+          <div class="gauge-value" id="gauge-attribution-val">--</div>
+        </div>
+      </div>
+      <div class="room-code">detector.score_response(response, rag_contexts, query)</div>
+    </div>
+  </div>
+  <div class="corridor" data-after="watchdog"></div>
+
+  <!-- FLOOR 7: DELIVERY -->
+  <div class="floor">
+    <div class="floor-label">Floor 7 &mdash; The Vault</div>
+    <div class="room" data-step="9" data-id="delivery" onclick="openRoom('delivery')">
+      <div class="room-top">
+        <div class="room-icon">&#128230;</div>
+        <div class="room-info">
+          <div class="room-step">Step 09</div>
+          <div class="room-name">The Messenger's Vault</div>
+          <div class="room-monster">Hermes the Wraith</div>
+        </div>
+      </div>
+      <div class="room-desc">Hermes takes what has been refined by every room above and flies it back through the castle to the guest who is waiting.</div>
+      <div class="room-code">return {"message": ..., "confidence": ..., "provider": ...}</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- DETAIL PANEL -->
+<div class="backdrop" id="backdrop" onclick="closePanel()"></div>
+<div class="detail-panel" id="detailPanel">
+  <div class="panel-header">
+    <div class="panel-icon" id="panelIcon"></div>
+    <div class="panel-title-wrap">
+      <div class="panel-step" id="panelStep"></div>
+      <div class="panel-title" id="panelTitle"></div>
+      <div class="panel-monster" id="panelMonster"></div>
+    </div>
+    <button class="panel-close" onclick="closePanel()">&times;</button>
+  </div>
+  <div class="panel-body" id="panelBody"></div>
+</div>
+
+<script>
+const ROOMS = {
+  bouncer: {
+    icon: "\u{1F9E8}", step: "Step 01", title: "The Gate", monster: "Gorgrath the Gargoyle",
+    file: "app/manager_office/validation.py",
+    flavor: "Nothing enters the castle without the Gargoyle's blessing. He checks your credentials, sniffs for malice, and decides: ENTER or BEGONE.",
+    description: "The Bouncer validates every incoming message before it goes anywhere. It checks for SQL injection patterns (DROP TABLE, DELETE FROM), XSS attacks (script tags, javascript:), message length (max 5000 chars), and sanitizes HTML using bleach. If anything fails, the message is rejected immediately.",
+    code: "text = validate_message(user_text)\n# Checks: length, SQL injection, XSS, bleach sanitization\n# Raises ValidationError if anything is suspicious",
+    teaches: "Input validation is a reflex \u2014 it happens before any higher processing. The LLM never sees a malicious message."
+  },
+  librarian: {
+    icon: "\u{1F4DA}", step: "Step 02", title: "The Archives", monster: "Esmeralda the Ghost Librarian",
+    file: "app/records_room/advanced_rag.py",
+    flavor: "Esmeralda has haunted these archives for three centuries. She reaches into the walls and pulls memories from the stone itself.",
+    description: "The Librarian runs a 3-stage hybrid search:\n\n1. BM25 keyword search (sub-1ms) \u2014 finds exact term matches\n2. Dense vector search (11ms, ChromaDB + all-MiniLM-L6-v2) \u2014 finds semantic matches\n3. Reciprocal Rank Fusion \u2014 merges both result sets\n4. Cross-encoder reranking (BAAI/bge-reranker-base) \u2014 rescores the top candidates\n\nEach result is tagged with its source document for attribution.",
+    code: "knowledge = rag.search(user_text)\nresults = knowledge.get('results', [])\nrag_contexts = [r['text'] for r in results]\n# Tags each with [Source: filename]",
+    teaches: "Hybrid search catches what either method alone would miss. BM25 finds 'Vampire Manor' by exact name. Vectors find it when you ask about 'the gothic castle in Transylvania'."
+  },
+  scriptwriter: {
+    icon: "\u{1F4DC}", step: "Step 03", title: "The Scriptorium", monster: "Quillborn the Ink Wraith",
+    file: "app/main.py (lines 167-183)",
+    flavor: "Quillborn assembles the sacred script. He takes the guest's request, binds it with retrieved lore, and writes the instructions that will command the Oracle.",
+    description: "The Scriptwriter constructs the system prompt. It includes:\n\n\u2022 The Grand Chamberlain persona\n\u2022 Today's date and session ID\n\u2022 All RAG context with [Source: ...] attribution tags\n\u2022 8 mandatory rules (use KB first, don't invent, say 'I don't know', gothic tone, farewell phrases)\n\nThis prompt is the law that governs the Oracle's behaviour.",
+    code: "system_prompt = f\"\"\"\nYou are the 'Grand Chamberlain'...\nToday is {current_date_str}.\nACTIVE SESSION ID: {session_id}\n\nRESORT KNOWLEDGE BASE (MANDATORY):\n{context_text}\n\nMANDATORY RULES:\n1. ALWAYS base your answer on the KB...\n\"\"\"",
+    teaches: "The system prompt is where you control LLM behaviour. Rules, persona, context \u2014 everything the Oracle knows comes from this script."
+  },
+  historian: {
+    icon: "\u{1F9E0}", step: "Step 04", title: "The Memory Vault", monster: "Mnemovex the Lich",
+    file: "app/concierge/memory.py",
+    flavor: "Mnemovex has preserved every conversation since the Resort opened. He selects which memories are relevant and binds them into the script.",
+    description: "The Historian retrieves the last 50 messages from this session's conversation history. Each message (user or assistant) is added to the chat_history list that the Oracle will see.\n\nAfter 12 messages, the system auto-summarises the conversation to save tokens, deleting older messages and prepending a summary.",
+    code: "past_messages = memory.get_messages(session_id)\nchat_history = [LLMMessage(role='system', content=system_prompt)]\nfor m in past_messages:\n    chat_history.append(LLMMessage(role=m['role'], content=m['content']))\nchat_history.append(LLMMessage(role='user', content=user_text))",
+    teaches: "Without memory, the Oracle forgets everything between breaths. The Historian gives it continuity \u2014 but at a token cost."
+  },
+  mouthpiece: {
+    icon: "\u{1F52E}", step: "Step 05 \u2014 Phase 1", title: "The Throne Room", monster: "The Oracle",
+    file: "app/concierge/llm_providers.py",
+    flavor: "The Oracle does not think. The Oracle predicts. It sees the shape of what must come next, token by token, until the answer crystallises from probability into truth.",
+    description: "This is LLM Call #1. The Oracle receives the full chat history (system prompt + past messages + user message) plus the available tool schemas.\n\nIt makes a decision:\n\u2022 Respond directly (text only) \u2192 skip to Watchdog\n\u2022 Call one or more tools \u2192 enter the Secret Passage\n\nThe ModelRouter tries providers in priority order (OpenAI \u2192 Anthropic \u2192 Ollama) with automatic failover.",
+    code: "llm_resp = await router.chat(chat_history, tools=tool_schemas)\n# Returns: LLMResponse with .content, .tool_calls, .provider\n# If tool_calls is non-empty \u2192 tool path\n# If empty \u2192 direct response path",
+    teaches: "This is the brain of the system. One call, one decision: talk or act. Everything before this was preparation. Everything after is execution or verification."
+  },
+  checkpoint: {
+    icon: "\u{1F510}", step: "Step 06", title: "The Checkpoint", monster: "Validex the Gear Golem",
+    file: "app/main.py (lines 56-62)",
+    flavor: "The Golem does not care about your feelings. It checks the Oracle's tool request against the rulebook. No mercy for the malformed.",
+    description: "Defense 6: Before any tool executes, the Golem validates the arguments.\n\nFor book_room: checks that hotel_name is in the VALID_HOTELS registry (the 6 real properties). If the Oracle hallucinates a fake hotel name (e.g., 'Dragon Spa'), the Golem blocks it.\n\nBlocked calls return {ok: false, blocked: true} and the Oracle is told why.",
+    code: "is_valid, error_msg = _validate_tool_call(t_name, t_args)\nif not is_valid:\n    res = {'ok': False, 'error': error_msg, 'blocked': True}\n    # Tool is NOT executed",
+    teaches: "The LLM will always trust its context. If poisoned data says 'Dragon Spa exists', the Oracle will try to book it. The Golem is the last line of defense."
+  },
+  hands: {
+    icon: "\u{1F527}", step: "Step 07", title: "The Forge", monster: "Ferrus the Forge Demon",
+    file: "app/concierge/tools.py",
+    flavor: "Ferrus executes. He doesn't question, doesn't interpret, doesn't improvise. He picks the correct arm, uses the correct tool, and returns the result.",
+    description: "The Forge executes the validated tool call:\n\n\u2022 book_room \u2014 validates dates, writes booking to SQLite, generates a PDF receipt\n\u2022 get_booking \u2014 retrieves booking by reference ID\n\u2022 search_amenities \u2014 runs a RAG query and returns context\n\nEach execution is timed, logged, and tracked as a Prometheus metric.",
+    code: "res = await registry.async_execute_with_timing(t_name, **t_args)\n# Generates request_id, logs start/end, increments TOOL_CALL_COUNT\n# Returns result dict or {ok: false, error: str}",
+    teaches: "Tools are the hands of the system. The Oracle thinks, the Forge does. Separating decision from execution is what makes the architecture safe."
+  },
+  synthesis: {
+    icon: "\u{1F9D9}", step: "Step 7B \u2014 Phase 2", title: "The Witch's Den", monster: "Syntha the Weaving Witch",
+    file: "app/concierge/llm_providers.py",
+    flavor: "Syntha takes the Oracle's original words and the Forge's raw results and weaves them into one. This is LLM call #2.",
+    description: "LLM Call #2. The Witch receives the full conversation including:\n\u2022 The Oracle's initial response (with tool call requests)\n\u2022 The tool results from the Forge\n\nShe synthesises a final response that incorporates the real data. No tool schemas this time \u2014 just composition.\n\nThis is why the agent needs TWO calls: one to decide, one to describe.",
+    code: "llm_resp2 = await router.chat(chat_history)\n# chat_history now includes tool results\n# No tools parameter \u2014 pure synthesis\nfinal_message = llm_resp2.content",
+    teaches: "The two-phase pattern is invisible to users but essential. Without it, the Oracle would have to describe what happened before the tools even ran."
+  },
+  watchdog: {
+    icon: "\u{1F43A}", step: "Step 08", title: "The Truth-Pit", monster: "Verdict \u2014 The Three-Headed Dog",
+    file: "app/manager_office/hallucination.py",
+    flavor: "Three heads. Three checks. Factus checks overlap. Scopus checks semantics. Verdax checks attribution. All three must nod before the scroll may pass.",
+    description: "The Watchdog scores every response using 3 weighted factors:\n\n1. Context Overlap (30%) \u2014 token-level intersection between response and RAG context\n2. Semantic Similarity (50%) \u2014 cosine similarity of sentence embeddings\n3. Source Attribution (20%) \u2014 per-sentence grounding check\n\nOverall = 0.3\u00D7overlap + 0.5\u00D7semantic + 0.2\u00D7attribution\n\nHIGH (\u22650.7) | MEDIUM (\u22650.4) | LOW (<0.4)\n\nBlind spot: can't see data from tools, only RAG context.",
+    code: "confidence = detector.score_response(\n    final_message, rag_contexts, user_text\n)\n# Returns ConfidenceResult:\n#   overall_score, level, overlap, semantic, attribution",
+    teaches: "The Watchdog watches the wrong door. If data came through tools instead of RAG, it scores 0.0 on a correct answer. Monitoring without understanding your data flow is noise."
+  },
+  delivery: {
+    icon: "\u{1F4E6}", step: "Step 09", title: "The Messenger's Vault", monster: "Hermes the Wraith",
+    file: "app/main.py (lines 263-281)",
+    flavor: "Hermes asks nothing. Judges nothing. He takes what has been refined by every room above him and flies it to the guest who is waiting.",
+    description: "The final return. Hermes packages everything into the response dict:\n\n\u2022 message \u2014 the final LLM response text\n\u2022 tool_calls \u2014 list of tools that were called and their results\n\u2022 confidence \u2014 hallucination scores (overall, overlap, semantic, attribution)\n\u2022 provider \u2014 which LLM provider handled the request\n\nThe /chat endpoint then saves messages to memory and sends JSON to the client.",
+    code: "return {\n    'message': final_message,\n    'tool_calls': tool_results,\n    'confidence': confidence.to_dict(),\n    'provider': llm_resp.provider,\n}",
+    teaches: "The response includes confidence metadata. A smart frontend could use this to show trust indicators to the user."
+  }
+};
+
+let currentPath = 'tools';
+let panelOpen = false;
+
+// Build scroll nav
+const scrollNav = document.getElementById('scrollNav');
+const steps = ['1','2','3','4','5','F','6','7','7B','8','9'];
+steps.forEach((s,i) => {
+  const dot = document.createElement('div');
+  dot.className = 'scroll-dot';
+  dot.title = `Step ${s}`;
+  dot.onclick = () => {
+    const rooms = document.querySelectorAll('.room');
+    if (rooms[i]) rooms[i].scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
+  scrollNav.appendChild(dot);
+});
+
+function setPath(path) {
+  currentPath = path;
+  const tc = document.getElementById('toolCorridor');
+  const toggle = document.getElementById('pathToggle');
+  document.querySelectorAll('.fork-path').forEach(p => p.classList.remove('active-path'));
+
+  if (path === 'direct') {
+    tc.style.opacity = '0.2';
+    tc.style.pointerEvents = 'none';
+    document.querySelector('.fork-path.direct').classList.add('active-path');
+    toggle.textContent = 'Showing: Direct Path';
+  } else {
+    tc.style.opacity = '1';
+    tc.style.pointerEvents = 'auto';
+    document.querySelector('.fork-path.tools').classList.add('active-path');
+    toggle.textContent = 'Showing: Tool Path';
+  }
+}
+
+function togglePath() {
+  setPath(currentPath === 'tools' ? 'direct' : 'tools');
+}
+
+function openRoom(id) {
+  const data = ROOMS[id];
+  if (!data) return;
+
+  document.getElementById('panelIcon').textContent = data.icon;
+  document.getElementById('panelStep').textContent = data.step;
+  document.getElementById('panelStep').style.color = getComputedStyle(document.querySelector(`[data-id="${id}"]`)).getPropertyValue('--accent');
+  document.getElementById('panelTitle').textContent = data.title;
+  document.getElementById('panelMonster').textContent = data.monster;
+
+  let html = '';
+  html += `<div class="panel-section"><div class="panel-flavor">${data.flavor}</div></div>`;
+  html += `<div class="panel-section"><div class="panel-section-label">Source File</div><div class="panel-file">${data.file}</div></div>`;
+  html += `<div class="panel-section"><div class="panel-section-label">What Happens Here</div><div class="panel-text" style="white-space:pre-line;">${data.description}</div></div>`;
+  html += `<div class="panel-section"><div class="panel-section-label">The Code</div><div class="panel-code">${data.code}</div></div>`;
+  html += `<div class="panel-section"><div class="panel-section-label">What This Teaches</div><div class="panel-text">${data.teaches}</div></div>`;
+
+  document.getElementById('panelBody').innerHTML = html;
+  document.getElementById('detailPanel').classList.add('open');
+  document.getElementById('backdrop').classList.add('active');
+
+  // Highlight active room
+  document.querySelectorAll('.room').forEach(r => r.classList.remove('active'));
+  document.querySelector(`[data-id="${id}"]`).classList.add('active');
+  panelOpen = true;
+}
+
+function closePanel() {
+  document.getElementById('detailPanel').classList.remove('open');
+  document.getElementById('backdrop').classList.remove('active');
+  document.querySelectorAll('.room').forEach(r => r.classList.remove('active'));
+  panelOpen = false;
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closePanel();
+});
+
+// Play sequence animation
+async function playSequence() {
+  resetAll();
+  const sequence = currentPath === 'tools'
+    ? ['bouncer','librarian','scriptwriter','historian','mouthpiece','checkpoint','hands','synthesis','watchdog','delivery']
+    : ['bouncer','librarian','scriptwriter','historian','mouthpiece','watchdog','delivery'];
+
+  for (let i = 0; i < sequence.length; i++) {
+    const id = sequence[i];
+    const room = document.querySelector(`[data-id="${id}"]`);
+    if (!room) continue;
+
+    room.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    await sleep(400);
+
+    room.classList.add('lit');
+    room.style.boxShadow = `0 0 20px rgba(245,158,11,0.15)`;
+
+    // Light corridor after this room
+    const corr = document.querySelector(`[data-after="${id}"]`);
+    if (corr) corr.classList.add('lit');
+
+    // Animate cerberus gauges
+    if (id === 'watchdog') {
+      animateGauges();
+    }
+
+    await sleep(800);
+  }
+}
+
+function animateGauges() {
+  const scores = { overlap: 82, semantic: 91, attribution: 75 };
+  Object.entries(scores).forEach(([key, val]) => {
+    document.getElementById(`gauge-${key}`).style.width = `${val}%`;
+    document.getElementById(`gauge-${key}-val`).textContent = (val/100).toFixed(2);
+  });
+}
+
+function resetAll() {
+  document.querySelectorAll('.room').forEach(r => {
+    r.classList.remove('lit', 'active');
+    r.style.boxShadow = '';
+  });
+  document.querySelectorAll('.corridor').forEach(c => c.classList.remove('lit'));
+  ['overlap','semantic','attribution'].forEach(k => {
+    document.getElementById(`gauge-${k}`).style.width = '0%';
+    document.getElementById(`gauge-${k}-val`).textContent = '--';
+  });
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// Init
+setPath('tools');
+</script>
+</body>
+</html>

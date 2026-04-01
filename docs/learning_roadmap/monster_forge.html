@@ -1,0 +1,2076 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Monster Forge — Tool Registry</title>
+<link href="https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&family=MedievalSharp&family=JetBrains+Mono:wght@400;500;600;700&family=Cinzel:wght@400;600;700;900&family=Cinzel+Decorative:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --forge-bg: #0a0608;
+  --forge-bg2: #110d0f;
+  --forge-stone: #1a1318;
+  --forge-stone2: #221a1e;
+  --forge-ember: #ff4500;
+  --forge-ember2: #ff6b00;
+  --forge-gold: #c8a84b;
+  --forge-gold2: #e8c96b;
+  --forge-gold3: #ffd700;
+  --forge-silver: #8a9bb0;
+  --forge-silver2: #b0c4de;
+  --forge-purple: #6b3fa0;
+  --forge-purple2: #9b5fd0;
+  --forge-teal: #00897b;
+  --forge-teal2: #4db6ac;
+  --forge-red: #8b0000;
+  --forge-red2: #c62828;
+  --forge-text: #d4c5a9;
+  --forge-text2: #f0e6d0;
+  --forge-muted: #7a6a5a;
+  --forge-border: #3a2a2e;
+  --glow-gold: 0 0 20px rgba(200,168,75,0.6), 0 0 40px rgba(200,168,75,0.3);
+  --glow-ember: 0 0 20px rgba(255,69,0,0.7), 0 0 40px rgba(255,69,0,0.4);
+  --glow-purple: 0 0 20px rgba(107,63,160,0.7), 0 0 40px rgba(107,63,160,0.4);
+  --glow-teal: 0 0 20px rgba(0,137,123,0.7), 0 0 40px rgba(0,137,123,0.4);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Cinzel', serif;
+  background: var(--forge-bg);
+  color: var(--forge-text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ===== FORGE HEADER ===== */
+.forge-header {
+  background: linear-gradient(180deg, #0a0608 0%, #1a0a0c 50%, #0a0608 100%);
+  border-bottom: 2px solid var(--forge-gold);
+  padding: 28px 24px 20px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.forge-header::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 100%, rgba(255,69,0,0.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+.forge-title-small {
+  font-family: 'Cinzel Decorative', serif;
+  font-size: 11px;
+  letter-spacing: 6px;
+  color: var(--forge-ember);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  opacity: 0.8;
+}
+.forge-title {
+  font-family: 'Cinzel Decorative', serif;
+  font-size: clamp(28px, 5vw, 52px);
+  font-weight: 700;
+  color: var(--forge-gold2);
+  text-shadow: var(--glow-gold), 2px 2px 0 #1a0a0c;
+  letter-spacing: 3px;
+  line-height: 1.1;
+  margin-bottom: 6px;
+}
+.forge-subtitle {
+  font-size: 12px;
+  color: var(--forge-muted);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+.ember-particles {
+  position: absolute; inset: 0; pointer-events: none; overflow: hidden;
+}
+.ember-particles span {
+  position: absolute;
+  bottom: 0;
+  width: 3px; height: 3px;
+  background: var(--forge-ember);
+  border-radius: 50%;
+  animation: floatEmber linear infinite;
+  box-shadow: 0 0 6px var(--forge-ember);
+}
+@keyframes floatEmber {
+  0% { transform: translateY(0) translateX(0) scale(1); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 0.6; }
+  100% { transform: translateY(-120px) translateX(var(--drift)) scale(0.2); opacity: 0; }
+}
+
+/* ===== NAV TABS ===== */
+.forge-nav {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  background: var(--forge-bg2);
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--forge-border);
+  flex-wrap: wrap;
+}
+.nav-tab {
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--forge-muted);
+  background: transparent;
+  border: 1px solid transparent;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: all 0.3s;
+  border-radius: 4px;
+}
+.nav-tab:hover { color: var(--forge-gold); border-color: var(--forge-gold); }
+.nav-tab.active {
+  color: var(--forge-gold2);
+  background: rgba(200,168,75,0.1);
+  border-color: var(--forge-gold);
+  box-shadow: var(--glow-gold);
+}
+
+/* ===== PANELS ===== */
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* ===== FORGE ROOM (MAIN VISUALIZATION) ===== */
+.forge-room {
+  padding: 32px 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* ===== FORGE MASTER SECTION ===== */
+.forge-master-section {
+  background: linear-gradient(135deg, #150d10 0%, #1e1218 100%);
+  border: 1px solid var(--forge-border);
+  border-top: 3px solid var(--forge-ember);
+  border-radius: 8px;
+  padding: 24px;
+  margin-bottom: 32px;
+  position: relative;
+  overflow: hidden;
+}
+.forge-master-section::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(circle at 0% 100%, rgba(255,69,0,0.08) 0%, transparent 60%);
+  pointer-events: none;
+}
+.forge-master-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.forge-icon-large {
+  width: 56px; height: 56px;
+  background: linear-gradient(135deg, #2a1a1e, #1a0e10);
+  border: 2px solid var(--forge-ember);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 26px;
+  box-shadow: var(--glow-ember);
+  flex-shrink: 0;
+  animation: pulseEmber 3s ease-in-out infinite;
+}
+@keyframes pulseEmber {
+  0%, 100% { box-shadow: var(--glow-ember); }
+  50% { box-shadow: 0 0 30px rgba(255,69,0,0.9), 0 0 60px rgba(255,69,0,0.5); }
+}
+.forge-master-info h2 {
+  font-family: 'Cinzel Decorative', serif;
+  font-size: 18px;
+  color: var(--forge-ember2);
+  text-shadow: 0 0 10px rgba(255,107,0,0.5);
+  margin-bottom: 4px;
+}
+.forge-master-info p {
+  font-size: 12px;
+  color: var(--forge-muted);
+  letter-spacing: 1px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.forge-components {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.forge-component {
+  background: rgba(0,0,0,0.3);
+  border: 1px solid var(--forge-border);
+  border-radius: 6px;
+  padding: 12px;
+  text-align: center;
+  position: relative;
+  transition: all 0.3s;
+}
+.forge-component:hover {
+  border-color: var(--forge-gold);
+  background: rgba(200,168,75,0.05);
+}
+.forge-component .comp-icon { font-size: 22px; margin-bottom: 6px; display: block; }
+.forge-component .comp-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--forge-gold);
+  letter-spacing: 1px;
+  margin-bottom: 3px;
+}
+.forge-component .comp-type {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: var(--forge-muted);
+}
+.component-connector {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--forge-ember);
+  font-size: 11px;
+  letter-spacing: 2px;
+}
+.connector-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--forge-ember), transparent);
+}
+
+/* ===== WEAPON WALL ===== */
+.weapon-wall-section {
+  margin-bottom: 32px;
+}
+.section-title {
+  font-family: 'Cinzel Decorative', serif;
+  font-size: 14px;
+  color: var(--forge-gold);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  text-align: center;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--forge-border);
+  text-shadow: 0 0 10px rgba(200,168,75,0.4);
+}
+
+.weapon-wall {
+  background: linear-gradient(180deg, #0e0810 0%, #150d12 100%);
+  border: 1px solid var(--forge-border);
+  border-radius: 8px;
+  padding: 32px 24px;
+  position: relative;
+  overflow: hidden;
+}
+.weapon-wall::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 4px;
+  background: repeating-linear-gradient(90deg, var(--forge-stone) 0px, var(--forge-stone) 20px, var(--forge-border) 20px, var(--forge-border) 22px);
+}
+/* Stone wall texture stripes */
+.weapon-wall::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: repeating-linear-gradient(
+    180deg,
+    transparent 0px, transparent 28px,
+    rgba(255,255,255,0.01) 28px, rgba(255,255,255,0.01) 30px
+  );
+  pointer-events: none;
+}
+
+.weapons-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  position: relative;
+  z-index: 1;
+}
+
+/* ===== WEAPON CARD ===== */
+.weapon-card {
+  background: linear-gradient(135deg, #1a1018 0%, #130c10 100%);
+  border: 1px solid var(--forge-border);
+  border-radius: 8px;
+  padding: 24px 16px;
+  cursor: pointer;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+  text-align: center;
+}
+.weapon-card::before {
+  content: '';
+  position: absolute; inset: 0;
+  border-radius: 8px;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.weapon-card.key::before { background: radial-gradient(circle at 50% 50%, rgba(200,168,75,0.1), transparent 70%); }
+.weapon-card.glass::before { background: radial-gradient(circle at 50% 50%, rgba(139,0,0,0.1), transparent 70%); }
+.weapon-card.orb::before { background: radial-gradient(circle at 50% 50%, rgba(107,63,160,0.1), transparent 70%); }
+.weapon-card:hover::before { opacity: 1; }
+
+.weapon-card.key:hover { border-color: var(--forge-gold); box-shadow: var(--glow-gold); }
+.weapon-card.glass:hover { border-color: var(--forge-red2); box-shadow: 0 0 20px rgba(139,0,0,0.6), 0 0 40px rgba(139,0,0,0.3); }
+.weapon-card.orb:hover { border-color: var(--forge-purple2); box-shadow: var(--glow-purple); }
+
+.weapon-card.active-weapon.key { border-color: var(--forge-gold2); box-shadow: var(--glow-gold); }
+.weapon-card.active-weapon.glass { border-color: var(--forge-red2); box-shadow: 0 0 20px rgba(198,40,40,0.8), 0 0 40px rgba(198,40,40,0.4); }
+.weapon-card.active-weapon.orb { border-color: var(--forge-purple2); box-shadow: var(--glow-purple); }
+
+/* Weapon hanging hook */
+.weapon-hook {
+  width: 2px;
+  height: 16px;
+  background: linear-gradient(180deg, var(--forge-silver), var(--forge-border));
+  margin: 0 auto 8px;
+  border-radius: 1px;
+}
+.weapon-hook::before {
+  content: '';
+  display: block;
+  width: 8px;
+  height: 8px;
+  background: var(--forge-silver);
+  border-radius: 50% 50% 0 0;
+  margin: -4px -3px 0;
+  border: 1px solid var(--forge-silver2);
+}
+
+/* Weapon icon */
+.weapon-icon {
+  font-size: 52px;
+  display: block;
+  margin: 8px auto 12px;
+  position: relative;
+  transition: transform 0.3s;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));
+}
+.weapon-card:hover .weapon-icon { transform: translateY(-4px) scale(1.05); }
+.weapon-card.executing .weapon-icon {
+  animation: weaponExecute 1.5s ease-in-out;
+}
+@keyframes weaponExecute {
+  0% { transform: translateY(0) scale(1) rotate(0deg); }
+  20% { transform: translateY(-20px) scale(1.2) rotate(-15deg); }
+  40% { transform: translateY(-30px) scale(1.3) rotate(15deg); }
+  60% { transform: translateY(-20px) scale(1.2) rotate(-5deg); }
+  80% { transform: translateY(-10px) scale(1.1) rotate(5deg); }
+  100% { transform: translateY(0) scale(1) rotate(0deg); }
+}
+
+/* Spark burst on execute */
+.sparks {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  opacity: 0;
+}
+.weapon-card.executing .sparks { animation: sparkBurst 1.5s ease-out; }
+@keyframes sparkBurst {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0); }
+  20% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  80% { opacity: 0.5; transform: translate(-50%, -50%) scale(1.5); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(2); }
+}
+.spark { position: absolute; width: 4px; height: 4px; border-radius: 50%; }
+
+.weapon-name {
+  font-family: 'Cinzel Decorative', serif;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.weapon-card.key .weapon-name { color: var(--forge-gold2); text-shadow: 0 0 8px rgba(200,168,75,0.5); }
+.weapon-card.glass .weapon-name { color: #e57373; text-shadow: 0 0 8px rgba(229,115,115,0.5); }
+.weapon-card.orb .weapon-name { color: var(--forge-purple2); text-shadow: 0 0 8px rgba(155,95,208,0.5); }
+
+.weapon-fn-name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--forge-muted);
+  margin-bottom: 8px;
+  letter-spacing: 1px;
+}
+.weapon-tagline {
+  font-size: 10px;
+  color: var(--forge-muted);
+  font-style: italic;
+  line-height: 1.4;
+  margin-bottom: 12px;
+}
+
+/* Mini metric bar */
+.weapon-metric {
+  background: rgba(0,0,0,0.4);
+  border: 1px solid var(--forge-border);
+  border-radius: 20px;
+  padding: 4px 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: center;
+}
+.metric-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  animation: metricPulse 2s ease-in-out infinite;
+}
+.weapon-card.key .metric-dot { background: var(--forge-gold); }
+.weapon-card.glass .metric-dot { background: #e57373; }
+.weapon-card.orb .metric-dot { background: var(--forge-purple2); }
+@keyframes metricPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.7); }
+}
+.metric-count {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--forge-muted);
+}
+.metric-label {
+  font-size: 9px;
+  color: var(--forge-muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.weapon-click-hint {
+  font-size: 9px;
+  color: var(--forge-muted);
+  letter-spacing: 2px;
+  margin-top: 10px;
+  opacity: 0.5;
+  text-transform: uppercase;
+}
+
+/* ===== WEAPON DETAIL PANEL ===== */
+.weapon-detail {
+  display: none;
+  background: linear-gradient(135deg, #150d10 0%, #0e0810 100%);
+  border: 1px solid var(--forge-border);
+  border-radius: 8px;
+  margin-top: 24px;
+  overflow: hidden;
+  animation: slideDown 0.3s ease-out;
+}
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.weapon-detail.visible { display: block; }
+
+.detail-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--forge-border);
+}
+.detail-weapon-icon { font-size: 28px; }
+.detail-header h3 {
+  font-family: 'Cinzel Decorative', serif;
+  font-size: 16px;
+}
+.detail-close {
+  margin-left: auto;
+  background: transparent;
+  border: 1px solid var(--forge-border);
+  color: var(--forge-muted);
+  width: 28px; height: 28px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+.detail-close:hover { border-color: var(--forge-ember); color: var(--forge-ember); }
+
+.detail-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--forge-border);
+}
+.detail-tab {
+  flex: 1;
+  padding: 10px;
+  text-align: center;
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--forge-muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+  background: transparent;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  font-family: 'Cinzel', serif;
+}
+.detail-tab:hover { color: var(--forge-gold); }
+.detail-tab.active { color: var(--forge-gold2); border-bottom-color: var(--forge-gold); }
+
+.detail-body { padding: 20px; }
+.detail-pane { display: none; }
+.detail-pane.active { display: block; }
+
+/* ===== SCHEMA DISPLAY ===== */
+.schema-block {
+  background: #0a080c;
+  border: 1px solid var(--forge-border);
+  border-radius: 6px;
+  padding: 16px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  line-height: 1.7;
+  overflow-x: auto;
+}
+.json-key { color: #c678dd; }
+.json-string { color: #98c379; }
+.json-number { color: #d19a66; }
+.json-punct { color: #5c6370; }
+.json-required { color: var(--forge-ember); }
+.json-enum { color: var(--forge-gold); }
+.json-type { color: #61afef; }
+
+/* ===== PARAMS TABLE ===== */
+.params-table { width: 100%; border-collapse: collapse; }
+.params-table th {
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--forge-muted);
+  text-align: left;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--forge-border);
+}
+.params-table td {
+  font-size: 11px;
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(58,42,46,0.5);
+  vertical-align: top;
+}
+.params-table tr:last-child td { border-bottom: none; }
+.param-name {
+  font-family: 'JetBrains Mono', monospace;
+  color: #c678dd;
+}
+.param-type {
+  font-family: 'JetBrains Mono', monospace;
+  color: #61afef;
+  font-size: 10px;
+}
+.param-required {
+  display: inline-block;
+  background: rgba(255,69,0,0.15);
+  border: 1px solid rgba(255,69,0,0.3);
+  color: var(--forge-ember);
+  font-size: 8px;
+  padding: 1px 6px;
+  border-radius: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.param-optional {
+  display: inline-block;
+  background: rgba(90,90,90,0.15);
+  border: 1px solid rgba(90,90,90,0.3);
+  color: var(--forge-muted);
+  font-size: 8px;
+  padding: 1px 6px;
+  border-radius: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.param-desc { font-size: 11px; color: var(--forge-muted); line-height: 1.5; }
+
+/* ===== SESAME STREET ANALOGY ===== */
+.sesame-box {
+  background: linear-gradient(135deg, rgba(200,168,75,0.06), rgba(200,168,75,0.02));
+  border: 1px solid rgba(200,168,75,0.2);
+  border-left: 4px solid var(--forge-gold);
+  border-radius: 6px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+.sesame-label {
+  font-size: 9px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--forge-gold);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.sesame-content {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--forge-text2);
+  line-height: 1.7;
+}
+.sesame-character {
+  font-size: 11px;
+  color: var(--forge-muted);
+  margin-top: 8px;
+  font-style: italic;
+}
+
+/* ===== TRY IT SECTION ===== */
+.try-it-section {
+  background: rgba(0,0,0,0.3);
+  border: 1px dashed var(--forge-border);
+  border-radius: 6px;
+  padding: 16px;
+  margin-top: 16px;
+}
+.try-it-label {
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--forge-ember);
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.try-it-fields { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+.try-field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.try-field label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: #c678dd;
+  min-width: 100px;
+}
+.try-field input, .try-field select {
+  flex: 1;
+  background: #0a080c;
+  border: 1px solid var(--forge-border);
+  color: var(--forge-text2);
+  padding: 6px 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  border-radius: 4px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.try-field input:focus, .try-field select:focus { border-color: var(--forge-gold); }
+.try-field select option { background: #1a1218; }
+
+.execute-btn {
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 10px 24px;
+  border: 1px solid;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+.execute-btn.gold {
+  color: var(--forge-gold2);
+  border-color: var(--forge-gold);
+  background: rgba(200,168,75,0.1);
+}
+.execute-btn.gold:hover {
+  background: rgba(200,168,75,0.2);
+  box-shadow: var(--glow-gold);
+  transform: translateY(-1px);
+}
+.execute-btn.red {
+  color: #e57373;
+  border-color: var(--forge-red2);
+  background: rgba(139,0,0,0.1);
+}
+.execute-btn.red:hover {
+  background: rgba(139,0,0,0.2);
+  box-shadow: 0 0 20px rgba(139,0,0,0.6);
+}
+.execute-btn.purple {
+  color: var(--forge-purple2);
+  border-color: var(--forge-purple);
+  background: rgba(107,63,160,0.1);
+}
+.execute-btn.purple:hover {
+  background: rgba(107,63,160,0.2);
+  box-shadow: var(--glow-purple);
+}
+
+.execute-result {
+  margin-top: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  background: #0a080c;
+  border: 1px solid var(--forge-border);
+  border-radius: 4px;
+  padding: 12px;
+  display: none;
+  animation: fadeIn 0.3s ease;
+}
+@keyframes fadeIn {
+  from { opacity: 0; } to { opacity: 1; }
+}
+.result-success { color: #98c379; border-color: rgba(152,195,121,0.3); }
+.result-error { color: #e06c75; border-color: rgba(224,108,117,0.3); }
+
+/* ===== HOTEL SHIELD ===== */
+.hotel-shield-section {
+  margin-bottom: 32px;
+}
+.hotel-shield {
+  background: linear-gradient(135deg, #130e15 0%, #0e0a10 100%);
+  border: 1px solid var(--forge-border);
+  border-radius: 8px;
+  padding: 24px;
+  position: relative;
+}
+.shield-emblem {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.shield-icon { font-size: 32px; }
+.shield-title {
+  font-family: 'Cinzel Decorative', serif;
+  font-size: 16px;
+  color: var(--forge-silver2);
+  text-shadow: 0 0 10px rgba(176,196,222,0.3);
+}
+.shield-subtitle {
+  font-size: 10px;
+  color: var(--forge-muted);
+  letter-spacing: 2px;
+  text-align: center;
+  margin-bottom: 20px;
+}
+.hotels-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.hotel-badge {
+  background: rgba(0,0,0,0.3);
+  border: 1px solid var(--forge-border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+  cursor: default;
+}
+.hotel-badge:hover {
+  border-color: var(--forge-silver);
+  background: rgba(176,196,222,0.05);
+}
+.hotel-badge-icon { font-size: 18px; flex-shrink: 0; }
+.hotel-badge-name {
+  font-size: 10px;
+  color: var(--forge-text);
+  line-height: 1.3;
+}
+.hotel-badge-valid {
+  margin-left: auto;
+  font-size: 8px;
+  color: #98c379;
+  letter-spacing: 1px;
+  flex-shrink: 0;
+}
+
+/* ===== TIMING WRAPPER SECTION ===== */
+.timing-section {
+  margin-bottom: 32px;
+}
+.timing-showcase {
+  background: linear-gradient(135deg, #0e1010 0%, #0a0e10 100%);
+  border: 1px solid var(--forge-border);
+  border-top: 3px solid var(--forge-teal2);
+  border-radius: 8px;
+  padding: 24px;
+}
+.timing-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.timing-icon {
+  width: 48px; height: 48px;
+  background: linear-gradient(135deg, #0e1818, #0a1010);
+  border: 2px solid var(--forge-teal);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px;
+  box-shadow: var(--glow-teal);
+}
+.timing-title-wrap h3 {
+  font-family: 'Cinzel Decorative', serif;
+  font-size: 15px;
+  color: var(--forge-teal2);
+  text-shadow: 0 0 10px rgba(0,137,123,0.4);
+  margin-bottom: 4px;
+}
+.timing-title-wrap p {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--forge-muted);
+}
+
+.timing-flow {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.timing-step {
+  text-align: center;
+}
+.timing-step-icon {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  margin: 0 auto 6px;
+  border: 1px solid var(--forge-border);
+  background: rgba(0,0,0,0.3);
+}
+.timing-step-label {
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: var(--forge-muted);
+  text-transform: uppercase;
+  line-height: 1.3;
+}
+.timing-arrow {
+  text-align: center;
+  color: var(--forge-teal);
+  font-size: 16px;
+  animation: arrowPulse 2s ease-in-out infinite;
+}
+@keyframes arrowPulse {
+  0%, 100% { opacity: 0.4; transform: translateX(0); }
+  50% { opacity: 1; transform: translateX(2px); }
+}
+
+.timing-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.timing-metric-box {
+  background: rgba(0,0,0,0.4);
+  border: 1px solid var(--forge-border);
+  border-radius: 6px;
+  padding: 12px;
+  text-align: center;
+}
+.timing-metric-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--forge-teal2);
+  text-shadow: 0 0 8px rgba(77,182,172,0.4);
+  margin-bottom: 4px;
+}
+.timing-metric-lbl {
+  font-size: 9px;
+  color: var(--forge-muted);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+/* ===== PROMETHEUS SECTION ===== */
+.prometheus-section {
+  margin-bottom: 32px;
+}
+.prometheus-board {
+  background: linear-gradient(135deg, #0e1015 0%, #0a0c10 100%);
+  border: 1px solid var(--forge-border);
+  border-top: 3px solid #e91e63;
+  border-radius: 8px;
+  padding: 24px;
+}
+.prom-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.prom-icon {
+  width: 48px; height: 48px;
+  background: linear-gradient(135deg, #1a0a0f, #100a0f);
+  border: 2px solid #e91e63;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px;
+  box-shadow: 0 0 20px rgba(233,30,99,0.5);
+}
+.prom-title-wrap h3 {
+  font-family: 'Cinzel Decorative', serif;
+  font-size: 15px;
+  color: #f06292;
+  text-shadow: 0 0 10px rgba(233,30,99,0.4);
+  margin-bottom: 4px;
+}
+.prom-title-wrap p {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--forge-muted);
+}
+.prom-counter-def {
+  background: #0a080c;
+  border: 1px solid var(--forge-border);
+  border-radius: 6px;
+  padding: 12px 16px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  margin-bottom: 16px;
+}
+.prom-bars { display: flex; flex-direction: column; gap: 10px; }
+.prom-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.prom-bar-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--forge-muted);
+  width: 130px;
+  flex-shrink: 0;
+}
+.prom-bar-track {
+  flex: 1;
+  height: 12px;
+  background: rgba(0,0,0,0.4);
+  border: 1px solid var(--forge-border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.prom-bar-fill {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.prom-bar-fill.gold { background: linear-gradient(90deg, var(--forge-gold), var(--forge-gold2)); }
+.prom-bar-fill.red { background: linear-gradient(90deg, var(--forge-red), var(--forge-red2)); }
+.prom-bar-fill.purple { background: linear-gradient(90deg, var(--forge-purple), var(--forge-purple2)); }
+.prom-bar-count {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 600;
+  width: 36px;
+  text-align: right;
+}
+.prom-bar-count.gold { color: var(--forge-gold2); }
+.prom-bar-count.red { color: #e57373; }
+.prom-bar-count.purple { color: var(--forge-purple2); }
+
+/* ===== LEARN PANEL ===== */
+.learn-panel { padding: 32px 24px; max-width: 900px; margin: 0 auto; }
+.learn-section { margin-bottom: 28px; }
+.learn-section-title {
+  font-family: 'Cinzel Decorative', serif;
+  font-size: 14px;
+  color: var(--forge-gold);
+  margin-bottom: 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--forge-border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.learn-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+.learn-card {
+  background: linear-gradient(135deg, #150d10, #0e0810);
+  border: 1px solid var(--forge-border);
+  border-radius: 6px;
+  padding: 16px;
+}
+.learn-card-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.learn-card-icon { font-size: 22px; }
+.learn-card-title {
+  font-family: 'Cinzel', serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--forge-gold);
+}
+.learn-card-code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: #c678dd;
+}
+.learn-card-desc {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--forge-text);
+  line-height: 1.6;
+}
+.learn-card-analogy {
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--forge-muted);
+  font-style: italic;
+  border-top: 1px solid var(--forge-border);
+  padding-top: 8px;
+}
+
+.flow-diagram {
+  background: #0a080c;
+  border: 1px solid var(--forge-border);
+  border-radius: 6px;
+  padding: 20px;
+  margin-top: 14px;
+}
+.flow-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.flow-row:last-child { margin-bottom: 0; }
+.flow-node {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(200,168,75,0.08);
+  border: 1px solid rgba(200,168,75,0.2);
+  border-radius: 4px;
+  padding: 5px 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--forge-gold);
+}
+.flow-arrow { color: var(--forge-ember); font-size: 12px; }
+.flow-node.teal {
+  background: rgba(0,137,123,0.08);
+  border-color: rgba(0,137,123,0.2);
+  color: var(--forge-teal2);
+}
+.flow-node.purple {
+  background: rgba(107,63,160,0.08);
+  border-color: rgba(107,63,160,0.2);
+  color: var(--forge-purple2);
+}
+.flow-node.silver {
+  background: rgba(176,196,222,0.06);
+  border-color: rgba(176,196,222,0.15);
+  color: var(--forge-silver2);
+}
+
+/* ===== LORE PANEL ===== */
+.lore-panel { padding: 32px 24px; max-width: 900px; margin: 0 auto; }
+.lore-scroll {
+  background: linear-gradient(135deg, #13100d, #0e0c0a);
+  border: 1px solid #3a2e1e;
+  border-radius: 8px;
+  padding: 28px;
+  margin-bottom: 20px;
+  position: relative;
+}
+.lore-scroll::before, .lore-scroll::after {
+  content: '❧';
+  font-size: 24px;
+  color: var(--forge-gold);
+  opacity: 0.4;
+  position: absolute;
+}
+.lore-scroll::before { top: 12px; left: 16px; }
+.lore-scroll::after { bottom: 12px; right: 16px; }
+.lore-title {
+  font-family: 'Cinzel Decorative', serif;
+  font-size: 18px;
+  color: var(--forge-gold2);
+  text-align: center;
+  margin-bottom: 16px;
+  text-shadow: var(--glow-gold);
+}
+.lore-text {
+  font-size: 13px;
+  color: var(--forge-text);
+  line-height: 2;
+  text-align: justify;
+}
+.lore-text em { color: var(--forge-gold); font-style: normal; }
+.lore-divider {
+  text-align: center;
+  color: var(--forge-muted);
+  font-size: 16px;
+  margin: 16px 0;
+  letter-spacing: 8px;
+}
+
+/* ===== LIVE CONSOLE ===== */
+.console-section {
+  background: #0a080c;
+  border: 1px solid var(--forge-border);
+  border-radius: 6px;
+  overflow: hidden;
+  margin-top: 16px;
+}
+.console-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: rgba(255,255,255,0.03);
+  border-bottom: 1px solid var(--forge-border);
+}
+.console-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+}
+.console-dot.red { background: #e06c75; }
+.console-dot.yellow { background: #e5c07b; }
+.console-dot.green { background: #98c379; }
+.console-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--forge-muted);
+  margin-left: 4px;
+  letter-spacing: 1px;
+}
+.console-body {
+  padding: 12px 14px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  line-height: 1.8;
+  max-height: 180px;
+  overflow-y: auto;
+}
+.log-line { display: flex; gap: 10px; }
+.log-time { color: #5c6370; flex-shrink: 0; }
+.log-level-info { color: #61afef; }
+.log-level-debug { color: #5c6370; }
+.log-level-warn { color: #e5c07b; }
+.log-level-error { color: #e06c75; }
+.log-msg { color: var(--forge-text); }
+.log-extra { color: #5c6370; }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .weapons-grid { grid-template-columns: 1fr; }
+  .hotels-grid { grid-template-columns: repeat(2, 1fr); }
+  .forge-components { grid-template-columns: 1fr; }
+  .timing-flow { grid-template-columns: 1fr; }
+  .timing-metrics { grid-template-columns: 1fr; }
+  .learn-grid { grid-template-columns: 1fr; }
+}
+
+/* ===== SCROLL BAR ===== */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--forge-bg2); }
+::-webkit-scrollbar-thumb { background: var(--forge-border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--forge-muted); }
+</style>
+</head>
+<body>
+
+<!-- Floating ember particles in header -->
+<header class="forge-header">
+  <div class="ember-particles" id="embers"></div>
+  <div class="forge-title-small">app / concierge / tools.py</div>
+  <h1 class="forge-title">The Monster Forge</h1>
+  <p class="forge-subtitle">Where Magical Weapons Are Forged &amp; Wielded</p>
+</header>
+
+<!-- Navigation -->
+<nav class="forge-nav">
+  <button class="nav-tab active" onclick="switchPanel('forge')">⚒ The Forge</button>
+  <button class="nav-tab" onclick="switchPanel('learn')">📜 The Grimoire</button>
+  <button class="nav-tab" onclick="switchPanel('lore')">🕯 The Lore</button>
+  <button class="nav-tab" onclick="switchPanel('console')">💻 Live Console</button>
+</nav>
+
+<!-- ===== PANEL 1: THE FORGE ===== -->
+<div class="panel active" id="panel-forge">
+  <div class="forge-room">
+
+    <!-- FORGE MASTER -->
+    <section class="forge-master-section">
+      <div class="forge-master-header">
+        <div class="forge-icon-large">🔥</div>
+        <div class="forge-master-info">
+          <h2>The Forge Master</h2>
+          <p>make_registry(db, pdf, rag_search_fn) → ToolRegistry</p>
+        </div>
+      </div>
+      <div class="forge-components">
+        <div class="forge-component">
+          <span class="comp-icon">🗄️</span>
+          <div class="comp-name">Database</div>
+          <div class="comp-type">DatabaseManager</div>
+        </div>
+        <div class="forge-component">
+          <span class="comp-icon">📄</span>
+          <div class="comp-name">PDF Forge</div>
+          <div class="comp-type">PDFGenerator</div>
+        </div>
+        <div class="forge-component">
+          <span class="comp-icon">🔮</span>
+          <div class="comp-name">RAG Oracle</div>
+          <div class="comp-type">Callable</div>
+        </div>
+      </div>
+      <div class="component-connector">
+        <div class="connector-line"></div>
+        <span>⚒ forge master binds all three ⚒</span>
+        <div class="connector-line"></div>
+      </div>
+    </section>
+
+    <!-- THE WEAPON WALL -->
+    <section class="weapon-wall-section">
+      <div class="section-title">⚔ The Weapon Wall — Three Sacred Tools ⚔</div>
+      <div class="weapon-wall">
+        <div class="weapons-grid">
+
+          <!-- WEAPON 1: GOLDEN KEY (book_room) -->
+          <div class="weapon-card key" id="weapon-book_room" onclick="selectWeapon('book_room')">
+            <div class="weapon-hook"></div>
+            <span class="weapon-icon" id="icon-book_room">🗝️</span>
+            <div class="sparks" id="sparks-book_room">
+              <span class="spark" style="background:#ffd700;top:-20px;left:-20px;width:5px;height:5px;border-radius:50%;box-shadow:0 0 6px #ffd700;animation:sparkFly 0.8s ease-out 0.2s both;"></span>
+              <span class="spark" style="background:#ffaa00;top:-25px;left:10px;width:4px;height:4px;border-radius:50%;box-shadow:0 0 6px #ffaa00;animation:sparkFly 0.9s ease-out 0.1s both;"></span>
+              <span class="spark" style="background:#ff6600;top:-15px;left:25px;width:6px;height:6px;border-radius:50%;box-shadow:0 0 8px #ff6600;animation:sparkFly 0.7s ease-out 0.3s both;"></span>
+            </div>
+            <div class="weapon-name">The Golden Key</div>
+            <div class="weapon-fn-name">book_room()</div>
+            <div class="weapon-tagline">"Unlocks any door in the six<br>haunted halls of Monster Resort"</div>
+            <div class="weapon-metric">
+              <div class="metric-dot"></div>
+              <span class="metric-count" id="count-book_room">0</span>
+              <span class="metric-label">calls</span>
+            </div>
+            <div class="weapon-click-hint">click to inspect</div>
+          </div>
+
+          <!-- WEAPON 2: MAGNIFYING GLASS (get_booking) -->
+          <div class="weapon-card glass" id="weapon-get_booking" onclick="selectWeapon('get_booking')">
+            <div class="weapon-hook"></div>
+            <span class="weapon-icon" id="icon-get_booking">🔍</span>
+            <div class="sparks" id="sparks-get_booking"></div>
+            <div class="weapon-name">The Blood Glass</div>
+            <div class="weapon-fn-name">get_booking()</div>
+            <div class="weapon-tagline">"Sees through shadow and stone<br>to reveal what has been promised"</div>
+            <div class="weapon-metric">
+              <div class="metric-dot"></div>
+              <span class="metric-count" id="count-get_booking">0</span>
+              <span class="metric-label">calls</span>
+            </div>
+            <div class="weapon-click-hint">click to inspect</div>
+          </div>
+
+          <!-- WEAPON 3: CRYSTAL BALL (search_amenities) -->
+          <div class="weapon-card orb" id="weapon-search_amenities" onclick="selectWeapon('search_amenities')">
+            <div class="weapon-hook"></div>
+            <span class="weapon-icon" id="icon-search_amenities">🔮</span>
+            <div class="sparks" id="sparks-search_amenities"></div>
+            <div class="weapon-name">The Arcane Orb</div>
+            <div class="weapon-fn-name">search_amenities()</div>
+            <div class="weapon-tagline">"Searches the ancient knowledge<br>scrolls via RAG enchantment"</div>
+            <div class="weapon-metric">
+              <div class="metric-dot"></div>
+              <span class="metric-count" id="count-search_amenities">0</span>
+              <span class="metric-label">calls</span>
+            </div>
+            <div class="weapon-click-hint">click to inspect</div>
+          </div>
+
+        </div><!-- end weapons-grid -->
+      </div><!-- end weapon-wall -->
+
+      <!-- WEAPON DETAIL (hidden until click) -->
+      <div class="weapon-detail" id="weapon-detail">
+        <div class="detail-header">
+          <span class="detail-weapon-icon" id="detail-icon"></span>
+          <h3 id="detail-name"></h3>
+          <button class="detail-close" onclick="closeDetail()">✕</button>
+        </div>
+        <div class="detail-tabs">
+          <button class="detail-tab active" onclick="switchDetailTab('schema')">Schema</button>
+          <button class="detail-tab" onclick="switchDetailTab('params')">Parameters</button>
+          <button class="detail-tab" onclick="switchDetailTab('analogy')">Sesame Street</button>
+          <button class="detail-tab" onclick="switchDetailTab('tryit')">Try It</button>
+        </div>
+        <div class="detail-body">
+
+          <!-- SCHEMA PANE -->
+          <div class="detail-pane active" id="pane-schema">
+            <div class="schema-block" id="schema-display"></div>
+          </div>
+
+          <!-- PARAMS PANE -->
+          <div class="detail-pane" id="pane-params">
+            <table class="params-table">
+              <thead>
+                <tr>
+                  <th>Parameter</th>
+                  <th>Type</th>
+                  <th>Required</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody id="params-tbody"></tbody>
+            </table>
+          </div>
+
+          <!-- ANALOGY PANE -->
+          <div class="detail-pane" id="pane-analogy">
+            <div class="sesame-box">
+              <div class="sesame-label">🐤 Sesame Street Explains It</div>
+              <div class="sesame-content" id="analogy-content"></div>
+              <div class="sesame-character" id="analogy-character"></div>
+            </div>
+            <div class="sesame-box" style="border-left-color: var(--forge-ember); background: rgba(255,69,0,0.04); border-color: rgba(255,69,0,0.2);">
+              <div class="sesame-label" style="color: var(--forge-ember);">🏰 Monster Resort Version</div>
+              <div class="sesame-content" id="analogy-monster"></div>
+            </div>
+          </div>
+
+          <!-- TRY IT PANE -->
+          <div class="detail-pane" id="pane-tryit">
+            <div class="try-it-section">
+              <div class="try-it-label">⚡ Summon the Weapon</div>
+              <div class="try-it-fields" id="tryit-fields"></div>
+              <button class="execute-btn" id="execute-btn" onclick="executeWeapon()">
+                ⚡ Execute
+              </button>
+              <div class="execute-result" id="execute-result"></div>
+            </div>
+          </div>
+
+        </div><!-- end detail-body -->
+      </div><!-- end weapon-detail -->
+    </section>
+
+    <!-- HOTEL SHIELD -->
+    <section class="hotel-shield-section">
+      <div class="section-title">🛡 The Valid Hotels Registry — Six Sacred Properties 🛡</div>
+      <div class="hotel-shield">
+        <div class="shield-emblem">
+          <span class="shield-icon">🛡️</span>
+          <span class="shield-title">VALID_HOTELS</span>
+          <span class="shield-icon">🛡️</span>
+        </div>
+        <p class="shield-subtitle">Single source of truth. All bookings validated against this registry.</p>
+        <div class="hotels-grid">
+          <div class="hotel-badge">
+            <span class="hotel-badge-icon">🧛</span>
+            <span class="hotel-badge-name">Vampire Manor: Eternal Night Inn</span>
+            <span class="hotel-badge-valid">✓</span>
+          </div>
+          <div class="hotel-badge">
+            <span class="hotel-badge-icon">🐺</span>
+            <span class="hotel-badge-name">The Werewolf Lodge: Moon &amp; Moor</span>
+            <span class="hotel-badge-valid">✓</span>
+          </div>
+          <div class="hotel-badge">
+            <span class="hotel-badge-icon">⚡</span>
+            <span class="hotel-badge-name">Castle Frankenstein: High Voltage Luxury</span>
+            <span class="hotel-badge-valid">✓</span>
+          </div>
+          <div class="hotel-badge">
+            <span class="hotel-badge-icon">🧟</span>
+            <span class="hotel-badge-name">Zombie Bed &amp; Breakfast: Bites &amp; Beds</span>
+            <span class="hotel-badge-valid">✓</span>
+          </div>
+          <div class="hotel-badge">
+            <span class="hotel-badge-icon">👻</span>
+            <span class="hotel-badge-name">Ghostly B&amp;B: Spectral Stay</span>
+            <span class="hotel-badge-valid">✓</span>
+          </div>
+          <div class="hotel-badge">
+            <span class="hotel-badge-icon">🏺</span>
+            <span class="hotel-badge-name">The Mummy Resort &amp; Tomb-Service</span>
+            <span class="hotel-badge-valid">✓</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TIMING WRAPPER -->
+    <section class="timing-section">
+      <div class="section-title">⏱ The Timing Wrapper — async_execute_with_timing() ⏱</div>
+      <div class="timing-showcase">
+        <div class="timing-header">
+          <div class="timing-icon">⏱</div>
+          <div class="timing-title-wrap">
+            <h3>The Stopwatch Enchantment</h3>
+            <p>async_execute_with_timing(name, **kwargs) → Any</p>
+          </div>
+        </div>
+        <div class="timing-flow">
+          <div class="timing-step">
+            <div class="timing-step-icon" style="border-color: var(--forge-ember); color: var(--forge-ember);">📥</div>
+            <div class="timing-step-label">Request<br>Arrives</div>
+          </div>
+          <div class="timing-arrow">→</div>
+          <div class="timing-step">
+            <div class="timing-step-icon" style="border-color: var(--forge-gold); color: var(--forge-gold);">🪙</div>
+            <div class="timing-step-label">Generate<br>request_id</div>
+          </div>
+          <div class="timing-arrow">→</div>
+          <div class="timing-step">
+            <div class="timing-step-icon" style="border-color: var(--forge-teal2); color: var(--forge-teal2);">⏱</div>
+            <div class="timing-step-label">Start<br>Timer</div>
+          </div>
+          <div class="timing-arrow">→</div>
+          <div class="timing-step">
+            <div class="timing-step-icon" style="border-color: var(--forge-purple2); color: var(--forge-purple2);">⚡</div>
+            <div class="timing-step-label">Execute<br>Tool fn</div>
+          </div>
+          <div class="timing-arrow">→</div>
+          <div class="timing-step">
+            <div class="timing-step-icon" style="border-color: #98c379; color: #98c379;">📊</div>
+            <div class="timing-step-label">Log +<br>Metrics</div>
+          </div>
+        </div>
+        <div class="timing-metrics">
+          <div class="timing-metric-box">
+            <div class="timing-metric-val" id="avg-ms">—</div>
+            <div class="timing-metric-lbl">Avg Elapsed (ms)</div>
+          </div>
+          <div class="timing-metric-box">
+            <div class="timing-metric-val" id="total-calls">0</div>
+            <div class="timing-metric-lbl">Total Calls</div>
+          </div>
+          <div class="timing-metric-box">
+            <div class="timing-metric-val" id="error-count" style="color: #e57373;">0</div>
+            <div class="timing-metric-lbl">Errors Caught</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PROMETHEUS -->
+    <section class="prometheus-section">
+      <div class="section-title">📈 Prometheus Scoreboard — TOOL_CALL_COUNT 📈</div>
+      <div class="prometheus-board">
+        <div class="prom-header">
+          <div class="prom-icon">📈</div>
+          <div class="prom-title-wrap">
+            <h3>The Rune Scoreboard</h3>
+            <p>Counter("mrc_tool_calls_total", labels=["tool"])</p>
+          </div>
+        </div>
+        <div class="prom-counter-def">
+          <span class="json-key">TOOL_CALL_COUNT</span> = <span class="json-type">Counter</span>(<span class="json-string">"mrc_tool_calls_total"</span>, <span class="json-string">"Total tool calls"</span>, [<span class="json-enum">"tool"</span>])
+        </div>
+        <div class="prom-bars">
+          <div class="prom-bar-row">
+            <div class="prom-bar-label">🗝️ book_room</div>
+            <div class="prom-bar-track">
+              <div class="prom-bar-fill gold" id="bar-book_room" style="width:0%"></div>
+            </div>
+            <div class="prom-bar-count gold" id="prom-count-book_room">0</div>
+          </div>
+          <div class="prom-bar-row">
+            <div class="prom-bar-label">🔍 get_booking</div>
+            <div class="prom-bar-track">
+              <div class="prom-bar-fill red" id="bar-get_booking" style="width:0%"></div>
+            </div>
+            <div class="prom-bar-count red" id="prom-count-get_booking">0</div>
+          </div>
+          <div class="prom-bar-row">
+            <div class="prom-bar-label">🔮 search_amenities</div>
+            <div class="prom-bar-track">
+              <div class="prom-bar-fill purple" id="bar-search_amenities" style="width:0%"></div>
+            </div>
+            <div class="prom-bar-count purple" id="prom-count-search_amenities">0</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div><!-- end forge-room -->
+</div><!-- end panel-forge -->
+
+<!-- ===== PANEL 2: THE GRIMOIRE ===== -->
+<div class="panel" id="panel-learn">
+  <div class="learn-panel">
+    <section class="learn-section">
+      <div class="learn-section-title">🏗️ The Architecture — How It's All Connected</div>
+      <div class="learn-grid">
+        <div class="learn-card">
+          <div class="learn-card-top">
+            <span class="learn-card-icon">🔥</span>
+            <div>
+              <div class="learn-card-title">make_registry()</div>
+              <div class="learn-card-code">The Forge Function</div>
+            </div>
+          </div>
+          <div class="learn-card-desc">Called once at startup. Takes db, pdf, and rag_search_fn as ingredients. Registers all 3 tools. Returns a ready ToolRegistry object.</div>
+          <div class="learn-card-analogy">Like a blacksmith opening the forge, binding fire, metal, and magic into each weapon before the day begins.</div>
+        </div>
+        <div class="learn-card">
+          <div class="learn-card-top">
+            <span class="learn-card-icon">🏛️</span>
+            <div>
+              <div class="learn-card-title">ToolRegistry</div>
+              <div class="learn-card-code">class ToolRegistry</div>
+            </div>
+          </div>
+          <div class="learn-card-desc">The weapon wall itself. Holds a dict of tools. Has register(), get(), list(), get_openai_tool_schemas(), and async_execute_with_timing().</div>
+          <div class="learn-card-analogy">The wall where all weapons hang. The forge master knows every blade's name and can hand any one to the LLM on demand.</div>
+        </div>
+        <div class="learn-card">
+          <div class="learn-card-top">
+            <span class="learn-card-icon">⚔️</span>
+            <div>
+              <div class="learn-card-title">Tool (dataclass)</div>
+              <div class="learn-card-code">@dataclass(frozen=True)</div>
+            </div>
+          </div>
+          <div class="learn-card-desc">Immutable. Each tool has a name, description, and fn. The fn is the actual async function. frozen=True means no one can tamper with the blade after forging.</div>
+          <div class="learn-card-analogy">A finished weapon. Once cast, the blade cannot be reforged. Its purpose is sealed.</div>
+        </div>
+        <div class="learn-card">
+          <div class="learn-card-top">
+            <span class="learn-card-icon">📋</span>
+            <div>
+              <div class="learn-card-title">to_openai_schema()</div>
+              <div class="learn-card-code">OpenAI tool format</div>
+            </div>
+          </div>
+          <div class="learn-card-desc">Converts each tool into the exact JSON format OpenAI's API expects: type "function", with name, description, and parameters as JSON Schema.</div>
+          <div class="learn-card-analogy">Translating the weapon's inscription into a language the AI wizard can read. Without this, the LLM doesn't know the weapons exist.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="learn-section">
+      <div class="learn-section-title">🌊 Full Request Flow</div>
+      <div class="flow-diagram">
+        <div class="flow-row">
+          <div class="flow-node">👤 Guest Request</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node teal">🤖 LLM picks tool</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node">📋 Tool call JSON</div>
+        </div>
+        <div class="flow-row">
+          <div class="flow-node purple">⏱ async_execute_with_timing()</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node">🪙 request_id generated</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node teal">📊 TOOL_CALL_COUNT.inc()</div>
+        </div>
+        <div class="flow-row">
+          <div class="flow-node">⚡ tool.fn(**kwargs)</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node silver">🗄️ db / 📄 pdf / 🔮 rag</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node purple">📊 log elapsed_ms + result</div>
+        </div>
+        <div class="flow-row">
+          <div class="flow-node teal">✅ Return to LLM</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node">💬 LLM crafts reply</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node silver">👤 Guest gets answer</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="learn-section">
+      <div class="learn-section-title">🛡️ Defense Layer — Hotel Validation</div>
+      <div style="background:#0a080c;border:1px solid var(--forge-border);border-radius:6px;padding:16px;font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.8;">
+        <span class="json-punct"># Defense 1: Reject bookings for unknown hotels</span><br>
+        <span class="json-key">if</span> hotel_name <span class="json-key">not in</span> <span class="json-type">VALID_HOTELS</span>:<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="json-key">logger</span>.<span class="json-string">warning</span>(<span class="json-string">"book_room_rejected_invalid_hotel"</span>)<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="json-key">return</span> {<span class="json-string">"ok"</span>: <span class="json-type">False</span>, <span class="json-string">"error"</span>: <span class="json-string">"Invalid hotel"</span>}<br>
+        <br>
+        <span class="json-punct"># The LLM cannot hallucinate a fake hotel and book it.</span><br>
+        <span class="json-punct"># VALID_HOTELS is the single source of truth.</span>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- ===== PANEL 3: THE LORE ===== -->
+<div class="panel" id="panel-lore">
+  <div class="lore-panel">
+    <div class="lore-scroll">
+      <div class="lore-title">The Legend of the Monster Forge</div>
+      <div class="lore-text">
+        In the time before the concierge awakened, the <em>Forge Master</em> descended into the depths of the back office with three sacred components: a <em>DatabaseManager</em> hewn from pure SQLite ore, a <em>PDFGenerator</em> bound in parchment and scroll, and a <em>RAG oracle</em> powered by the whispered knowledge of a thousand embedded documents.
+      </div>
+      <div class="lore-divider">✦ ✦ ✦</div>
+      <div class="lore-text">
+        The Forge Master called <em>make_registry()</em> — a single invocation that summoned the <em>ToolRegistry</em> into being. Three weapons were cast in that first fire: the <em>Golden Key</em>, which opens the doors of any of the six hallowed Monster Hotels; the <em>Blood Glass</em>, which sees through time to retrieve what has already been promised; and the <em>Arcane Orb</em>, which searches the RAG scrolls for knowledge buried in ancient PDFs.
+      </div>
+      <div class="lore-divider">✦ ✦ ✦</div>
+      <div class="lore-text">
+        Each weapon was sealed with a <em>@registry.register()</em> incantation — the decorator that binds the function to the registry wall forever. <em>frozen=True</em> ensures no dark sorcerer may modify a weapon after its making. When the LLM calls a tool, the <em>Stopwatch Enchantment</em> activates: a UUID is conjured, the timer begins, the weapon executes, and the elapsed milliseconds are inscribed in the <em>Prometheus Rune Scoreboard</em> for eternity.
+      </div>
+      <div class="lore-divider">✦ ✦ ✦</div>
+      <div class="lore-text">
+        Should a traveler name a hotel that does not appear on the <em>Sacred Shield of Valid Hotels</em>, the Golden Key will refuse to turn. This is <em>Defense 1</em> — the first line against hallucinated properties. The forge is not merely a workshop. It is a citadel.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PANEL 4: LIVE CONSOLE ===== -->
+<div class="panel" id="panel-console">
+  <div style="padding: 24px; max-width: 900px; margin: 0 auto;">
+    <div style="margin-bottom: 16px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+      <button class="execute-btn gold" onclick="simulateLog('book_room')">🗝️ Simulate book_room</button>
+      <button class="execute-btn red" onclick="simulateLog('get_booking')">🔍 Simulate get_booking</button>
+      <button class="execute-btn purple" onclick="simulateLog('search_amenities')">🔮 Simulate search_amenities</button>
+      <button class="execute-btn" style="color:var(--forge-muted);border-color:var(--forge-border);" onclick="clearConsole()">✕ Clear</button>
+    </div>
+    <div class="console-section">
+      <div class="console-header">
+        <div class="console-dot red"></div>
+        <div class="console-dot yellow"></div>
+        <div class="console-dot green"></div>
+        <span class="console-title">monster_resort.log — structlog output</span>
+      </div>
+      <div class="console-body" id="console-body">
+        <div class="log-line">
+          <span class="log-time">00:00:00</span>
+          <span class="log-level-info">[INFO ]</span>
+          <span class="log-msg">tool_module_initialized</span>
+        </div>
+        <div class="log-line">
+          <span class="log-time">00:00:00</span>
+          <span class="log-level-info">[INFO ]</span>
+          <span class="log-msg">tool_registry_initialized</span>
+        </div>
+        <div class="log-line">
+          <span class="log-time">00:00:00</span>
+          <span class="log-level-info">[INFO ]</span>
+          <span class="log-msg">tool_registered</span>
+          <span class="log-extra"> tool=book_room</span>
+        </div>
+        <div class="log-line">
+          <span class="log-time">00:00:00</span>
+          <span class="log-level-info">[INFO ]</span>
+          <span class="log-msg">tool_registered</span>
+          <span class="log-extra"> tool=get_booking</span>
+        </div>
+        <div class="log-line">
+          <span class="log-time">00:00:00</span>
+          <span class="log-level-info">[INFO ]</span>
+          <span class="log-msg">tool_registered</span>
+          <span class="log-extra"> tool=search_amenities</span>
+        </div>
+        <div class="log-line">
+          <span class="log-time">00:00:00</span>
+          <span class="log-level-info">[INFO ]</span>
+          <span class="log-msg">tool_registry_ready</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+@keyframes sparkFly {
+  0% { transform: translate(0,0) scale(1); opacity: 1; }
+  100% { transform: translate(var(--sx,20px), var(--sy,-30px)) scale(0); opacity: 0; }
+}
+</style>
+
+<script>
+// ===== STATE =====
+const state = {
+  selectedWeapon: null,
+  counts: { book_room: 0, get_booking: 0, search_amenities: 0 },
+  totalMs: [],
+  errors: 0,
+  logTime: 0,
+};
+
+// ===== WEAPON DATA =====
+const WEAPONS = {
+  book_room: {
+    icon: '🗝️',
+    color: 'gold',
+    displayName: 'The Golden Key — book_room()',
+    schema: `{
+  <span class="json-key">"type"</span>: <span class="json-string">"function"</span>,
+  <span class="json-key">"function"</span>: {
+    <span class="json-key">"name"</span>: <span class="json-string">"book_room"</span>,
+    <span class="json-key">"description"</span>: <span class="json-string">"Book a room at one of our official Monster Resort properties."</span>,
+    <span class="json-key">"parameters"</span>: {
+      <span class="json-key">"type"</span>: <span class="json-type">"object"</span>,
+      <span class="json-key">"properties"</span>: {
+        <span class="json-key">"session_id"</span>:  { <span class="json-key">"type"</span>: <span class="json-type">"string"</span> },
+        <span class="json-key">"guest_name"</span>:  { <span class="json-key">"type"</span>: <span class="json-type">"string"</span> },
+        <span class="json-key">"hotel_name"</span>:  { <span class="json-key">"type"</span>: <span class="json-type">"string"</span>, <span class="json-key">"enum"</span>: [<span class="json-enum">...VALID_HOTELS</span>] },
+        <span class="json-key">"room_type"</span>:   { <span class="json-key">"type"</span>: <span class="json-type">"string"</span> },
+        <span class="json-key">"check_in"</span>:    { <span class="json-key">"type"</span>: <span class="json-type">"string"</span> },
+        <span class="json-key">"check_out"</span>:   { <span class="json-key">"type"</span>: <span class="json-type">"string"</span> }
+      },
+      <span class="json-key">"required"</span>: [<span class="json-required">"session_id"</span>, <span class="json-required">"guest_name"</span>, <span class="json-required">"hotel_name"</span>, <span class="json-required">"room_type"</span>, <span class="json-required">"check_in"</span>, <span class="json-required">"check_out"</span>]
+    }
+  }
+}`,
+    params: [
+      { name: 'session_id', type: 'string', req: true, desc: 'The active chat session ID' },
+      { name: 'guest_name', type: 'string', req: true, desc: 'Full name of the guest making the booking' },
+      { name: 'hotel_name', type: 'string (enum)', req: true, desc: 'Must be one of the 6 VALID_HOTELS — LLM cannot invent hotels' },
+      { name: 'room_type', type: 'string', req: true, desc: 'e.g. "Coffin Suite", "Moon Howl Room"' },
+      { name: 'check_in', type: 'string', req: true, desc: 'ISO date string, e.g. 2026-10-31' },
+      { name: 'check_out', type: 'string', req: true, desc: 'ISO date string, e.g. 2026-11-01' },
+    ],
+    analogy: 'Imagine you are at a hotel front desk. You say: "I want a room please." The receptionist has a form to fill out — they need your name, which hotel, what type of room, and when you are arriving and leaving. This is exactly what book_room() does. The LLM is the receptionist. You are the guest. The form is the JSON schema.',
+    character: '— Big Bird trying to check in at Vampire Manor',
+    monster: 'The Golden Key swoops off the wall. It checks your hotel name against the Sacred Shield of Valid Hotels. If it matches, the key turns in the database lock and a PDF receipt materialises in the invoices crypt.',
+    tryFields: [
+      { id: 'session_id', label: 'session_id', type: 'text', placeholder: 'sess_abc123', value: 'sess_demo' },
+      { id: 'guest_name', label: 'guest_name', type: 'text', placeholder: 'Count Dracula', value: 'Count Dracula' },
+      { id: 'hotel_name', label: 'hotel_name', type: 'select', options: [
+        'Vampire Manor: Eternal Night Inn',
+        'The Werewolf Lodge: Moon & Moor',
+        'Castle Frankenstein: High Voltage Luxury',
+        'Zombie Bed & Breakfast: Bites & Beds',
+        'Ghostly B&B: Spectral Stay',
+        'The Mummy Resort & Tomb-Service',
+        'The Haunted Hilton (INVALID)',
+      ]},
+      { id: 'room_type', label: 'room_type', type: 'text', placeholder: 'Coffin Suite', value: 'Coffin Suite' },
+      { id: 'check_in', label: 'check_in', type: 'text', placeholder: '2026-10-31', value: '2026-10-31' },
+      { id: 'check_out', label: 'check_out', type: 'text', placeholder: '2026-11-02', value: '2026-11-02' },
+    ],
+  },
+  get_booking: {
+    icon: '🔍',
+    color: 'red',
+    displayName: 'The Blood Glass — get_booking()',
+    schema: `{
+  <span class="json-key">"type"</span>: <span class="json-string">"function"</span>,
+  <span class="json-key">"function"</span>: {
+    <span class="json-key">"name"</span>: <span class="json-string">"get_booking"</span>,
+    <span class="json-key">"description"</span>: <span class="json-string">"Retrieve details for an existing booking."</span>,
+    <span class="json-key">"parameters"</span>: {
+      <span class="json-key">"type"</span>: <span class="json-type">"object"</span>,
+      <span class="json-key">"properties"</span>: {
+        <span class="json-key">"booking_id"</span>: { <span class="json-key">"type"</span>: <span class="json-type">"string"</span> }
+      },
+      <span class="json-key">"required"</span>: [<span class="json-required">"booking_id"</span>]
+    }
+  }
+}`,
+    params: [
+      { name: 'booking_id', type: 'string', req: true, desc: 'The unique booking ID returned when the booking was created. Looks up the full booking record from the database.' },
+    ],
+    analogy: 'You lost your reservation slip. You call the hotel and give them your booking number. They look it up and read everything back: your name, the room, the dates. get_booking() is that phone call. You give one thing — the ID — and you get everything back.',
+    character: '— Elmo looking for his reservation at Ghostly B&B',
+    monster: 'The Blood Glass is lifted from its hook. A booking_id is whispered into the glass. The glass scries the database. It either returns the full booking record, or reflects back the cold words: "Not found."',
+    tryFields: [
+      { id: 'booking_id', label: 'booking_id', type: 'text', placeholder: 'BK-2026-0042', value: 'BK-2026-0042' },
+    ],
+  },
+  search_amenities: {
+    icon: '🔮',
+    color: 'purple',
+    displayName: 'The Arcane Orb — search_amenities()',
+    schema: `{
+  <span class="json-key">"type"</span>: <span class="json-string">"function"</span>,
+  <span class="json-key">"function"</span>: {
+    <span class="json-key">"name"</span>: <span class="json-string">"search_amenities"</span>,
+    <span class="json-key">"description"</span>: <span class="json-string">"Search resort knowledge base for amenities and info."</span>,
+    <span class="json-key">"parameters"</span>: {
+      <span class="json-key">"type"</span>: <span class="json-type">"object"</span>,
+      <span class="json-key">"properties"</span>: {
+        <span class="json-key">"query"</span>: { <span class="json-key">"type"</span>: <span class="json-type">"string"</span> }
+      },
+      <span class="json-key">"required"</span>: [<span class="json-required">"query"</span>]
+    }
+  }
+}`,
+    params: [
+      { name: 'query', type: 'string', req: true, desc: 'A natural language question about resort amenities, facilities, or services. Passed directly to the RAG search function for semantic search over embedded PDFs.' },
+    ],
+    analogy: 'There is a giant encyclopedia about the hotel. You cannot read the whole thing. Instead, you ask a question and a smart librarian finds the most relevant pages for you. That librarian is RAG (Retrieval-Augmented Generation). search_amenities() lets the AI ask the librarian anything about the resort.',
+    character: '— Cookie Monster asking if the Mummy Resort has a cookie bar',
+    monster: 'The Arcane Orb floats from its pedestal. The query is whispered into the swirling mist. The RAG oracle searches through embedded PDF scrolls and returns the most relevant passages. The orb never makes things up — it only reports what was written.',
+    tryFields: [
+      { id: 'query', label: 'query', type: 'text', placeholder: 'Does Vampire Manor have a blood pool?', value: 'What are the spa amenities at Vampire Manor?' },
+    ],
+  },
+};
+
+// ===== WEAPON SELECTION =====
+let activeDetailTab = 'schema';
+
+function selectWeapon(name) {
+  // Deselect all
+  document.querySelectorAll('.weapon-card').forEach(c => c.classList.remove('active-weapon'));
+  // Select clicked
+  document.getElementById('weapon-' + name).classList.add('active-weapon');
+
+  state.selectedWeapon = name;
+  const w = WEAPONS[name];
+
+  // Populate detail panel
+  document.getElementById('detail-icon').textContent = w.icon;
+  document.getElementById('detail-name').textContent = w.displayName;
+  document.getElementById('detail-name').style.color = w.color === 'gold' ? 'var(--forge-gold2)' : w.color === 'red' ? '#e57373' : 'var(--forge-purple2)';
+
+  // Schema
+  document.getElementById('schema-display').innerHTML = w.schema;
+
+  // Params
+  const tbody = document.getElementById('params-tbody');
+  tbody.innerHTML = w.params.map(p => `
+    <tr>
+      <td class="param-name">${p.name}</td>
+      <td class="param-type">${p.type}</td>
+      <td><span class="${p.req ? 'param-required' : 'param-optional'}">${p.req ? 'required' : 'optional'}</span></td>
+      <td class="param-desc">${p.desc}</td>
+    </tr>
+  `).join('');
+
+  // Analogy
+  document.getElementById('analogy-content').textContent = w.analogy;
+  document.getElementById('analogy-character').textContent = w.character;
+  document.getElementById('analogy-monster').textContent = w.monster;
+
+  // Try It fields
+  buildTryItFields(name);
+
+  // Execute button
+  const btn = document.getElementById('execute-btn');
+  btn.className = `execute-btn ${w.color}`;
+
+  // Show detail, switch to last active tab
+  const detail = document.getElementById('weapon-detail');
+  detail.classList.add('visible');
+  switchDetailTab(activeDetailTab);
+
+  // Scroll to detail
+  detail.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function buildTryItFields(name) {
+  const fields = WEAPONS[name].tryFields;
+  const container = document.getElementById('tryit-fields');
+  container.innerHTML = fields.map(f => {
+    if (f.type === 'select') {
+      return `<div class="try-field">
+        <label>${f.label}</label>
+        <select id="try-${f.id}">
+          ${f.options.map(o => `<option value="${o}">${o}</option>`).join('')}
+        </select>
+      </div>`;
+    }
+    return `<div class="try-field">
+      <label>${f.label}</label>
+      <input type="text" id="try-${f.id}" placeholder="${f.placeholder}" value="${f.value || ''}">
+    </div>`;
+  }).join('');
+  document.getElementById('execute-result').style.display = 'none';
+}
+
+function closeDetail() {
+  document.getElementById('weapon-detail').classList.remove('visible');
+  document.querySelectorAll('.weapon-card').forEach(c => c.classList.remove('active-weapon'));
+  state.selectedWeapon = null;
+}
+
+function switchDetailTab(tab) {
+  activeDetailTab = tab;
+  document.querySelectorAll('.detail-tab').forEach((t, i) => {
+    const tabs = ['schema', 'params', 'analogy', 'tryit'];
+    t.classList.toggle('active', tabs[i] === tab);
+  });
+  document.querySelectorAll('.detail-pane').forEach(p => p.classList.remove('active'));
+  document.getElementById('pane-' + tab).classList.add('active');
+}
+
+// ===== EXECUTE WEAPON (SIMULATION) =====
+function executeWeapon() {
+  const name = state.selectedWeapon;
+  if (!name) return;
+  const w = WEAPONS[name];
+
+  // Collect field values
+  const values = {};
+  w.tryFields.forEach(f => {
+    const el = document.getElementById('try-' + f.id);
+    if (el) values[f.id] = el.value;
+  });
+
+  // Animate weapon
+  const card = document.getElementById('weapon-' + name);
+  card.classList.add('executing');
+  setTimeout(() => card.classList.remove('executing'), 1500);
+
+  // Add to console + metrics
+  const ms = Math.floor(Math.random() * 120) + 20;
+  const reqId = 'req-' + Math.random().toString(36).slice(2,8);
+
+  // Validate hotel if book_room
+  let isError = false;
+  let errorMsg = '';
+  if (name === 'book_room') {
+    const VALID = [
+      'Vampire Manor: Eternal Night Inn',
+      'The Werewolf Lodge: Moon & Moor',
+      'Castle Frankenstein: High Voltage Luxury',
+      'Zombie Bed & Breakfast: Bites & Beds',
+      'Ghostly B&B: Spectral Stay',
+      'The Mummy Resort & Tomb-Service',
+    ];
+    if (!VALID.includes(values.hotel_name)) {
+      isError = true;
+      errorMsg = `Invalid hotel: '${values.hotel_name}'. Must be one of our official properties.`;
+    }
+  }
+  if (name === 'get_booking' && !values.booking_id) {
+    isError = true;
+    errorMsg = 'booking_id is required';
+  }
+
+  // Update state
+  state.counts[name]++;
+  state.totalMs.push(ms);
+  if (isError) state.errors++;
+
+  // Update UI counts
+  updateCounts();
+
+  // Simulate result
+  const resultBox = document.getElementById('execute-result');
+  resultBox.style.display = 'block';
+
+  if (isError) {
+    resultBox.className = 'execute-result result-error';
+    resultBox.innerHTML = `<span style="color:var(--forge-ember)">// DEFENSE ACTIVATED</span>\n` +
+      `{\n  "ok": false,\n  "error": "${errorMsg}",\n  "request_id": "${reqId}"\n}`;
+    addLog('WARN', `${name}_rejected`, `error="${errorMsg}" request_id="${reqId}"`);
+  } else {
+    resultBox.className = 'execute-result result-success';
+    let resultJson = '';
+    if (name === 'book_room') {
+      const bkId = 'BK-' + Math.random().toString(36).slice(2,8).toUpperCase();
+      resultJson = `{\n  "ok": true,\n  "booking_id": "${bkId}",\n  "message": "Stay confirmed at ${values.hotel_name}!",\n  "invoice_url": "/invoices/receipt_${bkId}.pdf",\n  "request_id": "${reqId}"\n}`;
+    } else if (name === 'get_booking') {
+      resultJson = `{\n  "ok": true,\n  "booking": {\n    "booking_id": "${values.booking_id}",\n    "guest_name": "Count Dracula",\n    "hotel_name": "Vampire Manor: Eternal Night Inn",\n    "room_type": "Coffin Suite",\n    "check_in": "2026-10-31"\n  },\n  "request_id": "${reqId}"\n}`;
+    } else {
+      resultJson = `{\n  "results": [\n    {\n      "text": "Vampire Manor features a heated blood pool, bat cave spa, and a 24-hour coffin concierge service.",\n      "score": 0.94\n    }\n  ],\n  "query": "${values.query}",\n  "request_id": "${reqId}"\n}`;
+    }
+    resultBox.innerHTML = `<span style="color:var(--forge-teal2)">// elapsed: ${ms}ms</span>\n` + resultJson;
+    addLog('INFO', `${name}_succeeded`, `elapsed_ms=${ms} request_id="${reqId}"`);
+  }
+
+  // Switch console to show
+  addLog('INFO', 'tool_execution_started', `tool=${name} request_id="${reqId}"`);
+}
+
+function updateCounts() {
+  ['book_room', 'get_booking', 'search_amenities'].forEach(n => {
+    document.getElementById('count-' + n).textContent = state.counts[n];
+    document.getElementById('prom-count-' + n).textContent = state.counts[n];
+  });
+
+  const total = state.counts.book_room + state.counts.get_booking + state.counts.search_amenities;
+  const max = Math.max(...Object.values(state.counts), 1);
+
+  ['book_room', 'get_booking', 'search_amenities'].forEach(n => {
+    const pct = (state.counts[n] / max) * 100;
+    document.getElementById('bar-' + n).style.width = pct + '%';
+  });
+
+  document.getElementById('total-calls').textContent = total;
+  document.getElementById('error-count').textContent = state.errors;
+  if (state.totalMs.length) {
+    const avg = Math.round(state.totalMs.reduce((a,b) => a+b, 0) / state.totalMs.length);
+    document.getElementById('avg-ms').textContent = avg;
+  }
+}
+
+// ===== PANEL SWITCHING =====
+function switchPanel(name) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ===== CONSOLE =====
+function addLog(level, msg, extra = '') {
+  const body = document.getElementById('console-body');
+  const t = new Date();
+  const ts = [t.getHours(), t.getMinutes(), t.getSeconds()].map(n => String(n).padStart(2,'0')).join(':');
+  const levelMap = { INFO: 'log-level-info', WARN: 'log-level-warn', ERROR: 'log-level-error', DEBUG: 'log-level-debug' };
+  const cls = levelMap[level] || 'log-level-info';
+  const padded = level.padEnd(5);
+  const line = document.createElement('div');
+  line.className = 'log-line';
+  line.innerHTML = `<span class="log-time">${ts}</span><span class="${cls}">[${padded}]</span><span class="log-msg"> ${msg}</span><span class="log-extra"> ${extra}</span>`;
+  body.appendChild(line);
+  body.scrollTop = body.scrollHeight;
+}
+
+function simulateLog(tool) {
+  const ms = Math.floor(Math.random() * 120) + 20;
+  const reqId = 'req-' + Math.random().toString(36).slice(2,8);
+  addLog('INFO', 'tool_execution_started', `tool=${tool} request_id="${reqId}"`);
+  setTimeout(() => {
+    state.counts[tool]++;
+    state.totalMs.push(ms);
+    updateCounts();
+    addLog('INFO', `${tool}_called`, `request_id="${reqId}"`);
+    setTimeout(() => addLog('INFO', 'tool_execution_succeeded', `tool=${tool} elapsed_ms=${ms} request_id="${reqId}"`), 300);
+  }, 200);
+}
+
+function clearConsole() {
+  document.getElementById('console-body').innerHTML = '<div class="log-line"><span class="log-time">--:--:--</span><span class="log-level-debug">[DEBUG]</span><span class="log-msg"> console cleared</span></div>';
+}
+
+// ===== EMBER PARTICLES =====
+function spawnEmbers() {
+  const container = document.getElementById('embers');
+  for (let i = 0; i < 12; i++) {
+    const span = document.createElement('span');
+    const left = Math.random() * 100;
+    const drift = (Math.random() - 0.5) * 60;
+    const duration = 2 + Math.random() * 3;
+    const delay = Math.random() * 4;
+    span.style.cssText = `left:${left}%;animation-duration:${duration}s;animation-delay:${delay}s;--drift:${drift}px;opacity:0;`;
+    container.appendChild(span);
+  }
+}
+spawnEmbers();
+
+// Animate prometheus bars on load
+setTimeout(() => {
+  // No bars to fill yet — they start at 0
+}, 500);
+</script>
+</body>
+</html>

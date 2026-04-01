@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Understanding def build_app() → FastAPI:</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* ── Reset & Base ────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy:    #0a0e27;
+    --navy-mid:#111638;
+    --navy-lt: #1a2050;
+    --gold:    #d4a845;
+    --gold-lt: #f0d078;
+    --gold-dk: #a67c20;
+    --glass:   rgba(255,255,255,0.04);
+    --glass-border: rgba(255,255,255,0.08);
+    --text:    #e0e0e8;
+    --text-dim:#8890b0;
+    --code-bg: #0d1030;
+    --green:   #4ade80;
+    --cyan:    #22d3ee;
+    --radius:  16px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--navy);
+    color: var(--text);
+    line-height: 1.7;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  code, pre {
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* ── Utility ─────────────────────────────────────────── */
+  .container { max-width: 1200px; margin: 0 auto; padding: 0 2rem; }
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .reveal-left {
+    opacity: 0;
+    transform: translateX(-60px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+  .reveal-left.visible {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  .reveal-right {
+    opacity: 0;
+    transform: translateX(60px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+  .reveal-right.visible {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  /* ── Hero ─────────────────────────────────────────────── */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 4rem 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 50% 40%, rgba(212,168,69,0.12) 0%, transparent 70%),
+      radial-gradient(circle at 20% 80%, rgba(34,211,238,0.06) 0%, transparent 40%);
+    pointer-events: none;
+  }
+
+  .hero-badge {
+    display: inline-block;
+    padding: 0.5rem 1.5rem;
+    border: 1px solid var(--gold);
+    border-radius: 100px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 2rem;
+    backdrop-filter: blur(10px);
+    background: rgba(212,168,69,0.08);
+  }
+
+  .hero h1 {
+    font-size: clamp(2.2rem, 5vw, 4rem);
+    font-weight: 800;
+    line-height: 1.15;
+    margin-bottom: 1.5rem;
+    letter-spacing: -0.02em;
+  }
+
+  .hero h1 .fn-name {
+    color: var(--gold);
+  }
+  .hero h1 .fn-return {
+    color: var(--cyan);
+  }
+
+  .hero-sub {
+    font-size: clamp(1rem, 2vw, 1.35rem);
+    color: var(--text-dim);
+    max-width: 700px;
+    line-height: 1.8;
+    font-weight: 300;
+  }
+
+  .hero-arrow {
+    margin-top: 3rem;
+    font-size: 2rem;
+    color: var(--gold);
+    animation: bounce 2s infinite;
+  }
+
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(12px); }
+  }
+
+  /* ── Quote Banner ────────────────────────────────────── */
+  .quote-banner {
+    padding: 6rem 2rem;
+    text-align: center;
+    position: relative;
+    background: linear-gradient(180deg, var(--navy) 0%, var(--navy-mid) 100%);
+  }
+
+  .quote-banner blockquote {
+    font-size: clamp(1.3rem, 3vw, 2rem);
+    font-weight: 300;
+    font-style: italic;
+    color: var(--gold-lt);
+    max-width: 900px;
+    margin: 0 auto;
+    line-height: 1.8;
+    position: relative;
+    padding: 0 2rem;
+  }
+
+  .quote-banner blockquote::before {
+    content: '\201C';
+    font-size: 8rem;
+    position: absolute;
+    top: -2.5rem;
+    left: -1rem;
+    color: rgba(212,168,69,0.15);
+    font-family: Georgia, serif;
+    line-height: 1;
+  }
+
+  .quote-attr {
+    margin-top: 1.5rem;
+    color: var(--text-dim);
+    font-size: 0.9rem;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+  }
+
+  /* ── Prize Ladder Nav ────────────────────────────────── */
+  .prize-ladder {
+    position: fixed;
+    right: 1.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    align-items: flex-end;
+  }
+
+  .prize-ladder a {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    padding: 0.3rem 0.6rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--text-dim);
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+  }
+
+  .prize-ladder a .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--glass-border);
+    border: 1px solid rgba(255,255,255,0.12);
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+  }
+
+  .prize-ladder a .label {
+    opacity: 0;
+    transform: translateX(8px);
+    transition: all 0.3s ease;
+    pointer-events: none;
+  }
+
+  .prize-ladder:hover a .label {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .prize-ladder a.active .dot {
+    background: var(--gold);
+    box-shadow: 0 0 8px rgba(212,168,69,0.6);
+    border-color: var(--gold);
+  }
+
+  .prize-ladder a.active {
+    color: var(--gold);
+  }
+
+  /* ── Section Spread ──────────────────────────────────── */
+  .spread {
+    padding: 8rem 0;
+    position: relative;
+  }
+
+  .spread:nth-child(even) {
+    background: var(--navy-mid);
+  }
+
+  .spread-header {
+    text-align: center;
+    margin-bottom: 4rem;
+  }
+
+  .spread-number {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 0.75rem;
+  }
+
+  .spread-title {
+    font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.5rem;
+  }
+
+  .spread-subtitle {
+    font-size: 1.05rem;
+    color: var(--text-dim);
+    font-weight: 300;
+  }
+
+  /* ── Split Card ──────────────────────────────────────── */
+  .split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    align-items: start;
+  }
+
+  @media (max-width: 900px) {
+    .split { grid-template-columns: 1fr; }
+    .prize-ladder { display: none; }
+  }
+
+  .card {
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius);
+    padding: 2.5rem;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .card:hover {
+    border-color: rgba(212,168,69,0.2);
+    box-shadow: 0 8px 40px rgba(0,0,0,0.3);
+  }
+
+  .card-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    display: block;
+  }
+
+  .card-role {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 0.5rem;
+  }
+
+  .card-name {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+  }
+
+  .card-desc {
+    color: var(--text-dim);
+    font-size: 0.95rem;
+    line-height: 1.8;
+  }
+
+  .card-desc strong {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  /* ── Code Panel ──────────────────────────────────────── */
+  .code-panel {
+    background: var(--code-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .code-panel-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    background: rgba(255,255,255,0.03);
+    border-bottom: 1px solid var(--glass-border);
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    font-weight: 500;
+  }
+
+  .code-panel-header .file-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--gold);
+  }
+
+  .code-panel pre {
+    padding: 1.5rem;
+    overflow-x: auto;
+    font-size: 0.82rem;
+    line-height: 1.9;
+    color: #c8cce8;
+  }
+
+  .code-panel pre .kw  { color: #c792ea; }
+  .code-panel pre .fn  { color: #82aaff; }
+  .code-panel pre .str { color: #c3e88d; }
+  .code-panel pre .cm  { color: #546e7a; font-style: italic; }
+  .code-panel pre .var { color: #f0d078; }
+  .code-panel pre .op  { color: #89ddff; }
+  .code-panel pre .num { color: #f78c6c; }
+
+  /* ── Summary Infographic ─────────────────────────────── */
+  .summary-section {
+    padding: 8rem 0;
+    background: linear-gradient(180deg, var(--navy-mid) 0%, var(--navy) 100%);
+  }
+
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-top: 3rem;
+  }
+
+  .summary-item {
+    text-align: center;
+    padding: 2rem 1rem;
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    transition: transform 0.3s ease, border-color 0.3s ease;
+  }
+
+  .summary-item:hover {
+    transform: translateY(-4px);
+    border-color: rgba(212,168,69,0.25);
+  }
+
+  .summary-emoji {
+    font-size: 2rem;
+    margin-bottom: 0.75rem;
+    display: block;
+  }
+
+  .summary-game {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 0.3rem;
+  }
+
+  .summary-sys {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+  }
+
+  .summary-var {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--cyan);
+  }
+
+  /* ── Flow Diagram ────────────────────────────────────── */
+  .flow-section {
+    padding: 6rem 0;
+  }
+
+  .flow-strip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 3rem;
+  }
+
+  .flow-node {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1.2rem;
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: 10px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    white-space: nowrap;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
+  .flow-arrow {
+    color: var(--gold);
+    font-size: 1.2rem;
+    font-weight: 300;
+  }
+
+  /* ── Footer ──────────────────────────────────────────── */
+  .footer {
+    padding: 4rem 2rem;
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 0.8rem;
+    border-top: 1px solid var(--glass-border);
+  }
+
+  .footer a {
+    color: var(--gold);
+    text-decoration: none;
+  }
+
+  /* ── Scrollbar ───────────────────────────────────────── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--navy); }
+  ::-webkit-scrollbar-thumb { background: var(--navy-lt); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--gold-dk); }
+
+  /* ── Glow accent lines ───────────────────────────────── */
+  .glow-line {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    opacity: 0.3;
+    margin: 0 auto;
+    max-width: 600px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ PRIZE LADDER NAV ═══════════════ -->
+<nav class="prize-ladder" id="prizeLadder">
+  <a href="#hero"><span class="label">Intro</span><span class="dot"></span></a>
+  <a href="#settings"><span class="label">$100 Settings</span><span class="dot"></span></a>
+  <a href="#db"><span class="label">$200 Database</span><span class="dot"></span></a>
+  <a href="#pdf"><span class="label">$500 PDF</span><span class="dot"></span></a>
+  <a href="#rag"><span class="label">$1,000 RAG</span><span class="dot"></span></a>
+  <a href="#memory"><span class="label">$2,000 Memory</span><span class="dot"></span></a>
+  <a href="#registry"><span class="label">$4,000 Registry</span><span class="dot"></span></a>
+  <a href="#router"><span class="label">$16,000 Router</span><span class="dot"></span></a>
+  <a href="#detector"><span class="label">$64,000 Detector</span><span class="dot"></span></a>
+  <a href="#tracker"><span class="label">$250,000 Tracker</span><span class="dot"></span></a>
+  <a href="#agent"><span class="label">$1,000,000 Host</span><span class="dot"></span></a>
+  <a href="#summary"><span class="label">Summary</span><span class="dot"></span></a>
+</nav>
+
+<!-- ═══════════════ HERO ═══════════════ -->
+<section class="hero" id="hero">
+  <span class="hero-badge">Monster Resort Concierge &middot; Deep Dive</span>
+  <h1>
+    Understanding<br>
+    <span class="fn-name">def build_app()</span>
+    <span class="fn-return">-&gt; FastAPI:</span>
+  </h1>
+  <p class="hero-sub">
+    A single function that assembles every moving part of the Monster Resort Concierge.
+    We'll use <strong style="color:var(--gold)">Who Wants to Be a Millionaire?</strong> to decode each component
+    &mdash; from the game manual to the million-dollar host.
+  </p>
+  <div class="hero-arrow">&darr;</div>
+</section>
+
+<!-- ═══════════════ QUOTE ═══════════════ -->
+<section class="quote-banner" id="quote">
+  <div class="container reveal">
+    <blockquote>
+      build_app() is the stage crew that sets up the entire game show before a single
+      question is asked &mdash; it wires the lights, loads the questions, hires the host,
+      and opens the doors to the audience.
+    </blockquote>
+    <p class="quote-attr">&mdash; The Grand Chamberlain's Field Guide</p>
+  </div>
+  <div class="glow-line" style="margin-top:3rem;"></div>
+</section>
+
+<!-- ═══════════════ 1 &middot; SETTINGS ═══════════════ -->
+<section class="spread" id="settings">
+  <div class="container">
+    <div class="spread-header reveal">
+      <p class="spread-number">Question 01 &middot; $100</p>
+      <h2 class="spread-title">The Game Manual</h2>
+      <p class="spread-subtitle">Every show starts with the rulebook.</p>
+    </div>
+    <div class="split">
+      <div class="card reveal-left">
+        <span class="card-icon">&#x1F4D6;</span>
+        <p class="card-role">Game Show Role</p>
+        <h3 class="card-name">The Game Manual</h3>
+        <p class="card-desc">
+          Before filming begins, the production team reads the <strong>game manual</strong> &mdash;
+          it defines the rules, the stakes, the time limits, and every configurable detail of how
+          the show runs. Without it, nobody knows the format.<br><br>
+          <strong>In our app:</strong> <code>settings</code> loads all environment variables &mdash;
+          API keys, thresholds, model names, database paths &mdash; via Pydantic's
+          <code>BaseSettings</code>. Every component downstream reads from this single source of truth.
+        </p>
+      </div>
+      <div class="code-panel reveal-right">
+        <div class="code-panel-header">
+          <span class="file-dot"></span> app/main.py &mdash; line 102
+        </div>
+        <pre><span class="var">settings</span> <span class="op">=</span> <span class="fn">get_settings</span>()
+<span class="var">app</span> <span class="op">=</span> <span class="fn">FastAPI</span>(
+    <span class="var">title</span><span class="op">=</span><span class="var">settings</span>.app_name,
+    <span class="var">version</span><span class="op">=</span><span class="str">"1.0.0"</span>
+)</pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ 2 &middot; DB ═══════════════ -->
+<section class="spread" id="db">
+  <div class="container">
+    <div class="spread-header reveal">
+      <p class="spread-number">Question 02 &middot; $200</p>
+      <h2 class="spread-title">The Question Bank</h2>
+      <p class="spread-subtitle">Where every trivia question lives.</p>
+    </div>
+    <div class="split">
+      <div class="card reveal-left">
+        <span class="card-icon">&#x1F3E6;</span>
+        <p class="card-role">Game Show Role</p>
+        <h3 class="card-name">The Question Bank</h3>
+        <p class="card-desc">
+          Millionaire doesn't improvise questions &mdash; they sit in a secured <strong>question bank</strong>,
+          categorised by difficulty and topic, ready to be drawn at any moment.<br><br>
+          <strong>In our app:</strong> <code>db = DatabaseManager(settings)</code> initializes SQLite tables
+          for sessions, bookings, chat history, and API keys. It's the persistent storage layer that every
+          other component reads from and writes to.
+        </p>
+      </div>
+      <div class="code-panel reveal-right">
+        <div class="code-panel-header">
+          <span class="file-dot"></span> app/main.py &mdash; lines 105-107
+        </div>
+        <pre><span class="var">db</span> <span class="op">=</span> <span class="fn">DatabaseManager</span>(<span class="var">settings</span>)
+<span class="var">api_key_manager</span> <span class="op">=</span> <span class="fn">APIKeyManager</span>(<span class="var">db</span>)
+<span class="var">app</span>.state.api_key_manager <span class="op">=</span> <span class="var">api_key_manager</span></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ 3 &middot; PDF ═══════════════ -->
+<section class="spread" id="pdf">
+  <div class="container">
+    <div class="spread-header reveal">
+      <p class="spread-number">Question 03 &middot; $500</p>
+      <h2 class="spread-title">The Official Check</h2>
+      <p class="spread-subtitle">Someone has to print the prize.</p>
+    </div>
+    <div class="split">
+      <div class="card reveal-left">
+        <span class="card-icon">&#x1F4B0;</span>
+        <p class="card-role">Game Show Role</p>
+        <h3 class="card-name">The Official Check</h3>
+        <p class="card-desc">
+          When a contestant wins, the show produces a <strong>giant novelty check</strong> &mdash;
+          formatted, branded, and ready for the cameras. Someone backstage handles that.<br><br>
+          <strong>In our app:</strong> <code>pdf = PDFGenerator(settings.pdf_output_dir)</code>
+          creates a service that renders booking confirmations and invoices as downloadable PDF documents.
+          It's the tangible output the guest walks away with.
+        </p>
+      </div>
+      <div class="code-panel reveal-right">
+        <div class="code-panel-header">
+          <span class="file-dot"></span> app/main.py &mdash; line 108
+        </div>
+        <pre><span class="var">pdf</span> <span class="op">=</span> <span class="fn">PDFGenerator</span>(<span class="var">settings</span>.pdf_output_dir)</pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ 4 &middot; RAG ═══════════════ -->
+<section class="spread" id="rag">
+  <div class="container">
+    <div class="spread-header reveal">
+      <p class="spread-number">Question 04 &middot; $1,000</p>
+      <h2 class="spread-title">The Deep Encyclopedia</h2>
+      <p class="spread-subtitle">Obscure knowledge at your fingertips.</p>
+    </div>
+    <div class="split">
+      <div class="card reveal-left">
+        <span class="card-icon">&#x1F4DA;</span>
+        <p class="card-role">Game Show Role</p>
+        <h3 class="card-name">The Deep Encyclopedia</h3>
+        <p class="card-desc">
+          Imagine a <strong>vast research library</strong> backstage that the host can consult for
+          obscure facts &mdash; it doesn't just keyword-search; it understands meaning, ranks relevance,
+          and surfaces the best passages.<br><br>
+          <strong>In our app:</strong> <code>AdvancedRAG</code> combines ChromaDB vector search with BM25
+          keyword search, then applies a cross-encoder reranker to produce the most relevant resort knowledge
+          for every guest query. Hybrid search, real intelligence.
+        </p>
+      </div>
+      <div class="code-panel reveal-right">
+        <div class="code-panel-header">
+          <span class="file-dot"></span> app/main.py &mdash; lines 110-116
+        </div>
+        <pre><span class="var">rag</span> <span class="op">=</span> <span class="fn">AdvancedRAG</span>(
+    <span class="var">settings</span>.rag_persist_dir,
+    <span class="var">settings</span>.rag_collection,
+    <span class="var">embedding_model</span><span class="op">=</span><span class="fn">getattr</span>(
+        <span class="var">settings</span>, <span class="str">"embedding_model"</span>,
+        <span class="str">"all-MiniLM-L6-v2"</span>
+    ),
+    <span class="var">reranker_model</span><span class="op">=</span><span class="str">"BAAI/bge-reranker-base"</span>,
+    <span class="var">ingestion_token</span><span class="op">=</span><span class="var">settings</span>.rag_ingestion_token,
+)</pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ 5 &middot; MEMORY ═══════════════ -->
+<section class="spread" id="memory">
+  <div class="container">
+    <div class="spread-header reveal">
+      <p class="spread-number">Question 05 &middot; $2,000</p>
+      <h2 class="spread-title">Contestant's Progress</h2>
+      <p class="spread-subtitle">What has happened so far in this game?</p>
+    </div>
+    <div class="split">
+      <div class="card reveal-left">
+        <span class="card-icon">&#x1F9E0;</span>
+        <p class="card-role">Game Show Role</p>
+        <h3 class="card-name">Contestant's Progress</h3>
+        <p class="card-desc">
+          The show tracks every contestant's <strong>progress</strong> &mdash;
+          which lifelines they've used, how much they've won, their answer history.
+          This context shapes what happens next.<br><br>
+          <strong>In our app:</strong> <code>memory = MemoryStore(db=db)</code> manages
+          per-session conversation history. It stores user messages and assistant replies so the
+          LLM has context across multiple turns &mdash; the chatbot's short-term memory.
+        </p>
+      </div>
+      <div class="code-panel reveal-right">
+        <div class="code-panel-header">
+          <span class="file-dot"></span> app/main.py &mdash; line 118
+        </div>
+        <pre><span class="var">memory</span> <span class="op">=</span> <span class="fn">MemoryStore</span>(<span class="var">db</span><span class="op">=</span><span class="var">db</span>)</pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ 6 &middot; REGISTRY ═══════════════ -->
+<section class="spread" id="registry">
+  <div class="container">
+    <div class="spread-header reveal">
+      <p class="spread-number">Question 06 &middot; $4,000</p>
+      <h2 class="spread-title">The Lifelines</h2>
+      <p class="spread-subtitle">Phone-a-Friend. Ask the Audience. 50:50.</p>
+    </div>
+    <div class="split">
+      <div class="card reveal-left">
+        <span class="card-icon">&#x1F4DE;</span>
+        <p class="card-role">Game Show Role</p>
+        <h3 class="card-name">The Lifelines</h3>
+        <p class="card-desc">
+          When a contestant is stuck, they reach for a <strong>lifeline</strong> &mdash;
+          each one is a different strategy for getting help. The show pre-registers all available
+          lifelines before the game starts.<br><br>
+          <strong>In our app:</strong> <code>make_registry()</code> builds a <code>ToolRegistry</code>
+          containing every tool the agent can invoke &mdash; booking rooms, searching the knowledge base,
+          generating PDFs. Each tool has a name, a schema, and a callable. The LLM picks which lifeline to use.
+        </p>
+      </div>
+      <div class="code-panel reveal-right">
+        <div class="code-panel-header">
+          <span class="file-dot"></span> app/main.py &mdash; lines 119-121
+        </div>
+        <pre><span class="var">registry</span> <span class="op">=</span> <span class="fn">make_registry</span>(
+    <span class="var">db</span><span class="op">=</span><span class="var">db</span>,
+    <span class="var">pdf</span><span class="op">=</span><span class="var">pdf</span>,
+    <span class="var">rag_search_fn</span><span class="op">=</span><span class="kw">lambda</span> <span class="var">query</span>, <span class="var">k</span><span class="op">=</span><span class="num">5</span>:
+        <span class="var">rag</span>.<span class="fn">search</span>(<span class="var">query</span><span class="op">=</span><span class="var">query</span>, <span class="var">k</span><span class="op">=</span><span class="var">k</span>)
+)</pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ 7 &middot; ROUTER ═══════════════ -->
+<section class="spread" id="router">
+  <div class="container">
+    <div class="spread-header reveal">
+      <p class="spread-number">Question 07 &middot; $16,000</p>
+      <h2 class="spread-title">The Floor Manager</h2>
+      <p class="spread-subtitle">Who decides it's time to lock in?</p>
+    </div>
+    <div class="split">
+      <div class="card reveal-left">
+        <span class="card-icon">&#x1F3AC;</span>
+        <p class="card-role">Game Show Role</p>
+        <h3 class="card-name">The Floor Manager</h3>
+        <p class="card-desc">
+          Behind every smooth broadcast is a <strong>floor manager</strong> who decides which camera is live,
+          when to cut to commercial, and how to handle technical hiccups &mdash; all invisible to the audience.<br><br>
+          <strong>In our app:</strong> <code>_build_router(settings)</code> creates a <code>ModelRouter</code>
+          that manages the OpenAI &rarr; Anthropic &rarr; Ollama fallback chain. If one model is down, it
+          seamlessly switches to the next. The audience (user) never sees the wiring.
+        </p>
+      </div>
+      <div class="code-panel reveal-right">
+        <div class="code-panel-header">
+          <span class="file-dot"></span> app/main.py &mdash; line 128
+        </div>
+        <pre><span class="cm"># Build multi-model router</span>
+<span class="var">router</span> <span class="op">=</span> <span class="fn">_build_router</span>(<span class="var">settings</span>)</pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ 8 &middot; DETECTOR ═══════════════ -->
+<section class="spread" id="detector">
+  <div class="container">
+    <div class="spread-header reveal">
+      <p class="spread-number">Question 08 &middot; $64,000</p>
+      <h2 class="spread-title">Final Answer Verifier</h2>
+      <p class="spread-subtitle">Is that really your final answer?</p>
+    </div>
+    <div class="split">
+      <div class="card reveal-left">
+        <span class="card-icon">&#x1F50D;</span>
+        <p class="card-role">Game Show Role</p>
+        <h3 class="card-name">Final Answer Verifier</h3>
+        <p class="card-desc">
+          After the contestant says "final answer," there's a <strong>verification system</strong>
+          that checks the answer against the master database. It catches mistakes before the host
+          commits to "correct" or "incorrect."<br><br>
+          <strong>In our app:</strong> <code>HallucinationDetector</code> compares the LLM's response
+          against the RAG source material. It flags responses as HIGH, MEDIUM, or LOW confidence &mdash;
+          catching hallucinations before they reach the guest.
+        </p>
+      </div>
+      <div class="code-panel reveal-right">
+        <div class="code-panel-header">
+          <span class="file-dot"></span> app/main.py &mdash; lines 131-134
+        </div>
+        <pre><span class="cm"># Hallucination detector</span>
+<span class="var">detector</span> <span class="op">=</span> <span class="fn">HallucinationDetector</span>(
+    <span class="var">high_threshold</span><span class="op">=</span><span class="var">settings</span>.hallucination_high_threshold,
+    <span class="var">medium_threshold</span><span class="op">=</span><span class="var">settings</span>.hallucination_medium_threshold,
+)</pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ 9 &middot; TRACKER ═══════════════ -->
+<section class="spread" id="tracker">
+  <div class="container">
+    <div class="spread-header reveal">
+      <p class="spread-number">Question 09 &middot; $250,000</p>
+      <h2 class="spread-title">The Control Room</h2>
+      <p class="spread-subtitle">Monitoring ratings, timing, and everything behind the glass.</p>
+    </div>
+    <div class="split">
+      <div class="card reveal-left">
+        <span class="card-icon">&#x1F4FA;</span>
+        <p class="card-role">Game Show Role</p>
+        <h3 class="card-name">The Control Room</h3>
+        <p class="card-desc">
+          The <strong>control room</strong> sits behind soundproof glass, monitoring every metric:
+          viewer ratings, segment timing, audio levels, camera feeds. Producers make real-time decisions
+          based on this data.<br><br>
+          <strong>In our app:</strong> <code>MLflowTracker</code> logs every interaction &mdash;
+          latency, token usage, model choice, hallucination scores. It writes to MLflow for experiment
+          tracking and gracefully becomes a no-op if disabled. Observability without overhead.
+        </p>
+      </div>
+      <div class="code-panel reveal-right">
+        <div class="code-panel-header">
+          <span class="file-dot"></span> app/main.py &mdash; lines 137-141
+        </div>
+        <pre><span class="cm"># MLflow tracker (graceful noop if disabled)</span>
+<span class="var">tracker</span> <span class="op">=</span> <span class="fn">MLflowTracker</span>(
+    <span class="var">tracking_uri</span><span class="op">=</span><span class="var">settings</span>.mlflow_tracking_uri,
+    <span class="var">experiment_name</span><span class="op">=</span><span class="var">settings</span>.mlflow_experiment_name,
+    <span class="var">enabled</span><span class="op">=</span><span class="var">settings</span>.mlflow_enabled,
+)</pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ 10 &middot; _agent_reply (THE HOST) ═══════════════ -->
+<section class="spread" id="agent">
+  <div class="container">
+    <div class="spread-header reveal">
+      <p class="spread-number">The Million Dollar Question</p>
+      <h2 class="spread-title" style="color:var(--gold-lt);">The Host</h2>
+      <p class="spread-subtitle">The one who delivers the final verdict.</p>
+    </div>
+    <div class="split">
+      <div class="card reveal-left" style="border-color:rgba(212,168,69,0.25);box-shadow:0 0 60px rgba(212,168,69,0.08);">
+        <span class="card-icon">&#x1F3A4;</span>
+        <p class="card-role">Game Show Role</p>
+        <h3 class="card-name" style="color:var(--gold-lt);">The Host &mdash; Regis Philbin</h3>
+        <p class="card-desc">
+          The <strong>host</strong> is the face of the show. They don't write the questions, manage the cameras,
+          or verify answers &mdash; but they orchestrate the entire experience. They take input from
+          every department and deliver one seamless performance to the contestant.<br><br>
+          <strong>In our app:</strong> <code>_agent_reply</code> is the inner async function that
+          ties everything together. It takes a user message, retrieves RAG context, builds the prompt,
+          calls the LLM via the router, executes tool calls, runs hallucination detection, logs metrics,
+          and returns the final response. It is the <strong>closure</strong> that captures every component
+          assembled above &mdash; the host who knows the whole crew by name.
+        </p>
+      </div>
+      <div class="code-panel reveal-right" style="border-color:rgba(212,168,69,0.2);">
+        <div class="code-panel-header">
+          <span class="file-dot"></span> app/main.py &mdash; lines 145-146
+        </div>
+        <pre><span class="cm"># --- AGENT LOGIC ---</span>
+
+<span class="kw">@profile</span>
+<span class="kw">async def</span> <span class="fn">_agent_reply</span>(
+    <span class="var">session_id</span>: <span class="fn">str</span>,
+    <span class="var">user_text</span>: <span class="fn">str</span>
+) <span class="op">-></span> <span class="fn">dict</span>:
+    <span class="cm"># Uses: rag, router, memory, registry,</span>
+    <span class="cm">#       detector, tracker</span>
+    <span class="cm"># — a closure over ALL components above</span>
+    <span class="var">knowledge</span> <span class="op">=</span> <span class="var">rag</span>.<span class="fn">search</span>(<span class="var">user_text</span>)
+    ...</pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ FLOW ═══════════════ -->
+<section class="flow-section">
+  <div class="container">
+    <div class="spread-header reveal">
+      <p class="spread-number">The Assembly Line</p>
+      <h2 class="spread-title">How It All Connects</h2>
+      <p class="spread-subtitle">build_app() wires each component, then _agent_reply() uses them all at runtime.</p>
+    </div>
+    <div class="flow-strip reveal">
+      <span class="flow-node">&#x1F4D6; Settings</span>
+      <span class="flow-arrow">&rarr;</span>
+      <span class="flow-node">&#x1F3E6; DB</span>
+      <span class="flow-arrow">&rarr;</span>
+      <span class="flow-node">&#x1F4B0; PDF</span>
+      <span class="flow-arrow">&rarr;</span>
+      <span class="flow-node">&#x1F4DA; RAG</span>
+      <span class="flow-arrow">&rarr;</span>
+      <span class="flow-node">&#x1F9E0; Memory</span>
+      <span class="flow-arrow">&rarr;</span>
+      <span class="flow-node">&#x1F4DE; Registry</span>
+      <span class="flow-arrow">&rarr;</span>
+      <span class="flow-node">&#x1F3AC; Router</span>
+      <span class="flow-arrow">&rarr;</span>
+      <span class="flow-node">&#x1F50D; Detector</span>
+      <span class="flow-arrow">&rarr;</span>
+      <span class="flow-node">&#x1F4FA; Tracker</span>
+      <span class="flow-arrow">&rarr;</span>
+      <span class="flow-node" style="border-color:var(--gold);color:var(--gold-lt);">&#x1F3A4; _agent_reply</span>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ SUMMARY INFOGRAPHIC ═══════════════ -->
+<section class="summary-section" id="summary">
+  <div class="container">
+    <div class="spread-header reveal">
+      <p class="spread-number">At a Glance</p>
+      <h2 class="spread-title">Game Show &harr; System Map</h2>
+      <p class="spread-subtitle">Every role in the show has a counterpart in the code.</p>
+    </div>
+    <div class="summary-grid">
+      <div class="summary-item reveal">
+        <span class="summary-emoji">&#x1F4D6;</span>
+        <p class="summary-game">Game Manual</p>
+        <p class="summary-sys">Settings</p>
+        <p class="summary-var">settings</p>
+      </div>
+      <div class="summary-item reveal">
+        <span class="summary-emoji">&#x1F3E6;</span>
+        <p class="summary-game">Question Bank</p>
+        <p class="summary-sys">Database</p>
+        <p class="summary-var">db</p>
+      </div>
+      <div class="summary-item reveal">
+        <span class="summary-emoji">&#x1F4B0;</span>
+        <p class="summary-game">Official Check</p>
+        <p class="summary-sys">PDF Generator</p>
+        <p class="summary-var">pdf</p>
+      </div>
+      <div class="summary-item reveal">
+        <span class="summary-emoji">&#x1F4DA;</span>
+        <p class="summary-game">Deep Encyclopedia</p>
+        <p class="summary-sys">Advanced RAG</p>
+        <p class="summary-var">rag</p>
+      </div>
+      <div class="summary-item reveal">
+        <span class="summary-emoji">&#x1F9E0;</span>
+        <p class="summary-game">Contestant Progress</p>
+        <p class="summary-sys">Memory Store</p>
+        <p class="summary-var">memory</p>
+      </div>
+      <div class="summary-item reveal">
+        <span class="summary-emoji">&#x1F4DE;</span>
+        <p class="summary-game">The Lifelines</p>
+        <p class="summary-sys">Tool Registry</p>
+        <p class="summary-var">registry</p>
+      </div>
+      <div class="summary-item reveal">
+        <span class="summary-emoji">&#x1F3AC;</span>
+        <p class="summary-game">Floor Manager</p>
+        <p class="summary-sys">Model Router</p>
+        <p class="summary-var">router</p>
+      </div>
+      <div class="summary-item reveal">
+        <span class="summary-emoji">&#x1F50D;</span>
+        <p class="summary-game">Answer Verifier</p>
+        <p class="summary-sys">Hallucination Detector</p>
+        <p class="summary-var">detector</p>
+      </div>
+      <div class="summary-item reveal">
+        <span class="summary-emoji">&#x1F4FA;</span>
+        <p class="summary-game">Control Room</p>
+        <p class="summary-sys">MLflow Tracker</p>
+        <p class="summary-var">tracker</p>
+      </div>
+      <div class="summary-item reveal" style="border-color:rgba(212,168,69,0.25);">
+        <span class="summary-emoji">&#x1F3A4;</span>
+        <p class="summary-game">The Host</p>
+        <p class="summary-sys">Agent Loop</p>
+        <p class="summary-var">_agent_reply</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ FOOTER ═══════════════ -->
+<footer class="footer">
+  <p>Monster Resort Concierge &middot; Learning Roadmap &middot; <a href="destruction_lab_tier1.html">Back to Labs</a></p>
+</footer>
+
+<!-- ═══════════════ JAVASCRIPT ═══════════════ -->
+<script>
+(function() {
+  'use strict';
+
+  /* ── Scroll-triggered reveal animations ─────────────── */
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+      }
+    });
+  }, {
+    threshold: 0.12,
+    rootMargin: '0px 0px -40px 0px'
+  });
+
+  document.querySelectorAll('.reveal, .reveal-left, .reveal-right').forEach(el => {
+    observer.observe(el);
+  });
+
+  /* ── Prize Ladder active state ──────────────────────── */
+  const ladderLinks = document.querySelectorAll('.prize-ladder a');
+  const sections = [];
+
+  ladderLinks.forEach(link => {
+    const id = link.getAttribute('href').slice(1);
+    const section = document.getElementById(id);
+    if (section) sections.push({ id, el: section, link });
+  });
+
+  function updateLadder() {
+    const scrollY = window.scrollY + window.innerHeight * 0.4;
+    let activeId = sections[0]?.id;
+
+    for (const s of sections) {
+      if (s.el.offsetTop <= scrollY) {
+        activeId = s.id;
+      }
+    }
+
+    ladderLinks.forEach(link => {
+      const id = link.getAttribute('href').slice(1);
+      link.classList.toggle('active', id === activeId);
+    });
+  }
+
+  let ticking = false;
+  window.addEventListener('scroll', () => {
+    if (!ticking) {
+      requestAnimationFrame(() => {
+        updateLadder();
+        ticking = false;
+      });
+      ticking = true;
+    }
+  });
+
+  updateLadder();
+})();
+</script>
+</body>
+</html>

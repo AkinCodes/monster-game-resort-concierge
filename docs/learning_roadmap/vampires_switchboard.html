@@ -1,0 +1,1700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Vampire's Switchboard — Room 42 Continued</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600&family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --void: #05030a;
+  --crypt: #0d0918;
+  --catacombs: #150e24;
+  --dungeon: #1c1430;
+  --stone: #2a1f42;
+  --mist: #3d2d5e;
+  --amber: #f5a623;
+  --amber-glow: #ffcc55;
+  --crimson: #c0392b;
+  --purple: #9b59b6;
+  --violet: #7c3aed;
+  --gold: #ffd700;
+  --text-bright: #f0eaff;
+  --text-mid: #9f8dbf;
+  --text-dim: #5c4d7a;
+  --book: #22d3ee;
+  --get: #10b981;
+  --search: #f59e0b;
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--void);
+  color: var(--text-bright);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* ── TORCH FLAME ── */
+@keyframes flicker {
+  0%,100% { opacity: 1; transform: scaleY(1) scaleX(1); }
+  20% { opacity: .85; transform: scaleY(1.05) scaleX(.97); }
+  40% { opacity: .92; transform: scaleY(.96) scaleX(1.02); }
+  60% { opacity: .88; transform: scaleY(1.08) scaleX(.96); }
+  80% { opacity: .95; transform: scaleY(.98) scaleX(1.01); }
+}
+@keyframes torchGlow {
+  0%,100% { box-shadow: 0 0 20px 6px rgba(245,166,35,.35), 0 0 40px 12px rgba(245,166,35,.15); }
+  50% { box-shadow: 0 0 28px 10px rgba(245,166,35,.5), 0 0 55px 18px rgba(245,166,35,.2); }
+}
+@keyframes pulse {
+  0%,100% { opacity: 1; }
+  50% { opacity: .55; }
+}
+@keyframes slideDown {
+  from { opacity:0; transform:translateY(-10px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+@keyframes stepAppear {
+  from { opacity:0; transform:translateX(-12px); }
+  to   { opacity:1; transform:translateX(0); }
+}
+@keyframes glow {
+  0%,100% { box-shadow: 0 0 8px 2px currentColor; }
+  50% { box-shadow: 0 0 16px 6px currentColor; }
+}
+
+.torch {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+.torch-flame {
+  font-size: 28px;
+  animation: flicker 1.8s ease-in-out infinite;
+  line-height: 1;
+}
+.torch-body {
+  width: 10px; height: 28px;
+  background: linear-gradient(to bottom, #8B4513, #5C3317);
+  border-radius: 3px 3px 5px 5px;
+}
+
+/* ── HEADER ── */
+.site-header {
+  background: linear-gradient(180deg, var(--void) 0%, var(--crypt) 60%, var(--catacombs) 100%);
+  border-bottom: 1px solid var(--stone);
+  padding: 48px 24px 36px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.site-header::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 0%, rgba(124,58,237,.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+.header-torches {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 32px;
+  margin-bottom: 16px;
+}
+.site-header h1 {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(26px, 5vw, 46px);
+  font-weight: 900;
+  color: var(--gold);
+  text-shadow: 0 0 20px rgba(255,215,0,.4), 0 2px 4px rgba(0,0,0,.6);
+  letter-spacing: 2px;
+  animation: torchGlow 3s ease-in-out infinite;
+}
+.site-header .subtitle {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(13px, 2vw, 17px);
+  color: var(--text-mid);
+  margin-top: 8px;
+  letter-spacing: 1px;
+}
+.site-header .file-badge {
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--violet);
+  background: rgba(124,58,237,.12);
+  border: 1px solid rgba(124,58,237,.3);
+  border-radius: 20px;
+  padding: 4px 14px;
+  margin-top: 12px;
+}
+.header-intro {
+  max-width: 680px;
+  margin: 20px auto 0;
+  color: var(--text-mid);
+  font-size: 15px;
+  line-height: 1.7;
+}
+.header-intro em {
+  color: var(--amber);
+  font-style: normal;
+}
+
+/* ── RECAP BOX ── */
+.recap-wrapper {
+  max-width: 860px;
+  margin: 28px auto 0;
+  padding: 0 20px;
+}
+.recap-toggle {
+  width: 100%;
+  background: var(--crypt);
+  border: 1px solid var(--mist);
+  border-radius: var(--radius);
+  padding: 14px 20px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--text-mid);
+  transition: all .2s;
+}
+.recap-toggle:hover { border-color: var(--amber); color: var(--amber); }
+.recap-toggle .room-tag {
+  font-family: 'Cinzel', serif;
+  color: var(--gold);
+  font-size: 14px;
+}
+.recap-toggle .arrow {
+  transition: transform .3s cubic-bezier(.4,0,.2,1);
+  font-size: 16px;
+}
+.recap-toggle.open .arrow { transform: rotate(180deg); }
+.recap-body {
+  display: none;
+  background: linear-gradient(135deg, rgba(13,9,24,.95), rgba(21,14,36,.95));
+  border: 1px solid var(--mist);
+  border-top: none;
+  border-radius: 0 0 var(--radius) var(--radius);
+  padding: 20px 24px;
+  animation: slideDown .25s ease;
+}
+.recap-body.open { display: block; }
+.recap-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.recap-item {
+  background: rgba(42,31,66,.5);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: 13px;
+}
+.recap-item .label { color: var(--text-dim); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
+.recap-item .value { color: var(--text-bright); font-family: 'JetBrains Mono', monospace; margin-top: 2px; }
+.recap-note {
+  color: var(--text-mid);
+  font-size: 14px;
+  border-left: 3px solid var(--amber);
+  padding-left: 14px;
+  margin-top: 4px;
+}
+
+/* ── TAB NAV ── */
+.tab-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px;
+  padding: 28px 16px 0;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+.tab-btn {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 11px 20px;
+  border: 2px solid transparent;
+  border-bottom: none;
+  border-radius: 12px 12px 0 0;
+  cursor: pointer;
+  transition: all .2s;
+  background: var(--crypt);
+  color: var(--text-dim);
+  position: relative;
+}
+.tab-btn:hover { color: var(--text-mid); background: var(--catacombs); }
+.tab-btn.active {
+  background: var(--catacombs);
+  color: var(--gold);
+  border-color: var(--mist);
+  border-bottom-color: var(--catacombs);
+}
+.tab-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px; left: -1px; right: -1px;
+  height: 3px;
+  background: var(--catacombs);
+}
+
+/* ── TAB PANELS ── */
+.tab-content {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 0 16px 60px;
+}
+.tab-panel {
+  display: none;
+  background: var(--catacombs);
+  border: 1px solid var(--mist);
+  border-radius: 0 12px 12px 12px;
+  padding: 36px 32px;
+  animation: slideDown .3s ease;
+}
+.tab-panel.active { display: block; }
+
+/* ── SECTION TITLES ── */
+.section-title {
+  font-family: 'Cinzel', serif;
+  font-size: 22px;
+  color: var(--gold);
+  margin-bottom: 8px;
+}
+.section-sub {
+  color: var(--text-mid);
+  font-size: 14px;
+  margin-bottom: 28px;
+  line-height: 1.6;
+}
+
+/* ── SESAME STREET BOX ── */
+.ss-box {
+  background: linear-gradient(135deg, rgba(245,166,35,.06), rgba(255,204,85,.04));
+  border: 2px solid rgba(245,166,35,.35);
+  border-radius: var(--radius);
+  padding: 20px 22px;
+  margin: 20px 0;
+  position: relative;
+}
+.ss-box::before {
+  content: '🐦';
+  position: absolute;
+  top: -12px; left: 16px;
+  font-size: 22px;
+  background: var(--catacombs);
+  padding: 0 6px;
+  line-height: 1;
+}
+.ss-box .ss-char {
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 700;
+  color: var(--amber);
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+.ss-box p {
+  color: var(--text-mid);
+  font-size: 14px;
+  line-height: 1.7;
+}
+.ss-box p + p { margin-top: 8px; }
+.ss-box strong { color: var(--amber-glow); }
+
+/* ── CODE BLOCK ── */
+.code-block {
+  background: #0a0612;
+  border: 1px solid var(--stone);
+  border-radius: var(--radius-sm);
+  padding: 18px 20px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  line-height: 1.8;
+  overflow-x: auto;
+  margin: 16px 0;
+  position: relative;
+}
+.code-block .code-label {
+  position: absolute;
+  top: 8px; right: 12px;
+  font-size: 10px;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.kw  { color: #c084fc; }
+.fn  { color: var(--gold); }
+.str { color: #86efac; }
+.cm  { color: var(--text-dim); font-style: italic; }
+.dec { color: var(--amber); }
+.num { color: #fb923c; }
+.var { color: #67e8f9; }
+
+/* ── INSIGHT BOX ── */
+.insight {
+  background: rgba(124,58,237,.1);
+  border: 1px solid rgba(124,58,237,.3);
+  border-radius: var(--radius-sm);
+  padding: 16px 20px;
+  margin: 20px 0;
+  font-size: 14px;
+  color: var(--text-mid);
+  line-height: 1.7;
+}
+.insight strong { color: var(--violet); }
+.insight .insight-icon { font-size: 18px; margin-right: 8px; }
+
+/* ── WIRING DIAGRAM ── */
+.wiring-wrap {
+  background: var(--dungeon);
+  border: 1px solid var(--stone);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin: 24px 0;
+}
+.wiring-wrap h3 {
+  font-family: 'Cinzel', serif;
+  font-size: 15px;
+  color: var(--text-mid);
+  text-align: center;
+  margin-bottom: 20px;
+  letter-spacing: 1px;
+}
+.wiring-diagram {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+.wiring-row {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  width: 100%;
+}
+.equip-box {
+  background: linear-gradient(135deg, var(--stone), var(--mist));
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  text-align: center;
+  min-width: 130px;
+  border: 1px solid var(--mist);
+}
+.equip-box .equip-icon { font-size: 24px; margin-bottom: 4px; }
+.equip-box .equip-name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--amber);
+  font-weight: 600;
+}
+.equip-box .equip-label {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+.wiring-svg-wrap {
+  width: 100%;
+  height: 80px;
+  overflow: visible;
+}
+.desk-box {
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  text-align: center;
+  min-width: 130px;
+  border: 2px solid;
+  position: relative;
+}
+.desk-book { border-color: var(--book); background: rgba(34,211,238,.06); }
+.desk-get  { border-color: var(--get);  background: rgba(16,185,129,.06); }
+.desk-srch { border-color: var(--search); background: rgba(245,158,11,.06); }
+.desk-box .desk-name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.desk-book .desk-name { color: var(--book); }
+.desk-get  .desk-name { color: var(--get); }
+.desk-srch .desk-name { color: var(--search); }
+.desk-box .desk-label { font-size: 11px; color: var(--text-dim); }
+.desk-box .desk-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: center;
+  margin-top: 8px;
+}
+.tag {
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 20px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.tag-db  { background: rgba(124,58,237,.2); color: #a78bfa; border: 1px solid rgba(124,58,237,.3); }
+.tag-pdf { background: rgba(192,57,43,.2);  color: #fca5a5; border: 1px solid rgba(192,57,43,.3); }
+.tag-rag { background: rgba(16,185,129,.2); color: #6ee7b7; border: 1px solid rgba(16,185,129,.3); }
+
+/* ── TOOL CARDS (accordion) ── */
+.tool-card {
+  border-radius: var(--radius);
+  margin-bottom: 16px;
+  overflow: hidden;
+  border: 1px solid var(--stone);
+}
+.tool-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 22px;
+  cursor: pointer;
+  transition: background .2s;
+  background: var(--dungeon);
+}
+.tool-card-header:hover { background: var(--stone); }
+.tool-card-header.open { background: var(--stone); }
+.tool-card-left { display: flex; align-items: center; gap: 14px; }
+.ext-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-weight: 600;
+}
+.tool-card-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 16px;
+  font-weight: 600;
+}
+.tool-card-desc { font-size: 13px; color: var(--text-dim); margin-top: 2px; }
+.tool-card-arrow {
+  font-size: 18px;
+  color: var(--text-dim);
+  transition: transform .3s cubic-bezier(.4,0,.2,1);
+}
+.tool-card-header.open .tool-card-arrow { transform: rotate(180deg); }
+.tool-card-body {
+  display: none;
+  padding: 24px 22px;
+  background: var(--catacombs);
+  border-top: 1px solid var(--stone);
+  animation: slideDown .25s ease;
+}
+.tool-card-body.open { display: block; }
+
+/* book_room card */
+.card-book .tool-card-title { color: var(--book); }
+.card-book .ext-badge { background: rgba(34,211,238,.15); color: var(--book); border: 1px solid rgba(34,211,238,.3); }
+.card-book .tool-card-header { border-left: 4px solid var(--book); }
+/* get_booking card */
+.card-get .tool-card-title { color: var(--get); }
+.card-get .ext-badge { background: rgba(16,185,129,.15); color: var(--get); border: 1px solid rgba(16,185,129,.3); }
+.card-get .tool-card-header { border-left: 4px solid var(--get); }
+/* search card */
+.card-srch .tool-card-title { color: var(--search); }
+.card-srch .ext-badge { background: rgba(245,158,11,.15); color: var(--search); border: 1px solid rgba(245,158,11,.3); }
+.card-srch .tool-card-header { border-left: 4px solid var(--search); }
+
+.equip-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.equip-chip {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--dungeon);
+  border: 1px solid var(--stone);
+  border-radius: 20px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.equip-chip .chip-icon { font-size: 14px; }
+
+/* ── BOUNCER BOX ── */
+.bouncer-box {
+  background: rgba(192,57,43,.06);
+  border: 1px solid rgba(192,57,43,.3);
+  border-radius: var(--radius-sm);
+  padding: 14px 18px;
+  margin: 14px 0;
+}
+.bouncer-box .bouncer-title {
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 700;
+  color: var(--crimson);
+  font-size: 14px;
+  margin-bottom: 8px;
+  display: flex; align-items: center; gap: 8px;
+}
+.bouncer-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.bouncer-list li {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--text-mid);
+  padding: 4px 10px;
+  background: rgba(192,57,43,.05);
+  border-radius: 4px;
+  border-left: 2px solid rgba(192,57,43,.4);
+}
+
+/* ── DISPATCHER TIMELINE ── */
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  position: relative;
+  margin: 20px 0;
+}
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 19px; top: 20px; bottom: 20px;
+  width: 2px;
+  background: linear-gradient(to bottom, var(--stone), var(--mist), var(--stone));
+}
+.tl-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 10px 0;
+  position: relative;
+}
+.tl-dot {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  border: 2px solid;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px;
+  font-weight: 700;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+  background: var(--catacombs);
+}
+.tl-dot.violet { color: #a78bfa; border-color: #a78bfa; }
+.tl-dot.cyan   { color: var(--book); border-color: var(--book); }
+.tl-dot.amber  { color: var(--amber); border-color: var(--amber); }
+.tl-dot.red    { color: #f87171; border-color: #f87171; }
+.tl-dot.green  { color: var(--get); border-color: var(--get); }
+.tl-content { flex: 1; padding-top: 1px; }
+.tl-label {
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--text-bright);
+}
+.tl-detail {
+  font-size: 13px;
+  color: var(--text-dim);
+  margin-top: 2px;
+  line-height: 1.5;
+}
+.tl-code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-mid);
+  background: var(--dungeon);
+  padding: 2px 8px;
+  border-radius: 4px;
+  display: inline-block;
+  margin-top: 4px;
+}
+
+/* ── ERROR SCENARIO ── */
+.error-scenario {
+  background: rgba(192,57,43,.06);
+  border: 1px solid rgba(192,57,43,.25);
+  border-radius: var(--radius);
+  padding: 20px 22px;
+  margin: 24px 0;
+}
+.error-scenario h3 {
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 700;
+  color: #f87171;
+  font-size: 16px;
+  margin-bottom: 12px;
+  display: flex; align-items: center; gap: 8px;
+}
+.error-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.error-step {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  font-size: 13px;
+}
+.error-step .e-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+.error-step .e-text { color: var(--text-mid); line-height: 1.5; }
+.error-step .e-text strong { color: var(--text-bright); }
+
+/* ── RING RING ── */
+.dial-buttons {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 28px;
+}
+.dial-btn {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  padding: 16px 14px;
+  border-radius: var(--radius);
+  border: 2px solid;
+  cursor: pointer;
+  transition: all .25s cubic-bezier(.4,0,.2,1);
+  background: var(--dungeon);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+  line-height: 1.3;
+}
+.dial-btn .dial-icon { font-size: 26px; }
+.dial-btn:hover { transform: translateY(-3px); }
+.dial-btn:active { transform: translateY(0); }
+.dial-book  { border-color: var(--book);   color: var(--book); }
+.dial-get   { border-color: var(--get);    color: var(--get); }
+.dial-srch  { border-color: var(--search); color: var(--search); }
+.dial-fail  { border-color: var(--crimson); color: #f87171; }
+.dial-btn.selected { transform: translateY(-3px); }
+.dial-book.selected  { background: rgba(34,211,238,.08); box-shadow: 0 0 20px rgba(34,211,238,.2); }
+.dial-get.selected   { background: rgba(16,185,129,.08); box-shadow: 0 0 20px rgba(16,185,129,.2); }
+.dial-srch.selected  { background: rgba(245,158,11,.08); box-shadow: 0 0 20px rgba(245,158,11,.2); }
+.dial-fail.selected  { background: rgba(192,57,43,.08);  box-shadow: 0 0 20px rgba(192,57,43,.2); }
+
+.theater {
+  background: var(--dungeon);
+  border: 1px solid var(--stone);
+  border-radius: var(--radius);
+  padding: 24px;
+  min-height: 200px;
+  position: relative;
+}
+.theater-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 160px;
+  color: var(--text-dim);
+  gap: 10px;
+}
+.theater-empty .phone-icon { font-size: 48px; opacity: .3; animation: pulse 2s ease-in-out infinite; }
+.theater-title {
+  font-family: 'Cinzel', serif;
+  font-size: 14px;
+  color: var(--text-dim);
+  margin-bottom: 16px;
+  letter-spacing: 1px;
+}
+.step-list { display: flex; flex-direction: column; gap: 6px; }
+.step-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  background: rgba(42,31,66,.3);
+  transition: all .4s ease;
+  opacity: 0;
+}
+.step-item.visible { opacity: 1; animation: stepAppear .4s ease forwards; }
+.step-item.active  { background: rgba(124,58,237,.12); border: 1px solid rgba(124,58,237,.3); }
+.step-item.done    { opacity: .5; }
+.step-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+.step-text { font-size: 14px; color: var(--text-mid); line-height: 1.5; }
+.step-item.active .step-text { color: var(--text-bright); }
+
+.explain-box {
+  margin-top: 20px;
+  background: rgba(124,58,237,.08);
+  border: 1px solid rgba(124,58,237,.25);
+  border-radius: var(--radius-sm);
+  padding: 18px 20px;
+  animation: slideDown .35s ease;
+}
+.explain-box .explain-label {
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 700;
+  color: var(--violet);
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+.explain-box p { font-size: 14px; color: var(--text-mid); line-height: 1.7; }
+.explain-box strong { color: var(--text-bright); }
+
+/* ── ROOM MAP (Tab 5) ── */
+.full-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 24px 0;
+}
+.ftl-step {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  padding: 16px 0;
+  position: relative;
+}
+.ftl-step + .ftl-step::before {
+  content: '';
+  position: absolute;
+  left: 11px; top: 0;
+  width: 2px; height: 16px;
+  background: var(--stone);
+}
+.ftl-dot {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  border: 2px solid;
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px;
+  background: var(--catacombs);
+  margin-top: 2px;
+}
+.ftl-dot.cyan   { color: var(--book);   border-color: var(--book);   }
+.ftl-dot.amber  { color: var(--amber);  border-color: var(--amber);  }
+.ftl-dot.violet { color: #a78bfa;       border-color: #a78bfa;       }
+.ftl-dot.red    { color: #f87171;       border-color: #f87171;       }
+.ftl-dot.green  { color: var(--get);    border-color: var(--get);    }
+.ftl-dot.dim    { color: var(--text-dim); border-color: var(--text-dim); }
+.ftl-content { flex: 1; }
+.ftl-label {
+  font-family: 'Cinzel', serif;
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.ftl-step .ftl-dot.cyan   ~ .ftl-content .ftl-label { color: var(--book); }
+.ftl-step .ftl-dot.amber  ~ .ftl-content .ftl-label { color: var(--amber); }
+.ftl-step .ftl-dot.violet ~ .ftl-content .ftl-label { color: #a78bfa; }
+.ftl-step .ftl-dot.red    ~ .ftl-content .ftl-label { color: #f87171; }
+.ftl-step .ftl-dot.green  ~ .ftl-content .ftl-label { color: var(--get); }
+.ftl-step .ftl-dot.dim    ~ .ftl-content .ftl-label { color: var(--text-dim); }
+.ftl-desc {
+  font-size: 13px;
+  color: var(--text-dim);
+  line-height: 1.7;
+}
+.ftl-note {
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-mid);
+  background: var(--dungeon);
+  padding: 3px 10px;
+  border-radius: 4px;
+  margin-top: 6px;
+}
+
+/* ── ROOM MAP VISUAL ── */
+.room-map {
+  background: var(--dungeon);
+  border: 1px solid var(--stone);
+  border-radius: var(--radius);
+  padding: 28px;
+  margin: 28px 0;
+}
+.room-map h3 {
+  font-family: 'Cinzel', serif;
+  font-size: 15px;
+  color: var(--text-dim);
+  text-align: center;
+  margin-bottom: 24px;
+  letter-spacing: 1px;
+}
+.map-layer {
+  border-radius: var(--radius-sm);
+  padding: 16px 20px;
+  margin-bottom: 8px;
+}
+.map-layer-top    { background: rgba(34,211,238,.05); border: 1px solid rgba(34,211,238,.2); }
+.map-layer-middle { background: rgba(124,58,237,.05); border: 1px solid rgba(124,58,237,.2); }
+.map-layer-bottom { background: rgba(16,185,129,.05); border: 1px solid rgba(16,185,129,.2); }
+.map-layer-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+}
+.map-layer-top    .map-layer-label { color: var(--book); }
+.map-layer-middle .map-layer-label { color: var(--violet); }
+.map-layer-bottom .map-layer-label { color: var(--get); }
+.map-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.map-item {
+  background: rgba(42,31,66,.5);
+  border-radius: var(--radius-sm);
+  padding: 6px 14px;
+  font-size: 13px;
+  color: var(--text-mid);
+  font-family: 'JetBrains Mono', monospace;
+}
+.map-arrow {
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 20px;
+  margin: 4px 0;
+}
+
+/* ── ONE-LINER ── */
+.one-liner {
+  text-align: center;
+  font-family: 'Cinzel', serif;
+  font-size: clamp(14px, 2.2vw, 18px);
+  color: var(--gold);
+  padding: 24px 20px;
+  border-top: 1px solid var(--stone);
+  margin-top: 28px;
+  line-height: 1.6;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 900px) {
+  .tab-panel { padding: 28px 20px; }
+  .wiring-row { gap: 12px; }
+  .equip-box, .desk-box { min-width: 100px; }
+}
+@media (max-width: 700px) {
+  .tab-btn { font-size: 12px; padding: 9px 13px; }
+  .tab-panel { padding: 20px 14px; }
+  .dial-buttons { grid-template-columns: 1fr 1fr; }
+  .wiring-row { flex-wrap: wrap; }
+  .recap-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 480px) {
+  .dial-buttons { grid-template-columns: 1fr; }
+  .recap-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════
+     HEADER
+═══════════════════════════════════════════════ -->
+<header class="site-header">
+  <div class="header-torches">
+    <div class="torch"><div class="torch-flame">🔥</div><div class="torch-body"></div></div>
+    <h1>The Vampire's Switchboard</h1>
+    <div class="torch"><div class="torch-flame">🔥</div><div class="torch-body"></div></div>
+  </div>
+  <div class="subtitle">Room 42 Continued — What happens when Count Dracula picks up the phone</div>
+  <div class="file-badge">app/concierge/tools.py</div>
+  <p class="header-intro">
+    The phone was sitting on the nightstand the <em>whole time</em> — right next to the notepad.
+    Tonight, Dracula finally picks it up: <em>"I vant to book a room for my cousin Nosferatu!"</em>
+  </p>
+</header>
+
+<!-- ═══════════════════════════════════════════════
+     RECAP BOX
+═══════════════════════════════════════════════ -->
+<div class="recap-wrapper">
+  <button class="recap-toggle" id="recapToggle" onclick="toggleRecap()">
+    <span class="room-tag">Room 42 — Occupied</span>
+    <span style="color:var(--text-dim);font-size:13px;">Previously, in Room 42... (click to expand)</span>
+    <span class="arrow">▾</span>
+  </button>
+  <div class="recap-body" id="recapBody">
+    <div class="recap-grid">
+      <div class="recap-item">
+        <div class="label">Guest</div>
+        <div class="value">Count Dracula</div>
+      </div>
+      <div class="recap-item">
+        <div class="label">Notepad</div>
+        <div class="value">Active (messages)</div>
+      </div>
+      <div class="recap-item">
+        <div class="label">Desk Card</div>
+        <div class="value">Updated (summary)</div>
+      </div>
+      <div class="recap-item">
+        <div class="label">Housekeeping</div>
+        <div class="value">Ran at page 12</div>
+      </div>
+    </div>
+    <div class="recap-note">
+      Last time, you learned how the room works: session IDs, the notepad of messages, the desk card summary, and housekeeping running at 12 pages.
+      Dracula chatted all night, housekeeping ran, he went to sleep, came back the next night.
+      <br><br>
+      <strong style="color:var(--amber);">Now:</strong> It's Night 2. The notepad has a few messages from tonight.
+      Dracula notices the phone on the nightstand — right where it's always been. He picks it up.
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     TAB NAV
+═══════════════════════════════════════════════ -->
+<nav class="tab-nav" role="tablist">
+  <button class="tab-btn active" onclick="switchTab('t1')" id="btn-t1" role="tab" aria-selected="true">⚙️ Before Opening</button>
+  <button class="tab-btn" onclick="switchTab('t2')" id="btn-t2" role="tab">📋 The Three Desks</button>
+  <button class="tab-btn" onclick="switchTab('t3')" id="btn-t3" role="tab">🎫 The Dispatcher</button>
+  <button class="tab-btn" onclick="switchTab('t4')" id="btn-t4" role="tab">📞 Ring Ring!</button>
+  <button class="tab-btn" onclick="switchTab('t5')" id="btn-t5" role="tab">🗺️ Room 42 → Lobby</button>
+</nav>
+
+<!-- ═══════════════════════════════════════════════
+     TAB PANELS
+═══════════════════════════════════════════════ -->
+<main class="tab-content">
+
+  <!-- ─────────────────── TAB 1: Before Opening ─────────────────── -->
+  <section class="tab-panel active" id="t1" role="tabpanel">
+    <h2 class="section-title">Before Opening — <code style="font-family:'JetBrains Mono',monospace;font-size:18px;color:var(--amber)">make_registry(db, pdf, rag)</code></h2>
+    <p class="section-sub">Before the hotel opens each night, Big Bird wheels three pieces of equipment to three service desks and chains them in place. Until the equipment arrives, the extension buttons are dead. Once wired, they light up.</p>
+
+    <div class="ss-box">
+      <div class="ss-char">Big Bird — Before Sundown</div>
+      <p>Every evening, before the first guest calls, Big Bird arrives with a rolling cart. On it: a <strong>filing cabinet</strong>, a <strong>printer</strong>, and a <strong>library key</strong>. He wheels each piece to its assigned desk and chains it with a padlock.</p>
+      <p>The Booking Desk gets the filing cabinet AND the printer. The Lookup Desk gets just the filing cabinet. The Information Desk gets just the library key. Only then does he flip the master switch — and the extension buttons on the switchboard light up.</p>
+      <p>Before Big Bird finishes, if someone picks up the phone and dials an extension, nothing happens. The button is dark. The desk has nothing to work with. <strong>The equipment IS the desk's ability to function.</strong></p>
+    </div>
+
+    <!-- WIRING DIAGRAM -->
+    <div class="wiring-wrap">
+      <h3>THE MORNING WIRING — Equipment flows to desks</h3>
+      <div class="wiring-diagram">
+        <div class="wiring-row">
+          <div class="equip-box">
+            <div class="equip-icon">🗄️</div>
+            <div class="equip-name">db</div>
+            <div class="equip-label">Filing Cabinet</div>
+          </div>
+          <div class="equip-box">
+            <div class="equip-icon">🖨️</div>
+            <div class="equip-name">pdf</div>
+            <div class="equip-label">Printer</div>
+          </div>
+          <div class="equip-box">
+            <div class="equip-icon">🔑</div>
+            <div class="equip-name">rag</div>
+            <div class="equip-label">Library Key</div>
+          </div>
+        </div>
+
+        <svg class="wiring-svg-wrap" viewBox="0 0 600 80" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+          <!-- db → book_room (left desk) -->
+          <path d="M 100 5 Q 100 40 110 75" stroke="#22d3ee" stroke-width="2" fill="none" stroke-dasharray="4 3" opacity="0.7"/>
+          <!-- db → get_booking (middle desk) -->
+          <path d="M 100 5 Q 100 30 300 75" stroke="#10b981" stroke-width="2" fill="none" stroke-dasharray="4 3" opacity="0.7"/>
+          <!-- pdf → book_room -->
+          <path d="M 300 5 Q 200 40 110 75" stroke="#22d3ee" stroke-width="2" fill="none" stroke-dasharray="4 3" opacity="0.7"/>
+          <!-- rag → search_amenities -->
+          <path d="M 500 5 Q 500 40 490 75" stroke="#f59e0b" stroke-width="2" fill="none" stroke-dasharray="4 3" opacity="0.7"/>
+          <!-- dots -->
+          <circle cx="100" cy="5"  r="5" fill="#22d3ee" opacity="0.8"/>
+          <circle cx="300" cy="5"  r="5" fill="#f87171" opacity="0.8"/>
+          <circle cx="500" cy="5"  r="5" fill="#10b981" opacity="0.8"/>
+        </svg>
+
+        <div class="wiring-row">
+          <div class="desk-box desk-book">
+            <div class="desk-name">book_room</div>
+            <div class="desk-label">Ext. 1 — Booking Desk</div>
+            <div class="desk-tags">
+              <span class="tag tag-db">db</span>
+              <span class="tag tag-pdf">pdf</span>
+            </div>
+          </div>
+          <div class="desk-box desk-get">
+            <div class="desk-name">get_booking</div>
+            <div class="desk-label">Ext. 2 — Lookup Desk</div>
+            <div class="desk-tags">
+              <span class="tag tag-db">db</span>
+            </div>
+          </div>
+          <div class="desk-box desk-srch">
+            <div class="desk-name">search_amenities</div>
+            <div class="desk-label">Ext. 3 — Info Desk</div>
+            <div class="desk-tags">
+              <span class="tag tag-rag">rag</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CODE -->
+    <div class="code-block">
+      <span class="code-label">tools.py</span>
+<span class="kw">def</span> <span class="fn">make_registry</span>(
+    <span class="var">db</span>: <span class="fn">DatabaseManager</span>,       <span class="cm"># filing cabinet</span>
+    <span class="var">pdf</span>: <span class="fn">PDFGenerator</span>,          <span class="cm"># printer</span>
+    <span class="var">rag_search_fn</span>: <span class="fn">Callable</span>,   <span class="cm"># library key</span>
+) -> <span class="fn">ToolRegistry</span>:
+    <span class="var">registry</span> = <span class="fn">ToolRegistry</span>()
+
+    <span class="dec">@registry.register</span>(<span class="str">"book_room"</span>, <span class="str">"Create a new booking"</span>)
+    <span class="kw">async def</span> <span class="fn">book_room</span>(<span class="var">session_id</span>, <span class="var">guest_name</span>, <span class="var">hotel_name</span>, ...):
+        <span class="cm"># Has access to: db (filing cabinet) + pdf (printer)</span>
+        <span class="var">booking</span> = <span class="var">db</span>.<span class="fn">create_booking</span>(...)
+        <span class="var">pdf</span>.<span class="fn">create_receipt</span>(...)
+
+    <span class="dec">@registry.register</span>(<span class="str">"get_booking"</span>, <span class="str">"Look up a booking"</span>)
+    <span class="kw">async def</span> <span class="fn">get_booking</span>(<span class="var">booking_id</span>, ...):
+        <span class="cm"># Has access to: db (filing cabinet) only</span>
+        <span class="kw">return</span> <span class="var">db</span>.<span class="fn">get_booking</span>(<span class="var">booking_id</span>)
+
+    <span class="dec">@registry.register</span>(<span class="str">"search_amenities"</span>, <span class="str">"Search resort knowledge"</span>)
+    <span class="kw">async def</span> <span class="fn">search_amenities</span>(<span class="var">query</span>, ...):
+        <span class="cm"># Has access to: rag_search_fn (library key) only</span>
+        <span class="kw">return</span> <span class="fn">rag_search_fn</span>(<span class="var">query</span>)
+
+    <span class="kw">return</span> <span class="var">registry</span>
+    </div>
+
+    <div class="insight">
+      <span class="insight-icon">💡</span>
+      <strong>The key insight:</strong> Each desk gets exactly what it needs — nothing more.
+      The Booking Desk can't accidentally search the library. The Information Desk can't accidentally print receipts.
+      This isn't an accident; it's how <code style="color:var(--amber);font-family:'JetBrains Mono',monospace">make_registry</code> works — it captures the equipment in the closure when it builds each function.
+      Add a new tool and you decide exactly what it gets access to.
+    </div>
+  </section>
+
+  <!-- ─────────────────── TAB 2: Three Desks ─────────────────── -->
+  <section class="tab-panel" id="t2" role="tabpanel">
+    <h2 class="section-title">The Three Desks</h2>
+    <p class="section-sub">Three extension cards, each laminated under glass and bolted into the switchboard. Click each one to expand it.</p>
+
+    <!-- Extension 1 -->
+    <div class="tool-card card-book">
+      <div class="tool-card-header" onclick="toggleCard('card-book')" id="card-book-header">
+        <div class="tool-card-left">
+          <span class="ext-badge">EXT. 1</span>
+          <div>
+            <div class="tool-card-title">book_room</div>
+            <div class="tool-card-desc">Create a new booking for a guest</div>
+          </div>
+        </div>
+        <span class="tool-card-arrow">▾</span>
+      </div>
+      <div class="tool-card-body" id="card-book-body">
+        <div class="equip-row">
+          <div class="equip-chip"><span class="chip-icon">🗄️</span> <span class="tag tag-db">db — filing cabinet</span></div>
+          <div class="equip-chip"><span class="chip-icon">🖨️</span> <span class="tag tag-pdf">pdf — printer</span></div>
+        </div>
+        <p style="font-size:14px;color:var(--text-mid);margin-bottom:16px;line-height:1.7">Takes a guest name, hotel, room type, and dates. First checks the approved hotel list bolted to the wall. If the hotel is on the list, creates the booking in the filing cabinet and prints a receipt. Hands back a confirmation number.</p>
+
+        <div class="bouncer-box">
+          <div class="bouncer-title">The Bouncer — The Approved Hotel List</div>
+          <p style="font-size:13px;color:var(--text-dim);margin-bottom:10px">A laminated list of 6 approved hotels bolted to the wall next to the Booking Desk. Not on the list? Polite rejection — the filing cabinet never even opens.</p>
+          <ul class="bouncer-list">
+            <li>The Mummy Resort &amp; Tomb-Service</li>
+            <li>The Werewolf Lodge: Moon &amp; Moor</li>
+            <li>Castle Frankenstein: High Voltage Luxury</li>
+            <li>Vampire Manor: Eternal Night Inn</li>
+            <li>Zombie Bed &amp; Breakfast: Bites &amp; Beds</li>
+            <li>Ghostly B&amp;B: Spectral Stay</li>
+          </ul>
+        </div>
+
+        <div class="ss-box">
+          <div class="ss-char">Big Bird at the Booking Desk</div>
+          <p>Dracula calls: "I vant to book a room at <strong>Garlic Palace</strong>!" Big Bird checks the laminated list on the wall. He runs his finger down all six properties. Garlic Palace is not there.</p>
+          <p>"Ve only have these six properties, Count." He reads them out. End of call. The filing cabinet stays closed. The printer stays quiet. <strong>The list protects the system from booking rooms at hotels that don't exist.</strong> The rejection happens before any real work begins.</p>
+        </div>
+
+        <div class="code-block">
+          <span class="code-label">tools.py</span>
+<span class="cm"># Defense 1: Authoritative hotel registry</span>
+<span class="var">VALID_HOTELS</span> = {
+    <span class="str">"The Mummy Resort &amp; Tomb-Service"</span>,
+    <span class="str">"Vampire Manor: Eternal Night Inn"</span>,
+    <span class="cm"># ... 4 more ...</span>
+}
+
+<span class="kw">if</span> <span class="var">hotel_name</span> <span class="kw">not in</span> <span class="var">VALID_HOTELS</span>:
+    <span class="kw">return</span> {
+        <span class="str">"ok"</span>: <span class="kw">False</span>,
+        <span class="str">"error"</span>: <span class="fn">f</span><span class="str">"Invalid hotel: '{hotel_name}'."</span>,
+    }
+        </div>
+      </div>
+    </div>
+
+    <!-- Extension 2 -->
+    <div class="tool-card card-get">
+      <div class="tool-card-header" onclick="toggleCard('card-get')" id="card-get-header">
+        <div class="tool-card-left">
+          <span class="ext-badge">EXT. 2</span>
+          <div>
+            <div class="tool-card-title">get_booking</div>
+            <div class="tool-card-desc">Retrieve details for an existing booking</div>
+          </div>
+        </div>
+        <span class="tool-card-arrow">▾</span>
+      </div>
+      <div class="tool-card-body" id="card-get-body">
+        <div class="equip-row">
+          <div class="equip-chip"><span class="chip-icon">🗄️</span> <span class="tag tag-db">db — filing cabinet</span></div>
+        </div>
+        <p style="font-size:14px;color:var(--text-mid);margin-bottom:16px;line-height:1.7">Takes a single booking ID. Opens the filing cabinet. Finds the folder. Returns all the details. That's it. One ID in, full booking out.</p>
+
+        <div class="ss-box">
+          <div class="ss-char">Big Bird at the Lookup Desk</div>
+          <p>Dracula calls back: "Vhat is my booking reference number BK-7x8y9z?" Big Bird takes the ID, walks to the filing cabinet, pulls open the drawer, and finds the folder with that exact code.</p>
+          <p>He reads back: "Nosferatu, Vampire Manor, Suite, January 15–20, Confirmed."</p>
+          <p><strong>He doesn't need the printer.</strong> There's no receipt to make. <strong>He doesn't need the library key.</strong> He's not searching for information. He has one job: find the folder. The filing cabinet is all he needs.</p>
+        </div>
+
+        <div class="code-block">
+          <span class="code-label">tools.py</span>
+<span class="dec">@registry.register</span>(<span class="str">"get_booking"</span>, <span class="str">"Look up a booking"</span>)
+<span class="kw">async def</span> <span class="fn">get_booking</span>(<span class="var">booking_id</span>: <span class="fn">str</span>, <span class="var">request_id</span>: <span class="fn">str</span>):
+    <span class="var">booking</span> = <span class="var">db</span>.<span class="fn">get_booking</span>(<span class="var">booking_id</span>)   <span class="cm"># filing cabinet</span>
+    <span class="kw">return</span> (
+        {<span class="str">"ok"</span>: <span class="kw">True</span>, <span class="str">"booking"</span>: <span class="var">booking</span>}
+        <span class="kw">if</span> <span class="var">booking</span>
+        <span class="kw">else</span> {<span class="str">"ok"</span>: <span class="kw">False</span>, <span class="str">"error"</span>: <span class="str">"Not found"</span>}
+    )
+        </div>
+      </div>
+    </div>
+
+    <!-- Extension 3 -->
+    <div class="tool-card card-srch">
+      <div class="tool-card-header" onclick="toggleCard('card-srch')" id="card-srch-header">
+        <div class="tool-card-left">
+          <span class="ext-badge">EXT. 3</span>
+          <div>
+            <div class="tool-card-title">search_amenities</div>
+            <div class="tool-card-desc">Search resort knowledge base for amenities and info</div>
+          </div>
+        </div>
+        <span class="tool-card-arrow">▾</span>
+      </div>
+      <div class="tool-card-body" id="card-srch-body">
+        <div class="equip-row">
+          <div class="equip-chip"><span class="chip-icon">🔑</span> <span class="tag tag-rag">rag — library key</span></div>
+        </div>
+        <p style="font-size:14px;color:var(--text-mid);margin-bottom:16px;line-height:1.7">Takes a free-text question. Uses the library key to unlock the knowledge vault and search for relevant information. Returns results about resort amenities, policies, and features.</p>
+
+        <div class="ss-box">
+          <div class="ss-char">Big Bird at the Information Desk</div>
+          <p>Nosferatu calls: "Is ze pool open at midnight? And is it heated?" Big Bird picks up the library key from the desk, walks to the knowledge vault at the back of the lobby, unlocks it, and searches through the resort information.</p>
+          <p>He comes back: "Yes! Blood-temperature infinity pool, open dusk to dawn. Towels provided."</p>
+          <p><strong>He doesn't need the filing cabinet.</strong> This isn't a booking question. <strong>He doesn't need the printer.</strong> There's no receipt. <strong>Just the key.</strong> The Information Desk was built for exactly this one task.</p>
+        </div>
+
+        <div class="code-block">
+          <span class="code-label">tools.py</span>
+<span class="dec">@registry.register</span>(<span class="str">"search_amenities"</span>, <span class="str">"Search resort knowledge"</span>)
+<span class="kw">async def</span> <span class="fn">search_amenities</span>(<span class="var">query</span>: <span class="fn">str</span>, <span class="var">request_id</span>: <span class="fn">str</span>):
+    <span class="var">result</span> = <span class="fn">rag_search_fn</span>(<span class="var">query</span>)  <span class="cm"># library key unlocks vault</span>
+    <span class="kw">return</span> <span class="var">result</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="insight">
+      <span class="insight-icon">🔒</span>
+      <strong>Why frozen?</strong> The <code style="color:var(--amber);font-family:'JetBrains Mono',monospace">@dataclass(frozen=True)</code> on the <code style="color:var(--amber);font-family:'JetBrains Mono',monospace">Tool</code> class means each extension card is laminated under glass — it can't be changed, can't be rewritten after registration. The switchboard entries are permanent records.
+    </div>
+  </section>
+
+  <!-- ─────────────────── TAB 3: The Dispatcher ─────────────────── -->
+  <section class="tab-panel" id="t3" role="tabpanel">
+    <h2 class="section-title">The Dispatcher — Always On Duty</h2>
+    <p class="section-sub">The dispatcher doesn't know HOW anything works. He just routes calls, times them, and writes everything down. If something breaks, he catches the fall — gives the guest a polite message and writes the real story in his private notebook.</p>
+
+    <div class="ss-box">
+      <div class="ss-char">The Dispatcher — Front Desk, Always On Duty</div>
+      <p>The dispatcher sits at the front desk with a stopwatch, a ledger, and the switchboard. Every call that comes in goes through him first. He doesn't know how bookings work. He doesn't know how the filing cabinet is organized. He doesn't care.</p>
+      <p>His job: <strong>route the call to the right desk, start the stopwatch, make a tally mark, wait for the result, stop the stopwatch, and write everything in the log.</strong> If a desk clerk trips and drops something, the dispatcher doesn't scream. He calmly tells the guest "We're experiencing a small issue" and writes the real error in his private log.</p>
+    </div>
+
+    <div class="timeline">
+      <div class="tl-step">
+        <div class="tl-dot violet">1</div>
+        <div class="tl-content">
+          <div class="tl-label">Ticket Number</div>
+          <div class="tl-detail">The dispatcher tears off a ticket from the roll and writes a number on it. Every call gets its own ticket, so later he can look up exactly what happened with that call.</div>
+        </div>
+      </div>
+      <div class="tl-step">
+        <div class="tl-dot cyan">2</div>
+        <div class="tl-content">
+          <div class="tl-label">Directory Check</div>
+          <div class="tl-detail">He looks at the switchboard. "Is this extension even real?" If someone dials an extension that doesn't exist, he says "Sorry, no such service" and hangs up. No point routing a call to a desk that isn't there.</div>
+        </div>
+      </div>
+      <div class="tl-step">
+        <div class="tl-dot amber">3</div>
+        <div class="tl-content">
+          <div class="tl-label">Tidy Up the Message</div>
+          <div class="tl-detail">Sometimes guests mumble or add extra words. The dispatcher cleans up the message — straightens out the request so the desk clerk gets a clear, neat version.</div>
+        </div>
+      </div>
+      <div class="tl-step">
+        <div class="tl-dot red">4</div>
+        <div class="tl-content">
+          <div class="tl-label" style="color:#f87171">START THE STOPWATCH</div>
+          <div class="tl-detail">Click! The stopwatch starts. From this moment, every second is being counted.</div>
+        </div>
+      </div>
+      <div class="tl-step">
+        <div class="tl-dot green">5</div>
+        <div class="tl-content">
+          <div class="tl-label">Tally Mark</div>
+          <div class="tl-detail">He walks over to the big tally board on the lobby wall and makes a mark under the right column. "That's the fourth booking call today!" Now the hotel knows which desks are busiest.</div>
+        </div>
+      </div>
+      <div class="tl-step">
+        <div class="tl-dot amber">6</div>
+        <div class="tl-content">
+          <div class="tl-label">Connect the Call</div>
+          <div class="tl-detail">He plugs the call into the right desk on the switchboard and waits. The desk clerk picks up, does the work, and hands back the result. While he's waiting, the dispatcher can still answer other incoming calls.</div>
+        </div>
+      </div>
+      <div class="tl-step">
+        <div class="tl-dot red">7</div>
+        <div class="tl-content">
+          <div class="tl-label" style="color:#f87171">STOP THE STOPWATCH</div>
+          <div class="tl-detail">Click! "That took 47 milliseconds!" he announces to no one in particular, scribbling the number in his ledger.</div>
+        </div>
+      </div>
+      <div class="tl-step">
+        <div class="tl-dot violet">8</div>
+        <div class="tl-content">
+          <div class="tl-label">Write It All Down</div>
+          <div class="tl-detail">In his ledger, he writes: which desk handled it, what the guest asked for, how long it took, and whether it worked or not. A complete record of every call, every time.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="error-scenario">
+      <h3>What if something goes wrong?</h3>
+      <div class="error-flow">
+        <div class="error-step">
+          <span class="e-icon">💥</span>
+          <div class="e-text">The desk clerk at the Booking Desk drops the filing cabinet. Papers fly everywhere. The request can't be completed.</div>
+        </div>
+        <div class="error-step">
+          <span class="e-icon">🎭</span>
+          <div class="e-text"><strong>The dispatcher catches it.</strong> He doesn't let the chaos reach the guest. He steps in front of the mess.</div>
+        </div>
+        <div class="error-step">
+          <span class="e-icon">🛎️</span>
+          <div class="e-text">He calmly picks up the phone: <strong>"We're experiencing a small issue with your request. We'll look into it."</strong> Polite. Professional. The guest never hears the crash.</div>
+        </div>
+        <div class="error-step">
+          <span class="e-icon">📓</span>
+          <div class="e-text">In his private ledger, he writes <strong>the real story</strong>: what went wrong, which desk it was, the ticket number, and how far along the call was when it broke. Everything needed to fix it later.</div>
+        </div>
+        <div class="error-step">
+          <span class="e-icon">⏱️</span>
+          <div class="e-text">The stopwatch still gets recorded — even for failed calls. He knows exactly how long it ran before the crash. That timing helps figure out what went wrong.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <span class="code-label">tools.py — async_execute_with_timing</span>
+<span class="kw">async def</span> <span class="fn">async_execute_with_timing</span>(<span class="var">self</span>, <span class="var">name</span>: <span class="fn">str</span>, **<span class="var">kwargs</span>) -> <span class="fn">Any</span>:
+    <span class="var">request_id</span> = <span class="var">kwargs</span>.<span class="fn">pop</span>(<span class="str">"request_id"</span>, <span class="fn">str</span>(<span class="fn">uuid.uuid4</span>()))   <span class="cm"># 1. ticket</span>
+
+    <span class="kw">if</span> <span class="var">name</span> <span class="kw">not in</span> <span class="var">self</span>.<span class="var">tools</span>:                                   <span class="cm"># 2. directory</span>
+        <span class="kw">raise</span> <span class="fn">MonsterResortError</span>(<span class="fn">f</span><span class="str">"Tool {name} not found"</span>)
+
+    <span class="var">clean_kwargs</span> = {<span class="var">k</span>.<span class="fn">rstrip</span>(<span class="str">":"</span>): <span class="var">v</span> <span class="kw">for</span> <span class="var">k</span>, <span class="var">v</span> <span class="kw">in</span> <span class="var">kwargs</span>.<span class="fn">items</span>()}  <span class="cm"># 3. clean up</span>
+    <span class="var">start</span> = <span class="fn">time</span>()                                                 <span class="cm"># 4. start stopwatch</span>
+
+    <span class="kw">try</span>:
+        <span class="var">TOOL_CALL_COUNT</span>.<span class="fn">labels</span>(<span class="var">tool</span>=<span class="var">name</span>).<span class="fn">inc</span>()                    <span class="cm"># 5. tally mark</span>
+        <span class="var">result</span> = <span class="kw">await</span> <span class="var">self</span>.<span class="var">tools</span>[<span class="var">name</span>].<span class="fn">fn</span>(**<span class="var">clean_kwargs</span>, ...)    <span class="cm"># 6. route the call</span>
+        <span class="var">elapsed_ms</span> = <span class="fn">round</span>((<span class="fn">time</span>() - <span class="var">start</span>) * <span class="num">1000</span>, <span class="num">2</span>)           <span class="cm"># 7. stop stopwatch</span>
+        <span class="var">logger</span>.<span class="fn">info</span>(<span class="str">"tool_execution_succeeded"</span>, ...)               <span class="cm"># 8. write log</span>
+        <span class="kw">return</span> <span class="var">result</span>
+
+    <span class="kw">except</span> <span class="fn">Exception</span> <span class="kw">as</span> <span class="var">e</span>:
+        <span class="var">elapsed_ms</span> = <span class="fn">round</span>((<span class="fn">time</span>() - <span class="var">start</span>) * <span class="num">1000</span>, <span class="num">2</span>)
+        <span class="var">logger</span>.<span class="fn">exception</span>(<span class="str">"tool_execution_failed"</span>, ...)
+        <span class="kw">return</span> {<span class="str">"ok"</span>: <span class="kw">False</span>, <span class="str">"error"</span>: <span class="fn">str</span>(<span class="var">e</span>), <span class="str">"request_id"</span>: <span class="var">request_id</span>}
+    </div>
+
+    <div class="insight">
+      <span class="insight-icon">🎯</span>
+      <strong>Every tool call gets the same treatment.</strong> Timing. Logging. Error handling. Tally marks.
+      Add a brand new tool tomorrow and it automatically gets all of this — for free — just by going through the dispatcher.
+      The dispatcher doesn't know about your tool and doesn't need to.
+    </div>
+  </section>
+
+  <!-- ─────────────────── TAB 4: Ring Ring ─────────────────── -->
+  <section class="tab-panel" id="t4" role="tabpanel">
+    <h2 class="section-title">Ring Ring! — Interactive Phone Demo</h2>
+    <p class="section-sub">Pick up the phone and choose a scenario. Watch the dispatcher route the call step by step.</p>
+
+    <div class="dial-buttons">
+      <button class="dial-btn dial-book" onclick="runScenario('book')" id="dial-book">
+        <span class="dial-icon">🏰</span>
+        Book a Room
+      </button>
+      <button class="dial-btn dial-get" onclick="runScenario('lookup')" id="dial-lookup">
+        <span class="dial-icon">🔎</span>
+        Look Up Booking
+      </button>
+      <button class="dial-btn dial-srch" onclick="runScenario('search')" id="dial-search">
+        <span class="dial-icon">📚</span>
+        Search Amenities
+      </button>
+      <button class="dial-btn dial-fail" onclick="runScenario('garlic')" id="dial-garlic">
+        <span class="dial-icon">💀</span>
+        Book at Garlic Palace
+      </button>
+    </div>
+
+    <div class="theater" id="theater">
+      <div class="theater-empty" id="theater-empty">
+        <div class="phone-icon">📞</div>
+        <div style="font-family:'Fredoka',sans-serif;font-size:16px;color:var(--text-dim)">Pick up the phone to dial an extension</div>
+      </div>
+      <div id="theater-active" style="display:none">
+        <div class="theater-title" id="theater-title">CALL IN PROGRESS</div>
+        <div class="step-list" id="step-list"></div>
+        <div id="explain-box" style="display:none"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────────────── TAB 5: Room 42 → Lobby ─────────────────── -->
+  <section class="tab-panel" id="t5" role="tabpanel">
+    <h2 class="section-title">Room 42 → Lobby — The Full Picture</h2>
+    <p class="section-sub">Connecting the room upstairs to the service desk downstairs — and understanding where the concierge sits between them.</p>
+
+    <div class="full-timeline">
+      <div class="ftl-step">
+        <div class="ftl-dot cyan">1</div>
+        <div class="ftl-content">
+          <div class="ftl-label">Check In</div>
+          <div class="ftl-desc">Dracula swipes his key card. The hotel creates his room — fresh notepad on the bed, empty desk card on the table. Room 42 is open for business.</div>
+          <span class="ftl-note">← You learned this in The Vampire's Hourglass</span>
+        </div>
+      </div>
+      <div class="ftl-step">
+        <div class="ftl-dot amber">2</div>
+        <div class="ftl-content">
+          <div class="ftl-label">In the Room</div>
+          <div class="ftl-desc">Dracula chats with the concierge. Every message gets written on the notepad. When the notepad hits 12 pages, housekeeping comes in — writes a short summary on the desk card, rips out the old pages. Fresh notepad, summary saved.</div>
+          <span class="ftl-note">← The room you already understand.</span>
+        </div>
+      </div>
+      <div class="ftl-step">
+        <div class="ftl-dot amber">3</div>
+        <div class="ftl-content">
+          <div class="ftl-label">The Phone Call</div>
+          <div class="ftl-desc">Dracula: "Book a room for Nosferatu!" This goes on the notepad too — it's still a message. The concierge reads the notepad and thinks: <em>"I can't do this from the room. I need to call downstairs."</em></div>
+        </div>
+      </div>
+      <div class="ftl-step">
+        <div class="ftl-dot violet">4</div>
+        <div class="ftl-content">
+          <div class="ftl-label">The Guest Services Card</div>
+          <div class="ftl-desc">The concierge picks up the Guest Services card on the nightstand — the laminated one that lists all three extensions. She sees Extension 1: Booking Desk. She fills in the request: who's it for, which hotel, what dates.</div>
+          <span class="ftl-note">The Guest Services card tells the concierge what's available and what information each desk needs.</span>
+        </div>
+      </div>
+      <div class="ftl-step">
+        <div class="ftl-dot red">5</div>
+        <div class="ftl-content">
+          <div class="ftl-label">Downstairs to the Service Desk</div>
+          <div class="ftl-desc">The dispatcher picks up. Starts the stopwatch. Makes a tally mark. Routes the call to the Booking Desk. The desk clerk checks the approved hotel list, files the booking in the cabinet, prints the receipt. Result travels back upstairs.</div>
+          <span class="ftl-note">Same 8 steps as always: ticket, check, stopwatch, tally, route, wait, stop, log.</span>
+        </div>
+      </div>
+      <div class="ftl-step">
+        <div class="ftl-dot green">6</div>
+        <div class="ftl-content">
+          <div class="ftl-label">Back in the Room</div>
+          <div class="ftl-desc">The result comes back to the room: "Booking confirmed! Here's your receipt." The concierge writes this on the notepad too. Now the notepad has Dracula's original request AND the answer from downstairs. Both are just messages. Both will be summarized by housekeeping eventually.</div>
+          <span class="ftl-note">The notepad doesn't care where the answer came from — it's just another line on the page.</span>
+        </div>
+      </div>
+      <div class="ftl-step">
+        <div class="ftl-dot dim">7</div>
+        <div class="ftl-content">
+          <div class="ftl-label">The Cycle</div>
+          <div class="ftl-desc">Chat, tool call, result, more chat, another tool call. The notepad fills up. Housekeeping runs. The desk card is updated. The room and the service desk work together, forever, one message at a time.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ROOM MAP -->
+    <div class="room-map">
+      <h3>THE ROOM MAP — Three Layers</h3>
+
+      <div class="map-layer map-layer-top">
+        <div class="map-layer-label">Upstairs: Room 42</div>
+        <div class="map-items">
+          <div class="map-item">📋 The Notepad</div>
+          <div class="map-item">📄 The Desk Card</div>
+          <div class="map-item">📞 The Phone</div>
+          <div class="map-item">🛏️ Room Number = who you are</div>
+        </div>
+      </div>
+
+      <div class="map-arrow">↕</div>
+
+      <div class="map-layer map-layer-middle">
+        <div class="map-layer-label">The Concierge</div>
+        <div class="map-items">
+          <div class="map-item">👁️ Reads the notepad</div>
+          <div class="map-item">📖 Checks the Guest Services card</div>
+          <div class="map-item">📞 Decides which extension to dial</div>
+          <div class="map-item">✍️ Writes the result back on the notepad</div>
+        </div>
+      </div>
+
+      <div class="map-arrow">↕</div>
+
+      <div class="map-layer map-layer-bottom">
+        <div class="map-layer-label">Downstairs: The Service Desk</div>
+        <div class="map-items">
+          <div class="map-item">☎️ The Switchboard</div>
+          <div class="map-item">🎫 The Dispatcher</div>
+          <div class="map-item">📊 The Tally Board</div>
+          <div class="map-item">EXT.1 Booking Desk</div>
+          <div class="map-item">EXT.2 Lookup Desk</div>
+          <div class="map-item">EXT.3 Information Desk</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="insight">
+      <span class="insight-icon">🏰</span>
+      <strong>The room manages the conversation</strong> — what was said, when, and by whom.
+      <strong>The service desk manages the actions</strong> — what was done, how long it took, and whether it worked.
+      The concierge sits between them: reading the notepad, checking the handbook, and dialing the right extension.
+    </div>
+
+    <div class="one-liner">
+      "The room is where you talk. The service desk is where things get done.<br>
+      The phone is how they connect. And the notepad remembers everything — <em>even the tool calls.</em>"
+    </div>
+  </section>
+
+</main>
+
+<script>
+// ── TAB SWITCHING ──
+function switchTab(id) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    b.classList.remove('active');
+    b.setAttribute('aria-selected', 'false');
+  });
+  document.getElementById(id).classList.add('active');
+  const btn = document.getElementById('btn-' + id);
+  btn.classList.add('active');
+  btn.setAttribute('aria-selected', 'true');
+  // reset theater on tab switch away
+  if (id !== 't4') resetTheater();
+}
+
+// ── RECAP TOGGLE ──
+function toggleRecap() {
+  const toggle = document.getElementById('recapToggle');
+  const body = document.getElementById('recapBody');
+  toggle.classList.toggle('open');
+  body.classList.toggle('open');
+}
+
+// ── ACCORDION CARDS ──
+function toggleCard(id) {
+  const header = document.getElementById(id + '-header');
+  const body = document.getElementById(id + '-body');
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  header.classList.toggle('open', !isOpen);
+}
+
+// ── SCENARIO DATA ──
+const scenarios = {
+  book: {
+    title: 'BOOKING CALL — Extension 1',
+    steps: [
+      { icon: '📞', text: 'Dracula calls: "Book a room at Vampire Manor for Nosferatu, Jan 15–20!"' },
+      { icon: '🎫', text: 'Dispatcher assigns ticket <code>#a1b2c3</code>' },
+      { icon: '📋', text: 'Directory check — Extension 1 (book_room) exists ✓' },
+      { icon: '⏱️', text: 'Stopwatch starts...' },
+      { icon: '📊', text: 'Tally board: book_room +1' },
+      { icon: '📜', text: 'Booking Desk checks the approved list — Vampire Manor: Eternal Night Inn... <strong style="color:var(--get)">APPROVED ✓</strong>' },
+      { icon: '🗄️', text: 'Files booking in the cabinet. Booking ID: <code>BK-7x8y9z</code>' },
+      { icon: '🖨️', text: 'Prints receipt for Nosferatu. Invoice: <code>/invoices/receipt_BK-7x8y9z.pdf</code>' },
+      { icon: '⏱️', text: 'Stopwatch stops — <strong style="color:#f87171">127ms</strong>' },
+      { icon: '✅', text: '<strong style="color:var(--get)">"Stay confirmed at Vampire Manor! Receipt attached."</strong>' },
+    ],
+    explain: 'The Booking Desk needed <strong>BOTH</strong> the filing cabinet (to store the booking) and the printer (to print the receipt). That\'s exactly why Big Bird wired both pieces of equipment to this desk during the morning setup.'
+  },
+  lookup: {
+    title: 'LOOKUP CALL — Extension 2',
+    steps: [
+      { icon: '📞', text: 'Dracula calls: "Vhat are the details for booking BK-7x8y9z?"' },
+      { icon: '🎫', text: 'Dispatcher assigns ticket <code>#d4e5f6</code>' },
+      { icon: '📋', text: 'Directory check — Extension 2 (get_booking) exists ✓' },
+      { icon: '⏱️', text: 'Stopwatch starts...' },
+      { icon: '📊', text: 'Tally board: get_booking +1' },
+      { icon: '🗄️', text: 'Opens filing cabinet... finds folder <code>BK-7x8y9z</code>' },
+      { icon: '⏱️', text: 'Stopwatch stops — <strong style="color:#f87171">12ms</strong>' },
+      { icon: '✅', text: '<strong style="color:var(--get)">"Nosferatu | Vampire Manor | Suite | Jan 15–20 | Confirmed"</strong>' },
+    ],
+    explain: 'The simplest flow. <strong>One ID in, one answer out.</strong> Only needed the filing cabinet. No printer, no library key. The Lookup Desk was built for exactly this — just a quick search through the cabinet.'
+  },
+  search: {
+    title: 'SEARCH CALL — Extension 3',
+    steps: [
+      { icon: '📞', text: 'Nosferatu calls: "Does Vampire Manor have a pool? Is it heated?"' },
+      { icon: '🎫', text: 'Dispatcher assigns ticket <code>#g7h8i9</code>' },
+      { icon: '📋', text: 'Directory check — Extension 3 (search_amenities) exists ✓' },
+      { icon: '⏱️', text: 'Stopwatch starts...' },
+      { icon: '📊', text: 'Tally board: search_amenities +1' },
+      { icon: '🔑', text: 'Info Desk unlocks the knowledge vault and searches for "pool"...' },
+      { icon: '⏱️', text: 'Stopwatch stops — <strong style="color:#f87171">89ms</strong>' },
+      { icon: '✅', text: '<strong style="color:var(--get)">"Yes! Blood-temperature infinity pool, open dusk to dawn. Towels provided."</strong>' },
+    ],
+    explain: 'The Information Desk doesn\'t touch bookings at all. It <strong>only needs the library key</strong> — no filing cabinet, no printer. The knowledge vault and the booking system are in completely separate rooms. That\'s on purpose — asking about pool hours can never accidentally mess with someone\'s reservation.'
+  },
+  garlic: {
+    title: 'REJECTED CALL — Invalid Hotel',
+    steps: [
+      { icon: '📞', text: 'Grover calls: "Book a room at <strong>The Garlic Palace</strong>!"' },
+      { icon: '🎫', text: 'Dispatcher assigns ticket <code>#j0k1l2</code>' },
+      { icon: '📋', text: 'Directory check — Extension 1 (book_room) exists ✓' },
+      { icon: '⏱️', text: 'Stopwatch starts...' },
+      { icon: '📊', text: 'Tally board: book_room +1' },
+      { icon: '🚫', text: 'Booking Desk checks the approved list — "The Garlic Palace"... <strong style="color:var(--crimson)">NOT ON THE LIST!</strong>' },
+      { icon: '⏱️', text: 'Stopwatch stops — <strong style="color:#f87171">3ms</strong>' },
+      { icon: '❌', text: '<strong style="color:#f87171">"Invalid hotel. The Garlic Palace is not one of our properties."</strong>' },
+    ],
+    explain: '<strong>The bouncer in action!</strong> The approved list has exactly 6 hotels. The Garlic Palace isn\'t one of them. The booking is rejected <strong>before the filing cabinet even opens</strong> — the desk clerk doesn\'t start any paperwork. The bouncer stops it at the door in 3 milliseconds.'
+  }
+};
+
+// ── THEATER ──
+let currentInterval = null;
+
+function resetTheater() {
+  if (currentInterval) { clearInterval(currentInterval); currentInterval = null; }
+  document.getElementById('theater-empty').style.display = 'flex';
+  document.getElementById('theater-active').style.display = 'none';
+  document.querySelectorAll('.dial-btn').forEach(b => b.classList.remove('selected'));
+}
+
+function runScenario(key) {
+  // clear previous
+  if (currentInterval) { clearInterval(currentInterval); currentInterval = null; }
+  document.querySelectorAll('.dial-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('dial-' + key).classList.add('selected');
+
+  const s = scenarios[key];
+  const theater = document.getElementById('theater');
+  const empty = document.getElementById('theater-empty');
+  const active = document.getElementById('theater-active');
+  const titleEl = document.getElementById('theater-title');
+  const listEl = document.getElementById('step-list');
+  const explainEl = document.getElementById('explain-box');
+
+  empty.style.display = 'none';
+  active.style.display = 'block';
+  titleEl.textContent = s.title;
+  listEl.innerHTML = '';
+  explainEl.style.display = 'none';
+  explainEl.innerHTML = '';
+
+  // pre-create all step items (hidden)
+  s.steps.forEach((step, i) => {
+    const item = document.createElement('div');
+    item.className = 'step-item';
+    item.id = 'step-' + i;
+    item.innerHTML = `<span class="step-icon">${step.icon}</span><span class="step-text">${step.text}</span>`;
+    listEl.appendChild(item);
+  });
+
+  let current = 0;
+
+  function showNext() {
+    if (current > 0) {
+      const prev = document.getElementById('step-' + (current - 1));
+      if (prev) { prev.classList.remove('active'); prev.classList.add('done'); }
+    }
+    if (current < s.steps.length) {
+      const el = document.getElementById('step-' + current);
+      if (el) { el.classList.add('visible', 'active'); }
+      current++;
+    } else {
+      clearInterval(currentInterval);
+      currentInterval = null;
+      // show explain box
+      explainEl.style.display = 'block';
+      explainEl.innerHTML = `<div class="explain-label">What just happened</div><p>${s.explain}</p>`;
+    }
+  }
+
+  showNext(); // show first immediately
+  currentInterval = setInterval(showNext, 800);
+}
+
+// ── ESCAPE KEY ──
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    // close recap
+    const recapToggle = document.getElementById('recapToggle');
+    const recapBody = document.getElementById('recapBody');
+    if (recapBody.classList.contains('open')) {
+      recapToggle.classList.remove('open');
+      recapBody.classList.remove('open');
+    }
+    // close all tool cards
+    ['card-book', 'card-get', 'card-srch'].forEach(id => {
+      const header = document.getElementById(id + '-header');
+      const body = document.getElementById(id + '-body');
+      if (header && body) {
+        header.classList.remove('open');
+        body.classList.remove('open');
+      }
+    });
+    // reset theater
+    resetTheater();
+  }
+});
+</script>
+</body>
+</html>

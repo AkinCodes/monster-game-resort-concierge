@@ -1,0 +1,3145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Definitions Lab — Monster Resort Concierge</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ========== RESET & BASE ========== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --violet: #8b5cf6;
+  --violet-light: #a78bfa;
+  --violet-dark: #7c3aed;
+  --violet-bg: #1e1b2e;
+  --violet-card: #2d2a45;
+  --violet-border: #4c1d95;
+  --pink: #ec4899;
+  --amber: #f59e0b;
+  --blue: #3b82f6;
+  --green: #10b981;
+  --red: #ef4444;
+  --indigo: #6366f1;
+  --bg: #0f0d1a;
+  --surface: #1a1726;
+  --card: #211e35;
+  --border: #2e2a4a;
+  --text: #e2e0f0;
+  --text-muted: #8b85b0;
+  --text-dim: #5a5578;
+  --code-bg: #161328;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow: 0 4px 20px rgba(0,0,0,0.5);
+  --shadow-violet: 0 4px 20px rgba(139,92,246,0.2);
+}
+html { font-size: 16px; }
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.6;
+}
+code, pre, .mono { font-family: 'JetBrains Mono', monospace; }
+
+/* ========== HERO ========== */
+.hero {
+  background: linear-gradient(135deg, #1e1b2e 0%, #2d1b69 50%, #1e1b2e 100%);
+  border-bottom: 2px solid var(--violet-border);
+  padding: 2.5rem 2rem 1.5rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 0%, rgba(139,92,246,0.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--violet-light);
+  margin-bottom: 0.75rem;
+}
+.hero h1 {
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-weight: 700;
+  background: linear-gradient(135deg, #c4b5fd, #8b5cf6, #ec4899);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 0.5rem;
+}
+.hero p {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  max-width: 500px;
+  margin: 0 auto 1rem;
+}
+.hero-stats {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+.hero-stats span strong {
+  color: var(--violet-light);
+  font-size: 1rem;
+}
+
+/* ========== MODE TABS ========== */
+.mode-bar {
+  display: flex;
+  gap: 0;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 1rem;
+  overflow-x: auto;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.mode-tab {
+  padding: 1rem 1.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  border: none;
+  background: none;
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.mode-tab:hover { color: var(--text); background: rgba(139,92,246,0.05); }
+.mode-tab.active { color: var(--violet-light); border-bottom-color: var(--violet); }
+.tab-icon { font-size: 1rem; }
+
+/* ========== LAYOUT ========== */
+.page { max-width: 1400px; margin: 0 auto; padding: 1.5rem; }
+.section { display: none; }
+.section.active { display: block; }
+
+/* ========== CATEGORY BADGES ========== */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 20px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* ========== BUTTONS ========== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.2s;
+}
+.btn-primary {
+  background: var(--violet);
+  color: #fff;
+}
+.btn-primary:hover { background: var(--violet-dark); }
+.btn-ghost {
+  background: transparent;
+  color: var(--text-muted);
+  border-color: var(--border);
+}
+.btn-ghost:hover { background: rgba(139,92,246,0.1); color: var(--violet-light); border-color: var(--violet); }
+.btn-success { background: var(--green); color: #fff; }
+.btn-warning { background: var(--amber); color: #000; }
+.btn-danger { background: var(--red); color: #fff; }
+.btn-sm { padding: 0.3rem 0.7rem; font-size: 0.8rem; }
+
+/* ========== TOOLBAR ========== */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+.search-box {
+  flex: 1;
+  min-width: 200px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.5rem 0.75rem;
+}
+.search-box input {
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-size: 0.9rem;
+  flex: 1;
+}
+.search-box input::placeholder { color: var(--text-dim); }
+.search-icon { color: var(--text-dim); font-size: 0.9rem; }
+select {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.5rem 0.75rem;
+  color: var(--text);
+  font-size: 0.85rem;
+  cursor: pointer;
+  outline: none;
+}
+select:focus { border-color: var(--violet); }
+
+/* ========== STATS BAR ========== */
+.stats-bar {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1rem 1.5rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+.stat-item { text-align: center; }
+.stat-value {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--violet-light);
+  line-height: 1;
+}
+.stat-label { font-size: 0.72rem; color: var(--text-muted); margin-top: 0.2rem; }
+.progress-bar {
+  flex: 1;
+  min-width: 120px;
+  height: 8px;
+  background: var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--violet), var(--violet-light));
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+
+/* ========== GLOSSARY MODE ========== */
+.glossary-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.term-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+.term-card:hover { border-color: var(--violet); }
+.term-layer1 {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  cursor: pointer;
+  user-select: none;
+}
+.term-id {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  font-weight: 600;
+  width: 2rem;
+  text-align: center;
+  flex-shrink: 0;
+}
+.term-info { flex: 1; }
+.term-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.2rem;
+}
+.term-def {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+.term-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+.expand-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  transition: all 0.2s;
+}
+.expand-btn:hover { border-color: var(--violet); color: var(--violet-light); }
+.layer2-container, .layer3-container {
+  border-top: 1px solid var(--border);
+  background: rgba(0,0,0,0.2);
+  display: none;
+}
+.layer2-container.open, .layer3-container.open { display: block; }
+.layer2-inner, .layer3-inner {
+  padding: 1.25rem 1.5rem;
+}
+.layer-header {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--violet-light);
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.layer3-container { background: rgba(0,0,0,0.35); }
+.layer3-header { color: var(--pink); }
+pre {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 1rem;
+  overflow-x: auto;
+  font-size: 0.8rem;
+  line-height: 1.6;
+  margin: 0.75rem 0;
+}
+.code-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.4rem;
+}
+.file-ref {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: rgba(139,92,246,0.1);
+  border: 1px solid rgba(139,92,246,0.3);
+  border-radius: 4px;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.75rem;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--violet-light);
+  margin: 0.2rem;
+}
+.analogy-box {
+  background: rgba(236,72,153,0.08);
+  border: 1px solid rgba(236,72,153,0.2);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem 1rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin: 0.75rem 0;
+}
+.analogy-box strong { color: var(--pink); }
+.tradeoff-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin: 0.75rem 0;
+}
+.tradeoff-pro, .tradeoff-con {
+  background: var(--code-bg);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem;
+  font-size: 0.82rem;
+}
+.tradeoff-pro { border-left: 3px solid var(--green); }
+.tradeoff-con { border-left: 3px solid var(--red); }
+.tradeoff-pro h4 { color: var(--green); font-size: 0.72rem; margin-bottom: 0.5rem; }
+.tradeoff-con h4 { color: var(--red); font-size: 0.72rem; margin-bottom: 0.5rem; }
+ul.tradeoff-list { padding-left: 1rem; }
+ul.tradeoff-list li { margin-bottom: 0.25rem; color: var(--text-muted); }
+.no-results {
+  text-align: center;
+  padding: 3rem;
+  color: var(--text-dim);
+}
+
+/* ========== FLASHCARD MODE ========== */
+.flashcard-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+.flashcard-nav-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 700px;
+}
+.flashcard-progress { font-size: 0.85rem; color: var(--text-muted); }
+.card-scene {
+  width: 100%;
+  max-width: 700px;
+  height: 380px;
+  perspective: 1200px;
+  cursor: pointer;
+}
+.card-body {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.card-body.flipped { transform: rotateY(180deg); }
+.card-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  border-radius: var(--radius);
+  border: 2px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 2rem;
+  overflow-y: auto;
+}
+.card-front {
+  background: var(--card);
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.card-front:hover { border-color: var(--violet); }
+.card-back {
+  background: var(--violet-card);
+  border-color: var(--violet-border);
+  transform: rotateY(180deg);
+}
+.card-front-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 1.5rem;
+}
+.card-term {
+  font-size: clamp(1.5rem, 4vw, 2.2rem);
+  font-weight: 700;
+  color: var(--violet-light);
+  margin-bottom: 1rem;
+}
+.card-category { margin-bottom: 1.5rem; }
+.card-hint {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.card-back-term {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--violet-light);
+  margin-bottom: 0.75rem;
+}
+.card-back-def {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+.card-back pre { font-size: 0.72rem; margin: 0.5rem 0; }
+.rating-buttons {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  width: 100%;
+  max-width: 700px;
+}
+.rating-btn {
+  flex: 1;
+  max-width: 160px;
+  padding: 0.75rem;
+  border-radius: var(--radius-sm);
+  border: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+}
+.rating-btn .rating-label { font-size: 0.7rem; font-weight: 400; opacity: 0.8; }
+.btn-hard { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
+.btn-hard:hover { background: rgba(239,68,68,0.25); }
+.btn-ok { background: rgba(245,158,11,0.15); color: var(--amber); border: 1px solid rgba(245,158,11,0.3); }
+.btn-ok:hover { background: rgba(245,158,11,0.25); }
+.btn-easy { background: rgba(16,185,129,0.15); color: var(--green); border: 1px solid rgba(16,185,129,0.3); }
+.btn-easy:hover { background: rgba(16,185,129,0.25); }
+.flashcard-controls {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
+  max-width: 700px;
+}
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: var(--text-dim);
+}
+.empty-state h3 { font-size: 1.2rem; color: var(--text-muted); margin-bottom: 0.5rem; }
+.flashcard-category-breakdown {
+  width: 100%;
+  max-width: 700px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.5rem;
+}
+.cat-stat-row {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.cat-stat-name { color: var(--text-muted); }
+.cat-stat-count { color: var(--violet-light); font-weight: 600; }
+
+/* ========== INTERVIEW MODE ========== */
+.interview-area {
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+.interview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.interview-header h2 { font-size: 1.2rem; color: var(--text); }
+.timer-display {
+  font-size: 2.5rem;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--violet-light);
+  min-width: 3ch;
+  text-align: center;
+}
+.timer-display.warning { color: var(--amber); }
+.timer-display.critical { color: var(--red); animation: pulse 0.5s infinite; }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+.interview-prompt-card {
+  background: var(--card);
+  border: 2px solid var(--violet-border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+}
+.interview-term {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--violet-light);
+  margin-bottom: 0.5rem;
+}
+.interview-question {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+.answer-textarea {
+  width: 100%;
+  min-height: 180px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.answer-textarea:focus { border-color: var(--violet); }
+.comparison-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+.comparison-panel {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+}
+.comparison-panel h3 {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.75rem;
+}
+.your-answer-panel { border-left: 3px solid var(--blue); }
+.your-answer-panel h3 { color: var(--blue); }
+.model-answer-panel { border-left: 3px solid var(--green); }
+.model-answer-panel h3 { color: var(--green); }
+.star-rating {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.star {
+  font-size: 1.8rem;
+  cursor: pointer;
+  transition: transform 0.15s;
+  line-height: 1;
+}
+.star:hover { transform: scale(1.2); }
+.star.lit { filter: drop-shadow(0 0 4px var(--amber)); }
+.quickfire-info {
+  background: rgba(245,158,11,0.08);
+  border: 1px solid rgba(245,158,11,0.2);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem 1rem;
+  font-size: 0.85rem;
+  color: var(--amber);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.interview-start-screen {
+  text-align: center;
+  padding: 3rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.interview-start-screen h2 { font-size: 1.5rem; color: var(--violet-light); margin-bottom: 0.75rem; }
+.interview-start-screen p { color: var(--text-muted); margin-bottom: 1.5rem; }
+.start-btn-group { display: flex; gap: 1rem; justify-content: center; }
+.interview-history {
+  max-height: 300px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.history-entry {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+}
+.history-entry-name { color: var(--text-muted); }
+.history-stars { color: var(--amber); }
+
+/* ========== CONCEPT MAP ========== */
+.concept-map-container {
+  position: relative;
+}
+.concept-map-toolbar {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.map-legend {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+.legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+.map-scroll {
+  overflow-x: auto;
+  overflow-y: visible;
+  padding-bottom: 2rem;
+}
+.map-inner {
+  min-width: 900px;
+  position: relative;
+}
+.map-svg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: visible;
+}
+.map-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1.5rem 1rem;
+  padding-top: 60px;
+}
+.map-col-header {
+  text-align: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
+  margin-bottom: 0;
+  position: absolute;
+  top: 0;
+}
+.col-headers {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0 1rem;
+  margin-bottom: 0.5rem;
+  position: relative;
+  z-index: 2;
+}
+.map-node {
+  background: var(--card);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.5rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s;
+  position: relative;
+  user-select: none;
+}
+.map-node:hover {
+  color: var(--text);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-violet);
+  z-index: 10;
+}
+.map-node.highlighted {
+  border-color: var(--violet) !important;
+  color: var(--text);
+  box-shadow: 0 0 12px rgba(139,92,246,0.4);
+}
+.map-node.dimmed {
+  opacity: 0.25;
+}
+.node-popup {
+  position: fixed;
+  background: var(--card);
+  border: 1px solid var(--violet-border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  max-width: 350px;
+  z-index: 1000;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+  display: none;
+}
+.node-popup.visible { display: block; }
+.popup-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--violet-light);
+  margin-bottom: 0.5rem;
+}
+.popup-def {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin-bottom: 0.75rem;
+}
+.popup-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+.popup-close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0.2rem;
+}
+.popup-close:hover { color: var(--text); }
+
+/* ========== SECTION HEADERS ========== */
+.section-header {
+  margin-bottom: 1.5rem;
+}
+.section-header h2 {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 0.25rem;
+}
+.section-header p { font-size: 0.85rem; color: var(--text-muted); }
+
+/* ========== MASTERY INDICATOR ========== */
+.mastery-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.mastery-none { background: var(--border); }
+.mastery-low { background: var(--red); }
+.mastery-medium { background: var(--amber); }
+.mastery-high { background: var(--green); }
+
+/* ========== QUICKFIRE ========== */
+.quickfire-progress {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+}
+.qf-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--border);
+  transition: background 0.3s;
+}
+.qf-dot.done { background: var(--green); }
+.qf-dot.current { background: var(--violet); }
+
+/* ========== SCROLLBAR ========== */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--violet-dark); }
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 768px) {
+  .hero { padding: 1.5rem 1rem 1rem; }
+  .page { padding: 1rem; }
+  .comparison-grid { grid-template-columns: 1fr; }
+  .tradeoff-grid { grid-template-columns: 1fr; }
+  .card-scene { height: 320px; }
+}
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-label">Monster Resort Concierge — Learning Lab</div>
+  <h1>Definitions Lab</h1>
+  <p>42 technical terms. 4 ways to learn. Master your project vocabulary.</p>
+  <div class="hero-stats">
+    <span><strong>42</strong><br>Terms</span>
+    <span><strong>7</strong><br>Categories</span>
+    <span><strong id="hero-mastered">0</strong><br>Mastered</span>
+    <span><strong id="hero-interviewed">0</strong><br>Interviewed</span>
+  </div>
+</div>
+
+<!-- MODE TABS -->
+<div class="mode-bar">
+  <button class="mode-tab active" data-mode="glossary"><span class="tab-icon">📖</span> Glossary</button>
+  <button class="mode-tab" data-mode="flashcard"><span class="tab-icon">🃏</span> Flashcards</button>
+  <button class="mode-tab" data-mode="interview"><span class="tab-icon">🎤</span> Interview</button>
+  <button class="mode-tab" data-mode="map"><span class="tab-icon">🗺️</span> Concept Map</button>
+</div>
+
+<!-- GLOSSARY SECTION -->
+<div class="page">
+<section id="section-glossary" class="section active">
+  <div class="toolbar">
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="glossary-search" placeholder="Search terms..." autocomplete="off">
+    </div>
+    <select id="glossary-cat">
+      <option value="">All Categories</option>
+      <option value="ai_llm">AI & LLM</option>
+      <option value="rag">RAG</option>
+      <option value="tools">Tools & Agents</option>
+      <option value="architecture">Architecture</option>
+      <option value="testing">Testing</option>
+      <option value="ml">ML Concepts</option>
+      <option value="bonus">Project-Specific</option>
+    </select>
+    <select id="glossary-sort">
+      <option value="id">Sort: By ID</option>
+      <option value="alpha">Sort: A–Z</option>
+      <option value="category">Sort: Category</option>
+    </select>
+    <button class="btn btn-ghost btn-sm" id="expand-all-btn">Expand All</button>
+    <button class="btn btn-ghost btn-sm" id="collapse-all-btn">Collapse All</button>
+  </div>
+  <div id="glossary-grid" class="glossary-grid"></div>
+</section>
+
+<!-- FLASHCARD SECTION -->
+<section id="section-flashcard" class="section">
+  <div class="stats-bar">
+    <div class="stat-item">
+      <div class="stat-value" id="fc-mastered">0</div>
+      <div class="stat-label">Mastered</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value" id="fc-remaining">42</div>
+      <div class="stat-label">Remaining</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value" id="fc-attempts">0</div>
+      <div class="stat-label">Total Reviews</div>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="fc-progress-fill" style="width:0%"></div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value" id="fc-pct">0%</div>
+      <div class="stat-label">Progress</div>
+    </div>
+  </div>
+  <div class="flashcard-category-breakdown" id="fc-cat-breakdown"></div>
+  <br>
+  <div class="flashcard-area">
+    <div class="flashcard-controls">
+      <button class="btn btn-ghost btn-sm" id="fc-shuffle-btn">🔀 Shuffle</button>
+      <select id="fc-cat-filter">
+        <option value="">All Categories</option>
+        <option value="ai_llm">AI & LLM</option>
+        <option value="rag">RAG</option>
+        <option value="tools">Tools & Agents</option>
+        <option value="architecture">Architecture</option>
+        <option value="testing">Testing</option>
+        <option value="ml">ML Concepts</option>
+        <option value="bonus">Project-Specific</option>
+      </select>
+      <button class="btn btn-ghost btn-sm" id="fc-unmastered-btn">📌 Unmastered Only</button>
+      <button class="btn btn-ghost btn-sm" id="fc-reset-btn">↺ Reset Stats</button>
+    </div>
+    <div class="flashcard-nav-bar">
+      <button class="btn btn-ghost btn-sm" id="fc-prev-btn">← Prev</button>
+      <div class="flashcard-progress" id="fc-progress-label">Card 1 / 42</div>
+      <button class="btn btn-ghost btn-sm" id="fc-next-btn">Next →</button>
+    </div>
+    <div id="fc-empty" class="empty-state" style="display:none">
+      <h3>🎉 All Mastered!</h3>
+      <p>Turn off "Unmastered Only" to review all cards.</p>
+    </div>
+    <div class="card-scene" id="fc-scene">
+      <div class="card-body" id="fc-card">
+        <div class="card-face card-front" id="fc-front">
+          <div class="card-front-label">Can you define this term?</div>
+          <div class="card-term" id="fc-term-name">Loading...</div>
+          <div class="card-category" id="fc-cat-badge"></div>
+          <div class="card-hint">⌨️ Space to flip · ← → to navigate</div>
+        </div>
+        <div class="card-face card-back" id="fc-back">
+          <div class="card-back-term" id="fc-back-name"></div>
+          <div class="card-back-def" id="fc-back-def"></div>
+          <pre id="fc-back-code" style="display:none"></pre>
+          <div class="analogy-box" id="fc-back-analogy" style="display:none"></div>
+        </div>
+      </div>
+    </div>
+    <div class="rating-buttons" id="fc-rating-buttons" style="display:none">
+      <button class="rating-btn btn-hard" data-rating="hard">
+        😰 Hard
+        <span class="rating-label">Still learning</span>
+      </button>
+      <button class="rating-btn btn-ok" data-rating="ok">
+        🤔 OK
+        <span class="rating-label">Getting there</span>
+      </button>
+      <button class="rating-btn btn-easy" data-rating="easy">
+        😎 Easy
+        <span class="rating-label">Got it!</span>
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- INTERVIEW SECTION -->
+<section id="section-interview" class="section">
+  <div class="interview-area">
+    <div id="interview-start" class="interview-start-screen">
+      <h2>🎤 Interview Simulator</h2>
+      <p>Practice explaining technical concepts under time pressure. A random term will appear — you have 60 seconds to write your answer. Then compare with the model answer and rate yourself.</p>
+      <div class="start-btn-group">
+        <button class="btn btn-primary" id="start-single-btn">Start Single Question</button>
+        <button class="btn btn-ghost" id="start-quickfire-btn">⚡ Quick Fire (5 terms)</button>
+      </div>
+    </div>
+    <div id="interview-session" style="display:none">
+      <div id="quickfire-bar" style="display:none" class="quickfire-info">
+        ⚡ Quick Fire Mode — <span id="qf-label">Question 1 of 5</span>
+        <div class="quickfire-progress" id="qf-dots"></div>
+      </div>
+      <div class="interview-header">
+        <h2>Explain this term:</h2>
+        <div class="timer-display" id="timer-display">60</div>
+      </div>
+      <div class="interview-prompt-card">
+        <div class="interview-term" id="interview-term-name"></div>
+        <div class="interview-question">Explain what this term means, how it's used in the Monster Resort project, and why it matters.</div>
+      </div>
+      <textarea class="answer-textarea" id="answer-textarea" placeholder="Start typing your answer..."></textarea>
+      <div style="display:flex; gap:0.75rem; justify-content:center;">
+        <button class="btn btn-primary" id="submit-answer-btn">Submit Answer</button>
+        <button class="btn btn-ghost" id="skip-question-btn">Skip</button>
+      </div>
+    </div>
+    <div id="interview-result" style="display:none">
+      <div class="comparison-grid">
+        <div class="comparison-panel your-answer-panel">
+          <h3>Your Answer</h3>
+          <div id="your-answer-display" style="font-size:0.88rem;color:var(--text-muted);line-height:1.6;"></div>
+        </div>
+        <div class="comparison-panel model-answer-panel">
+          <h3>Model Answer</h3>
+          <div id="model-answer-display" style="font-size:0.88rem;color:var(--text-muted);line-height:1.6;"></div>
+        </div>
+      </div>
+      <div style="text-align:center;padding:1rem;">
+        <div style="font-size:0.9rem;color:var(--text-muted);margin-bottom:0.75rem;">How well did you do?</div>
+        <div class="star-rating" id="star-rating" style="justify-content:center;">
+          <span class="star" data-star="1">⭐</span>
+          <span class="star" data-star="2">⭐</span>
+          <span class="star" data-star="3">⭐</span>
+          <span class="star" data-star="4">⭐</span>
+          <span class="star" data-star="5">⭐</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:0.75rem;justify-content:center;">
+        <button class="btn btn-primary" id="next-question-btn">Next Question</button>
+        <button class="btn btn-ghost" id="end-session-btn">End Session</button>
+      </div>
+    </div>
+    <div id="quickfire-summary" style="display:none">
+      <div class="interview-start-screen">
+        <h2>⚡ Quick Fire Results</h2>
+        <div id="qf-score-display" style="font-size:2rem;color:var(--violet-light);font-weight:700;margin:1rem 0;"></div>
+        <div id="qf-breakdown" style="margin-bottom:1.5rem;"></div>
+        <div class="start-btn-group">
+          <button class="btn btn-primary" id="qf-retry-btn">Try Again</button>
+          <button class="btn btn-ghost" id="qf-home-btn">Back to Menu</button>
+        </div>
+      </div>
+    </div>
+    <div id="interview-history-section">
+      <div style="font-size:0.8rem;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.75rem;margin-top:1rem;">Recent Sessions</div>
+      <div class="interview-history" id="interview-history"></div>
+    </div>
+  </div>
+</section>
+
+<!-- CONCEPT MAP SECTION -->
+<section id="section-map" class="section">
+  <div class="concept-map-toolbar">
+    <div class="map-legend" id="map-legend"></div>
+    <div style="margin-left:auto;display:flex;gap:0.5rem;">
+      <button class="btn btn-ghost btn-sm" id="map-reset-btn">Reset View</button>
+    </div>
+  </div>
+  <div class="map-scroll">
+    <div class="map-inner" id="map-inner">
+      <svg class="map-svg" id="map-svg"></svg>
+      <div class="col-headers" id="col-headers"></div>
+      <div class="map-grid" id="map-grid"></div>
+    </div>
+  </div>
+</section>
+</div>
+
+<!-- NODE POPUP -->
+<div class="node-popup" id="node-popup">
+  <button class="popup-close" id="popup-close-btn">✕</button>
+  <div class="popup-title" id="popup-title"></div>
+  <div id="popup-badge" style="margin-bottom:0.5rem;"></div>
+  <div class="popup-def" id="popup-def"></div>
+  <div class="popup-actions">
+    <button class="btn btn-primary btn-sm" id="popup-goto-btn">Go to Glossary →</button>
+  </div>
+</div>
+
+<!-- ========== DATA ========== -->
+<script>
+const CATEGORIES = [
+  { id: 'ai_llm',       label: 'AI & LLM',          color: '#8b5cf6', termIds: [1,2,3,4,5,6] },
+  { id: 'rag',          label: 'RAG',                color: '#ec4899', termIds: [7,8,9,10,11,12,13,14,15,16,17,18] },
+  { id: 'tools',        label: 'Tools & Agents',     color: '#f59e0b', termIds: [19,20,21,22] },
+  { id: 'architecture', label: 'Architecture',       color: '#3b82f6', termIds: [23,24,25,26,27,28,29,30] },
+  { id: 'testing',      label: 'Testing',            color: '#10b981', termIds: [31,32,33,34] },
+  { id: 'ml',           label: 'ML Concepts',        color: '#ef4444', termIds: [35,36,37,38,39,40] },
+  { id: 'bonus',        label: 'Project-Specific',   color: '#6366f1', termIds: [41,42] },
+];
+
+const RELATIONSHIPS = [
+  { from: 1,  to: 2,  label: 'causes' },
+  { from: 1,  to: 5,  label: 'uses' },
+  { from: 1,  to: 6,  label: 'limited by' },
+  { from: 7,  to: 8,  label: 'uses' },
+  { from: 8,  to: 9,  label: 'stored in' },
+  { from: 9,  to: 10, label: 'enables' },
+  { from: 10, to: 11, label: 'uses' },
+  { from: 13, to: 14, label: 'part of' },
+  { from: 14, to: 15, label: 'uses' },
+  { from: 15, to: 16, label: 'feeds into' },
+  { from: 7,  to: 17, label: 'measured by' },
+  { from: 7,  to: 18, label: 'measured by' },
+  { from: 19, to: 21, label: 'requires' },
+  { from: 20, to: 19, label: 'uses' },
+  { from: 22, to: 19, label: 'manages' },
+  { from: 23, to: 24, label: 'enables' },
+  { from: 23, to: 25, label: 'uses' },
+  { from: 26, to: 23, label: 'validates in' },
+  { from: 31, to: 17, label: 'evaluates' },
+  { from: 35, to: 36, label: 'uses' },
+  { from: 37, to: 35, label: 'produces' },
+  { from: 40, to: 1,  label: 'powers' },
+  { from: 2,  to: 18, label: 'detected by' },
+  { from: 42, to: 1,  label: 'uses' },
+  { from: 30, to: 23, label: 'configures' },
+];
+
+const TERMS = [
+  {
+    id: 1, category: 'ai_llm', name: 'Large Language Model (LLM)', shortName: 'LLM',
+    definition: 'A neural network trained on vast amounts of text data to understand and generate human-like text. Examples: GPT-4, Claude, Llama.',
+    inProject: {
+      summary: 'You use a ModelRouter (app/llm_providers.py) that orchestrates multiple LLM providers — OpenAI, Anthropic (Claude), and Ollama (local). The router supports automatic fallback: if the primary provider fails, it seamlessly tries the next one.',
+      code: `from app.llm_providers import ModelRouter
+
+router = ModelRouter()  # Loads providers from MRC_MODEL_PROVIDER env var
+response = await router.generate(
+    messages=[{"role": "user", "content": "Book a room"}],
+    model="gpt-4o-mini"
+)
+# If OpenAI is down → falls back to Anthropic or Ollama`,
+      files: ['app/llm_providers.py']
+    },
+    deepDive: {
+      howItWorks: 'Transformers process all tokens simultaneously via self-attention, allowing the model to understand long-range relationships in text.',
+      tradeoffs: { pros: ['Human-level language understanding', 'Generalizes to new tasks', 'Multi-language support'], cons: ['Expensive to run', 'Can hallucinate', 'Large memory footprint'] },
+      alternatives: 'Rule-based NLP, traditional ML classifiers'
+    },
+    analogy: 'Like a very sophisticated autocomplete that understands context and can write entire documents — and with ModelRouter you have multiple engines backing each other up.',
+    keywords: ['transformer', 'neural network', 'GPT', 'Claude', 'Llama'],
+    relatesTo: [2, 5, 6, 40]
+  },
+  {
+    id: 2, category: 'ai_llm', name: 'Hallucination', shortName: 'Hallucination',
+    definition: 'When an LLM generates information that sounds plausible but is completely made up or factually incorrect.',
+    inProject: {
+      summary: 'You have a dedicated HallucinationDetector (app/hallucination.py) that scores every /chat response with a ConfidenceLevel (HIGH / MEDIUM / LOW). The detector cross-references LLM output against retrieved RAG context.',
+      code: `# ❌ Hallucination: "Castle Frankenstein offers underwater yoga classes"
+#    → HallucinationDetector: ConfidenceLevel.LOW
+
+# ✅ Grounded: "Castle Frankenstein offers Electric Massage Therapy"
+#    → HallucinationDetector: ConfidenceLevel.HIGH`,
+      files: ['app/hallucination.py']
+    },
+    deepDive: {
+      howItWorks: 'Occurs when the model completes patterns from training data rather than being grounded in facts. More likely with low temperature or topics underrepresented in training.',
+      tradeoffs: { pros: ['Reduced by RAG (15% → <2%)', 'HallucinationDetector flags issues in real-time'], cons: ['Can never be fully eliminated', 'Subtle hallucinations are hard to detect'] },
+      alternatives: 'RAG, fine-tuning, retrieval verification, human review'
+    },
+    analogy: 'Like a confident student who makes up an answer because they half-remember something similar.',
+    keywords: ['confabulation', 'grounding', 'confidence', 'RAG'],
+    relatesTo: [1, 7, 18]
+  },
+  {
+    id: 3, category: 'ai_llm', name: 'Prompt Engineering', shortName: 'Prompt Eng.',
+    definition: 'The art and science of crafting inputs (prompts) to LLMs to get desired outputs. Includes system prompts, few-shot examples, and constraints.',
+    inProject: {
+      summary: 'Your system prompt defines the "Grand Chamberlain" persona with MANDATORY RULES that restrict the model to only use provided context, preventing hallucination.',
+      code: `system_prompt_content = (
+    "You are the 'Grand Chamberlain' of the Monster Resort. "
+    "MANDATORY RULES:\\n"
+    "1. ONLY use information from the provided context\\n"
+    "2. If information isn't in context, say 'I don't have that information'"
+)`,
+      files: ['app/main.py']
+    },
+    deepDive: {
+      howItWorks: 'The model follows instructions in the system prompt as "rules" because it was fine-tuned on instruction-following data.',
+      tradeoffs: { pros: ['No retraining needed', 'Fast iteration', 'Controllable behavior'], cons: ['Can be bypassed by jailbreaks', 'Token cost', 'Requires expertise'] },
+      alternatives: 'Fine-tuning, RLHF, few-shot in-context learning'
+    },
+    analogy: 'Like writing a very precise job description — the better you specify the role and constraints, the better the output.',
+    keywords: ['system prompt', 'few-shot', 'chain-of-thought', 'persona'],
+    relatesTo: [1, 2]
+  },
+  {
+    id: 4, category: 'ai_llm', name: 'Temperature', shortName: 'Temperature',
+    definition: 'A parameter (0.0–2.0) controlling randomness in LLM outputs. Lower = more deterministic, higher = more creative.',
+    inProject: {
+      summary: 'Not explicitly set in your project, so uses the default (~0.7). Factual queries benefit from lower temperature; creative responses benefit from higher.',
+      code: `# 0.0 = Always picks most likely word (robotic)
+# 0.7 = Balanced creativity and consistency (default)
+# 1.0 = More creative variations
+# 2.0 = Highly random, sometimes incoherent`,
+      files: ['app/llm_providers.py']
+    },
+    deepDive: {
+      howItWorks: 'After the model computes token probabilities, temperature scales the distribution before sampling. T→0 makes the top token overwhelmingly likely; T>1 flattens the distribution.',
+      tradeoffs: { pros: ['Simple to tune', 'Immediate effect'], cons: ['Single knob for complex behavior', 'Can make factual tasks worse'] },
+      alternatives: 'Top-p (nucleus) sampling, top-k sampling, beam search'
+    },
+    analogy: 'Like a thermostat for creativity — turn it up for brainstorming, down for factual reports.',
+    keywords: ['sampling', 'randomness', 'top-p', 'determinism'],
+    relatesTo: [1]
+  },
+  {
+    id: 5, category: 'ai_llm', name: 'Tokens', shortName: 'Tokens',
+    definition: 'The basic units that LLMs process. Roughly: 1 token ≈ 0.75 words or 4 characters. Used for pricing and context limits.',
+    inProject: {
+      summary: 'Your project tracks token usage via Prometheus metrics. GPT-4o-mini costs $0.150 per 1M input tokens. Your average query uses ~2,000 tokens (~$0.0003 per query).',
+      code: `AI_TOKEN_USAGE = Counter("mrc_ai_tokens_total", ["model"])
+# Tracks how many tokens you're using (for cost calculation)
+
+# Examples:
+# "Hello, world!" = 4 tokens
+# "Lightning Spa at Castle Frankenstein" = 6 tokens`,
+      files: ['app/monitoring.py']
+    },
+    deepDive: {
+      howItWorks: 'Text is split by a tokenizer (e.g., tiktoken for GPT). Common words are single tokens; rare words split into subwords. Numbers and code can tokenize inefficiently.',
+      tradeoffs: { pros: ['Enables variable-length text processing', 'Subword handling for any language'], cons: ['Pricing complexity', 'Non-obvious splits (e.g. "ChatGPT" = 3 tokens)'] },
+      alternatives: 'Character-level models, byte-pair encoding alternatives'
+    },
+    analogy: 'Like charging per syllable in a song — common words are cheap, long technical words cost more.',
+    keywords: ['BPE', 'tiktoken', 'context limit', 'cost'],
+    relatesTo: [1, 6]
+  },
+  {
+    id: 6, category: 'ai_llm', name: 'Context Window', shortName: 'Context Window',
+    definition: 'The maximum amount of text (in tokens) an LLM can process at once. Includes both input and output.',
+    inProject: {
+      summary: 'GPT-4o has a 128K token context window. Your usage per query is ~3,550 tokens (2.8% of limit) — system prompt + RAG context + history + query + response buffer.',
+      code: `# Your token budget per request:
+# System prompt:        ~500 tokens
+# RAG context:        ~1,500 tokens
+# Conversation history: ~1,000 tokens
+# User query:            ~50 tokens
+# Response buffer:      ~500 tokens
+# Total:              ~3,550 tokens (2.8% of 128K limit)`,
+      files: ['app/main.py']
+    },
+    deepDive: {
+      howItWorks: 'The full prompt + response must fit within the context window. Attention mechanisms have quadratic complexity with sequence length, making very long contexts expensive.',
+      tradeoffs: { pros: ['GPT-4o 128K handles most use cases', 'Long context = more conversation history'], cons: ['Cost scales with context size', 'Quality can degrade at very long contexts ("lost in the middle")'] },
+      alternatives: 'Summarization, sliding window, retrieval-augmented memory'
+    },
+    analogy: 'Like a whiteboard — you can only fit so much before you need to erase and start fresh.',
+    keywords: ['128K', 'attention', 'memory', 'history'],
+    relatesTo: [1, 5]
+  },
+  {
+    id: 7, category: 'rag', name: 'RAG (Retrieval-Augmented Generation)', shortName: 'RAG',
+    definition: 'A technique where relevant information is retrieved from a knowledge base and provided to the LLM as context, grounding responses in factual data.',
+    inProject: {
+      summary: 'Core architecture pattern of your project. User query → RAG search → context retrieved → LLM + context → grounded response. Reduced hallucinations from 15% to <2%.',
+      code: `# 1. Retrieve relevant info
+knowledge = rag.search(user_text)
+context_text = "\\n".join([r["text"] for r in knowledge["results"]])
+
+# 2. Augment prompt
+system_prompt = f"KNOWLEDGE BASE: {context_text}\\n\\nUser: {user_text}"
+
+# 3. Generate response
+response = llm.generate(system_prompt)`,
+      files: ['app/rag.py', 'app/main.py']
+    },
+    deepDive: {
+      howItWorks: 'At query time, the question is embedded into a vector, matched against stored document embeddings, and top-k relevant chunks are prepended to the LLM prompt.',
+      tradeoffs: { pros: ['Reduces hallucination', 'Uses current data', 'Easy knowledge updates', 'Citations possible'], cons: ['Adds latency', 'Retrieval quality matters', 'Chunk boundary issues'] },
+      alternatives: 'Fine-tuning, larger context window, knowledge graphs'
+    },
+    analogy: 'Like an open-book exam — instead of memorizing everything, you look up facts before answering.',
+    keywords: ['retrieval', 'augmentation', 'knowledge base', 'grounding'],
+    relatesTo: [2, 8, 9, 17, 18]
+  },
+  {
+    id: 8, category: 'rag', name: 'Embeddings (Vector Embeddings)', shortName: 'Embeddings',
+    definition: 'High-dimensional numerical representations of text that capture semantic meaning. Similar meanings → similar vectors.',
+    inProject: {
+      summary: 'Using all-MiniLM-L6-v2 model (384 dimensions). Text is converted to a 384-dimensional vector that captures semantic meaning for similarity search.',
+      code: `text = "Castle Frankenstein spa services"
+embedding = encoder.encode(text)
+# Result: [0.234, -0.567, 0.891, ..., 0.123]  ← 384 numbers`,
+      files: ['app/rag.py']
+    },
+    deepDive: {
+      howItWorks: 'A small transformer (sentence-transformers) passes text through its encoder and uses the final [CLS] token or mean-pooled hidden states as the embedding vector.',
+      tradeoffs: { pros: ['Semantic understanding', 'Language-agnostic', 'Fast at inference time'], cons: ['384 dims = 1.5KB per document', 'Quality varies by domain', 'Out-of-vocabulary terms may embed poorly'] },
+      alternatives: 'OpenAI text-embedding-3-small, Cohere Embed, BGE-m3'
+    },
+    analogy: 'Like GPS coordinates for meaning — nearby coordinates mean nearby concepts.',
+    keywords: ['all-MiniLM-L6-v2', 'sentence-transformers', 'vector', 'semantic'],
+    relatesTo: [7, 9, 10, 11]
+  },
+  {
+    id: 9, category: 'rag', name: 'Vector Database (Vector Store)', shortName: 'Vector DB',
+    definition: 'A specialized database optimized for storing and searching high-dimensional vectors (embeddings). Enables similarity search.',
+    inProject: {
+      summary: 'Using ChromaDB — lightweight, open-source vector database. Stores document embeddings and enables fast nearest-neighbor search.',
+      code: `# Store
+collection.add(
+    documents=["Lightning Spa offers massages"],
+    embeddings=[[0.234, -0.567, ...]],
+    ids=["doc1"]
+)
+
+# Search
+results = collection.query(
+    query_embeddings=[[0.240, -0.560, ...]],
+    n_results=5
+)`,
+      files: ['app/rag.py']
+    },
+    deepDive: {
+      howItWorks: 'Uses Approximate Nearest Neighbor (ANN) algorithms like HNSW (Hierarchical Navigable Small World graphs) to find similar vectors in milliseconds, even with millions of documents.',
+      tradeoffs: { pros: ['ChromaDB is free and local', 'No external service needed', 'ACID-like persistence'], cons: ['Not as scalable as Pinecone', 'In-memory index limits scale', 'No managed backups'] },
+      alternatives: 'Pinecone (managed), Weaviate (feature-rich), FAISS (Facebook, very fast), pgvector (Postgres extension)'
+    },
+    analogy: 'Like a library organized by topic similarity rather than alphabetically — books about "spa treatments" are physically next to books about "massage therapy".',
+    keywords: ['ChromaDB', 'HNSW', 'ANN', 'similarity search'],
+    relatesTo: [8, 10]
+  },
+  {
+    id: 10, category: 'rag', name: 'Semantic Search', shortName: 'Semantic Search',
+    definition: 'Search based on meaning/concepts rather than exact keyword matches. Finds "vampire accommodation" when you search "creature of the night lodging".',
+    inProject: {
+      summary: 'Powers your RAG retrieval. Finds "Electric Massage Therapy" when user asks about "electricity spa treatments" — even without exact keyword overlap.',
+      code: `# Query: "electricity spa treatments"
+# Traditional keyword search: No match
+# Semantic search: Finds "Electric Massage Therapy" ✅
+
+# Flow:
+# 1. Convert query to embedding
+# 2. Find documents with similar embeddings
+# 3. Return most similar (measured by cosine distance)`,
+      files: ['app/rag.py']
+    },
+    deepDive: {
+      howItWorks: 'Both query and documents are embedded into the same vector space. Cosine similarity measures how "aligned" they are in that space, regardless of exact word choice.',
+      tradeoffs: { pros: ['Handles synonyms and paraphrases', 'Language-agnostic', 'No keyword engineering needed'], cons: ['Misses exact matches sometimes', 'Opaque results', 'Domain mismatch can cause failures'] },
+      alternatives: 'BM25 (keyword), hybrid search, TF-IDF'
+    },
+    analogy: 'Like searching Netflix by mood ("something scary but funny") rather than exact title.',
+    keywords: ['vector search', 'cosine similarity', 'nearest neighbor', 'semantic'],
+    relatesTo: [8, 9, 11]
+  },
+  {
+    id: 11, category: 'rag', name: 'Cosine Similarity', shortName: 'Cosine Sim.',
+    definition: 'A metric (0–1) measuring how similar two vectors are. 1 = identical direction, 0 = perpendicular, -1 = opposite.',
+    inProject: {
+      summary: 'The mathematical foundation of your semantic search. ChromaDB uses cosine distance (1 - cosine_similarity) internally to rank retrieved documents.',
+      code: `query_embedding = [0.5, 0.5, 0.5]
+doc_embedding   = [0.6, 0.4, 0.5]
+similarity = 0.95  # Very similar! ✅
+
+different_doc = [-0.5, -0.5, -0.5]
+similarity = -0.95  # Opposite meaning ❌
+
+# Formula:
+# similarity = (A · B) / (||A|| × ||B||)`,
+      files: ['app/rag.py']
+    },
+    deepDive: {
+      howItWorks: 'Computes the angle between two vectors. Because vectors are normalized, their dot product equals the cosine of their angle. Magnitude doesn\'t matter — only direction.',
+      tradeoffs: { pros: ['Magnitude-invariant (short/long docs compared fairly)', 'Bounded [-1, 1]', 'Very fast to compute'], cons: ['Doesn\'t capture word order', 'Poor with antonyms in low-dim spaces'] },
+      alternatives: 'Euclidean distance, dot product, Manhattan distance'
+    },
+    analogy: 'Like comparing compass bearings — two ships heading nearly the same direction are "similar", regardless of their speed.',
+    keywords: ['dot product', 'angle', 'similarity metric', 'normalization'],
+    relatesTo: [8, 9, 10]
+  },
+  {
+    id: 12, category: 'rag', name: 'Chunking', shortName: 'Chunking',
+    definition: 'Breaking large documents into smaller pieces (chunks) for embedding and retrieval. Balances context completeness vs. relevance.',
+    inProject: {
+      summary: 'Your knowledge base documents (amenities_expanded.txt, hotels.txt etc.) are split into ~300-500 token chunks before embedding. Smaller chunks = precise retrieval; larger = more context.',
+      code: `# Large document → Split into chunks
+chunks = [
+    "Castle Frankenstein: High Voltage Luxury. Room types...",
+    "Lightning Spa Services: Electric Massage...",
+    "Dining: Voltage Victuals Restaurant offers...",
+]
+# Each chunk gets its own embedding and is searchable independently`,
+      files: ['app/rag.py']
+    },
+    deepDive: {
+      howItWorks: 'Documents are split at sentence or paragraph boundaries. Overlap (e.g., 50 tokens shared between adjacent chunks) prevents information loss at chunk boundaries.',
+      tradeoffs: { pros: ['Small chunks: precise matches', 'Large chunks: more context per retrieval'], cons: ['Information split across chunk boundaries', 'Overlap increases storage'] },
+      alternatives: 'Semantic chunking (split at topic boundaries), fixed-size with overlap, sentence-level'
+    },
+    analogy: 'Like cutting a textbook into index cards — each card covers one concept, making it easy to find and grab just what you need.',
+    keywords: ['chunk size', 'overlap', 'splitting', 'tokenization'],
+    relatesTo: [7, 8]
+  },
+  {
+    id: 13, category: 'rag', name: 'BM25 (Best Matching 25)', shortName: 'BM25',
+    definition: 'A keyword-based ranking algorithm that scores documents based on term frequency and inverse document frequency. Excellent for exact word matches.',
+    inProject: {
+      summary: 'Part of your hybrid search in AdvancedRAG. BM25 excels at finding exact property names and proper nouns like "Vampire Manor" or "Lightning Spa".',
+      code: `query = "Vampire Manor"
+# BM25 scores:
+# - "Vampire" appears 10 times in doc1 → High score
+# - "Manor" appears 5 times in doc1 → Boost
+# - These words are rare overall → Extra boost
+
+# BM25 loves: Proper nouns, specific terms, exact matches
+# BM25 misses: Synonyms, concepts, paraphrases`,
+      files: ['app/advanced_rag.py']
+    },
+    deepDive: {
+      howItWorks: 'Scores = TF(term, doc) × IDF(term, corpus). IDF gives rare terms more weight. BM25 saturates TF to prevent length bias. No neural networks — just frequency statistics.',
+      tradeoffs: { pros: ['No GPU needed', 'Perfect recall for exact terms', 'Interpretable scores'], cons: ['No semantic understanding', 'Fails on synonyms', 'Needs inverted index'] },
+      alternatives: 'TF-IDF, BM25+, BM25L, semantic search'
+    },
+    analogy: 'Like a library card catalog — finds exactly what you ask for, but can\'t suggest that "creature of the night lodging" = "Vampire Manor".',
+    keywords: ['TF-IDF', 'inverted index', 'keyword search', 'sparse retrieval'],
+    relatesTo: [14]
+  },
+  {
+    id: 14, category: 'rag', name: 'Hybrid Search', shortName: 'Hybrid Search',
+    definition: 'Combining multiple search methods (typically BM25 + semantic) to get benefits of both keyword matching and conceptual understanding.',
+    inProject: {
+      summary: 'Your AdvancedRAG runs BM25 and dense search in parallel, fuses results with Reciprocal Rank Fusion, then reranks. Achieved 100% accuracy on proper nouns.',
+      code: `def search(self, query: str, k: int = 5):
+    bm25_results  = self._bm25_search(query, k=20)   # Keyword
+    dense_results = self._dense_search(query, k=20)  # Semantic
+    fused = self._reciprocal_rank_fusion(bm25_results, dense_results)
+    final = self._rerank(query, fused, top_k=k)
+    return final`,
+      files: ['app/advanced_rag.py']
+    },
+    deepDive: {
+      howItWorks: 'Parallel retrieval from both BM25 and dense indexes; fusion algorithm (RRF) merges ranked lists; cross-encoder reranker picks the final top-k.',
+      tradeoffs: { pros: ['Best of both worlds', 'Robust to both exact and conceptual queries', '100% accuracy on names'], cons: ['More complex', 'Higher latency', 'Two indexes to maintain'] },
+      alternatives: 'Pure semantic, pure BM25, learned sparse retrieval (SPLADE)'
+    },
+    analogy: 'Like using both Google and a card catalog — Google finds concepts, the catalog finds exact titles, and you combine the best results.',
+    keywords: ['BM25', 'dense retrieval', 'fusion', 'two-stage'],
+    relatesTo: [13, 15, 16]
+  },
+  {
+    id: 15, category: 'rag', name: 'Reciprocal Rank Fusion (RRF)', shortName: 'RRF',
+    definition: 'A method for combining ranked lists from multiple sources. Gives higher weight to items that rank well in multiple lists.',
+    inProject: {
+      summary: 'Used in AdvancedRAG to merge BM25 and dense search results. Documents appearing in both lists get boosted — ensuring consensus picks rise to the top.',
+      code: `# RRF_score(doc) = sum(1 / (k + rank_in_list_i))  # k=60
+
+# BM25 ranks:  DocA=1, DocB=2
+# Dense ranks: DocB=1, DocA=3
+# RRF: DocA=0.0164+0.0159=0.0323, DocB=0.0161+0.0164=0.0325
+# DocB wins because it ranked high in BOTH lists`,
+      files: ['app/advanced_rag.py']
+    },
+    deepDive: {
+      howItWorks: 'For each document in any ranked list, compute 1/(k+rank) and sum across all lists. The constant k=60 prevents very high ranks from dominating. No score normalization needed.',
+      tradeoffs: { pros: ['Simple and effective', 'No score calibration needed', 'Handles different score scales'], cons: ['Doesn\'t use actual scores', 'k is a hyperparameter to tune'] },
+      alternatives: 'Score fusion (weighted sum), CombMNZ, learned fusion'
+    },
+    analogy: 'Like a competition where judges rank acts — an act ranked 2nd by all judges beats one ranked 1st by only one judge.',
+    keywords: ['rank fusion', 'ensemble retrieval', 'k=60', 'consensus'],
+    relatesTo: [14, 16]
+  },
+  {
+    id: 16, category: 'rag', name: 'Reranking (Cross-Encoder)', shortName: 'Reranker',
+    definition: 'A second-stage model that scores query-document pairs together for final precision. More accurate but slower than initial retrieval.',
+    inProject: {
+      summary: 'Using BGE cross-encoder (BAAI/bge-reranker-base). Stage 1 retrieves 20 candidates fast; Stage 2 reranks top 20 → picks top 5. Boosted context precision from 0.85 to 0.94 (+11%).',
+      code: `# Bi-encoder (fast but less accurate):
+query_emb = encode("spa services")     # independent
+doc_emb   = encode("Lightning Spa")   # independent
+score = cosine(query_emb, doc_emb)    # 0.85
+
+# Cross-encoder (slower, more accurate):
+score = cross_encoder.predict([
+    ("spa services", "Lightning Spa")  # encoded TOGETHER
+])  # 0.94 (captures interaction!)`,
+      files: ['app/advanced_rag.py']
+    },
+    deepDive: {
+      howItWorks: 'Query and document are concatenated and passed through a BERT-like model. The [CLS] token embedding is used to predict a relevance score — the model "sees" how they interact.',
+      tradeoffs: { pros: ['Much more accurate than bi-encoder', '+11% context precision', 'Captures query-doc interaction'], cons: ['O(n) inference (must score each candidate)', '300ms overhead per query'] },
+      alternatives: 'MonoT5, ColBERT (late interaction), GPT-4 as reranker'
+    },
+    analogy: 'Like a hiring manager who reads your CV in context of each specific job posting, vs. a recruiter who checks keywords before forwarding.',
+    keywords: ['cross-encoder', 'BGE', 'two-stage retrieval', 'precision'],
+    relatesTo: [14, 15, 17]
+  },
+  {
+    id: 17, category: 'rag', name: 'Context Precision', shortName: 'Context Precision',
+    definition: 'A RAGAS metric measuring what percentage of retrieved context is actually relevant to answering the question.',
+    inProject: {
+      summary: 'Your score: 0.94 (94%) — excellent. Measured in test_ragas_eval.py. Formula: (relevant chunks retrieved) / (total chunks retrieved).',
+      code: `# Query: "What spa services at Castle Frankenstein?"
+# Retrieved 5 chunks:
+#   1. "Lightning Spa services: Electric Massage..." ✅ Relevant
+#   2. "Castle Frankenstein room rates..."         ✅ Relevant
+#   3. "Vampire Manor elixir varieties..."         ❌ Not relevant
+#   4. "Lightning Spa hours..."                   ✅ Relevant
+#   5. "Check-in policy..."                       ❌ Not relevant
+# Context Precision = 3/5 = 0.60 (before reranking)
+# After reranking: 0.94 ✅`,
+      files: ['tests/test_ragas_eval.py']
+    },
+    deepDive: {
+      howItWorks: 'Evaluated by checking each retrieved chunk against the ground-truth answer. A chunk is "relevant" if it contains information needed to answer the question.',
+      tradeoffs: { pros: ['Directly measurable', 'Actionable: improve retrieval or reranker'], cons: ['Requires labeled data', 'LLM-based evaluation can be expensive'] },
+      alternatives: 'nDCG@k, MAP, MRR (information retrieval metrics)'
+    },
+    analogy: 'Like checking what percentage of books you pulled off the shelf actually helped you write your essay.',
+    keywords: ['RAGAS', 'precision', 'relevance', 'retrieval quality'],
+    relatesTo: [7, 16, 31]
+  },
+  {
+    id: 18, category: 'rag', name: 'Faithfulness', shortName: 'Faithfulness',
+    definition: 'A RAGAS metric measuring whether the AI\'s answer can be verified from the retrieved context. Detects hallucinations.',
+    inProject: {
+      summary: 'Your score: 0.88 (88%) — only 12% of claims can\'t be verified from context. Combined with HallucinationDetector for real-time verification.',
+      code: `# Context: "Lightning Spa offers Electric Massage"
+
+# ✅ Faithful answer:
+# "The spa offers Electric Massage"
+# Faithfulness: 1.0 (claim in context)
+
+# ❌ Hallucinated answer:
+# "The spa offers underwater yoga and crystal healing"
+# Faithfulness: 0.0 (neither claim in context)`,
+      files: ['tests/test_ragas_eval.py', 'app/hallucination.py']
+    },
+    deepDive: {
+      howItWorks: 'Each claim in the answer is extracted and checked: "Can this claim be inferred from the retrieved context?" Claims not in context = hallucinations.',
+      tradeoffs: { pros: ['Directly measures hallucination risk', 'Correlates with user trust'], cons: ['LLM-as-judge can itself hallucinate', 'Computationally expensive at scale'] },
+      alternatives: 'FactScore, attribution scoring, citation checking'
+    },
+    analogy: 'Like a fact-checker who verifies every claim in an article against cited sources.',
+    keywords: ['RAGAS', 'hallucination detection', 'grounding', 'attribution'],
+    relatesTo: [2, 7, 17]
+  },
+  {
+    id: 19, category: 'tools', name: 'Tool Calling (Function Calling)', shortName: 'Tool Calling',
+    definition: 'Allowing LLMs to invoke predefined functions/APIs to perform actions or retrieve information. Converts natural language into structured function calls.',
+    inProject: {
+      summary: 'LLM can invoke book_room, search_amenities, get_booking, generate_invoice, check_availability tools. More reliable than prompt engineering for structured actions.',
+      code: `# LLM decides to call tool:
+user: "Book room for John at Vampire Manor"
+llm:  { "tool_calls": [{ "function": {
+          "name": "book_room",
+          "arguments": '{"guest_name": "John", "hotel_name": "Vampire Manor"}'
+       }}]}
+
+# Execute tool
+result = book_room(guest_name="John", hotel_name="Vampire Manor")
+# → {"booking_id": "b437674a", "status": "confirmed"}`,
+      files: ['app/tools.py', 'app/main.py']
+    },
+    deepDive: {
+      howItWorks: 'Tool schemas are passed to the LLM as part of the API call. The model is trained to output tool_call JSON instead of text when appropriate. The app detects this and executes the function.',
+      tradeoffs: { pros: ['Structured output (no parsing)', 'Reliable parameter extraction', 'Type safety'], cons: ['Tool schema design is tricky', 'LLM may call wrong tool', 'Extra API round-trip'] },
+      alternatives: 'JSON mode, ReAct prompting, structured output schemas'
+    },
+    analogy: 'Like a dispatcher who translates customer requests into specific work orders for different departments.',
+    keywords: ['function calling', 'OpenAI tools', 'structured output', 'agent actions'],
+    relatesTo: [20, 21, 22]
+  },
+  {
+    id: 20, category: 'tools', name: 'Agent', shortName: 'Agent',
+    definition: 'An LLM-powered system that can make decisions, use tools, and take actions autonomously to achieve goals.',
+    inProject: {
+      summary: 'Your entire project IS an agent. Given a user request, it reasons about which tools to call, calls them in sequence, observes results, and continues until the goal is achieved.',
+      code: `# Agent loop:
+# 1. Perceive: get user input
+# 2. Think: LLM reasoning (which tool to use?)
+# 3. Act: call tool (book_room, search_amenities, etc.)
+# 4. Observe: get tool result
+# 5. Repeat until goal achieved (or no more tools needed)
+
+# Example:
+# User: "Spooky hotel with spa for tomorrow"
+# → search_amenities("spa") → Found Castle Frankenstein
+# → book_room("Castle Frankenstein", tomorrow)
+# → "Your Coffin Suite is booked! Reference: b437674a"`,
+      files: ['app/main.py', 'app/tools.py']
+    },
+    deepDive: {
+      howItWorks: 'The agent loop keeps calling the LLM with the growing conversation (including tool results) until the model returns a plain text response with no more tool calls.',
+      tradeoffs: { pros: ['Handles multi-step workflows', 'Adapts to unexpected inputs', 'Can recover from tool failures'], cons: ['Token cost grows with steps', 'Hard to debug', 'Loops are possible'] },
+      alternatives: 'Workflow-based systems, RPA, hardcoded decision trees'
+    },
+    analogy: 'Like a hotel concierge who doesn\'t just look things up but actually makes phone calls, takes reservations, and follows up — all autonomously.',
+    keywords: ['ReAct', 'agent loop', 'autonomous', 'multi-step'],
+    relatesTo: [19, 21, 22]
+  },
+  {
+    id: 21, category: 'tools', name: 'Tool Schema', shortName: 'Tool Schema',
+    definition: 'JSON specification describing what a tool does, what parameters it accepts, and their types. Enables LLM to understand how to use tools.',
+    inProject: {
+      summary: 'Each tool in your project has a schema with name, description, and parameters (types, required fields, enums for hotel names). The LLM reads these schemas to decide which tool to call.',
+      code: `{
+  "name": "book_room",
+  "description": "Book a room at one of our Monster Resort properties",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "guest_name": { "type": "string" },
+      "hotel_name": {
+        "type": "string",
+        "enum": ["Vampire Manor: Eternal Night Inn",
+                 "Castle Frankenstein: High Voltage Luxury"]
+      },
+      "check_in": { "type": "string" }
+    },
+    "required": ["guest_name", "hotel_name", "check_in"]
+  }
+}`,
+      files: ['app/tools.py']
+    },
+    deepDive: {
+      howItWorks: 'Passed as part of the OpenAI API request. The model is trained to produce structured tool_call JSON matching the schema. Enums constrain outputs to valid values.',
+      tradeoffs: { pros: ['Prevents invalid parameters', 'Self-documenting', 'Type safety'], cons: ['Verbose schema = more tokens', 'Complex nested schemas confuse models'] },
+      alternatives: 'Natural language tool descriptions (less reliable), Pydantic-based schema generation'
+    },
+    analogy: 'Like a form with labeled fields — the LLM fills in the blanks rather than writing a free-form request.',
+    keywords: ['JSON Schema', 'OpenAPI', 'parameters', 'enum'],
+    relatesTo: [19, 20]
+  },
+  {
+    id: 22, category: 'tools', name: 'Tool Registry', shortName: 'Tool Registry',
+    definition: 'A centralized system for registering, discovering, and executing tools. Maps tool names to actual functions.',
+    inProject: {
+      summary: 'ToolRegistry in app/tools.py manages all tools with a decorator pattern. LLM tool calls are dispatched through registry.execute() which looks up and calls the right function.',
+      code: `class ToolRegistry:
+    def __init__(self):
+        self.tools: Dict[str, Tool] = {}
+
+    def register(self, name: str, description: str):
+        def decorator(fn):
+            self.tools[name] = Tool(name, description, fn)
+            return fn
+        return decorator
+
+@registry.register("book_room", "Book a room")
+def book_room(guest_name: str, hotel_name: str, ...):
+    return {"booking_id": "...", "status": "confirmed"}
+
+result = registry.execute("book_room", guest_name="John", ...)`,
+      files: ['app/tools.py']
+    },
+    deepDive: {
+      howItWorks: 'A dictionary maps tool names to Tool objects. register() is a decorator that auto-adds functions. execute() handles routing and error handling.',
+      tradeoffs: { pros: ['Centralized tool management', 'Easy to add new tools', 'Auto-generates schemas'], cons: ['Single point of failure', 'Names must be globally unique'] },
+      alternatives: 'Direct function dispatch, plugin architecture, LangChain tools'
+    },
+    analogy: 'Like a telephone switchboard — all calls come in centrally and get routed to the right department.',
+    keywords: ['decorator pattern', 'dispatch', 'centralized', 'plugin'],
+    relatesTo: [19, 20]
+  },
+  {
+    id: 23, category: 'architecture', name: 'FastAPI', shortName: 'FastAPI',
+    definition: 'Modern Python web framework for building APIs. Features automatic docs, type validation, and async support.',
+    inProject: {
+      summary: 'The web framework powering your /chat, /bookings, /sessions, /metrics endpoints. Provides automatic OpenAPI docs at http://localhost:8000/docs.',
+      code: `from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.post("/chat")
+async def chat_endpoint(payload: dict):
+    message = payload["message"]
+    reply = await agent_reply(message)
+    return {"reply": reply}
+
+# Auto-generates: http://localhost:8000/docs`,
+      files: ['app/main.py']
+    },
+    deepDive: {
+      howItWorks: 'Built on Starlette (ASGI) and Pydantic. Uses Python type hints to auto-generate OpenAPI schemas. async def handlers use uvicorn\'s event loop for non-blocking I/O.',
+      tradeoffs: { pros: ['Auto docs', 'Type validation', 'Async native', 'Very fast'], cons: ['Less mature ecosystem than Flask/Django', 'Learning curve for dependency injection'] },
+      alternatives: 'Flask (simpler, synchronous), Django REST Framework (batteries included), Litestar'
+    },
+    analogy: 'Like a smart receptionist who not only takes messages but automatically writes the employee directory (API docs) based on who works there.',
+    keywords: ['ASGI', 'OpenAPI', 'Swagger', 'endpoints', 'uvicorn'],
+    relatesTo: [24, 25, 26]
+  },
+  {
+    id: 24, category: 'architecture', name: 'Async/Await', shortName: 'Async/Await',
+    definition: 'Programming paradigm where operations can run concurrently without blocking. Enables handling multiple requests simultaneously.',
+    inProject: {
+      summary: 'All endpoints use async def. While waiting for OpenAI API (~2 seconds), the server can handle other requests. Enables 50 concurrent requests vs 1 with synchronous code.',
+      code: `# ❌ Synchronous (blocks other requests):
+def slow_function():
+    result = slow_api_call()  # Blocks 2 seconds
+    return result  # Only 30 req/min
+
+# ✅ Asynchronous (handles 1500 req/min):
+async def fast_function():
+    result = await slow_api_call()  # Releases control during wait
+    return result`,
+      files: ['app/main.py']
+    },
+    deepDive: {
+      howItWorks: 'Python\'s asyncio event loop runs a single thread. await suspends the current coroutine and yields control back to the event loop, which can run other coroutines while waiting for I/O.',
+      tradeoffs: { pros: ['50x higher concurrency for I/O-bound work', 'No thread overhead', 'Native to FastAPI'], cons: ['Can\'t use with CPU-bound work (use multiprocessing)', 'Async contagion (must use async all the way down)'] },
+      alternatives: 'Threading, multiprocessing, Celery (distributed), gevent'
+    },
+    analogy: 'Like a waiter who takes 10 orders, submits them all to the kitchen, then delivers as they\'re ready — vs. a waiter who waits at the kitchen counter for each order.',
+    keywords: ['coroutine', 'asyncio', 'event loop', 'concurrency', 'non-blocking'],
+    relatesTo: [23]
+  },
+  {
+    id: 25, category: 'architecture', name: 'Middleware', shortName: 'Middleware',
+    definition: 'Software layer that intercepts requests/responses to add functionality like authentication, logging, or rate limiting.',
+    inProject: {
+      summary: 'Your middleware stack: CORS → Auth check → Rate limit → Logging → Endpoint → Logging → Response. Each layer runs before/after your endpoint without changing endpoint code.',
+      code: `@app.middleware("http")
+async def add_request_id(request: Request, call_next):
+    # Runs BEFORE endpoint
+    request_id = str(uuid.uuid4())
+
+    response = await call_next(request)  # ← Calls actual endpoint
+
+    # Runs AFTER endpoint
+    response.headers["X-Request-ID"] = request_id
+    return response`,
+      files: ['app/main.py']
+    },
+    deepDive: {
+      howItWorks: 'FastAPI wraps each middleware as an ASGI middleware that calls next() to pass control to the next layer. Like an onion — each layer wraps the inner layers.',
+      tradeoffs: { pros: ['Separation of concerns', 'Reusable across all routes', 'Easy to add/remove'], cons: ['Order matters (auth before rate limit)', 'Middleware bugs affect all routes'] },
+      alternatives: 'Decorators per endpoint, before/after hooks, API gateway'
+    },
+    analogy: 'Like airport security — every passenger (request) goes through ID check, X-ray, customs in a fixed order before reaching the gate (your endpoint).',
+    keywords: ['ASGI', 'interceptor', 'CORS', 'auth', 'pipeline'],
+    relatesTo: [23, 34]
+  },
+  {
+    id: 26, category: 'architecture', name: 'Pydantic', shortName: 'Pydantic',
+    definition: 'Python library for data validation using type annotations. Automatically validates and converts data types.',
+    inProject: {
+      summary: 'Used throughout your project for request/response validation. FastAPI uses Pydantic under the hood — your BookingRequest, ChatRequest models auto-validate incoming JSON.',
+      code: `from pydantic import BaseModel, Field
+
+class BookingRequest(BaseModel):
+    guest_name: str = Field(min_length=1, max_length=100)
+    hotel_name: str
+    check_in: str
+    guests: int = Field(ge=1, le=10)  # 1-10 guests
+
+# Auto-validates incoming JSON — raises 422 if invalid`,
+      files: ['app/main.py', 'app/models.py']
+    },
+    deepDive: {
+      howItWorks: 'Uses Python type hints at class definition time. At runtime, validates incoming data against the schema, coerces types where possible, and raises ValidationError with field-level detail otherwise.',
+      tradeoffs: { pros: ['Zero boilerplate validation', 'Excellent error messages', 'IDE support', 'JSON serialization built-in'], cons: ['Runtime overhead (minor)', 'V1 vs V2 API changes caused migration pain'] },
+      alternatives: 'Marshmallow, Cerberus, dataclasses + manual validation, attrs'
+    },
+    analogy: 'Like a customs form with pre-printed fields — it automatically rejects anything that doesn\'t fit the required format.',
+    keywords: ['BaseModel', 'validation', 'type hints', 'serialization'],
+    relatesTo: [23]
+  },
+  {
+    id: 27, category: 'architecture', name: 'SQLite', shortName: 'SQLite',
+    definition: 'Lightweight, file-based relational database. No separate server needed — entire database in one file.',
+    inProject: {
+      summary: 'Stores sessions, messages, and bookings in monster_resort.db. Uses parameterized queries to prevent SQL injection. Appropriate for dev/small deployments.',
+      code: `# Database: monster_resort.db (single file)
+# Tables: sessions, messages, bookings
+
+conn.execute(
+    "SELECT * FROM bookings WHERE guest_name = ?",
+    ("John",)  # ← Parameterized (prevents SQL injection)
+)`,
+      files: ['app/database.py']
+    },
+    deepDive: {
+      howItWorks: 'Stores data in a single .db file using B-tree structures. In WAL mode, reads don\'t block writes. Perfect for 1-1000 concurrent users; PostgreSQL recommended for 10K+.',
+      tradeoffs: { pros: ['Zero config', 'Single file backup', 'ACID transactions', 'Free'], cons: ['Not for high concurrency (10K+ users)', 'No network access (localhost only)', 'Limited PostgreSQL feature set'] },
+      alternatives: 'PostgreSQL (production), MySQL, MongoDB (document store)'
+    },
+    analogy: 'Like a filing cabinet — perfect for one office, but a multinational company needs a proper records room (PostgreSQL).',
+    keywords: ['SQL', 'ACID', 'B-tree', 'WAL', 'file database'],
+    relatesTo: [23]
+  },
+  {
+    id: 28, category: 'architecture', name: 'Prometheus', shortName: 'Prometheus',
+    definition: 'Open-source monitoring system that collects and stores time-series metrics. Enables tracking application health and performance.',
+    inProject: {
+      summary: 'Tracks request count, latency, booking counts, token usage, and error rates. Metrics exposed at /metrics endpoint, scraped by Prometheus server, visualized in Grafana.',
+      code: `from prometheus_client import Counter, Histogram
+
+REQUEST_COUNT = Counter("mrc_http_requests_total", "Total requests")
+REQUEST_LATENCY = Histogram("mrc_http_request_latency_seconds", "Latency")
+AI_TOKEN_USAGE = Counter("mrc_ai_tokens_total", ["model"])
+
+REQUEST_COUNT.inc()           # Increment
+REQUEST_LATENCY.observe(0.542)  # Record 542ms latency`,
+      files: ['app/monitoring.py']
+    },
+    deepDive: {
+      howItWorks: 'Application exposes /metrics endpoint. Prometheus server scrapes it every 15s and stores time-series. PromQL queries aggregate data for dashboards and alerts.',
+      tradeoffs: { pros: ['Industry standard', 'Pull-based (no push needed)', 'Grafana integration', 'Powerful query language'], cons: ['Not for events/logs (use ELK)', 'Short retention by default (15 days)'] },
+      alternatives: 'DataDog, New Relic, CloudWatch, OpenTelemetry + Jaeger'
+    },
+    analogy: 'Like a car dashboard — all vital signs visible at a glance, and you can set alerts if anything goes into the red zone.',
+    keywords: ['metrics', 'time-series', 'PromQL', 'Grafana', 'observability'],
+    relatesTo: [23]
+  },
+  {
+    id: 29, category: 'architecture', name: 'Docker', shortName: 'Docker',
+    definition: 'Platform for packaging applications with dependencies into containers — isolated, reproducible environments.',
+    inProject: {
+      summary: 'docker-compose.yml runs your API, ChromaDB, Prometheus, Grafana, and MLflow as separate containers. Each service is isolated with its own dependencies.',
+      code: `# Dockerfile
+FROM python:3.12
+WORKDIR /app
+COPY . .
+RUN pip install -r requirements.txt
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0"]
+
+# docker-compose up --build
+# Starts: API + ChromaDB + Prometheus + Grafana + MLflow`,
+      files: ['Dockerfile', 'docker-compose.yml']
+    },
+    deepDive: {
+      howItWorks: 'Containers share the host OS kernel but have isolated filesystems, networks, and processes. Docker images layer efficiently — base Python layer is reused across builds.',
+      tradeoffs: { pros: ['Reproducible everywhere', 'No "works on my machine"', 'Easy service orchestration'], cons: ['Resource overhead (small)', 'Networking complexity', 'Image size if not optimized'] },
+      alternatives: 'Podman (rootless), virtual machines (heavier), bare metal, Kubernetes (for scale)'
+    },
+    analogy: 'Like shipping containers — the contents are identical no matter what ship or truck transports them.',
+    keywords: ['containerization', 'docker-compose', 'image', 'isolation'],
+    relatesTo: [23]
+  },
+  {
+    id: 30, category: 'architecture', name: 'Environment Variables', shortName: 'Env Vars',
+    definition: 'Configuration values stored outside code. Enables different settings for dev/staging/production without code changes.',
+    inProject: {
+      summary: 'All config uses MRC_ prefix via Centralized Config (app/config.py). Key vars: MRC_MODEL_PROVIDER, MRC_ANTHROPIC_API_KEY, MRC_MLFLOW_TRACKING_URI. Replaces scattered os.getenv() calls.',
+      code: `# ❌ Hardcoded (security risk!):
+API_KEY = "sk-abc123"  # Exposed in git!
+
+# ✅ Environment variable:
+API_KEY = os.getenv("MRC_ANTHROPIC_API_KEY")
+
+# .env file:
+# MRC_MODEL_PROVIDER=openai
+# MRC_ANTHROPIC_API_KEY=sk-ant-...
+# MRC_MLFLOW_TRACKING_URI=http://localhost:5000`,
+      files: ['app/config.py', '.env']
+    },
+    deepDive: {
+      howItWorks: 'OS injects variables into process environment at startup. Python reads with os.getenv(). .env files are loaded by python-dotenv. Never commit .env to git.',
+      tradeoffs: { pros: ['No secrets in code', 'Different config per environment', '12-factor app compliance'], cons: ['.env file management overhead', 'No type safety (all strings)', 'Easy to forget to set required vars'] },
+      alternatives: 'Secrets managers (AWS Secrets Manager, HashiCorp Vault), config files (YAML/TOML), cloud-native config'
+    },
+    analogy: 'Like a lock combination stored separately from the lock — changing the combination doesn\'t require replacing the lock.',
+    keywords: ['12-factor', 'secrets', '.env', 'dotenv', 'configuration'],
+    relatesTo: [23, 29]
+  },
+  {
+    id: 31, category: 'testing', name: 'RAGAS (RAG Assessment)', shortName: 'RAGAS',
+    definition: 'Framework for evaluating RAG system quality. Measures faithfulness, relevance, precision, and recall.',
+    inProject: {
+      summary: 'Your scores: faithfulness 0.88, answer_relevancy 0.89, context_precision 0.94, context_recall 0.92. All evaluated in tests/test_ragas_eval.py.',
+      code: `from ragas.metrics import faithfulness, answer_relevancy
+
+results = evaluate_rag_batch(samples)
+# {
+#   "faithfulness": 0.88,
+#   "answer_relevancy": 0.89,
+#   "context_precision": 0.94,
+#   "context_recall": 0.92
+# }`,
+      files: ['tests/test_ragas_eval.py']
+    },
+    deepDive: {
+      howItWorks: 'Uses an LLM-as-judge approach: for each metric, RAGAS prompts a judge LLM with the question, context, and answer and asks it to score specific aspects.',
+      tradeoffs: { pros: ['Automated evaluation', 'Comprehensive metrics', 'Open source'], cons: ['LLM-as-judge can be biased', 'Requires reference answers', 'Costs tokens to evaluate'] },
+      alternatives: 'Human evaluation, ROUGE/BLEU (keyword overlap), TruLens, DeepEval'
+    },
+    analogy: 'Like a standardized test rubric for your AI — instead of "it feels right", you have numeric scores on specific dimensions.',
+    keywords: ['evaluation', 'faithfulness', 'relevancy', 'precision', 'recall'],
+    relatesTo: [7, 17, 18]
+  },
+  {
+    id: 32, category: 'testing', name: 'Unit Testing', shortName: 'Unit Testing',
+    definition: 'Testing individual components/functions in isolation to verify they work correctly.',
+    inProject: {
+      summary: 'tests/test_unit_core.py tests ToolRegistry, SessionManager, and individual tool functions. Uses pytest with mocked LLM responses to avoid real API calls.',
+      code: `# tests/test_unit_core.py
+def test_tool_registry():
+    reg = ToolRegistry()
+
+    @reg.register("test_tool", "A test")
+    def test_fn(x: int):
+        return x * 2
+
+    result = reg.execute("test_tool", x=5)
+    assert result == 10  # ✅ Pass`,
+      files: ['tests/test_unit_core.py', 'tests/test_rag_unit.py']
+    },
+    deepDive: {
+      howItWorks: 'Each test function tests one behavior. pytest discovers test_ functions, runs them, and reports failures. Mocking (unittest.mock) replaces external dependencies with predictable fakes.',
+      tradeoffs: { pros: ['Fast (no real API calls)', 'Easy to debug', 'Documents expected behavior'], cons: ['Doesn\'t catch integration bugs', 'Mocks can diverge from reality'] },
+      alternatives: 'Integration tests, property-based testing (Hypothesis), fuzzing'
+    },
+    analogy: 'Like testing each car part separately on a bench before assembling the car.',
+    keywords: ['pytest', 'mocking', 'assertion', 'isolation', 'coverage'],
+    relatesTo: [33]
+  },
+  {
+    id: 33, category: 'testing', name: 'Integration Testing', shortName: 'Integration Testing',
+    definition: 'Testing how multiple components work together. Tests entire workflows end-to-end.',
+    inProject: {
+      summary: 'tests/test_api_endpoints.py and test_booking.py test the full stack: HTTP request → FastAPI → Agent → Tool → Database → Response.',
+      code: `def test_booking_flow_end_to_end(client):
+    response = client.post("/chat", json={
+        "message": "Book room for John at Vampire Manor tomorrow"
+    })
+    assert response.status_code == 200
+
+    data = response.json()
+    assert "booking" in data["reply"].lower()
+
+    # Verify session persisted
+    session_id = data["session_id"]
+    session = client.get(f"/sessions/{session_id}")
+    assert session.status_code == 200`,
+      files: ['tests/test_api_endpoints.py', 'tests/test_booking.py']
+    },
+    deepDive: {
+      howItWorks: 'Uses FastAPI TestClient (httpx under the hood) which runs the app in-process. Database uses a temp SQLite file. LLM calls may be mocked or use real API with a test key.',
+      tradeoffs: { pros: ['Catches integration bugs', 'Tests real user flows', 'High confidence'], cons: ['Slower than unit tests', 'Harder to isolate failures', 'Brittle to minor changes'] },
+      alternatives: 'End-to-end tests (Playwright), contract testing (Pact), smoke tests'
+    },
+    analogy: 'Like a test drive of the assembled car — you find issues that individual part tests miss.',
+    keywords: ['TestClient', 'end-to-end', 'workflow', 'full stack'],
+    relatesTo: [32]
+  },
+  {
+    id: 34, category: 'testing', name: 'Rate Limiting', shortName: 'Rate Limiting',
+    definition: 'Restricting the number of requests a user can make in a time period. Prevents abuse and ensures fair usage.',
+    inProject: {
+      summary: 'Using slowapi with a 60 requests/minute per-IP limit. Exceeding limit returns HTTP 429. Protects against abuse and controls OpenAI API costs.',
+      code: `from slowapi import Limiter
+
+limiter = Limiter(
+    key_func=get_remote_address,
+    default_limits=["60/minute"]
+)
+
+@app.post("/chat")
+@limiter.limit("60/minute")
+async def chat(request: Request, payload: dict):
+    # Returns HTTP 429 if >60 req/min
+    ...`,
+      files: ['app/main.py']
+    },
+    deepDive: {
+      howItWorks: 'Uses a sliding window or token bucket algorithm. For each IP, tracks requests in the current time window. When limit is exceeded, immediately returns 429 without running endpoint logic.',
+      tradeoffs: { pros: ['Prevents abuse and cost explosion', 'Fair resource allocation', 'Easy with slowapi'], cons: ['IP-based can block multiple users behind NAT', 'Legitimate burst traffic affected'] },
+      alternatives: 'Token bucket (smoother), Redis-based distributed limiting, API gateway rate limiting'
+    },
+    analogy: 'Like a nightclub with a "one person per minute" door policy — keeps things manageable even if 1000 people want to enter.',
+    keywords: ['429', 'slowapi', 'token bucket', 'IP-based', 'throttling'],
+    relatesTo: [25, 23]
+  },
+  {
+    id: 35, category: 'ml', name: 'Fine-Tuning', shortName: 'Fine-Tuning',
+    definition: 'Training a pre-trained model on your specific dataset to specialize it for your use case. Updates model weights.',
+    inProject: {
+      summary: 'You fine-tuned Phi-3-mini (3.8B params) on 155 Monster Resort Q&A pairs using LoRA. Before: generic responses. After: "Lightning Spa offers Electric Massage..." with Gothic tone.',
+      code: `# Before fine-tuning:
+"What spa services?" → Generic response
+
+# After fine-tuning on Monster Resort data:
+"What spa services?" → "Lightning Spa offers Electric Massage
+                        with adjustable amperage..."
+
+# Process: 155 Q&A pairs → LoRA training (8-12 hrs CPU) → adapter`,
+      files: ['notebooks/fine_tuning_notebook.ipynb']
+    },
+    deepDive: {
+      howItWorks: 'Continue training a pre-trained model\'s weights on your domain-specific data. The model adapts its knowledge without forgetting general capabilities (if done carefully).',
+      tradeoffs: { pros: ['Domain expertise baked in', 'Faster inference (no RAG needed)', 'Gothic tone learned automatically'], cons: ['Data collection required', 'Training time/cost', 'Knowledge cutoff issue'] },
+      alternatives: 'Prompt engineering, RAG (no training), few-shot examples'
+    },
+    analogy: 'Like hiring a general doctor and putting them through a 3-month Monster Resort residency — they become a specialist while keeping general knowledge.',
+    keywords: ['domain adaptation', 'Phi-3', 'LoRA', 'training data', 'weights'],
+    relatesTo: [36, 37]
+  },
+  {
+    id: 36, category: 'ml', name: 'LoRA (Low-Rank Adaptation)', shortName: 'LoRA',
+    definition: 'Parameter-efficient fine-tuning technique. Instead of updating all model weights, trains small adapter layers. Reduces training cost by 90%.',
+    inProject: {
+      summary: 'Used to fine-tune Phi-3-mini. Full fine-tuning would need 32GB VRAM and 200+ hours; LoRA needs 8GB VRAM and 8-12 hours on CPU. Trains only 20M of 3.8B parameters (0.5%).',
+      code: `# Full fine-tuning: 3.8B parameters, 32GB VRAM, 200hrs
+# LoRA fine-tuning: 20M parameters, 8GB VRAM, 8-12hrs
+
+# How LoRA decomposes weight matrices:
+# W' = W + (A × B)
+# A = 1000×8 matrix  (8K parameters)
+# B = 8×1000 matrix  (8K parameters)
+# Total adapter: 16K params (vs 1M original!)`,
+      files: ['notebooks/fine_tuning_notebook.ipynb']
+    },
+    deepDive: {
+      howItWorks: 'Each weight matrix W is augmented with two low-rank matrices A and B where rank << min(rows, cols). Only A and B are trained. At inference, W + AB is computed once and merged.',
+      tradeoffs: { pros: ['99.5% fewer parameters to train', 'Multiple LoRA adapters possible (swappable)', 'Can run on consumer hardware'], cons: ['Slightly lower quality than full fine-tuning', 'Rank selection is a hyperparameter'] },
+      alternatives: 'Full fine-tuning, prefix tuning, prompt tuning, adapter layers (Houlsby), QLoRA (quantized)'
+    },
+    analogy: 'Like putting on prescription lenses instead of replacing your entire eye — a small adapter changes behavior without altering the core.',
+    keywords: ['low-rank', 'adapter', 'PEFT', 'efficient training', 'rank'],
+    relatesTo: [35, 37]
+  },
+  {
+    id: 37, category: 'ml', name: 'Training vs Inference', shortName: 'Train vs Infer',
+    definition: 'Training: the process of teaching a model (updating weights). Inference: using a trained model to make predictions (weights frozen).',
+    inProject: {
+      summary: 'You trained once (LoRA fine-tuning, 8-12 hrs). Every API call to your chatbot is inference (~100-200ms). Training cost: ~$50. Inference cost: ~$0.0003 per query.',
+      code: `# TRAINING (LoRA - done once):
+for epoch in range(3):
+    for batch in training_data:
+        predictions = model(batch)
+        loss = calculate_loss(predictions, targets)
+        update_weights(loss)  # ← Model learns
+
+# INFERENCE (every API call):
+query = "What spa services?"
+response = model.generate(query)  # ← Weights frozen, predict only`,
+      files: ['notebooks/fine_tuning_notebook.ipynb', 'app/llm_providers.py']
+    },
+    deepDive: {
+      howItWorks: 'Training uses backpropagation to compute gradients and update weights. Inference is just a forward pass — input flows through the network, output is produced, no weight updates.',
+      tradeoffs: { pros: ['Inference is fast and cheap', 'Training is a one-time cost', 'Separation of concerns'], cons: ['Knowledge frozen at training time', 'Must retrain to learn new facts'] },
+      alternatives: 'Continuous learning (RLHF), online learning, retrieval-augmented (RAG avoids retraining)'
+    },
+    analogy: 'Training is studying for an exam. Inference is taking the exam — you use what you learned but don\'t add new knowledge.',
+    keywords: ['forward pass', 'backpropagation', 'weights', 'gradient', 'frozen'],
+    relatesTo: [35, 36, 39]
+  },
+  {
+    id: 38, category: 'ml', name: 'Model Quantization', shortName: 'Quantization',
+    definition: 'Reducing model precision (e.g., 32-bit floats → 8-bit integers) to save memory and speed up inference with minimal quality loss.',
+    inProject: {
+      summary: 'Your project currently uses FP16 (half precision) on GPU and FP32 on CPU. INT8 quantization would shrink the model 4x with ~1-2% quality loss.',
+      code: `# Full precision (FP32):
+weight = 0.123456789  # 32 bits = 4 bytes
+# Model size: 3.8GB
+
+# 8-bit quantization (INT8):
+weight = 31  # 8 bits = 1 byte (maps to ~0.12)
+# Model size: ~1GB  ← 4x smaller!
+
+# FP16 (half precision):
+# Model size: ~1.9GB, ~2x speedup on GPU`,
+      files: ['notebooks/fine_tuning_notebook.ipynb']
+    },
+    deepDive: {
+      howItWorks: 'Maps float values to a smaller range of integers using scale and zero-point. GGUF format (used by Ollama) supports 4-bit quantization. Quality loss increases with lower bit-width.',
+      tradeoffs: { pros: ['4x memory reduction (INT8)', '2-3x faster inference', 'Enables running on smaller hardware'], cons: ['~1-2% quality loss (INT8)', '~5-10% loss (INT4)', 'Quantization artifacts on edge cases'] },
+      alternatives: 'Knowledge distillation (train smaller model), pruning (remove weights), speculative decoding'
+    },
+    analogy: 'Like converting a 4K photo to 1080p — much smaller file, barely noticeable quality difference for most uses.',
+    keywords: ['INT8', 'FP16', 'GGUF', 'bitsandbytes', 'precision'],
+    relatesTo: [35, 37]
+  },
+  {
+    id: 39, category: 'ml', name: 'Gradient Descent', shortName: 'Gradient Descent',
+    definition: 'Optimization algorithm used to train neural networks. Iteratively adjusts weights to minimize loss (error).',
+    inProject: {
+      summary: 'The fundamental algorithm behind your LoRA fine-tuning. At each training step, computes how to adjust LoRA adapter weights (A, B matrices) to reduce loss on the training batch.',
+      code: `# Simplified training loop:
+for batch in training_data:
+    predictions = model(inputs)         # Forward pass
+    loss = calculate_loss(predictions)  # Compute error
+    gradients = compute_gradients(loss) # Backward pass
+
+    for weight in lora_weights:
+        weight -= learning_rate * gradient  # ← "Descent"
+
+# learning_rate: 3e-4 (LoRA default)`,
+      files: ['notebooks/fine_tuning_notebook.ipynb']
+    },
+    deepDive: {
+      howItWorks: 'Computes ∂Loss/∂weight for each parameter via backpropagation (chain rule). Subtracts this gradient * learning_rate from the weight. Repeated over many batches minimizes the loss.',
+      tradeoffs: { pros: ['Works for any differentiable model', 'Proven reliable at scale'], cons: ['Can get stuck in local minima', 'Learning rate is tricky to tune', 'Slow without GPU'] },
+      alternatives: 'Adam optimizer (adaptive learning rate), AdaGrad, RMSProp, LBFGS (second order)'
+    },
+    analogy: 'Like hiking down a hill blindfolded — feel which direction slopes down steepest (gradient) and take a step that way. Repeat until you reach the valley (minimum loss).',
+    keywords: ['backpropagation', 'learning rate', 'loss', 'optimizer', 'Adam'],
+    relatesTo: [37]
+  },
+  {
+    id: 40, category: 'ml', name: 'Transformer Architecture', shortName: 'Transformer',
+    definition: 'Neural network architecture that powers modern LLMs. Uses self-attention to understand relationships between words.',
+    inProject: {
+      summary: 'GPT-4o, Claude, Phi-3-mini (your fine-tuned model), and the all-MiniLM-L6-v2 embedding model are all transformers. Self-attention is why they understand context so well.',
+      code: `# Input: "The spa at Castle Frankenstein offers massages"
+# Self-attention lets "massages" attend to ALL words simultaneously:
+# "massages" → relates to "spa" (high), "Castle" (medium), "at" (low)
+
+# Architecture:
+# Token Embedding → Positional Encoding →
+# [Self-Attention + FFN] × N layers → Output Layer`,
+      files: ['notebooks/fine_tuning_notebook.ipynb']
+    },
+    deepDive: {
+      howItWorks: 'Each token generates Query, Key, Value vectors. Attention scores = softmax(Q·Kᵀ/√d). Output = weighted sum of Values. Multi-head attention runs this in parallel with different projections.',
+      tradeoffs: { pros: ['Long-range dependencies', 'Parallel training (vs RNN)', 'State-of-the-art on all NLP tasks'], cons: ['O(n²) attention cost', 'Large memory footprint', 'Expensive to train from scratch'] },
+      alternatives: 'RNNs/LSTMs (sequential, good for very long sequences), State Space Models (Mamba), CNNs for NLP'
+    },
+    analogy: 'Like a room where everyone can whisper to everyone else simultaneously — each word "hears" all other words and decides how much to pay attention to each.',
+    keywords: ['self-attention', 'multi-head attention', 'positional encoding', 'GPT', 'BERT'],
+    relatesTo: [1, 36]
+  },
+  {
+    id: 41, category: 'bonus', name: 'Gothic Tone', shortName: 'Gothic Tone',
+    definition: 'The sophisticated, dark, and elegant personality voice of your AI concierge. Defines how the assistant communicates.',
+    inProject: {
+      summary: 'Enforced through your system prompt\'s "Grand Chamberlain" persona and tone guidance. Transforms generic responses into immersive hotel experience language.',
+      code: `# ❌ Generic:
+"Your booking is confirmed."
+
+# ✅ Gothic:
+"The dark seal has been set upon the ledger.
+We await your shadow."
+
+# ❌ Generic:
+"Check-in is at 3 PM."
+
+# ✅ Gothic:
+"You may shamble into our embrace from 3:00 PM,
+when the shadows lengthen."`,
+      files: ['app/main.py']
+    },
+    deepDive: {
+      howItWorks: 'Encoded in the system prompt as style instructions. The LLM\'s language model naturally produces stylistically consistent text when given strong persona guidance.',
+      tradeoffs: { pros: ['Unique brand voice', 'Memorable user experience', 'Consistent personality'], cons: ['Can feel excessive if overused', 'May confuse users unfamiliar with Gothic genre', 'Harder to maintain factual precision'] },
+      alternatives: 'Neutral professional tone, brand-specific tone guidelines, post-processing text transformation'
+    },
+    analogy: 'Like a theme park character — Mickey Mouse doesn\'t break character even when answering boring questions.',
+    keywords: ['persona', 'tone', 'brand voice', 'system prompt', 'style'],
+    relatesTo: [3, 42]
+  },
+  {
+    id: 42, category: 'bonus', name: 'Session Management', shortName: 'Session Mgmt',
+    definition: 'Tracking conversations across multiple requests using unique session identifiers and stored message history.',
+    inProject: {
+      summary: 'Each conversation gets a UUID session_id stored in SQLite. Message history is loaded for each request, enabling multi-turn conversations. HallucinationDetector scores are stored per session.',
+      code: `# First message → create session
+session_id = str(uuid.uuid4())  # "abc-123-def"
+
+# Store messages
+memory.add_message(session_id, "user", "Hello")
+memory.add_message(session_id, "assistant", "Welcome...")
+
+# Second message → load history
+messages = memory.get_messages(session_id)  # Full history!
+# LLM receives full context → understands references`,
+      files: ['app/memory.py', 'app/database.py']
+    },
+    deepDive: {
+      howItWorks: 'Session ID is returned in API response and must be sent in subsequent requests. SQLite stores message tuples (session_id, role, content, timestamp). Messages are prepended to LLM prompt.',
+      tradeoffs: { pros: ['Multi-turn conversation support', 'Persistent across page refreshes', 'Simple implementation with SQLite'], cons: ['History grows → more tokens → higher cost', 'No automatic cleanup of old sessions', 'Session hijacking risk without auth'] },
+      alternatives: 'Cookie-based sessions, JWT claims, Redis for session storage, stateless (no history)'
+    },
+    analogy: 'Like a hotel guest file — the concierge checks your folder before each interaction so they know your preferences and history.',
+    keywords: ['UUID', 'session_id', 'conversation history', 'multi-turn', 'context'],
+    relatesTo: [1, 27]
+  },
+];
+
+// ========== STATE MANAGEMENT ==========
+const STATE_KEY = 'definitions_lab_v1';
+
+function getDefaultState() {
+  return {
+    flashcards: {},    // { [termId]: { attempts, mastery, isMastered, lastReview } }
+    interviews: {},    // { [termId]: { attempts: [{timestamp, stars, answer}], avgRating } }
+    glossary: { expandedL2: [], expandedL3: [], lastSearch: '', lastCategoryFilter: '', sortBy: 'id' },
+    preferences: { lastMode: 'glossary', flashcardShuffle: false, flashcardCategoryFilter: '', showUnmastered: false }
+  };
+}
+
+function getState() {
+  try {
+    const raw = localStorage.getItem(STATE_KEY);
+    if (!raw) return getDefaultState();
+    return { ...getDefaultState(), ...JSON.parse(raw) };
+  } catch { return getDefaultState(); }
+}
+
+function saveState(state) {
+  try { localStorage.setItem(STATE_KEY, JSON.stringify(state)); } catch {}
+}
+
+function updateState(updater) {
+  const s = getState();
+  updater(s);
+  saveState(s);
+  return s;
+}
+
+// ========== HELPERS ==========
+function getCategoryById(catId) {
+  return CATEGORIES.find(c => c.id === catId) || { label: catId, color: '#8b5cf6' };
+}
+
+function getTermById(id) {
+  return TERMS.find(t => t.id === id);
+}
+
+function makeBadge(catId) {
+  const cat = getCategoryById(catId);
+  return `<span class="badge" style="background:${cat.color}22;color:${cat.color};border:1px solid ${cat.color}44">${cat.label}</span>`;
+}
+
+function getMastery(termId) {
+  const state = getState();
+  const fc = state.flashcards[termId];
+  if (!fc) return 'none';
+  if (fc.isMastered) return 'high';
+  if (fc.mastery >= 2) return 'medium';
+  if (fc.attempts > 0) return 'low';
+  return 'none';
+}
+
+function updateHeroStats() {
+  const state = getState();
+  const mastered = Object.values(state.flashcards).filter(f => f.isMastered).length;
+  const interviewed = Object.values(state.interviews).filter(i => i.attempts && i.attempts.length > 0).length;
+  document.getElementById('hero-mastered').textContent = mastered;
+  document.getElementById('hero-interviewed').textContent = interviewed;
+}
+</script>
+
+<!-- ========== MODE SWITCHING ========== -->
+<script>
+const MODES = ['glossary', 'flashcard', 'interview', 'map'];
+
+function setMode(mode) {
+  if (!MODES.includes(mode)) mode = 'glossary';
+  MODES.forEach(m => {
+    document.getElementById('section-' + m).classList.toggle('active', m === mode);
+    document.querySelector(`.mode-tab[data-mode="${m}"]`).classList.toggle('active', m === mode);
+  });
+  window.location.hash = mode;
+  updateState(s => { s.preferences.lastMode = mode; });
+  if (mode === 'map') setTimeout(renderConceptMap, 50);
+  if (mode === 'flashcard') updateFlashcardStats();
+  if (mode === 'interview') renderInterviewHistory();
+  updateHeroStats();
+}
+
+document.querySelectorAll('.mode-tab').forEach(tab => {
+  tab.addEventListener('click', () => setMode(tab.dataset.mode));
+});
+
+// ========== GLOSSARY MODE ==========
+let glossaryFilteredTerms = [...TERMS];
+
+function renderGlossary() {
+  const search = (document.getElementById('glossary-search').value || '').toLowerCase();
+  const cat = document.getElementById('glossary-cat').value;
+  const sort = document.getElementById('glossary-sort').value;
+  const state = getState();
+
+  glossaryFilteredTerms = TERMS.filter(t => {
+    const matchCat = !cat || t.category === cat;
+    const matchSearch = !search ||
+      t.name.toLowerCase().includes(search) ||
+      t.definition.toLowerCase().includes(search) ||
+      (t.keywords || []).some(k => k.toLowerCase().includes(search));
+    return matchCat && matchSearch;
+  });
+
+  if (sort === 'alpha') glossaryFilteredTerms.sort((a,b) => a.name.localeCompare(b.name));
+  else if (sort === 'category') glossaryFilteredTerms.sort((a,b) => a.category.localeCompare(b.category) || a.id - b.id);
+  else glossaryFilteredTerms.sort((a,b) => a.id - b.id);
+
+  const grid = document.getElementById('glossary-grid');
+
+  if (!glossaryFilteredTerms.length) {
+    grid.innerHTML = '<div class="no-results">No terms match your search. Try clearing filters.</div>';
+    return;
+  }
+
+  grid.innerHTML = glossaryFilteredTerms.map(t => {
+    const mastery = getMastery(t.id);
+    const l2Open = (state.glossary.expandedL2 || []).includes(t.id);
+    const l3Open = (state.glossary.expandedL3 || []).includes(t.id);
+
+    const l2Html = t.inProject ? `
+      <div class="layer2-container ${l2Open ? 'open' : ''}" id="l2-${t.id}">
+        <div class="layer2-inner">
+          <div class="layer-header">🔧 In Your Project</div>
+          <p style="font-size:0.87rem;color:var(--text-muted);margin-bottom:0.75rem;">${t.inProject.summary}</p>
+          ${t.inProject.files ? '<div style="margin-bottom:0.75rem;">' + t.inProject.files.map(f => `<span class="file-ref">📁 ${f}</span>`).join('') + '</div>' : ''}
+          ${t.inProject.code ? `<div class="code-label">Example</div><pre>${escHtml(t.inProject.code)}</pre>` : ''}
+          ${t.deepDive ? `<button class="btn btn-ghost btn-sm" onclick="toggleL3(${t.id})" style="margin-top:0.5rem;">🔬 Deep Dive ${l3Open ? '▲' : '▼'}</button>` : ''}
+        </div>
+        ${t.deepDive ? `
+        <div class="layer3-container ${l3Open ? 'open' : ''}" id="l3-${t.id}">
+          <div class="layer3-inner">
+            <div class="layer-header layer3-header">🔬 Deep Dive</div>
+            ${t.deepDive.howItWorks ? `<p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:1rem;"><strong style="color:var(--text);">How it works:</strong> ${t.deepDive.howItWorks}</p>` : ''}
+            ${t.deepDive.tradeoffs ? `
+              <div class="tradeoff-grid">
+                <div class="tradeoff-pro">
+                  <h4>✅ PROS</h4>
+                  <ul class="tradeoff-list">${t.deepDive.tradeoffs.pros.map(p => `<li>${p}</li>`).join('')}</ul>
+                </div>
+                <div class="tradeoff-con">
+                  <h4>❌ CONS</h4>
+                  <ul class="tradeoff-list">${t.deepDive.tradeoffs.cons.map(c => `<li>${c}</li>`).join('')}</ul>
+                </div>
+              </div>
+            ` : ''}
+            ${t.deepDive.alternatives ? `<p style="font-size:0.82rem;color:var(--text-muted);margin-top:0.75rem;"><strong style="color:var(--text-muted);">Alternatives:</strong> ${t.deepDive.alternatives}</p>` : ''}
+            ${t.analogy ? `<div class="analogy-box"><strong>💡 Analogy:</strong> ${t.analogy}</div>` : ''}
+          </div>
+        </div>` : ''}
+      </div>` : '';
+
+    return `<div class="term-card" id="term-card-${t.id}" data-id="${t.id}">
+      <div class="term-layer1" onclick="toggleL2(${t.id})">
+        <div class="term-id">#${t.id}</div>
+        <div class="mastery-dot mastery-${mastery}"></div>
+        <div class="term-info">
+          <div class="term-name">${t.name}</div>
+          <div class="term-def">${t.definition}</div>
+        </div>
+        <div class="term-controls">
+          ${makeBadge(t.category)}
+          <button class="expand-btn" title="Expand">${l2Open ? '▲' : '▼'}</button>
+        </div>
+      </div>
+      ${l2Html}
+    </div>`;
+  }).join('');
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function toggleL2(termId) {
+  updateState(s => {
+    if (!s.glossary.expandedL2) s.glossary.expandedL2 = [];
+    const idx = s.glossary.expandedL2.indexOf(termId);
+    if (idx >= 0) s.glossary.expandedL2.splice(idx, 1);
+    else s.glossary.expandedL2.push(termId);
+  });
+  renderGlossary();
+}
+
+function toggleL3(termId) {
+  event.stopPropagation();
+  updateState(s => {
+    if (!s.glossary.expandedL3) s.glossary.expandedL3 = [];
+    const idx = s.glossary.expandedL3.indexOf(termId);
+    if (idx >= 0) s.glossary.expandedL3.splice(idx, 1);
+    else { s.glossary.expandedL3.push(termId); }
+    // Ensure L2 is also open
+    if (!s.glossary.expandedL2) s.glossary.expandedL2 = [];
+    if (!s.glossary.expandedL2.includes(termId)) s.glossary.expandedL2.push(termId);
+  });
+  renderGlossary();
+}
+
+document.getElementById('glossary-search').addEventListener('input', () => renderGlossary());
+document.getElementById('glossary-cat').addEventListener('change', () => renderGlossary());
+document.getElementById('glossary-sort').addEventListener('change', () => renderGlossary());
+
+document.getElementById('expand-all-btn').addEventListener('click', () => {
+  updateState(s => {
+    s.glossary.expandedL2 = TERMS.map(t => t.id);
+  });
+  renderGlossary();
+});
+
+document.getElementById('collapse-all-btn').addEventListener('click', () => {
+  updateState(s => {
+    s.glossary.expandedL2 = [];
+    s.glossary.expandedL3 = [];
+  });
+  renderGlossary();
+});
+
+// Jump to glossary term from concept map popup
+function jumpToGlossary(termId) {
+  setMode('glossary');
+  updateState(s => {
+    if (!s.glossary.expandedL2) s.glossary.expandedL2 = [];
+    if (!s.glossary.expandedL2.includes(termId)) s.glossary.expandedL2.push(termId);
+  });
+  renderGlossary();
+  setTimeout(() => {
+    const el = document.getElementById('term-card-' + termId);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 100);
+}
+</script>
+
+<!-- ========== FLASHCARD MODE ========== -->
+<script>
+let fcDeck = [];
+let fcIndex = 0;
+let fcIsFlipped = false;
+
+function buildDeck() {
+  const state = getState();
+  const catFilter = document.getElementById('fc-cat-filter').value;
+  const showUnmastered = state.preferences.showUnmastered;
+
+  let deck = TERMS.filter(t => {
+    const matchCat = !catFilter || t.category === catFilter;
+    const matchMastery = !showUnmastered || !state.flashcards[t.id]?.isMastered;
+    return matchCat && matchMastery;
+  });
+
+  if (state.preferences.flashcardShuffle) {
+    deck = deck.sort(() => Math.random() - 0.5);
+  }
+  return deck;
+}
+
+function showCard(index) {
+  if (!fcDeck.length) {
+    document.getElementById('fc-scene').style.display = 'none';
+    document.getElementById('fc-empty').style.display = 'block';
+    document.getElementById('fc-rating-buttons').style.display = 'none';
+    return;
+  }
+  document.getElementById('fc-scene').style.display = 'block';
+  document.getElementById('fc-empty').style.display = 'none';
+
+  fcIndex = ((index % fcDeck.length) + fcDeck.length) % fcDeck.length;
+  const term = fcDeck[fcIndex];
+
+  // Reset flip
+  fcIsFlipped = false;
+  const cardBody = document.getElementById('fc-card');
+  cardBody.classList.remove('flipped');
+  document.getElementById('fc-rating-buttons').style.display = 'none';
+
+  // Front
+  document.getElementById('fc-term-name').textContent = term.name;
+  document.getElementById('fc-cat-badge').innerHTML = makeBadge(term.category);
+
+  // Back
+  document.getElementById('fc-back-name').textContent = term.name;
+  document.getElementById('fc-back-def').textContent = term.definition;
+
+  const codeEl = document.getElementById('fc-back-code');
+  if (term.inProject && term.inProject.code) {
+    codeEl.textContent = term.inProject.code;
+    codeEl.style.display = 'block';
+  } else {
+    codeEl.style.display = 'none';
+  }
+
+  const analogyEl = document.getElementById('fc-back-analogy');
+  if (term.analogy) {
+    analogyEl.innerHTML = `<strong>💡 Analogy:</strong> ${term.analogy}`;
+    analogyEl.style.display = 'block';
+  } else {
+    analogyEl.style.display = 'none';
+  }
+
+  // Progress label
+  document.getElementById('fc-progress-label').textContent = `Card ${fcIndex + 1} / ${fcDeck.length}`;
+}
+
+function flipCard() {
+  fcIsFlipped = !fcIsFlipped;
+  document.getElementById('fc-card').classList.toggle('flipped', fcIsFlipped);
+  document.getElementById('fc-rating-buttons').style.display = fcIsFlipped ? 'flex' : 'none';
+}
+
+function rateCard(rating) {
+  if (!fcDeck.length) return;
+  const term = fcDeck[fcIndex];
+
+  updateState(s => {
+    if (!s.flashcards[term.id]) {
+      s.flashcards[term.id] = { attempts: 0, mastery: 0, isMastered: false, lastReview: null };
+    }
+    const fc = s.flashcards[term.id];
+    fc.attempts++;
+    fc.lastReview = Date.now();
+
+    if (rating === 'easy') {
+      fc.mastery = (fc.mastery || 0) + 2;
+      if (fc.mastery >= 4) fc.isMastered = true;
+    } else if (rating === 'ok') {
+      fc.mastery = Math.max(0, (fc.mastery || 0) + 1);
+    } else { // hard
+      fc.mastery = Math.max(0, (fc.mastery || 0) - 1);
+      fc.isMastered = false;
+    }
+  });
+
+  updateFlashcardStats();
+  // Auto-advance
+  fcDeck = buildDeck();
+  showCard(fcIndex + 1);
+}
+
+function updateFlashcardStats() {
+  const state = getState();
+  const allFc = state.flashcards;
+  const mastered = Object.values(allFc).filter(f => f.isMastered).length;
+  const totalAttempts = Object.values(allFc).reduce((sum, f) => sum + (f.attempts || 0), 0);
+  const remaining = TERMS.length - mastered;
+  const pct = Math.round((mastered / TERMS.length) * 100);
+
+  document.getElementById('fc-mastered').textContent = mastered;
+  document.getElementById('fc-remaining').textContent = remaining;
+  document.getElementById('fc-attempts').textContent = totalAttempts;
+  document.getElementById('fc-progress-fill').style.width = pct + '%';
+  document.getElementById('fc-pct').textContent = pct + '%';
+
+  // Category breakdown
+  const breakdown = document.getElementById('fc-cat-breakdown');
+  breakdown.innerHTML = CATEGORIES.map(cat => {
+    const catTermIds = cat.termIds;
+    const catMastered = catTermIds.filter(id => allFc[id]?.isMastered).length;
+    return `<div class="cat-stat-row">
+      <span class="cat-stat-name" style="color:${cat.color}">${cat.label}</span>
+      <span class="cat-stat-count">${catMastered}/${catTermIds.length}</span>
+    </div>`;
+  }).join('');
+
+  updateHeroStats();
+}
+
+// Event listeners
+document.getElementById('fc-scene').addEventListener('click', flipCard);
+
+document.querySelectorAll('.rating-btn').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    rateCard(btn.dataset.rating);
+  });
+});
+
+document.getElementById('fc-prev-btn').addEventListener('click', () => {
+  fcDeck = buildDeck();
+  showCard(fcIndex - 1);
+});
+
+document.getElementById('fc-next-btn').addEventListener('click', () => {
+  fcDeck = buildDeck();
+  showCard(fcIndex + 1);
+});
+
+document.getElementById('fc-shuffle-btn').addEventListener('click', () => {
+  updateState(s => { s.preferences.flashcardShuffle = !s.preferences.flashcardShuffle; });
+  const shuffled = getState().preferences.flashcardShuffle;
+  document.getElementById('fc-shuffle-btn').textContent = shuffled ? '🔀 Shuffled ✓' : '🔀 Shuffle';
+  fcDeck = buildDeck();
+  showCard(0);
+});
+
+document.getElementById('fc-cat-filter').addEventListener('change', (e) => {
+  updateState(s => { s.preferences.flashcardCategoryFilter = e.target.value; });
+  fcDeck = buildDeck();
+  showCard(0);
+});
+
+document.getElementById('fc-unmastered-btn').addEventListener('click', () => {
+  updateState(s => { s.preferences.showUnmastered = !s.preferences.showUnmastered; });
+  const show = getState().preferences.showUnmastered;
+  document.getElementById('fc-unmastered-btn').textContent = show ? '📌 All Cards' : '📌 Unmastered Only';
+  fcDeck = buildDeck();
+  showCard(0);
+});
+
+document.getElementById('fc-reset-btn').addEventListener('click', () => {
+  if (!confirm('Reset all flashcard stats? This cannot be undone.')) return;
+  updateState(s => { s.flashcards = {}; });
+  updateFlashcardStats();
+  fcDeck = buildDeck();
+  showCard(0);
+});
+
+// Keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+  const mode = getState().preferences.lastMode;
+  if (mode !== 'flashcard') return;
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+  if (e.code === 'Space') { e.preventDefault(); flipCard(); }
+  else if (e.code === 'ArrowRight') { fcDeck = buildDeck(); showCard(fcIndex + 1); }
+  else if (e.code === 'ArrowLeft') { fcDeck = buildDeck(); showCard(fcIndex - 1); }
+  else if (e.code === 'Digit1') rateCard('hard');
+  else if (e.code === 'Digit2') rateCard('ok');
+  else if (e.code === 'Digit3') rateCard('easy');
+});
+</script>
+
+<!-- ========== INTERVIEW MODE ========== -->
+<script>
+let interviewTimer = null;
+let interviewTimeLeft = 60;
+let currentInterviewTerm = null;
+let quickfireMode = false;
+let quickfireQueue = [];
+let quickfireIndex = 0;
+let quickfireResults = [];
+let pendingStars = 0;
+
+function getRandomTerm(exclude = []) {
+  const pool = TERMS.filter(t => !exclude.includes(t.id));
+  if (!pool.length) return TERMS[Math.floor(Math.random() * TERMS.length)];
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+function startInterview(term) {
+  currentInterviewTerm = term;
+  interviewTimeLeft = 60;
+  pendingStars = 0;
+
+  document.getElementById('interview-start').style.display = 'none';
+  document.getElementById('interview-session').style.display = 'block';
+  document.getElementById('interview-result').style.display = 'none';
+  document.getElementById('quickfire-summary').style.display = 'none';
+
+  document.getElementById('interview-term-name').textContent = term.name;
+  document.getElementById('answer-textarea').value = '';
+  document.getElementById('answer-textarea').disabled = false;
+
+  updateTimerDisplay(60);
+
+  clearInterval(interviewTimer);
+  interviewTimer = setInterval(() => {
+    interviewTimeLeft--;
+    updateTimerDisplay(interviewTimeLeft);
+    if (interviewTimeLeft <= 0) {
+      clearInterval(interviewTimer);
+      submitAnswer();
+    }
+  }, 1000);
+}
+
+function updateTimerDisplay(seconds) {
+  const el = document.getElementById('timer-display');
+  el.textContent = seconds;
+  el.className = 'timer-display';
+  if (seconds <= 10) el.classList.add('critical');
+  else if (seconds <= 20) el.classList.add('warning');
+}
+
+function submitAnswer() {
+  clearInterval(interviewTimer);
+  const answer = document.getElementById('answer-textarea').value.trim();
+
+  document.getElementById('answer-textarea').disabled = true;
+  document.getElementById('interview-session').style.display = 'none';
+  document.getElementById('interview-result').style.display = 'block';
+
+  // Your answer
+  document.getElementById('your-answer-display').textContent =
+    answer || '(No answer submitted)';
+
+  // Model answer
+  const term = currentInterviewTerm;
+  let modelAnswer = term.definition + '\n\n';
+  if (term.inProject) modelAnswer += 'In the project: ' + term.inProject.summary;
+  if (term.analogy) modelAnswer += '\n\nAnalogy: ' + term.analogy;
+  document.getElementById('model-answer-display').textContent = modelAnswer;
+
+  // Reset stars
+  pendingStars = 0;
+  updateStars(0);
+
+  // Update quickfire bar
+  if (quickfireMode) {
+    updateQuickfireBar();
+  }
+}
+
+function updateStars(count) {
+  document.querySelectorAll('.star').forEach((star, i) => {
+    star.classList.toggle('lit', i < count);
+  });
+}
+
+function saveInterviewResult(termId, stars, answer) {
+  updateState(s => {
+    if (!s.interviews[termId]) {
+      s.interviews[termId] = { attempts: [], avgRating: 0 };
+    }
+    const entry = { timestamp: Date.now(), stars, answer: answer.substring(0, 500) };
+    s.interviews[termId].attempts.push(entry);
+    const ratings = s.interviews[termId].attempts.map(a => a.stars);
+    s.interviews[termId].avgRating = ratings.reduce((a,b) => a+b, 0) / ratings.length;
+  });
+  updateHeroStats();
+  renderInterviewHistory();
+}
+
+document.querySelectorAll('.star').forEach(star => {
+  star.addEventListener('click', () => {
+    pendingStars = parseInt(star.dataset.star);
+    updateStars(pendingStars);
+  });
+  star.addEventListener('mouseover', () => {
+    updateStars(parseInt(star.dataset.star));
+  });
+  star.addEventListener('mouseleave', () => {
+    updateStars(pendingStars);
+  });
+});
+
+function proceedFromResult() {
+  const answer = document.getElementById('your-answer-display').textContent;
+  const stars = pendingStars || 1;
+  saveInterviewResult(currentInterviewTerm.id, stars, answer);
+
+  if (quickfireMode) {
+    quickfireResults.push({ term: currentInterviewTerm, stars });
+    quickfireIndex++;
+
+    if (quickfireIndex >= quickfireQueue.length) {
+      showQuickfireSummary();
+    } else {
+      updateQuickfireBar();
+      startInterview(quickfireQueue[quickfireIndex]);
+    }
+  } else {
+    document.getElementById('interview-result').style.display = 'none';
+    document.getElementById('interview-start').style.display = 'block';
+    renderInterviewHistory();
+  }
+}
+
+function updateQuickfireBar() {
+  const bar = document.getElementById('quickfire-bar');
+  bar.style.display = 'flex';
+  document.getElementById('qf-label').textContent = `Question ${quickfireIndex + 1} of ${quickfireQueue.length}`;
+
+  const dots = document.getElementById('qf-dots');
+  dots.innerHTML = quickfireQueue.map((_, i) => {
+    let cls = 'qf-dot';
+    if (i < quickfireIndex) cls += ' done';
+    else if (i === quickfireIndex) cls += ' current';
+    return `<div class="${cls}"></div>`;
+  }).join('');
+}
+
+function showQuickfireSummary() {
+  clearInterval(interviewTimer);
+  document.getElementById('interview-session').style.display = 'none';
+  document.getElementById('interview-result').style.display = 'none';
+  document.getElementById('quickfire-bar').style.display = 'none';
+  document.getElementById('quickfire-summary').style.display = 'block';
+
+  const totalStars = quickfireResults.reduce((s, r) => s + r.stars, 0);
+  const avgStars = (totalStars / quickfireResults.length).toFixed(1);
+  document.getElementById('qf-score-display').textContent = `${avgStars} / 5 avg rating`;
+
+  const breakdownEl = document.getElementById('qf-breakdown');
+  breakdownEl.innerHTML = quickfireResults.map(r =>
+    `<div style="font-size:0.85rem;color:var(--text-muted);padding:0.3rem 0;">
+      ${r.term.name}: ${'⭐'.repeat(r.stars)}${'☆'.repeat(5 - r.stars)}
+    </div>`
+  ).join('');
+}
+
+function renderInterviewHistory() {
+  const state = getState();
+  const histEl = document.getElementById('interview-history');
+  const entries = [];
+
+  Object.entries(state.interviews).forEach(([termId, data]) => {
+    if (data.attempts && data.attempts.length > 0) {
+      const term = getTermById(parseInt(termId));
+      if (!term) return;
+      const last = data.attempts[data.attempts.length - 1];
+      entries.push({ term, stars: last.stars, timestamp: last.timestamp, avgRating: data.avgRating });
+    }
+  });
+
+  entries.sort((a, b) => b.timestamp - a.timestamp);
+  const recent = entries.slice(0, 8);
+
+  if (!recent.length) {
+    histEl.innerHTML = '<div style="font-size:0.85rem;color:var(--text-dim);padding:1rem 0;">No sessions yet. Start your first interview!</div>';
+    return;
+  }
+
+  histEl.innerHTML = recent.map(e =>
+    `<div class="history-entry">
+      <span class="history-entry-name">${e.term.name}</span>
+      <span class="history-stars">${'⭐'.repeat(e.stars)}${'☆'.repeat(5 - e.stars)}</span>
+    </div>`
+  ).join('');
+}
+
+// Button wiring
+document.getElementById('start-single-btn').addEventListener('click', () => {
+  quickfireMode = false;
+  quickfireQueue = [];
+  quickfireIndex = 0;
+  quickfireResults = [];
+  document.getElementById('quickfire-bar').style.display = 'none';
+  startInterview(getRandomTerm());
+});
+
+document.getElementById('start-quickfire-btn').addEventListener('click', () => {
+  quickfireMode = true;
+  quickfireResults = [];
+  quickfireIndex = 0;
+  quickfireQueue = [];
+  const used = [];
+  for (let i = 0; i < 5; i++) {
+    const t = getRandomTerm(used);
+    quickfireQueue.push(t);
+    used.push(t.id);
+  }
+  updateQuickfireBar();
+  startInterview(quickfireQueue[0]);
+});
+
+document.getElementById('submit-answer-btn').addEventListener('click', submitAnswer);
+
+document.getElementById('skip-question-btn').addEventListener('click', () => {
+  clearInterval(interviewTimer);
+  document.getElementById('answer-textarea').value = '(Skipped)';
+  submitAnswer();
+});
+
+document.getElementById('next-question-btn').addEventListener('click', proceedFromResult);
+
+document.getElementById('end-session-btn').addEventListener('click', () => {
+  clearInterval(interviewTimer);
+  const answer = document.getElementById('your-answer-display').textContent;
+  if (pendingStars > 0) saveInterviewResult(currentInterviewTerm.id, pendingStars, answer);
+
+  quickfireMode = false;
+  document.getElementById('interview-result').style.display = 'none';
+  document.getElementById('interview-session').style.display = 'none';
+  document.getElementById('quickfire-bar').style.display = 'none';
+  document.getElementById('interview-start').style.display = 'block';
+  renderInterviewHistory();
+});
+
+document.getElementById('qf-retry-btn').addEventListener('click', () => {
+  document.getElementById('quickfire-summary').style.display = 'none';
+  document.getElementById('interview-start').style.display = 'block';
+});
+
+document.getElementById('qf-home-btn').addEventListener('click', () => {
+  document.getElementById('quickfire-summary').style.display = 'none';
+  document.getElementById('interview-start').style.display = 'block';
+});
+</script>
+
+<!-- ========== CONCEPT MAP ========== -->
+<script>
+let mapRendered = false;
+let hoveredNodeId = null;
+
+function renderConceptMap() {
+  if (mapRendered) return;
+  mapRendered = true;
+
+  // Legend
+  const legend = document.getElementById('map-legend');
+  legend.innerHTML = CATEGORIES.map(cat =>
+    `<div class="legend-item">
+      <div class="legend-dot" style="background:${cat.color}"></div>
+      <span>${cat.label}</span>
+    </div>`
+  ).join('');
+
+  // Column headers
+  const colHeaders = document.getElementById('col-headers');
+  colHeaders.innerHTML = CATEGORIES.map(cat =>
+    `<div class="map-col-header" style="background:${cat.color}22;color:${cat.color};border:1px solid ${cat.color}44;">${cat.label}</div>`
+  ).join('');
+
+  // Nodes grid (7 columns, one per category)
+  const grid = document.getElementById('map-grid');
+  const allNodes = [];
+
+  CATEGORIES.forEach(cat => {
+    const colDiv = document.createElement('div');
+    colDiv.style.cssText = 'display:flex;flex-direction:column;gap:0.6rem;';
+
+    cat.termIds.forEach(termId => {
+      const term = getTermById(termId);
+      if (!term) return;
+
+      const node = document.createElement('div');
+      node.className = 'map-node';
+      node.id = 'map-node-' + termId;
+      node.dataset.termId = termId;
+      node.style.borderColor = cat.color + '55';
+      node.textContent = term.shortName || term.name;
+      node.title = term.name + ' — ' + term.definition.substring(0, 80) + '...';
+
+      node.addEventListener('click', (e) => {
+        e.stopPropagation();
+        showNodePopup(termId, e);
+      });
+
+      node.addEventListener('dblclick', (e) => {
+        e.stopPropagation();
+        hideNodePopup();
+        jumpToGlossary(termId);
+      });
+
+      node.addEventListener('mouseenter', () => highlightConnections(termId));
+      node.addEventListener('mouseleave', () => clearHighlights());
+
+      colDiv.appendChild(node);
+      allNodes.push({ termId, el: node });
+    });
+
+    grid.appendChild(colDiv);
+  });
+
+  // Draw SVG connections after layout
+  requestAnimationFrame(() => {
+    setTimeout(() => drawConnections(), 100);
+  });
+}
+
+function drawConnections() {
+  const svg = document.getElementById('map-svg');
+  const mapInner = document.getElementById('map-inner');
+  const rect = mapInner.getBoundingClientRect();
+
+  svg.innerHTML = '';
+  svg.setAttribute('width', mapInner.scrollWidth);
+  svg.setAttribute('height', mapInner.scrollHeight);
+
+  RELATIONSHIPS.forEach(rel => {
+    const fromEl = document.getElementById('map-node-' + rel.from);
+    const toEl = document.getElementById('map-node-' + rel.to);
+    if (!fromEl || !toEl) return;
+
+    const fromRect = fromEl.getBoundingClientRect();
+    const toRect = toEl.getBoundingClientRect();
+    const parentRect = mapInner.getBoundingClientRect();
+
+    const x1 = fromRect.left - parentRect.left + fromRect.width / 2;
+    const y1 = fromRect.top - parentRect.top + fromRect.height / 2;
+    const x2 = toRect.left - parentRect.left + toRect.width / 2;
+    const y2 = toRect.top - parentRect.top + toRect.height / 2;
+
+    // Bezier curve
+    const cx = (x1 + x2) / 2;
+    const cy = (y1 + y2) / 2 - 20;
+
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', `M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}`);
+    path.setAttribute('stroke', '#4c1d95');
+    path.setAttribute('stroke-width', '1.5');
+    path.setAttribute('fill', 'none');
+    path.setAttribute('opacity', '0.4');
+    path.setAttribute('data-from', rel.from);
+    path.setAttribute('data-to', rel.to);
+    path.classList.add('map-connection');
+
+    // Arrow marker
+    path.setAttribute('marker-end', 'url(#arrowhead)');
+
+    svg.appendChild(path);
+  });
+
+  // Define arrowhead marker
+  const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+  const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+  marker.setAttribute('id', 'arrowhead');
+  marker.setAttribute('markerWidth', '6');
+  marker.setAttribute('markerHeight', '4');
+  marker.setAttribute('refX', '6');
+  marker.setAttribute('refY', '2');
+  marker.setAttribute('orient', 'auto');
+  const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+  polygon.setAttribute('points', '0 0, 6 2, 0 4');
+  polygon.setAttribute('fill', '#8b5cf6');
+  marker.appendChild(polygon);
+  defs.appendChild(marker);
+  svg.insertBefore(defs, svg.firstChild);
+}
+
+function highlightConnections(termId) {
+  hoveredNodeId = termId;
+
+  // Find connected term IDs
+  const connected = new Set([termId]);
+  RELATIONSHIPS.forEach(rel => {
+    if (rel.from === termId) connected.add(rel.to);
+    if (rel.to === termId) connected.add(rel.from);
+  });
+
+  // Dim/highlight nodes
+  document.querySelectorAll('.map-node').forEach(node => {
+    const id = parseInt(node.dataset.termId);
+    if (connected.has(id)) {
+      node.classList.add('highlighted');
+      node.classList.remove('dimmed');
+    } else {
+      node.classList.add('dimmed');
+      node.classList.remove('highlighted');
+    }
+  });
+
+  // Highlight connections
+  document.querySelectorAll('.map-connection').forEach(path => {
+    const from = parseInt(path.dataset.from);
+    const to = parseInt(path.dataset.to);
+    if (from === termId || to === termId) {
+      path.setAttribute('stroke', '#8b5cf6');
+      path.setAttribute('opacity', '0.9');
+      path.setAttribute('stroke-width', '2.5');
+    } else {
+      path.setAttribute('opacity', '0.05');
+    }
+  });
+}
+
+function clearHighlights() {
+  hoveredNodeId = null;
+  document.querySelectorAll('.map-node').forEach(n => {
+    n.classList.remove('highlighted', 'dimmed');
+  });
+  document.querySelectorAll('.map-connection').forEach(path => {
+    path.setAttribute('stroke', '#4c1d95');
+    path.setAttribute('opacity', '0.4');
+    path.setAttribute('stroke-width', '1.5');
+  });
+}
+
+// Popup
+function showNodePopup(termId, event) {
+  const term = getTermById(termId);
+  if (!term) return;
+
+  const popup = document.getElementById('node-popup');
+  document.getElementById('popup-title').textContent = term.name;
+  document.getElementById('popup-badge').innerHTML = makeBadge(term.category);
+  document.getElementById('popup-def').textContent = term.definition;
+  document.getElementById('popup-goto-btn').onclick = () => { hideNodePopup(); jumpToGlossary(termId); };
+
+  popup.classList.add('visible');
+
+  // Position near click but within viewport
+  const x = Math.min(event.clientX + 10, window.innerWidth - 370);
+  const y = Math.min(event.clientY + 10, window.innerHeight - 300);
+  popup.style.left = x + 'px';
+  popup.style.top = y + 'px';
+}
+
+function hideNodePopup() {
+  document.getElementById('node-popup').classList.remove('visible');
+}
+
+document.getElementById('popup-close-btn').addEventListener('click', hideNodePopup);
+document.addEventListener('click', (e) => {
+  const popup = document.getElementById('node-popup');
+  if (!popup.contains(e.target) && !e.target.classList.contains('map-node')) {
+    hideNodePopup();
+  }
+});
+
+document.getElementById('map-reset-btn').addEventListener('click', () => {
+  clearHighlights();
+  hideNodePopup();
+});
+
+// ========== INITIALIZATION ==========
+document.addEventListener('DOMContentLoaded', () => {
+  // Determine initial mode
+  const hashMode = window.location.hash.replace('#', '');
+  const state = getState();
+  const initialMode = (hashMode && ['glossary','flashcard','interview','map'].includes(hashMode))
+    ? hashMode
+    : (state.preferences.lastMode || 'glossary');
+
+  // Render glossary
+  renderGlossary();
+
+  // Initialize flashcard deck
+  fcDeck = buildDeck();
+  showCard(0);
+  updateFlashcardStats();
+
+  // Render interview history
+  renderInterviewHistory();
+
+  // Set mode
+  setMode(initialMode);
+  updateHeroStats();
+});
+</script>
+</body>
+</html>
