@@ -1,0 +1,1411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Key Management System | Monster Resort Concierge</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Space+Mono:wght@400;700&family=Crimson+Pro:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0e14;
+            --bg-secondary: #151922;
+            --bg-tertiary: #1f2430;
+            --text-primary: #e6e6e6;
+            --text-secondary: #a6acb9;
+            --text-muted: #707a8c;
+            --accent-gold: #ffcc66;
+            --accent-cyan: #73d0ff;
+            --accent-green: #95e6cb;
+            --accent-red: #ff6b6b;
+            --accent-purple: #d4bfff;
+            --accent-orange: #ffad66;
+            --border: #2d3543;
+            --code-bg: #0d1117;
+        }
+
+        body {
+            font-family: 'Crimson Pro', serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+            color: var(--text-primary);
+            line-height: 1.7;
+            min-height: 100vh;
+            padding: 2rem 1rem;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                linear-gradient(var(--border) 1px, transparent 1px),
+                linear-gradient(90deg, var(--border) 1px, transparent 1px);
+            background-size: 50px 50px;
+            opacity: 0.03;
+            z-index: -1;
+            animation: gridMove 20s linear infinite;
+        }
+
+        @keyframes gridMove {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(50px); }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 4rem;
+            position: relative;
+            padding: 3rem 2rem;
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, var(--accent-gold) 0%, transparent 70%);
+            opacity: 0.05;
+            animation: pulse 8s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.05; }
+            50% { transform: scale(1.1) rotate(180deg); opacity: 0.08; }
+        }
+
+        h1 {
+            font-family: 'Space Mono', monospace;
+            font-size: 3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-cyan) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+            position: relative;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .subtitle {
+            font-size: 1.3rem;
+            color: var(--text-secondary);
+            font-weight: 300;
+            position: relative;
+            animation: fadeIn 1s ease-out 0.3s both;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 0.4rem 1rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--accent-gold);
+            border-radius: 20px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--accent-gold);
+            margin: 0.5rem 0.3rem;
+            animation: fadeIn 1s ease-out 0.6s both;
+        }
+
+        .meta-info {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .meta-item {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .meta-item span {
+            color: var(--accent-cyan);
+        }
+
+        nav {
+            background: var(--bg-secondary);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 3rem;
+            border: 1px solid var(--border);
+            position: sticky;
+            top: 1rem;
+            z-index: 100;
+            animation: fadeIn 1s ease-out 0.8s both;
+        }
+
+        nav h3 {
+            font-family: 'Space Mono', monospace;
+            color: var(--accent-cyan);
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+
+        nav ul {
+            list-style: none;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 0.5rem;
+            margin: 0;
+        }
+
+        nav a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            display: block;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+        }
+
+        nav a:hover {
+            color: var(--accent-gold);
+            background: var(--bg-tertiary);
+            border-color: var(--accent-gold);
+            transform: translateX(5px);
+        }
+
+        section {
+            background: var(--bg-secondary);
+            border-radius: 15px;
+            padding: 3rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+            position: relative;
+        }
+
+        h2 {
+            font-family: 'Space Mono', monospace;
+            font-size: 2rem;
+            color: var(--accent-gold);
+            margin-bottom: 1.5rem;
+            position: relative;
+            padding-left: 1.5rem;
+        }
+
+        h2::before {
+            content: '\25B8';
+            position: absolute;
+            left: 0;
+            color: var(--accent-cyan);
+        }
+
+        h3 {
+            font-family: 'Space Mono', monospace;
+            font-size: 1.4rem;
+            color: var(--accent-cyan);
+            margin: 2rem 0 1rem 0;
+        }
+
+        h4 {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.1rem;
+            color: var(--accent-purple);
+            margin: 1.5rem 0 1rem 0;
+        }
+
+        p {
+            margin-bottom: 1.2rem;
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+        }
+
+        .highlight-box {
+            background: var(--bg-tertiary);
+            border-left: 4px solid var(--accent-gold);
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 8px;
+        }
+
+        .highlight-box.problem {
+            border-left-color: var(--accent-red);
+        }
+
+        .highlight-box.solution {
+            border-left-color: var(--accent-green);
+        }
+
+        .highlight-box.insight {
+            border-left-color: var(--accent-purple);
+        }
+
+        .highlight-box.warning {
+            border-left-color: var(--accent-orange);
+        }
+
+        .highlight-box strong {
+            color: var(--text-primary);
+        }
+
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--code-bg);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            color: var(--accent-green);
+        }
+
+        pre {
+            background: var(--code-bg);
+            padding: 1.5rem;
+            border-radius: 10px;
+            overflow-x: auto;
+            margin: 1.5rem 0;
+            border: 1px solid var(--border);
+            position: relative;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            color: var(--text-primary);
+            display: block;
+            line-height: 1.6;
+        }
+
+        pre .label {
+            position: absolute;
+            top: -10px;
+            right: 1rem;
+            background: var(--bg-secondary);
+            padding: 0.2rem 0.8rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--accent-cyan);
+            border: 1px solid var(--accent-cyan);
+            border-radius: 4px;
+        }
+
+        .diagram {
+            background: var(--bg-tertiary);
+            border: 2px solid var(--accent-cyan);
+            border-radius: 10px;
+            padding: 2rem;
+            margin: 2rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            overflow-x: auto;
+            position: relative;
+            white-space: pre;
+            line-height: 1.4;
+        }
+
+        .diagram::before {
+            content: attr(data-label);
+            position: absolute;
+            top: -12px;
+            left: 1rem;
+            background: var(--bg-secondary);
+            padding: 0.2rem 0.8rem;
+            font-size: 0.7rem;
+            color: var(--accent-cyan);
+            border: 1px solid var(--accent-cyan);
+            border-radius: 4px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+        }
+
+        th {
+            background: var(--bg-tertiary);
+            color: var(--accent-gold);
+            padding: 1rem;
+            text-align: left;
+            border: 1px solid var(--border);
+        }
+
+        td {
+            padding: 1rem;
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        tr:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        .status-badge.success {
+            background: rgba(149, 230, 203, 0.2);
+            color: var(--accent-green);
+            border: 1px solid var(--accent-green);
+        }
+
+        .status-badge.error {
+            background: rgba(255, 107, 107, 0.2);
+            color: var(--accent-red);
+            border: 1px solid var(--accent-red);
+        }
+
+        .status-badge.warning {
+            background: rgba(255, 204, 102, 0.2);
+            color: var(--accent-gold);
+            border: 1px solid var(--accent-gold);
+        }
+
+        .status-badge.new {
+            background: rgba(115, 208, 255, 0.2);
+            color: var(--accent-cyan);
+            border: 1px solid var(--accent-cyan);
+        }
+
+        ul, ol {
+            margin-left: 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        li {
+            margin-bottom: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        li::marker {
+            color: var(--accent-cyan);
+        }
+
+        .endpoint-card {
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+            padding: 2rem;
+            margin: 1.5rem 0;
+            border: 1px solid var(--border);
+            transition: border-color 0.3s ease;
+        }
+
+        .endpoint-card:hover {
+            border-color: var(--accent-gold);
+        }
+
+        .endpoint-method {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            font-size: 0.85rem;
+            padding: 0.3rem 0.8rem;
+            border-radius: 6px;
+            margin-right: 0.8rem;
+            display: inline-block;
+        }
+
+        .method-post { background: rgba(149, 230, 203, 0.2); color: var(--accent-green); }
+        .method-get { background: rgba(115, 208, 255, 0.2); color: var(--accent-cyan); }
+        .method-delete { background: rgba(255, 107, 107, 0.2); color: var(--accent-red); }
+
+        .endpoint-path {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.1rem;
+            color: var(--text-primary);
+        }
+
+        .flow-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+            padding: 1.5rem;
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .flow-number {
+            font-family: 'Space Mono', monospace;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent-gold);
+            background: var(--bg-primary);
+            width: 3rem;
+            height: 3rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            flex-shrink: 0;
+            border: 2px solid var(--accent-gold);
+        }
+
+        .flow-content h4 {
+            margin-top: 0;
+            color: var(--accent-cyan);
+        }
+
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .test-card {
+            background: var(--bg-tertiary);
+            border-radius: 10px;
+            padding: 1.2rem;
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .test-card:hover {
+            border-color: var(--accent-green);
+            transform: translateY(-2px);
+        }
+
+        .test-name {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--accent-green);
+            margin-bottom: 0.5rem;
+        }
+
+        .test-desc {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+        }
+
+        .file-tree {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            line-height: 1.8;
+            color: var(--text-secondary);
+        }
+
+        .file-tree .folder { color: var(--accent-cyan); }
+        .file-tree .new-file { color: var(--accent-green); }
+        .file-tree .modified { color: var(--accent-gold); }
+        .file-tree .comment { color: var(--text-muted); font-style: italic; }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .comparison-panel {
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid var(--border);
+        }
+
+        .comparison-panel.before {
+            border-top: 3px solid var(--accent-red);
+        }
+
+        .comparison-panel.after {
+            border-top: 3px solid var(--accent-green);
+        }
+
+        .comparison-panel h4 {
+            margin-top: 0;
+        }
+
+        footer {
+            text-align: center;
+            padding: 3rem 2rem;
+            margin-top: 2rem;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            border-top: 1px solid var(--border);
+        }
+
+        footer a {
+            color: var(--accent-cyan);
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            color: var(--accent-gold);
+        }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 2rem; }
+            h2 { font-size: 1.5rem; }
+            section { padding: 1.5rem; }
+            .comparison-grid { grid-template-columns: 1fr; }
+            .meta-info { flex-direction: column; align-items: center; gap: 0.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+
+        <!-- HEADER -->
+        <header>
+            <h1>API Key Management System</h1>
+            <p class="subtitle">Managed key creation, rotation, revocation, and audit logging for the Monster Resort Concierge</p>
+            <div>
+                <span class="tag">MR-APIKEY-001</span>
+                <span class="tag">security</span>
+                <span class="tag">auth</span>
+                <span class="tag">admin-api</span>
+            </div>
+            <div class="meta-info">
+                <div class="meta-item">Status: <span>FINAL</span></div>
+                <div class="meta-item">Owner: <span>Engineering</span></div>
+                <div class="meta-item">Updated: <span>2026-02-13</span></div>
+                <div class="meta-item">Classification: <span>Internal</span></div>
+            </div>
+        </header>
+
+        <!-- NAV -->
+        <nav>
+            <h3>// Table of Contents</h3>
+            <ul>
+                <li><a href="#summary">01. Executive Summary</a></li>
+                <li><a href="#why">02. Why This Feature Exists</a></li>
+                <li><a href="#architecture">03. Architecture Overview</a></li>
+                <li><a href="#components">04. Component Deep Dive</a></li>
+                <li><a href="#api-reference">05. API Reference</a></li>
+                <li><a href="#security">06. Security Design Decisions</a></li>
+                <li><a href="#testing">07. Testing Guide</a></li>
+                <li><a href="#user-impact">08. User Impact &amp; Use Cases</a></li>
+                <li><a href="#config">09. Configuration</a></li>
+                <li><a href="#troubleshooting">10. Troubleshooting</a></li>
+                <li><a href="#security-fixes">11. Security Fixes Included</a></li>
+                <li><a href="#future">12. Future Enhancements</a></li>
+            </ul>
+        </nav>
+
+        <!-- 1. EXECUTIVE SUMMARY -->
+        <section id="summary">
+            <h2>01. Executive Summary</h2>
+            <p>The API Key Management System transforms the <code>APIKeyManager</code> class from dead code into a fully wired, production-grade feature. It enables administrators to <strong>create</strong>, <strong>list</strong>, <strong>revoke</strong>, and <strong>audit</strong> managed API keys through dedicated REST endpoints, with full integration into the existing authentication flow.</p>
+
+            <h3>What Changed</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>File</th>
+                        <th>Change</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>app/security.py</code></td>
+                        <td>Added <code>list_keys</code>, <code>revoke_key</code>, <code>get_usage</code>; removed dead code</td>
+                        <td><span class="status-badge warning">Modified</span></td>
+                    </tr>
+                    <tr>
+                        <td><code>app/admin_routes.py</code></td>
+                        <td>Admin router with 4 CRUD endpoints</td>
+                        <td><span class="status-badge new">New File</span></td>
+                    </tr>
+                    <tr>
+                        <td><code>app/main.py</code></td>
+                        <td>Initialised <code>APIKeyManager</code>, mounted admin router</td>
+                        <td><span class="status-badge warning">Modified</span></td>
+                    </tr>
+                    <tr>
+                        <td><code>app/auth_mixins.py</code></td>
+                        <td>Rewrote <code>jwt_or_api_key</code> with managed key support + security fixes</td>
+                        <td><span class="status-badge warning">Modified</span></td>
+                    </tr>
+                    <tr>
+                        <td><code>tests/test_api_key_manager.py</code></td>
+                        <td>16 tests (unit + integration)</td>
+                        <td><span class="status-badge new">New File</span></td>
+                    </tr>
+                    <tr>
+                        <td><code>tests/conftest.py</code></td>
+                        <td>Added new tables to cleanup list</td>
+                        <td><span class="status-badge warning">Modified</span></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Key Capabilities Delivered</h3>
+            <ul>
+                <li><strong>Key Creation</strong> with <code>mr_</code> prefix, SHA-256 hashing, configurable expiry (1&ndash;365 days)</li>
+                <li><strong>Key Verification</strong> during auth flow with automatic <code>last_used_at</code> tracking</li>
+                <li><strong>Key Revocation</strong> via admin endpoint (soft-delete pattern)</li>
+                <li><strong>Audit Logging</strong> of every managed-key authentication attempt (success and failure)</li>
+                <li><strong>Security Hardening</strong> &mdash; removed hardcoded backdoor, fixed JWT verification bug</li>
+            </ul>
+        </section>
+
+        <!-- 2. WHY THIS FEATURE EXISTS -->
+        <section id="why">
+            <h2>02. Why This Feature Exists</h2>
+
+            <h3>The Problem</h3>
+            <p>Before this implementation, the Monster Resort Concierge had only <strong>one authentication mechanism for API clients</strong>: a single static API key stored in <code>MRC_API_KEY</code>. This created several problems:</p>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Problem</th>
+                        <th>Impact</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>No key rotation</td><td>If the key leaked, every integration broke during rotation</td></tr>
+                    <tr><td>No per-user attribution</td><td>All API consumers looked identical in logs</td></tr>
+                    <tr><td>No expiry</td><td>Keys lived forever once issued</td></tr>
+                    <tr><td>No audit trail</td><td>No visibility into who called what, when</td></tr>
+                    <tr><td>No revocation</td><td>Compromised keys could not be individually disabled</td></tr>
+                    <tr><td>Dead code</td><td><code>APIKeyManager</code> existed but was never instantiated</td></tr>
+                </tbody>
+            </table>
+
+            <h3>The Solution</h3>
+            <div class="highlight-box solution">
+                <p><strong>Managed API keys</strong> give each integration partner or service their own key tied to a <code>user_id</code> &mdash; with automatic expiry, instant revocation, and a full audit trail. Create a new key, migrate the consumer, revoke the old key &mdash; zero downtime rotation.</p>
+            </div>
+
+            <h3>Portfolio Value</h3>
+            <div class="highlight-box insight">
+                <p>This feature demonstrates production security patterns that interviewers and reviewers look for: <strong>defence-in-depth</strong> (multiple auth mechanisms), <strong>zero-trust key storage</strong> (only hash stored, raw key shown once), <strong>audit logging</strong> for compliance (SOC 2, GDPR), <strong>clean API design</strong> with Pydantic validation, and <strong>comprehensive test coverage</strong>.</p>
+            </div>
+        </section>
+
+        <!-- 3. ARCHITECTURE OVERVIEW -->
+        <section id="architecture">
+            <h2>03. Architecture Overview</h2>
+
+            <h3>Where It Fits in the Codebase</h3>
+            <div class="file-tree">
+                <pre><code><span class="folder">monster-resort-concierge/</span>
+<span class="folder">  app/</span>
+    <span class="modified">main.py</span>              <span class="comment"># Wiring: creates APIKeyManager, mounts router</span>
+    <span class="modified">security.py</span>          <span class="comment"># Core: APIKeyManager class (create, verify, revoke, audit)</span>
+    <span class="new-file">admin_routes.py</span>      <span class="comment"># NEW: REST endpoints for key management</span>
+    <span class="modified">auth_mixins.py</span>       <span class="comment"># Updated: jwt_or_api_key now checks managed keys</span>
+    auth.py              <span class="comment"># Unchanged: JWT creation/verification</span>
+    config.py            <span class="comment"># Unchanged: static MRC_API_KEY setting</span>
+<span class="folder">  tests/</span>
+    <span class="new-file">test_api_key_manager.py</span>  <span class="comment"># NEW: 16 tests for the feature</span>
+    <span class="modified">conftest.py</span>              <span class="comment"># Updated: cleanup includes new tables</span>
+<span class="folder">  docs/</span>
+    <span class="folder">api_key_management/</span>
+      <span class="new-file">api_key_management_guide.html</span>  <span class="comment"># This document</span></code></pre>
+            </div>
+
+            <h3>Authentication Flow</h3>
+            <div class="diagram" data-label="AUTH FLOW DIAGRAM">
+                        CLIENT REQUEST
+                        |
+          Headers: X-API-Key: mr_abc123...
+                   OR Authorization: Bearer mr_abc123...
+                   OR Authorization: Bearer &lt;static-key&gt;
+                   OR Authorization: Bearer &lt;jwt-token&gt;
+                        |
+                        v
+           +-------------------------------+
+           |   jwt_or_api_key()            |
+           |   (auth_mixins.py)            |
+           +-------------------------------+
+           |                               |
+           |  1. X-API-Key header?         |
+           |     +-- Static key match?  ---+---> "api_key_user"
+           |     +-- Starts with mr_?     |
+           |         +-- verify_key() --> user_id
+           |         |   log_usage(success=True)
+           |         +-- Invalid?         |
+           |             log_usage(success=False)
+           |                               |
+           |  2. Bearer token?             |
+           |     +-- Static key match?  ---+---> "api_key_user"
+           |     +-- Starts with mr_?  ---+---> managed flow
+           |     +-- JWT decode?       ---+---> username
+           |                               |
+           |  3. Nothing matched?       ---+---> 401 Unauthorized
+           +-------------------------------+</div>
+
+            <h3>Database Schema</h3>
+            <p>Two tables are auto-created by <code>APIKeyManager._ensure_schema()</code> on first init:</p>
+
+            <pre><code><span style="color: var(--accent-purple);">-- Stores hashed keys and metadata</span>
+CREATE TABLE IF NOT EXISTS <span style="color: var(--accent-cyan);">api_keys</span> (
+    key_hash      TEXT PRIMARY KEY,   <span style="color: var(--text-muted);">-- SHA-256 of the raw key</span>
+    user_id       TEXT NOT NULL,      <span style="color: var(--text-muted);">-- Owner identifier</span>
+    created_at    TEXT NOT NULL,      <span style="color: var(--text-muted);">-- ISO 8601 timestamp</span>
+    expires_at    TEXT,               <span style="color: var(--text-muted);">-- ISO 8601 (NULL = never)</span>
+    last_used_at  TEXT,               <span style="color: var(--text-muted);">-- Updated on each verify</span>
+    is_active     INTEGER DEFAULT 1   <span style="color: var(--text-muted);">-- 0 = revoked</span>
+);
+
+<span style="color: var(--accent-purple);">-- Audit log of every authentication attempt</span>
+CREATE TABLE IF NOT EXISTS <span style="color: var(--accent-cyan);">api_key_usage</span> (
+    id        INTEGER PRIMARY KEY AUTOINCREMENT,
+    key_hash  TEXT NOT NULL,        <span style="color: var(--text-muted);">-- Links to api_keys.key_hash</span>
+    endpoint  TEXT NOT NULL,        <span style="color: var(--text-muted);">-- e.g. "/chat"</span>
+    timestamp TEXT NOT NULL,        <span style="color: var(--text-muted);">-- ISO 8601</span>
+    success   INTEGER NOT NULL      <span style="color: var(--text-muted);">-- 1 = authenticated, 0 = rejected</span>
+);</code></pre>
+
+            <div class="highlight-box warning">
+                <p><strong>Important:</strong> The raw API key is <strong>never stored</strong>. Only the SHA-256 hash is persisted. The raw key is returned exactly once during creation.</p>
+            </div>
+        </section>
+
+        <!-- 4. COMPONENT DEEP DIVE -->
+        <section id="components">
+            <h2>04. Component Deep Dive</h2>
+
+            <h3>4.1 APIKeyManager <code>app/security.py</code></h3>
+            <p>The core class that handles all key lifecycle operations.</p>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Method</th>
+                        <th>Purpose</th>
+                        <th>Returns</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>__init__(db)</code></td><td>Stores DB ref, calls <code>_ensure_schema()</code></td><td>&mdash;</td></tr>
+                    <tr><td><code>_ensure_schema()</code></td><td>Creates tables if missing</td><td>&mdash;</td></tr>
+                    <tr><td><code>create_key(user_id, expires_days=90)</code></td><td>Generates <code>mr_</code> prefixed key, stores SHA-256 hash</td><td>Raw key (string)</td></tr>
+                    <tr><td><code>verify_key(key)</code></td><td>Hashes input, checks DB for active + non-expired match</td><td><code>user_id</code> or <code>None</code></td></tr>
+                    <tr><td><code>log_usage(key, endpoint, success)</code></td><td>Writes audit entry to <code>api_key_usage</code></td><td>&mdash;</td></tr>
+                    <tr><td><code>list_keys(user_id=None)</code></td><td>Returns key metadata with truncated <code>key_id</code></td><td>List of dicts</td></tr>
+                    <tr><td><code>revoke_key(key_id)</code></td><td>Sets <code>is_active = 0</code> for matching key</td><td><code>True</code>/<code>False</code></td></tr>
+                    <tr><td><code>get_usage(key_hash=None, limit=100)</code></td><td>Returns audit entries with JOINed user_id</td><td>List of dicts</td></tr>
+                </tbody>
+            </table>
+
+            <h4>Truncated key_id</h4>
+            <p>External-facing methods use a <strong>truncated key_id</strong> (first 12 characters of the SHA-256 hash) instead of the full 64-character hash. 12 hex chars = 48 bits = 281 trillion possibilities &mdash; sufficient for identification and safe to display in dashboards.</p>
+
+            <h3>4.2 Admin Routes <code>app/admin_routes.py</code></h3>
+            <p>A standalone <code>APIRouter</code> that provides CRUD operations for API keys. Mounted at <code>/admin/api-keys</code>.</p>
+            <ul>
+                <li>Pydantic request/response models for all endpoints</li>
+                <li><code>get_api_key_manager(request)</code> dependency extracts manager from <code>app.state</code></li>
+                <li>All endpoints require auth via <code>jwt_or_api_key</code></li>
+                <li>Appears as its own "admin" section in FastAPI auto-docs (<code>/docs</code>)</li>
+            </ul>
+
+            <h3>4.3 Auth Mixin <code>app/auth_mixins.py</code></h3>
+            <p>The <code>jwt_or_api_key</code> dependency was rewritten to support three authentication mechanisms:</p>
+
+            <div class="comparison-grid">
+                <div class="comparison-panel before">
+                    <h4>Before</h4>
+                    <ul>
+                        <li>No managed key support</li>
+                        <li>Hardcoded hex backdoor accepted as valid token</li>
+                        <li>Called <code>verify_token(token)</code> which expected <code>HTTPAuthorizationCredentials</code> &mdash; JWT auth never actually worked</li>
+                        <li>No audit logging</li>
+                        <li>No <code>Request</code> parameter</li>
+                    </ul>
+                </div>
+                <div class="comparison-panel after">
+                    <h4>After</h4>
+                    <ul>
+                        <li>Full <code>mr_</code> managed key support via <code>manager.verify_key()</code></li>
+                        <li>Backdoor removed</li>
+                        <li>Calls <code>pyjwt.decode()</code> directly &mdash; JWT auth works correctly</li>
+                        <li><code>log_usage()</code> on every managed-key attempt</li>
+                        <li><code>Request</code> parameter to access <code>app.state.api_key_manager</code></li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>4.4 App Wiring <code>app/main.py</code></h3>
+            <p>Four lines added to <code>build_app()</code>:</p>
+
+            <pre><code><span style="color: var(--accent-purple);"># Import (at top of file)</span>
+<span style="color: var(--accent-cyan);">from</span> .security <span style="color: var(--accent-cyan);">import</span> install_rate_limiter, APIKeyManager
+<span style="color: var(--accent-cyan);">from</span> .admin_routes <span style="color: var(--accent-cyan);">import</span> router <span style="color: var(--accent-cyan);">as</span> admin_router
+
+<span style="color: var(--accent-purple);"># In build_app(), after db = DatabaseManager(settings):</span>
+api_key_manager = APIKeyManager(db)
+app.state.api_key_manager = api_key_manager
+
+<span style="color: var(--accent-purple);"># After install_rate_limiter(app, settings):</span>
+app.include_router(admin_router)</code></pre>
+
+            <p>The <code>APIKeyManager</code> is stored on <code>app.state</code> (FastAPI's built-in mechanism for sharing objects across requests) rather than module-level globals &mdash; making it testable and explicit.</p>
+        </section>
+
+        <!-- 5. API REFERENCE -->
+        <section id="api-reference">
+            <h2>05. API Reference</h2>
+            <p>All endpoints require authentication via <code>jwt_or_api_key</code> (static API key, managed key, or JWT).</p>
+
+            <!-- POST -->
+            <div class="endpoint-card">
+                <p>
+                    <span class="endpoint-method method-post">POST</span>
+                    <span class="endpoint-path">/admin/api-keys</span>
+                </p>
+                <p>Create a new managed API key.</p>
+
+                <h4>Request Body</h4>
+                <table>
+                    <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Default</th><th>Constraints</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>user_id</code></td><td>string</td><td>Yes</td><td>&mdash;</td><td>min 1 character</td></tr>
+                        <tr><td><code>expires_days</code></td><td>integer</td><td>No</td><td>90</td><td>1&ndash;365</td></tr>
+                    </tbody>
+                </table>
+
+                <h4>Example</h4>
+                <pre><code>curl -X POST http://localhost:8000/admin/api-keys \
+  -H "Authorization: Bearer &lt;your-api-key&gt;" \
+  -H "Content-Type: application/json" \
+  -d '{"user_id": "mobile-app-v2", "expires_days": 30}'</code></pre>
+
+                <h4>Response (200)</h4>
+                <pre><code>{
+  "raw_key": "mr_K7xP2mN9qR4wT6yB1cD8eF3gH5jL0nM2pQ4sU6vX8zA",
+  "user_id": "mobile-app-v2",
+  "expires_days": 30,
+  "message": "Store this key securely - it will not be shown again."
+}</code></pre>
+                <div class="highlight-box warning">
+                    <p><strong>Important:</strong> The <code>raw_key</code> is only returned once. It cannot be retrieved later.</p>
+                </div>
+            </div>
+
+            <!-- GET list -->
+            <div class="endpoint-card">
+                <p>
+                    <span class="endpoint-method method-get">GET</span>
+                    <span class="endpoint-path">/admin/api-keys</span>
+                </p>
+                <p>List all managed keys (metadata only). Filterable by <code>?user_id=</code>.</p>
+
+                <h4>Example</h4>
+                <pre><code><span style="color: var(--text-muted);"># List all keys</span>
+curl http://localhost:8000/admin/api-keys \
+  -H "Authorization: Bearer &lt;your-api-key&gt;"
+
+<span style="color: var(--text-muted);"># Filter by user</span>
+curl "http://localhost:8000/admin/api-keys?user_id=mobile-app-v2" \
+  -H "Authorization: Bearer &lt;your-api-key&gt;"</code></pre>
+
+                <h4>Response (200)</h4>
+                <pre><code>[
+  {
+    "key_id": "a1b2c3d4e5f6",
+    "user_id": "mobile-app-v2",
+    "created_at": "2026-02-13T10:30:00.000000",
+    "expires_at": "2026-03-15T10:30:00.000000",
+    "last_used_at": "2026-02-13T14:22:00.000000",
+    "is_active": true
+  }
+]</code></pre>
+            </div>
+
+            <!-- DELETE -->
+            <div class="endpoint-card">
+                <p>
+                    <span class="endpoint-method method-delete">DELETE</span>
+                    <span class="endpoint-path">/admin/api-keys/{key_id}</span>
+                </p>
+                <p>Revoke a key (soft delete). Use the <code>key_id</code> from the list endpoint.</p>
+
+                <h4>Example</h4>
+                <pre><code>curl -X DELETE http://localhost:8000/admin/api-keys/a1b2c3d4e5f6 \
+  -H "Authorization: Bearer &lt;your-api-key&gt;"</code></pre>
+
+                <h4>Response (200)</h4>
+                <pre><code>{ "ok": true, "detail": "Key a1b2c3d4e5f6 revoked" }</code></pre>
+
+                <h4>Response (404)</h4>
+                <pre><code>{ "detail": "Key not found" }</code></pre>
+            </div>
+
+            <!-- GET usage -->
+            <div class="endpoint-card">
+                <p>
+                    <span class="endpoint-method method-get">GET</span>
+                    <span class="endpoint-path">/admin/api-keys/usage</span>
+                </p>
+                <p>View the audit log. Filterable by <code>?key_id=</code> and <code>?limit=</code>.</p>
+
+                <h4>Example</h4>
+                <pre><code>curl "http://localhost:8000/admin/api-keys/usage?limit=10" \
+  -H "Authorization: Bearer &lt;your-api-key&gt;"</code></pre>
+
+                <h4>Response (200)</h4>
+                <pre><code>[
+  {
+    "id": 42,
+    "key_id": "a1b2c3d4e5f6",
+    "user_id": "mobile-app-v2",
+    "endpoint": "/chat",
+    "timestamp": "2026-02-13T14:22:00.000000",
+    "success": true
+  }
+]</code></pre>
+            </div>
+        </section>
+
+        <!-- 6. SECURITY DESIGN DECISIONS -->
+        <section id="security">
+            <h2>06. Security Design Decisions</h2>
+
+            <h3>6.1 Key Storage: Hash-Only</h3>
+            <p>Raw keys are <strong>never stored</strong>. The system uses a one-way SHA-256 hash.</p>
+
+            <div class="flow-step">
+                <div class="flow-number">1</div>
+                <div class="flow-content">
+                    <h4>Creation</h4>
+                    <p>Generate <code>mr_K7xP2mN9qR4w...</code> &rarr; SHA-256 &rarr; Store hash in DB &rarr; Return raw key to caller once</p>
+                </div>
+            </div>
+            <div class="flow-step">
+                <div class="flow-number">2</div>
+                <div class="flow-content">
+                    <h4>Verification</h4>
+                    <p>Receive <code>mr_K7xP2mN9qR4w...</code> &rarr; SHA-256 &rarr; DB lookup by hash &rarr; Check active + not expired &rarr; Return <code>user_id</code></p>
+                </div>
+            </div>
+
+            <p><strong>Why?</strong> If the database is compromised, attackers get hashes, not usable keys. SHA-256 is one-way; they cannot reverse it.</p>
+
+            <h3>6.2 Key Prefix: <code>mr_</code></h3>
+            <ul>
+                <li><strong>Quick identification</strong> in logs and config files</li>
+                <li><strong>Routing</strong> &mdash; auth flow only calls <code>verify_key()</code> for <code>mr_</code> tokens, avoiding unnecessary DB lookups</li>
+                <li><strong>Grep-friendly</strong> &mdash; <code>grep "mr_" .env</code> instantly finds managed keys</li>
+            </ul>
+
+            <h3>6.3 Soft Revocation</h3>
+            <p><code>revoke_key()</code> sets <code>is_active = 0</code> rather than deleting. This preserves audit history, forensic evidence (creation date, owner, revocation time), and allows admin recovery.</p>
+
+            <h3>6.4 Audit on Failure</h3>
+            <div class="highlight-box insight">
+                <p>Both <strong>successful</strong> and <strong>failed</strong> authentication attempts are logged. Failed attempts are often more important than successes for security monitoring &mdash; repeated failures suggest a leaked/compromised key being brute-forced.</p>
+            </div>
+        </section>
+
+        <!-- 7. TESTING GUIDE -->
+        <section id="testing">
+            <h2>07. Testing Guide</h2>
+
+            <h3>Running the Test Suite</h3>
+            <pre><code><span style="color: var(--text-muted);"># Run only the API key management tests</span>
+uv run pytest tests/test_api_key_manager.py -v
+
+<span style="color: var(--text-muted);"># Run with coverage report</span>
+uv run pytest tests/test_api_key_manager.py -v \
+  --cov=app.security --cov=app.admin_routes --cov=app.auth_mixins
+
+<span style="color: var(--text-muted);"># Run all project tests (excluding known pre-existing failures)</span>
+uv run pytest tests/ -v \
+  -k "not health and not test_rag_empty_folder and not test_ragas_eval_example" \
+  --ignore=tests/test_api_basic.py \
+  --ignore=tests/test_api_endpoints.py \
+  --ignore=tests/test_booking.py</code></pre>
+
+            <h3>Unit Tests (Pure Python, No FastAPI)</h3>
+            <p>Unit tests use a lightweight <code>_FakeDB</code> wrapper to test <code>APIKeyManager</code> in isolation.</p>
+
+            <div class="test-grid">
+                <div class="test-card">
+                    <div class="test-name">test_returns_mr_prefix</div>
+                    <div class="test-desc">Created keys start with <code>mr_</code> for auth routing</div>
+                </div>
+                <div class="test-card">
+                    <div class="test-name">test_key_is_unique</div>
+                    <div class="test-desc">Two keys for same user are different</div>
+                </div>
+                <div class="test-card">
+                    <div class="test-name">test_valid_key_returns_user_id</div>
+                    <div class="test-desc"><code>verify_key()</code> returns the correct owner</div>
+                </div>
+                <div class="test-card">
+                    <div class="test-name">test_invalid_key_returns_none</div>
+                    <div class="test-desc">Random strings don't authenticate</div>
+                </div>
+                <div class="test-card">
+                    <div class="test-name">test_expired_key_returns_none</div>
+                    <div class="test-desc">Past-expiry keys are rejected</div>
+                </div>
+                <div class="test-card">
+                    <div class="test-name">test_revoke_prevents_verification</div>
+                    <div class="test-desc">Revoked keys fail verification</div>
+                </div>
+                <div class="test-card">
+                    <div class="test-name">test_revoke_nonexistent_returns_false</div>
+                    <div class="test-desc">Missing key handled gracefully</div>
+                </div>
+                <div class="test-card">
+                    <div class="test-name">test_lists_all_keys</div>
+                    <div class="test-desc">All created keys appear in listing</div>
+                </div>
+                <div class="test-card">
+                    <div class="test-name">test_filter_by_user_id</div>
+                    <div class="test-desc"><code>list_keys(user_id=)</code> filters correctly</div>
+                </div>
+                <div class="test-card">
+                    <div class="test-name">test_key_id_is_truncated</div>
+                    <div class="test-desc">Listed <code>key_id</code> is exactly 12 characters</div>
+                </div>
+                <div class="test-card">
+                    <div class="test-name">test_log_and_get_usage</div>
+                    <div class="test-desc">Usage logging round-trips correctly</div>
+                </div>
+            </div>
+
+            <h3>Integration Tests (FastAPI TestClient)</h3>
+            <div class="test-grid">
+                <div class="test-card">
+                    <div class="test-name">test_create_requires_auth</div>
+                    <div class="test-desc">POST without auth returns 401</div>
+                </div>
+                <div class="test-card">
+                    <div class="test-name">test_create_and_list_keys</div>
+                    <div class="test-desc">Create then list shows the new key</div>
+                </div>
+                <div class="test-card">
+                    <div class="test-name">test_managed_key_authenticates_chat</div>
+                    <div class="test-desc">Created key works on <code>/chat</code></div>
+                </div>
+                <div class="test-card">
+                    <div class="test-name">test_revoke_key_blocks_access</div>
+                    <div class="test-desc">Revoked key returns 401 on <code>/chat</code></div>
+                </div>
+                <div class="test-card">
+                    <div class="test-name">test_usage_log_populated</div>
+                    <div class="test-desc">Usage appears after authenticating with managed key</div>
+                </div>
+            </div>
+
+            <h3>Manual End-to-End Testing</h3>
+            <p>Start the app and test the full lifecycle:</p>
+
+            <div class="flow-step">
+                <div class="flow-number">1</div>
+                <div class="flow-content">
+                    <h4>Start the server</h4>
+                    <pre><code>uv run uvicorn app.main:app --reload</code></pre>
+                </div>
+            </div>
+            <div class="flow-step">
+                <div class="flow-number">2</div>
+                <div class="flow-content">
+                    <h4>Create a managed key</h4>
+                    <pre><code>curl -s -X POST http://localhost:8000/admin/api-keys \
+  -H "Authorization: Bearer $(grep MRC_API_KEY .env | cut -d= -f2)" \
+  -H "Content-Type: application/json" \
+  -d '{"user_id": "test-user", "expires_days": 7}' | python -m json.tool
+
+<span style="color: var(--text-muted);"># Save the raw_key:</span>
+export MANAGED_KEY="mr_..."</code></pre>
+                </div>
+            </div>
+            <div class="flow-step">
+                <div class="flow-number">3</div>
+                <div class="flow-content">
+                    <h4>Use the managed key to call /chat</h4>
+                    <pre><code>curl -s -X POST http://localhost:8000/chat \
+  -H "X-API-Key: $MANAGED_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"message": "What rooms are available?"}' | python -m json.tool</code></pre>
+                </div>
+            </div>
+            <div class="flow-step">
+                <div class="flow-number">4</div>
+                <div class="flow-content">
+                    <h4>Check the usage log</h4>
+                    <pre><code>curl -s http://localhost:8000/admin/api-keys/usage \
+  -H "Authorization: Bearer $(grep MRC_API_KEY .env | cut -d= -f2)" \
+  | python -m json.tool</code></pre>
+                </div>
+            </div>
+            <div class="flow-step">
+                <div class="flow-number">5</div>
+                <div class="flow-content">
+                    <h4>List all keys</h4>
+                    <pre><code>curl -s http://localhost:8000/admin/api-keys \
+  -H "Authorization: Bearer $(grep MRC_API_KEY .env | cut -d= -f2)" \
+  | python -m json.tool</code></pre>
+                </div>
+            </div>
+            <div class="flow-step">
+                <div class="flow-number">6</div>
+                <div class="flow-content">
+                    <h4>Revoke the key</h4>
+                    <pre><code>curl -s -X DELETE http://localhost:8000/admin/api-keys/&lt;key_id&gt; \
+  -H "Authorization: Bearer $(grep MRC_API_KEY .env | cut -d= -f2)" \
+  | python -m json.tool</code></pre>
+                </div>
+            </div>
+            <div class="flow-step">
+                <div class="flow-number">7</div>
+                <div class="flow-content">
+                    <h4>Confirm revoked key is rejected</h4>
+                    <pre><code>curl -s -X POST http://localhost:8000/chat \
+  -H "X-API-Key: $MANAGED_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"message": "Hello"}' | python -m json.tool
+
+<span style="color: var(--text-muted);"># Expected: 401 Unauthorized</span></code></pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. USER IMPACT -->
+        <section id="user-impact">
+            <h2>08. User Impact &amp; Use Cases</h2>
+
+            <h3>For API Consumers (External Integrations)</h3>
+            <table>
+                <thead><tr><th>Scenario</th><th>Before</th><th>After</th></tr></thead>
+                <tbody>
+                    <tr>
+                        <td>Mobile app needs API access</td>
+                        <td>Share the single <code>MRC_API_KEY</code></td>
+                        <td>Create a dedicated <code>mr_</code> key for the app</td>
+                    </tr>
+                    <tr>
+                        <td>Key leaked in a git commit</td>
+                        <td>Rotate <code>MRC_API_KEY</code>, break ALL integrations</td>
+                        <td>Revoke only the leaked key</td>
+                    </tr>
+                    <tr>
+                        <td>Onboarding a partner</td>
+                        <td>Share the master key (security risk)</td>
+                        <td>Issue a time-limited key with audit trail</td>
+                    </tr>
+                    <tr>
+                        <td>Debugging "who called what"</td>
+                        <td>All requests look the same</td>
+                        <td>Filter audit log by <code>user_id</code></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>For Platform Administrators</h3>
+            <table>
+                <thead><tr><th>Capability</th><th>Benefit</th></tr></thead>
+                <tbody>
+                    <tr><td>Key listing</td><td>See all active integrations at a glance</td></tr>
+                    <tr><td>Usage audit</td><td>Compliance reporting, anomaly detection</td></tr>
+                    <tr><td>Per-key revocation</td><td>Incident response without service disruption</td></tr>
+                    <tr><td>Expiry enforcement</td><td>Keys auto-expire, forcing rotation</td></tr>
+                </tbody>
+            </table>
+
+            <h3>For Developers</h3>
+            <table>
+                <thead><tr><th>Capability</th><th>Benefit</th></tr></thead>
+                <tbody>
+                    <tr><td>Separate test keys</td><td>Create short-lived keys for CI/CD pipelines</td></tr>
+                    <tr><td>Auth debugging</td><td>See exactly which auth method succeeded in logs</td></tr>
+                    <tr><td>Self-documenting API</td><td>FastAPI auto-docs at <code>/docs</code> include admin endpoints</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- 9. CONFIGURATION -->
+        <section id="config">
+            <h2>09. Configuration &amp; Environment</h2>
+
+            <div class="highlight-box solution">
+                <p><strong>No new environment variables required.</strong> The feature uses the existing database and works automatically on startup.</p>
+            </div>
+
+            <table>
+                <thead><tr><th>Setting</th><th>Source</th><th>Used By</th><th>Notes</th></tr></thead>
+                <tbody>
+                    <tr><td><code>MRC_API_KEY</code></td><td>.env</td><td>auth_mixins.py</td><td>Static key, still works as before</td></tr>
+                    <tr><td><code>MRC_DATABASE_URL</code></td><td>.env</td><td>APIKeyManager</td><td>Keys stored in same SQLite DB</td></tr>
+                    <tr><td><code>MRC_JWT_SECRET_KEY</code></td><td>.env</td><td>auth_mixins.py</td><td>JWT auth still works as before</td></tr>
+                </tbody>
+            </table>
+
+            <p>The <code>api_keys</code> and <code>api_key_usage</code> tables are auto-created by <code>APIKeyManager.__init__()</code> during app startup. No migrations needed.</p>
+        </section>
+
+        <!-- 10. TROUBLESHOOTING -->
+        <section id="troubleshooting">
+            <h2>10. Troubleshooting</h2>
+
+            <div class="highlight-box problem">
+                <h4>"API key manager not available" (503)</h4>
+                <p><strong>Cause:</strong> <code>app.state.api_key_manager</code> is <code>None</code>.</p>
+                <p><strong>Fix:</strong> Ensure <code>main.py</code> has: <code>api_key_manager = APIKeyManager(db)</code> and <code>app.state.api_key_manager = api_key_manager</code></p>
+            </div>
+
+            <div class="highlight-box problem">
+                <h4>Managed key returns 401 even though it was just created</h4>
+                <p>Check in order:</p>
+                <ol>
+                    <li><strong>Prefix</strong> &mdash; Key must start with <code>mr_</code></li>
+                    <li><strong>Expiry</strong> &mdash; Check <code>expires_at</code> in key listing</li>
+                    <li><strong>Revoked</strong> &mdash; Check <code>is_active</code> is <code>true</code></li>
+                    <li><strong>Typo</strong> &mdash; Copy-paste the full key exactly as returned</li>
+                </ol>
+            </div>
+
+            <div class="highlight-box">
+                <h4>Pre-existing test failures (unrelated to this feature)</h4>
+                <table>
+                    <thead><tr><th>Test</th><th>Reason</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>test_health_endpoint</code></td><td>No <code>/health</code> route exists</td></tr>
+                        <tr><td><code>test_tools_endpoint_auth</code></td><td>No <code>/tools</code> route exists</td></tr>
+                        <tr><td><code>test_chat_booking_flow</code></td><td>Calls <code>/chat</code> without auth headers</td></tr>
+                        <tr><td><code>test_rag_policy_answer</code></td><td>Calls <code>/chat</code> without auth headers</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- 11. SECURITY FIXES -->
+        <section id="security-fixes">
+            <h2>11. Security Fixes Included</h2>
+
+            <h3>11.1 Hardcoded Backdoor Removed</h3>
+            <div class="comparison-grid">
+                <div class="comparison-panel before">
+                    <h4>Before (auth_mixins.py:27)</h4>
+                    <pre><code>if (
+  token == settings.api_key.strip()
+  or token == "6f2b8e3a9d..."
+):
+    return "api_key_user"</code></pre>
+                    <p style="color: var(--accent-red); font-size: 0.9rem;">Anyone who discovered this hex string could bypass authentication.</p>
+                </div>
+                <div class="comparison-panel after">
+                    <h4>After</h4>
+                    <pre><code>if token == settings.api_key.strip():
+    return "api_key_user"</code></pre>
+                    <p style="color: var(--accent-green); font-size: 0.9rem;">Only the configured <code>MRC_API_KEY</code> is accepted.</p>
+                </div>
+            </div>
+
+            <h3>11.2 JWT Verification Bug Fixed</h3>
+            <div class="comparison-grid">
+                <div class="comparison-panel before">
+                    <h4>Before</h4>
+                    <pre><code><span style="color: var(--text-muted);"># token is a plain string</span>
+user = verify_token(token)
+<span style="color: var(--text-muted);"># verify_token expects HTTPAuth
+# CredentialsCredentials
+# -> AttributeError -> silently
+# caught -> JWT never worked</span></code></pre>
+                </div>
+                <div class="comparison-panel after">
+                    <h4>After</h4>
+                    <pre><code>payload = pyjwt.decode(
+    token, SECRET_KEY,
+    algorithms=[ALGORITHM]
+)
+username = payload.get("sub")
+<span style="color: var(--text-muted);"># JWT tokens are correctly
+# decoded and validated</span></code></pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- 12. FUTURE ENHANCEMENTS -->
+        <section id="future">
+            <h2>12. Future Enhancements</h2>
+
+            <table>
+                <thead><tr><th>Enhancement</th><th>Effort</th><th>Value</th></tr></thead>
+                <tbody>
+                    <tr>
+                        <td>Role-based admin access</td>
+                        <td><span class="status-badge warning">Medium</span></td>
+                        <td>Only admins can manage keys, not any authenticated user</td>
+                    </tr>
+                    <tr>
+                        <td>Key scoping (per-endpoint permissions)</td>
+                        <td><span class="status-badge warning">Medium</span></td>
+                        <td>Restrict keys to specific endpoints (e.g., read-only keys)</td>
+                    </tr>
+                    <tr>
+                        <td>Rate limiting per key</td>
+                        <td><span class="status-badge success">Low</span></td>
+                        <td>Each managed key gets its own rate limit bucket</td>
+                    </tr>
+                    <tr>
+                        <td>Webhook on revocation</td>
+                        <td><span class="status-badge success">Low</span></td>
+                        <td>Notify integration owners when their key is revoked</td>
+                    </tr>
+                    <tr>
+                        <td>Dashboard UI</td>
+                        <td><span class="status-badge error">High</span></td>
+                        <td>Gradio or React admin panel for key management</td>
+                    </tr>
+                    <tr>
+                        <td>Key re-activation</td>
+                        <td><span class="status-badge success">Low</span></td>
+                        <td>Admin can un-revoke a key (currently requires manual SQL)</td>
+                    </tr>
+                    <tr>
+                        <td>Bulk operations</td>
+                        <td><span class="status-badge success">Low</span></td>
+                        <td>Revoke all keys for a user_id in one call</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- FOOTER -->
+        <footer>
+            <p>Monster Resort Concierge &mdash; API Key Management System Documentation</p>
+            <p>Part of the engineering documentation suite. See also: <a href="../rag_architecture/rag_architecture_deep_dive.html">RAG Architecture</a> | <a href="../learning_roadmap/learning_roadmap.html">Learning Roadmap</a></p>
+            <p style="margin-top: 1rem;">Document ID: MR-APIKEY-001 | Last Updated: 2026-02-13</p>
+        </footer>
+
+    </div>
+</body>
+</html>

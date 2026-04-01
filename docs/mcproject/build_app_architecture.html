@@ -1,0 +1,1241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>build_app() Architecture — Circuit Board</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   RESET & VARIABLES
+   ============================================================ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+
+:root{
+  /* surface */
+  --bg:#0a0e17;
+  --bg-board:#0d1220;
+  --bg-node:#141b2d;
+  --bg-node-hover:#1a2340;
+  --bg-panel:#111827;
+  --border:#1e293b;
+  --border-glow:#334155;
+
+  /* text */
+  --text:#e2e8f0;
+  --text-dim:#94a3b8;
+  --text-bright:#f8fafc;
+
+  /* flow colors — the 3 line types */
+  --flow-data:#f59e0b;      /* orange — data flow */
+  --flow-knowledge:#22d3ee; /* cyan — knowledge flow */
+  --flow-config:#a78bfa;    /* purple — config flow */
+
+  /* node accent colors by phase */
+  --phase1:#a78bfa;  /* purple — config */
+  --phase2:#3b82f6;  /* blue — infrastructure */
+  --phase3:#10b981;  /* green — integration */
+  --phase4:#f59e0b;  /* amber — intelligence */
+  --phase5:#ef4444;  /* red — orchestrator */
+
+  /* misc */
+  --glow-spread:12px;
+  --transition:0.3s cubic-bezier(.4,0,.2,1);
+}
+
+html{font-size:15px}
+body{
+  font-family:'Inter',system-ui,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  overflow-x:hidden;
+  min-height:100vh;
+}
+
+/* ============================================================
+   PAGE HEADER
+   ============================================================ */
+.page-header{
+  padding:48px 32px 36px;
+  text-align:center;
+  border-bottom:1px solid var(--border);
+  background:linear-gradient(180deg,#0f1629 0%,var(--bg) 100%);
+}
+.page-header h1{
+  font-family:'JetBrains Mono',monospace;
+  font-size:2rem;
+  font-weight:700;
+  color:var(--text-bright);
+  letter-spacing:-0.5px;
+}
+.page-header h1 span{color:var(--flow-knowledge)}
+.page-header p{
+  margin-top:8px;
+  color:var(--text-dim);
+  font-size:0.93rem;
+  max-width:600px;
+  margin-left:auto;margin-right:auto;
+}
+
+/* ============================================================
+   LEGEND
+   ============================================================ */
+.legend{
+  display:flex;
+  justify-content:center;
+  gap:28px;
+  padding:16px 32px;
+  border-bottom:1px solid var(--border);
+  flex-wrap:wrap;
+}
+.legend-item{
+  display:flex;align-items:center;gap:8px;
+  font-size:0.82rem;color:var(--text-dim);
+}
+.legend-line{
+  width:36px;height:3px;border-radius:2px;
+  position:relative;
+}
+.legend-line.data{background:var(--flow-data)}
+.legend-line.knowledge{background:var(--flow-knowledge)}
+.legend-line.config{background:var(--flow-config)}
+.legend-line::after{
+  content:'';position:absolute;right:-2px;top:50%;
+  width:6px;height:6px;border-radius:50%;
+  transform:translateY(-50%);
+  background:inherit;
+  box-shadow:0 0 6px currentColor;
+}
+.legend-dot{
+  width:8px;height:8px;border-radius:50%;
+  animation:legendPulse 2s ease-in-out infinite;
+}
+.legend-dot.data{background:var(--flow-data)}
+.legend-dot.knowledge{background:var(--flow-knowledge)}
+.legend-dot.config{background:var(--flow-config)}
+@keyframes legendPulse{0%,100%{opacity:1}50%{opacity:0.4}}
+
+/* ============================================================
+   BOARD CONTAINER
+   ============================================================ */
+.board-wrap{
+  position:relative;
+  max-width:1200px;
+  margin:0 auto;
+  padding:40px 24px 80px;
+}
+
+/* The SVG overlay — sits on top of nodes absolutely */
+.svg-overlay{
+  position:absolute;
+  top:0;left:0;
+  width:100%;height:100%;
+  pointer-events:none;
+  z-index:1;
+}
+
+/* ============================================================
+   PHASE LABELS
+   ============================================================ */
+.phase{
+  display:flex;align-items:center;gap:12px;
+  margin:32px 0 16px;
+  position:relative;z-index:2;
+}
+.phase:first-of-type{margin-top:0}
+.phase-num{
+  font-family:'JetBrains Mono',monospace;
+  font-size:0.7rem;font-weight:700;
+  color:var(--bg);
+  background:var(--text-dim);
+  width:22px;height:22px;
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+}
+.phase-text{
+  font-size:0.82rem;
+  font-weight:600;
+  text-transform:uppercase;
+  letter-spacing:1.5px;
+  color:var(--text-dim);
+}
+.phase-line{
+  flex:1;height:1px;
+  background:linear-gradient(90deg,var(--border),transparent);
+}
+
+/* ============================================================
+   NODE ROW LAYOUT
+   ============================================================ */
+.node-row{
+  display:flex;
+  gap:20px;
+  justify-content:center;
+  flex-wrap:wrap;
+  position:relative;
+  z-index:2;
+  margin-bottom:8px;
+}
+
+/* ============================================================
+   NODES — the circuit board chips
+   ============================================================ */
+.node{
+  --accent:var(--phase2);
+  background:var(--bg-node);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:20px 22px 18px;
+  cursor:pointer;
+  position:relative;
+  transition:all var(--transition);
+  width:220px;
+  flex-shrink:0;
+}
+.node::before{
+  content:'';
+  position:absolute;top:-1px;left:20px;right:20px;
+  height:3px;border-radius:0 0 3px 3px;
+  background:var(--accent);
+  opacity:0.7;
+  transition:opacity var(--transition);
+}
+.node:hover{
+  background:var(--bg-node-hover);
+  border-color:var(--border-glow);
+  transform:translateY(-2px);
+  box-shadow:0 8px 32px rgba(0,0,0,0.3);
+}
+.node:hover::before{opacity:1}
+
+.node.selected{
+  border-color:var(--accent);
+  box-shadow:0 0 0 1px var(--accent),0 0 var(--glow-spread) rgba(0,0,0,0.2);
+}
+.node.selected::before{opacity:1;height:3px}
+
+.node.upstream-glow{
+  border-color:rgba(34,211,238,0.5);
+  box-shadow:0 0 16px rgba(34,211,238,0.15);
+}
+.node.downstream-glow{
+  border-color:rgba(245,158,11,0.5);
+  box-shadow:0 0 16px rgba(245,158,11,0.15);
+}
+.node.dimmed{opacity:0.25;pointer-events:none}
+
+.node-order{
+  font-family:'JetBrains Mono',monospace;
+  font-size:0.68rem;
+  font-weight:700;
+  color:var(--accent);
+  margin-bottom:4px;
+}
+.node-name{
+  font-weight:700;
+  font-size:1rem;
+  color:var(--text-bright);
+  margin-bottom:2px;
+}
+.node-role{
+  font-size:0.78rem;
+  color:var(--text-dim);
+  margin-bottom:10px;
+}
+.node-code{
+  font-family:'JetBrains Mono',monospace;
+  font-size:0.72rem;
+  color:var(--flow-knowledge);
+  background:rgba(34,211,238,0.06);
+  padding:6px 10px;
+  border-radius:6px;
+  border:1px solid rgba(34,211,238,0.1);
+  word-break:break-all;
+}
+
+/* Connection pins — visual dots on node edges */
+.node-pins{
+  position:absolute;
+  bottom:-6px;left:50%;
+  transform:translateX(-50%);
+  display:flex;gap:6px;
+}
+.pin{
+  width:8px;height:8px;
+  border-radius:50%;
+  border:2px solid var(--bg-node);
+  background:var(--accent);
+  transition:all var(--transition);
+}
+.node.selected .pin,
+.node.upstream-glow .pin,
+.node.downstream-glow .pin{
+  box-shadow:0 0 8px var(--accent);
+}
+
+/* Top pins for incoming */
+.node-pins-top{
+  position:absolute;
+  top:-6px;left:50%;
+  transform:translateX(-50%);
+  display:flex;gap:6px;
+}
+
+/* Phase-specific accent overrides */
+.node[data-phase="1"]{--accent:var(--phase1)}
+.node[data-phase="2"]{--accent:var(--phase2)}
+.node[data-phase="3"]{--accent:var(--phase3)}
+.node[data-phase="4"]{--accent:var(--phase4)}
+.node[data-phase="5"]{--accent:var(--phase5)}
+
+/* wide node for _agent_reply */
+.node.wide{width:480px}
+
+/* ============================================================
+   DETAIL PANEL — slides in from the right
+   ============================================================ */
+.detail-panel{
+  position:fixed;
+  top:0;right:0;
+  width:420px;max-width:92vw;
+  height:100vh;
+  background:var(--bg-panel);
+  border-left:1px solid var(--border);
+  z-index:100;
+  transform:translateX(100%);
+  transition:transform 0.35s cubic-bezier(.4,0,.2,1);
+  overflow-y:auto;
+  box-shadow:-8px 0 40px rgba(0,0,0,0.4);
+}
+.detail-panel.open{transform:translateX(0)}
+
+.panel-header{
+  padding:28px 28px 20px;
+  border-bottom:1px solid var(--border);
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  position:sticky;top:0;
+  background:var(--bg-panel);
+  z-index:2;
+}
+.panel-title{
+  font-size:1.15rem;
+  font-weight:700;
+  color:var(--text-bright);
+}
+.panel-subtitle{
+  font-size:0.82rem;
+  color:var(--text-dim);
+  margin-top:4px;
+}
+.panel-close{
+  width:32px;height:32px;
+  border:1px solid var(--border);
+  border-radius:8px;
+  background:transparent;
+  color:var(--text-dim);
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.1rem;
+  transition:all var(--transition);
+  flex-shrink:0;
+}
+.panel-close:hover{
+  background:var(--bg-node);
+  color:var(--text-bright);
+  border-color:var(--border-glow);
+}
+
+.panel-body{padding:24px 28px 40px}
+
+.panel-section{margin-bottom:24px}
+.panel-section-label{
+  font-size:0.72rem;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:1.2px;
+  color:var(--text-dim);
+  margin-bottom:8px;
+}
+.panel-code{
+  font-family:'JetBrains Mono',monospace;
+  font-size:0.78rem;
+  color:var(--flow-knowledge);
+  background:rgba(34,211,238,0.05);
+  padding:14px 16px;
+  border-radius:8px;
+  border:1px solid rgba(34,211,238,0.1);
+  line-height:1.7;
+  white-space:pre-wrap;
+}
+.panel-text{
+  font-size:0.88rem;
+  color:var(--text);
+  line-height:1.7;
+}
+.panel-connections{
+  display:flex;flex-direction:column;gap:8px;
+}
+.panel-conn{
+  display:flex;align-items:center;gap:8px;
+  font-size:0.82rem;
+  color:var(--text);
+  padding:8px 12px;
+  background:rgba(255,255,255,0.02);
+  border:1px solid var(--border);
+  border-radius:8px;
+}
+.panel-conn-dot{
+  width:8px;height:8px;
+  border-radius:50%;flex-shrink:0;
+}
+.panel-conn-dot.upstream{background:var(--flow-knowledge)}
+.panel-conn-dot.downstream{background:var(--flow-data)}
+.panel-conn-arrow{
+  color:var(--text-dim);
+  font-family:'JetBrains Mono',monospace;
+  font-size:0.7rem;
+}
+.panel-file{
+  font-family:'JetBrains Mono',monospace;
+  font-size:0.78rem;
+  color:var(--phase2);
+}
+
+/* ============================================================
+   SVG PATHS — connection lines
+   ============================================================ */
+.conn-path{
+  fill:none;
+  stroke-width:2;
+  stroke-linecap:round;
+  opacity:0.35;
+  transition:opacity 0.4s ease, stroke-width 0.4s ease;
+}
+.conn-path.highlighted{
+  opacity:0.9;
+  stroke-width:3;
+}
+.conn-path.dimmed{opacity:0.06}
+.conn-path[data-flow="config"]{stroke:var(--flow-config)}
+.conn-path[data-flow="data"]{stroke:var(--flow-data)}
+.conn-path[data-flow="knowledge"]{stroke:var(--flow-knowledge)}
+
+/* Animated dot that travels along paths */
+.flow-dot{
+  r:4;
+  opacity:0;
+  filter:blur(0.5px);
+}
+.flow-dot[data-flow="config"]{fill:var(--flow-config)}
+.flow-dot[data-flow="data"]{fill:var(--flow-data)}
+.flow-dot[data-flow="knowledge"]{fill:var(--flow-knowledge)}
+.flow-dot.active{opacity:1}
+
+/* Glow filter for SVG */
+.svg-glow{filter:url(#glow)}
+
+/* ============================================================
+   GRID BACKGROUND — circuit board effect
+   ============================================================ */
+.board-wrap::before{
+  content:'';
+  position:absolute;
+  inset:0;
+  background-image:
+    radial-gradient(circle at 1px 1px, rgba(148,163,184,0.05) 1px, transparent 0);
+  background-size:32px 32px;
+  pointer-events:none;
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media(max-width:900px){
+  .node{width:180px;padding:16px}
+  .node.wide{width:100%;max-width:400px}
+  .detail-panel{width:100%}
+  .node-name{font-size:0.9rem}
+}
+@media(max-width:600px){
+  .node-row{flex-direction:column;align-items:center}
+  .node{width:100%;max-width:320px}
+  .legend{flex-direction:column;align-items:center;gap:12px}
+}
+
+/* ============================================================
+   BACKDROP — click outside panel to close
+   ============================================================ */
+.backdrop{
+  position:fixed;inset:0;
+  background:rgba(0,0,0,0.3);
+  z-index:99;
+  opacity:0;pointer-events:none;
+  transition:opacity 0.3s ease;
+}
+.backdrop.active{opacity:1;pointer-events:all}
+
+/* ============================================================
+   TOOLTIP HINT
+   ============================================================ */
+.hint{
+  text-align:center;
+  font-size:0.78rem;
+  color:var(--text-dim);
+  margin-top:8px;
+  opacity:0.6;
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     HEADER
+     ============================================================ -->
+<header class="page-header">
+  <h1><span>build_app()</span> Architecture</h1>
+  <p>How the Monster Resort opens its doors: 10 objects created at startup, wired together on a circuit board. Click any node to inspect.</p>
+</header>
+
+<!-- ============================================================
+     LEGEND
+     ============================================================ -->
+<div class="legend">
+  <div class="legend-item">
+    <div class="legend-line config"></div>
+    <span>Config flow</span>
+  </div>
+  <div class="legend-item">
+    <div class="legend-line data"></div>
+    <span>Data flow</span>
+  </div>
+  <div class="legend-item">
+    <div class="legend-line knowledge"></div>
+    <span>Knowledge flow</span>
+  </div>
+  <div class="legend-item">
+    <div class="legend-dot data" style="animation-delay:0.3s"></div>
+    <span>Animated = active flow direction</span>
+  </div>
+</div>
+
+<!-- ============================================================
+     BOARD
+     ============================================================ -->
+<div class="board-wrap" id="boardWrap">
+
+  <!-- SVG overlay for all connection lines -->
+  <svg class="svg-overlay" id="svgOverlay">
+    <defs>
+      <filter id="glow">
+        <feGaussianBlur stdDeviation="3" result="blur"/>
+        <feMerge>
+          <feMergeNode in="blur"/>
+          <feMergeNode in="SourceGraphic"/>
+        </feMerge>
+      </filter>
+    </defs>
+    <!-- Paths and dots injected by JS -->
+  </svg>
+
+  <!-- ==================== PHASE 1 ==================== -->
+  <div class="phase">
+    <div class="phase-num">1</div>
+    <div class="phase-text">Foundation</div>
+    <div class="phase-line"></div>
+  </div>
+
+  <div class="node-row">
+    <div class="node" data-id="settings" data-phase="1"
+         data-upstream=""
+         data-downstream="db,pdf,rag,router,detector,tracker">
+      <div class="node-order">01</div>
+      <div class="node-name">settings</div>
+      <div class="node-role">The Blueprint</div>
+      <div class="node-code">settings = get_settings()</div>
+      <div class="node-pins"><div class="pin"></div><div class="pin"></div><div class="pin"></div></div>
+    </div>
+  </div>
+
+  <p class="hint">Click a node to see details and highlight connections</p>
+
+  <!-- ==================== PHASE 2 ==================== -->
+  <div class="phase">
+    <div class="phase-num">2</div>
+    <div class="phase-text">Infrastructure</div>
+    <div class="phase-line"></div>
+  </div>
+
+  <div class="node-row">
+    <div class="node" data-id="db" data-phase="2"
+         data-upstream="settings"
+         data-downstream="memory,registry,agent_reply">
+      <div class="node-pins-top"><div class="pin"></div></div>
+      <div class="node-order">02</div>
+      <div class="node-name">db</div>
+      <div class="node-role">The Filing Cabinet</div>
+      <div class="node-code">DatabaseManager(settings)</div>
+      <div class="node-pins"><div class="pin"></div><div class="pin"></div></div>
+    </div>
+    <div class="node" data-id="pdf" data-phase="2"
+         data-upstream="settings"
+         data-downstream="registry">
+      <div class="node-pins-top"><div class="pin"></div></div>
+      <div class="node-order">03</div>
+      <div class="node-name">pdf</div>
+      <div class="node-role">The Print Shop</div>
+      <div class="node-code">PDFGenerator(settings)</div>
+      <div class="node-pins"><div class="pin"></div></div>
+    </div>
+    <div class="node" data-id="rag" data-phase="2"
+         data-upstream="settings"
+         data-downstream="registry,agent_reply">
+      <div class="node-pins-top"><div class="pin"></div></div>
+      <div class="node-order">04</div>
+      <div class="node-name">rag</div>
+      <div class="node-role">The Knowledge Vault</div>
+      <div class="node-code">AdvancedRAG(settings)</div>
+      <div class="node-pins"><div class="pin"></div><div class="pin"></div></div>
+    </div>
+  </div>
+
+  <!-- ==================== PHASE 3 ==================== -->
+  <div class="phase">
+    <div class="phase-num">3</div>
+    <div class="phase-text">Integration</div>
+    <div class="phase-line"></div>
+  </div>
+
+  <div class="node-row">
+    <div class="node" data-id="memory" data-phase="3"
+         data-upstream="db"
+         data-downstream="agent_reply">
+      <div class="node-pins-top"><div class="pin"></div></div>
+      <div class="node-order">05</div>
+      <div class="node-name">memory</div>
+      <div class="node-role">The Guest Diary</div>
+      <div class="node-code">MemoryStore(db=db)</div>
+      <div class="node-pins"><div class="pin"></div></div>
+    </div>
+    <div class="node" data-id="registry" data-phase="3"
+         data-upstream="db,pdf,rag"
+         data-downstream="agent_reply">
+      <div class="node-pins-top"><div class="pin"></div><div class="pin"></div><div class="pin"></div></div>
+      <div class="node-order">06</div>
+      <div class="node-name">registry</div>
+      <div class="node-role">The Tool Belt</div>
+      <div class="node-code">make_registry(db, pdf, rag)</div>
+      <div class="node-pins"><div class="pin"></div></div>
+    </div>
+  </div>
+
+  <!-- ==================== PHASE 4 ==================== -->
+  <div class="phase">
+    <div class="phase-num">4</div>
+    <div class="phase-text">Intelligence</div>
+    <div class="phase-line"></div>
+  </div>
+
+  <div class="node-row">
+    <div class="node" data-id="router" data-phase="4"
+         data-upstream="settings"
+         data-downstream="agent_reply">
+      <div class="node-pins-top"><div class="pin"></div></div>
+      <div class="node-order">07</div>
+      <div class="node-name">router</div>
+      <div class="node-role">The Mouthpiece</div>
+      <div class="node-code">ModelRouter(settings)</div>
+      <div class="node-pins"><div class="pin"></div></div>
+    </div>
+    <div class="node" data-id="detector" data-phase="4"
+         data-upstream="settings"
+         data-downstream="agent_reply">
+      <div class="node-pins-top"><div class="pin"></div></div>
+      <div class="node-order">08</div>
+      <div class="node-name">detector</div>
+      <div class="node-role">The Fact Checker</div>
+      <div class="node-code">HallucinationDetector(settings)</div>
+      <div class="node-pins"><div class="pin"></div></div>
+    </div>
+    <div class="node" data-id="tracker" data-phase="4"
+         data-upstream="settings"
+         data-downstream="agent_reply">
+      <div class="node-pins-top"><div class="pin"></div></div>
+      <div class="node-order">09</div>
+      <div class="node-name">tracker</div>
+      <div class="node-role">The Surveillance</div>
+      <div class="node-code">MLflowTracker(settings)</div>
+      <div class="node-pins"><div class="pin"></div></div>
+    </div>
+  </div>
+
+  <!-- ==================== PHASE 5 ==================== -->
+  <div class="phase">
+    <div class="phase-num">5</div>
+    <div class="phase-text">Orchestration</div>
+    <div class="phase-line"></div>
+  </div>
+
+  <div class="node-row">
+    <div class="node wide" data-id="agent_reply" data-phase="5"
+         data-upstream="registry,router,memory,rag,detector,tracker"
+         data-downstream="">
+      <div class="node-pins-top"><div class="pin"></div><div class="pin"></div><div class="pin"></div><div class="pin"></div><div class="pin"></div><div class="pin"></div></div>
+      <div class="node-order">10</div>
+      <div class="node-name">_agent_reply</div>
+      <div class="node-role">The Grand Chamberlain</div>
+      <div class="node-code">async def _agent_reply(session_id, user_text) -> dict</div>
+    </div>
+  </div>
+
+</div><!-- end board-wrap -->
+
+<!-- ============================================================
+     DETAIL PANEL
+     ============================================================ -->
+<div class="backdrop" id="backdrop"></div>
+<div class="detail-panel" id="detailPanel">
+  <div class="panel-header">
+    <div>
+      <div class="panel-title" id="panelTitle">—</div>
+      <div class="panel-subtitle" id="panelSubtitle">—</div>
+    </div>
+    <button class="panel-close" id="panelClose" aria-label="Close">&times;</button>
+  </div>
+  <div class="panel-body" id="panelBody"></div>
+</div>
+
+<!-- ============================================================
+     JAVASCRIPT
+     ============================================================ -->
+<script>
+(function(){
+"use strict";
+
+/* ============================================================
+   NODE DATA — details for the panel
+   ============================================================ */
+const NODE_DATA = {
+  settings: {
+    title: "settings",
+    subtitle: "Phase 1 — Foundation",
+    file: "app/config.py",
+    code: `settings = get_settings()
+
+# Pydantic BaseSettings with MRC_ prefix
+# Reads from environment variables + .env file
+# Cached via @lru_cache — created once`,
+    description: "The very first object created. Reads all configuration from environment variables (MRC_ prefix) and .env file. Every other object receives its marching orders from here. Change a value here and it ripples through the entire system.",
+    configures: "openai_api_key, anthropic_api_key, rag_persist_dir, rag_collection, hallucination thresholds, database_url, rate_limit_per_minute, mlflow_tracking_uri",
+    upstreamLabel: "Source node — no dependencies",
+    downstreamList: ["db", "pdf", "rag", "router", "detector", "tracker"]
+  },
+  db: {
+    title: "db",
+    subtitle: "Phase 2 — Infrastructure",
+    file: "app/back_office/database.py",
+    code: `db = DatabaseManager(settings)
+
+# Creates SQLite connection
+# Auto-creates tables: bookings, sessions,
+#   api_keys, schema_migrations
+# Context manager: get_connection()`,
+    description: "Creates and manages the SQLite database. Sets up tables for bookings, sessions, and API keys. Provides a context manager with auto-commit and rollback. The persistent memory of the entire resort.",
+    upstreamLabel: "Receives config from:",
+    upstreamList: ["settings"],
+    downstreamList: ["memory", "registry", "agent_reply"]
+  },
+  pdf: {
+    title: "pdf",
+    subtitle: "Phase 2 — Infrastructure",
+    file: "app/services/pdf_generator.py",
+    code: `pdf = PDFGenerator(settings.pdf_output_dir)
+
+# Generates booking confirmation PDFs
+# Used by the book_room tool in registry`,
+    description: "Generates styled PDF booking confirmations. When a guest books a room, this creates the official confirmation document. Injected into the tool registry so book_room can produce PDFs.",
+    upstreamLabel: "Receives config from:",
+    upstreamList: ["settings"],
+    downstreamList: ["registry"]
+  },
+  rag: {
+    title: "rag",
+    subtitle: "Phase 2 — Infrastructure",
+    file: "app/records_room/advanced_rag.py",
+    code: `rag = AdvancedRAG(
+  settings.rag_persist_dir,
+  settings.rag_collection,
+  embedding_model="all-MiniLM-L6-v2",
+  reranker_model="BAAI/bge-reranker-base",
+  ingestion_token=settings.rag_ingestion_token
+)`,
+    description: "Hybrid search engine: combines ChromaDB vector search with BM25 keyword search, then reranks with a cross-encoder. This is how the Chamberlain knows about resort amenities, room details, and policies. Dual role: feeds the registry's search_amenities tool AND provides direct context to _agent_reply.",
+    upstreamLabel: "Receives config from:",
+    upstreamList: ["settings"],
+    downstreamList: ["registry", "agent_reply"]
+  },
+  memory: {
+    title: "memory",
+    subtitle: "Phase 3 — Integration",
+    file: "app/concierge/memory.py",
+    code: `memory = MemoryStore(db=db)
+
+# Stores/retrieves conversation history
+# Per-session message pairs
+# Used by _agent_reply for context`,
+    description: "Stores and retrieves conversation history per session. Wraps the database with a chat-specific interface. When _agent_reply needs to remember what a guest said 5 messages ago, it asks memory.",
+    upstreamLabel: "Depends on:",
+    upstreamList: ["db"],
+    downstreamList: ["agent_reply"]
+  },
+  registry: {
+    title: "registry",
+    subtitle: "Phase 3 — Integration",
+    file: "app/concierge/tools.py",
+    code: `registry = make_registry(
+  db=db,
+  pdf=pdf,
+  rag_search_fn=lambda q, k=5: rag.search(q, k=k)
+)
+
+# Registers: book_room, get_booking,
+#   search_amenities, cancel_booking`,
+    description: "The most connected node. Combines db (for bookings), pdf (for confirmations), and rag (for amenity search) into a unified tool interface. The LLM calls these tools by name during the agent loop. This is the Chamberlain's hands — the actions it can take in the world.",
+    upstreamLabel: "Wired to:",
+    upstreamList: ["db", "pdf", "rag"],
+    downstreamList: ["agent_reply"]
+  },
+  router: {
+    title: "router",
+    subtitle: "Phase 4 — Intelligence",
+    file: "app/concierge/llm_providers.py",
+    code: `router = _build_router(settings)
+
+# ModelRouter with fallback chain:
+#   OpenAI → Anthropic → Ollama
+# Auto-failover on provider errors`,
+    description: "Multi-provider LLM router with automatic failover. Tries OpenAI first, falls back to Anthropic (Claude), then Ollama for local inference. The Chamberlain's voice — without this, there is no conversation.",
+    upstreamLabel: "Receives config from:",
+    upstreamList: ["settings"],
+    downstreamList: ["agent_reply"]
+  },
+  detector: {
+    title: "detector",
+    subtitle: "Phase 4 — Intelligence",
+    file: "app/manager_office/hallucination.py",
+    code: `detector = HallucinationDetector(
+  high_threshold=settings.hallucination_high_threshold,
+  medium_threshold=settings.hallucination_medium_threshold
+)
+
+# Scores: HIGH / MEDIUM / LOW confidence
+# Compares LLM response against RAG context`,
+    description: "Compares every LLM response against the RAG context to detect fabrication. Scores each response HIGH, MEDIUM, or LOW. If the Chamberlain invents a room that does not exist, the detector catches it.",
+    upstreamLabel: "Receives config from:",
+    upstreamList: ["settings"],
+    downstreamList: ["agent_reply"]
+  },
+  tracker: {
+    title: "tracker",
+    subtitle: "Phase 4 — Intelligence",
+    file: "app/cctv/mlflow_tracking.py",
+    code: `tracker = MLflowTracker(
+  tracking_uri=settings.mlflow_tracking_uri,
+  experiment_name=settings.mlflow_experiment_name,
+  enabled=settings.mlflow_enabled
+)
+
+# Graceful noop if disabled
+# Logs: latency, token counts, tool calls`,
+    description: "MLflow experiment tracker for monitoring LLM performance. Logs latency, token usage, tool calls, and hallucination scores. Gracefully becomes a no-op if MLflow is disabled. The CCTV system watching everything.",
+    upstreamLabel: "Receives config from:",
+    upstreamList: ["settings"],
+    downstreamList: ["agent_reply"]
+  },
+  agent_reply: {
+    title: "_agent_reply",
+    subtitle: "Phase 5 — Orchestration",
+    file: "app/main.py",
+    code: `@profile
+async def _agent_reply(
+  session_id: str,
+  user_text: str
+) -> dict:
+  # 1. Validate input
+  # 2. RAG search for context
+  # 3. Build system prompt
+  # 4. Load memory (history)
+  # 5. LLM call via router
+  # 6. Tool loop (if tool_calls)
+  # 7. Hallucination check
+  # 8. Track with MLflow
+  # 9. Save to memory
+  # 10. Return response`,
+    description: "The Grand Chamberlain itself. This is where all 10 objects converge. Every line of build_app() exists to create the objects that _agent_reply() needs. It orchestrates: input validation, RAG retrieval, prompt construction, memory loading, LLM inference, tool execution, hallucination detection, metrics tracking, and response delivery.",
+    upstreamLabel: "Consumes everything:",
+    upstreamList: ["registry", "router", "memory", "rag", "detector", "tracker"],
+    downstreamLabel: "Terminal node — returns response to user"
+  }
+};
+
+/* ============================================================
+   CONNECTION DEFINITIONS
+   ============================================================ */
+const CONNECTIONS = [
+  // settings → phase 2 (config flow)
+  { from: "settings", to: "db",       flow: "config" },
+  { from: "settings", to: "pdf",      flow: "config" },
+  { from: "settings", to: "rag",      flow: "config" },
+  // settings → phase 4 (config flow)
+  { from: "settings", to: "router",   flow: "config" },
+  { from: "settings", to: "detector", flow: "config" },
+  { from: "settings", to: "tracker",  flow: "config" },
+  // phase 2 → phase 3 (data flow)
+  { from: "db",  to: "memory",   flow: "data" },
+  { from: "db",  to: "registry", flow: "data" },
+  { from: "pdf", to: "registry", flow: "data" },
+  // phase 2 → phase 3 (knowledge flow)
+  { from: "rag", to: "registry", flow: "knowledge" },
+  // phase 2/3/4 → agent_reply
+  { from: "rag",      to: "agent_reply", flow: "knowledge" },
+  { from: "memory",   to: "agent_reply", flow: "data" },
+  { from: "registry", to: "agent_reply", flow: "data" },
+  { from: "router",   to: "agent_reply", flow: "data" },
+  { from: "detector", to: "agent_reply", flow: "knowledge" },
+  { from: "tracker",  to: "agent_reply", flow: "data" },
+];
+
+/* ============================================================
+   DOM REFS
+   ============================================================ */
+const svgEl       = document.getElementById("svgOverlay");
+const boardWrap   = document.getElementById("boardWrap");
+const detailPanel = document.getElementById("detailPanel");
+const panelTitle  = document.getElementById("panelTitle");
+const panelSubtitle = document.getElementById("panelSubtitle");
+const panelBody   = document.getElementById("panelBody");
+const panelClose  = document.getElementById("panelClose");
+const backdrop    = document.getElementById("backdrop");
+
+const allNodes = document.querySelectorAll(".node[data-id]");
+let selectedId = null;
+let pathElements = [];   // {path, dot, from, to, flow}
+let animFrame = null;
+
+/* ============================================================
+   SVG PATH COMPUTATION
+   ============================================================ */
+function getNodeCenter(id) {
+  const el = document.querySelector(`.node[data-id="${id}"]`);
+  if (!el) return { x: 0, y: 0 };
+  const r = el.getBoundingClientRect();
+  const wr = boardWrap.getBoundingClientRect();
+  return {
+    x: r.left + r.width / 2 - wr.left,
+    y: r.top + r.height / 2 - wr.top
+  };
+}
+
+function getNodeEdge(id, side) {
+  const el = document.querySelector(`.node[data-id="${id}"]`);
+  if (!el) return { x: 0, y: 0 };
+  const r = el.getBoundingClientRect();
+  const wr = boardWrap.getBoundingClientRect();
+  const cx = r.left + r.width / 2 - wr.left;
+  if (side === "bottom") {
+    return { x: cx, y: r.bottom - wr.top };
+  }
+  return { x: cx, y: r.top - wr.top };
+}
+
+function buildPaths() {
+  // Clear existing
+  pathElements.forEach(p => { p.path.remove(); p.dot.remove(); });
+  pathElements = [];
+
+  CONNECTIONS.forEach((conn, i) => {
+    const start = getNodeEdge(conn.from, "bottom");
+    const end   = getNodeEdge(conn.to, "top");
+
+    // Create a smooth cubic bezier — vertical bias for circuit-board feel
+    const dy = end.y - start.y;
+    const dx = end.x - start.x;
+    const cy1 = start.y + dy * 0.4;
+    const cy2 = end.y - dy * 0.4;
+
+    // Slight horizontal offset for overlapping paths
+    const offset = (i % 3 - 1) * 3;
+
+    const d = `M ${start.x + offset} ${start.y}
+               C ${start.x + offset} ${cy1},
+                 ${end.x + offset} ${cy2},
+                 ${end.x + offset} ${end.y}`;
+
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("d", d);
+    path.setAttribute("data-flow", conn.flow);
+    path.setAttribute("data-from", conn.from);
+    path.setAttribute("data-to", conn.to);
+    path.classList.add("conn-path");
+
+    const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    dot.setAttribute("data-flow", conn.flow);
+    dot.classList.add("flow-dot");
+    dot.setAttribute("r", "4");
+
+    svgEl.appendChild(path);
+    svgEl.appendChild(dot);
+
+    pathElements.push({
+      path, dot,
+      from: conn.from,
+      to: conn.to,
+      flow: conn.flow,
+      length: path.getTotalLength(),
+      offset: Math.random() * 1000,  // stagger animation start
+      speed: 1800 + Math.random() * 1200  // ms for one traversal
+    });
+  });
+}
+
+/* ============================================================
+   ANIMATED DOTS — travel along paths
+   ============================================================ */
+function animateDots(timestamp) {
+  pathElements.forEach(p => {
+    const t = ((timestamp + p.offset) % p.speed) / p.speed;
+    const point = p.path.getPointAtLength(t * p.length);
+    p.dot.setAttribute("cx", point.x);
+    p.dot.setAttribute("cy", point.y);
+
+    // Fade in/out at endpoints
+    let opacity = 1;
+    if (t < 0.08) opacity = t / 0.08;
+    else if (t > 0.92) opacity = (1 - t) / 0.08;
+    p.dot.style.opacity = p.dot.classList.contains("active") ? opacity : 0;
+  });
+  animFrame = requestAnimationFrame(animateDots);
+}
+
+function startDotAnimation() {
+  // Activate all dots by default
+  pathElements.forEach(p => p.dot.classList.add("active"));
+  if (!animFrame) animFrame = requestAnimationFrame(animateDots);
+}
+
+/* ============================================================
+   SELECTION & HIGHLIGHTING
+   ============================================================ */
+function selectNode(id) {
+  if (selectedId === id) {
+    deselectAll();
+    return;
+  }
+  selectedId = id;
+
+  const data = NODE_DATA[id];
+  if (!data) return;
+
+  // Upstream/downstream sets
+  const upstream = new Set();
+  const downstream = new Set();
+  CONNECTIONS.forEach(c => {
+    if (c.to === id) upstream.add(c.from);
+    if (c.from === id) downstream.add(c.to);
+  });
+
+  // Node classes
+  allNodes.forEach(n => {
+    const nid = n.dataset.id;
+    n.classList.remove("selected", "upstream-glow", "downstream-glow", "dimmed");
+    if (nid === id) {
+      n.classList.add("selected");
+    } else if (upstream.has(nid)) {
+      n.classList.add("upstream-glow");
+    } else if (downstream.has(nid)) {
+      n.classList.add("downstream-glow");
+    } else {
+      n.classList.add("dimmed");
+    }
+  });
+
+  // Path classes
+  pathElements.forEach(p => {
+    const connected = (p.from === id || p.to === id);
+    p.path.classList.toggle("highlighted", connected);
+    p.path.classList.toggle("dimmed", !connected);
+    p.dot.classList.toggle("active", connected);
+  });
+
+  // Open panel
+  openPanel(id, data, upstream, downstream);
+}
+
+function deselectAll() {
+  selectedId = null;
+  allNodes.forEach(n => n.classList.remove("selected", "upstream-glow", "downstream-glow", "dimmed"));
+  pathElements.forEach(p => {
+    p.path.classList.remove("highlighted", "dimmed");
+    p.dot.classList.add("active");
+  });
+  closePanel();
+}
+
+/* ============================================================
+   DETAIL PANEL
+   ============================================================ */
+function openPanel(id, data, upstream, downstream) {
+  panelTitle.textContent = data.title;
+  panelSubtitle.textContent = data.subtitle;
+
+  let html = "";
+
+  // File
+  html += `<div class="panel-section">
+    <div class="panel-section-label">Source File</div>
+    <div class="panel-file">${data.file}</div>
+  </div>`;
+
+  // Code
+  html += `<div class="panel-section">
+    <div class="panel-section-label">Creation Code</div>
+    <div class="panel-code">${escapeHtml(data.code)}</div>
+  </div>`;
+
+  // Description
+  html += `<div class="panel-section">
+    <div class="panel-section-label">What It Does</div>
+    <div class="panel-text">${data.description}</div>
+  </div>`;
+
+  // Upstream connections
+  if (upstream.size > 0 || data.upstreamList) {
+    const list = data.upstreamList || Array.from(upstream);
+    html += `<div class="panel-section">
+      <div class="panel-section-label">${data.upstreamLabel || "Depends On"}</div>
+      <div class="panel-connections">
+        ${list.map(u => `<div class="panel-conn" data-goto="${u}">
+          <div class="panel-conn-dot upstream"></div>
+          <span>${u}</span>
+          <span class="panel-conn-arrow">&#8594; ${id}</span>
+        </div>`).join("")}
+      </div>
+    </div>`;
+  } else if (data.upstreamLabel) {
+    html += `<div class="panel-section">
+      <div class="panel-section-label">Dependencies</div>
+      <div class="panel-text">${data.upstreamLabel}</div>
+    </div>`;
+  }
+
+  // Downstream connections
+  if (downstream.size > 0 || data.downstreamList) {
+    const list = data.downstreamList || Array.from(downstream);
+    html += `<div class="panel-section">
+      <div class="panel-section-label">Feeds Into</div>
+      <div class="panel-connections">
+        ${list.map(d => `<div class="panel-conn" data-goto="${d}">
+          <div class="panel-conn-dot downstream"></div>
+          <span>${d}</span>
+          <span class="panel-conn-arrow">${id} &#8594;</span>
+        </div>`).join("")}
+      </div>
+    </div>`;
+  } else if (data.downstreamLabel) {
+    html += `<div class="panel-section">
+      <div class="panel-section-label">Output</div>
+      <div class="panel-text">${data.downstreamLabel}</div>
+    </div>`;
+  }
+
+  // Extra: configures (for settings)
+  if (data.configures) {
+    html += `<div class="panel-section">
+      <div class="panel-section-label">Configures</div>
+      <div class="panel-code">${data.configures}</div>
+    </div>`;
+  }
+
+  panelBody.innerHTML = html;
+  detailPanel.classList.add("open");
+  backdrop.classList.add("active");
+
+  // Make panel connections clickable
+  panelBody.querySelectorAll(".panel-conn[data-goto]").forEach(el => {
+    el.style.cursor = "pointer";
+    el.addEventListener("click", () => {
+      const target = el.dataset.goto;
+      selectNode(target);
+      // Scroll to target node
+      const targetEl = document.querySelector(`.node[data-id="${target}"]`);
+      if (targetEl) targetEl.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+  });
+}
+
+function closePanel() {
+  detailPanel.classList.remove("open");
+  backdrop.classList.remove("active");
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+/* ============================================================
+   EVENT LISTENERS
+   ============================================================ */
+allNodes.forEach(node => {
+  node.addEventListener("click", () => {
+    selectNode(node.dataset.id);
+  });
+});
+
+panelClose.addEventListener("click", deselectAll);
+backdrop.addEventListener("click", deselectAll);
+
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") deselectAll();
+});
+
+/* ============================================================
+   RESIZE HANDLER — rebuild paths on layout change
+   ============================================================ */
+let resizeTimer;
+function handleResize() {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    // Update SVG viewBox
+    const wr = boardWrap.getBoundingClientRect();
+    svgEl.setAttribute("width", wr.width);
+    svgEl.setAttribute("height", wr.height);
+    svgEl.style.width = wr.width + "px";
+    svgEl.style.height = wr.height + "px";
+    buildPaths();
+    if (selectedId) selectNode(selectedId); // re-highlight
+    else startDotAnimation();
+  }, 100);
+}
+
+window.addEventListener("resize", handleResize);
+
+/* ============================================================
+   INIT
+   ============================================================ */
+function init() {
+  // Wait for layout to settle
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      handleResize();
+      startDotAnimation();
+    });
+  });
+}
+
+init();
+
+})();
+</script>
+</body>
+</html>
