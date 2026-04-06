@@ -242,7 +242,7 @@ class ConciergeOrchestrator:
         brace_start = text.find("{")
         brace_end = text.rfind("}")
         if brace_start != -1 and brace_end != -1:
-            text = text[brace_start : brace_end + 1]
+            text = text[brace_start:brace_end + 1]
 
         try:
             data = json.loads(text)
@@ -374,7 +374,10 @@ class ConciergeOrchestrator:
         """Execute a registered tool and format the result."""
         if not plan.tool_name:
             return ExecutionResult(
-                response="I understood you want to perform an action, but I could not determine which one. Could you be more specific?",
+                response=(
+                    "I understood you want to perform an action, but I could"
+                    " not determine which one. Could you be more specific?"
+                ),
                 plan=plan,
             )
 
@@ -546,7 +549,6 @@ class ConciergeOrchestrator:
 if __name__ == "__main__":
     import asyncio
     import os
-    import sys
 
     logging.basicConfig(
         level=logging.INFO,
