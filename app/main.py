@@ -3,7 +3,7 @@ import uuid
 import os
 import json
 from datetime import datetime
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, HTTPException
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
@@ -26,6 +26,7 @@ from .concierge.llm_providers import (  # noqa: E402
     AnthropicProvider,
     OllamaProvider,
 )
+from .concierge.orchestrator import ConciergeOrchestrator
 from .manager_office.hallucination import HallucinationDetector  # noqa: E402
 from .cctv.mlflow_tracking import MLflowTracker  # noqa: E402
 from .cctv.logging_utils import setup_logging  # noqa: E402
@@ -136,6 +137,16 @@ def build_app() -> FastAPI:
         experiment_name=settings.mlflow_experiment_name,
         enabled=settings.mlflow_enabled,
     )
+
+    # Build orchestrator for v2 endpoint
+    orchestrator = None
+    if router is not None:
+        orchestrator = ConciergeOrchestrator(
+            llm_provider=router,
+            rag=rag,
+            tool_registry=registry,
+            memory_store=memory,
+        )
 
     # --- AGENT LOGIC ---
 
@@ -305,6 +316,37 @@ def build_app() -> FastAPI:
             "tools_used": response_data.get("tool_calls", []),
             "confidence": response_data.get("confidence"),
             "provider": response_data.get("provider"),
+        }
+
+    @app.post("/chat/v2")
+    async def chat_v2(payload: dict, _: str = Depends(jwt_or_api_key)):
+        """Orchestrator-based chat endpoint (plan-then-execute)."""
+        session_id = payload.get("session_id") or str(uuid.uuid4())
+        user_text = payload.get("message")
+
+        if not user_text:
+            raise HTTPException(status_code=400, detail="message is required")
+
+        if orchestrator is None:
+            return {
+                "ok": False,
+                "reply": "AI services are offline.",
+                "session_id": session_id,
+            }
+
+        result = await orchestrator.handle(user_text, session_id)
+
+        return {
+            "ok": True,
+            "reply": result.response,
+            "session_id": session_id,
+            "intent": result.plan.intent.value,
+            "reasoning": result.plan.reasoning,
+            "sources": result.sources,
+            "tools_used": [result.tool_result] if result.tool_result else [],
+            "confidence": result.confidence.to_dict() if hasattr(result.confidence, "to_dict") else result.confidence,
+            "latency_ms": result.latency_ms,
+            "token_usage": result.token_usage,
         }
 
     # Startup Ingestion
