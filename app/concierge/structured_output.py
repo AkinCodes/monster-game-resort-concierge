@@ -134,7 +134,7 @@ class StructuredOutputParser:
                 feedback = (
                     f"Your previous response could not be parsed. "
                     f"Error: {accumulated_errors[-1]}\n\n"
-                    f"Please respond with ONLY valid JSON matching this schema:\n"
+                    f"Please respond with ONLY valid JSON matching this schema:\n"  # noqa: E231
                     f"{json.dumps(schema.model_json_schema(), indent=2)}"
                 )
                 try:
@@ -166,7 +166,7 @@ class StructuredOutputParser:
         return (
             "Respond with ONLY a valid JSON object (no markdown fences, no "
             "commentary) that conforms to this schema:\n\n"
-            f"```json\n{schema_str}\n```"
+            f"```json\n{schema_str}\n```"  # noqa: W604
         )
 
     # -- internals ----------------------------------------------------------

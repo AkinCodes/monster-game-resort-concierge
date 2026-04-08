@@ -188,7 +188,7 @@ class ConciergeOrchestrator:
         user_content = user_message
         if history_text:
             user_content = (
-                f"Recent conversation:\n{history_text}\n\nCurrent message: {user_message}"
+                f"Recent conversation:\n{history_text}\n\nCurrent message: {user_message}"  # noqa: E231
             )
 
         messages = [
@@ -609,7 +609,7 @@ if __name__ == "__main__":
 
             print(f"Intent:  {result.plan.intent.value}")
             print(f"Reason:  {result.plan.reasoning}")
-            print(f"Latency: {result.latency_ms:.1f}ms")
+            print(f"Latency: {result.latency_ms:.1f}ms")  # noqa: E231
             if result.sources:
                 print(f"Sources: {result.sources}")
             if result.tool_result:

@@ -26,7 +26,7 @@ from .concierge.llm_providers import (  # noqa: E402
     AnthropicProvider,
     OllamaProvider,
 )
-from .concierge.orchestrator import ConciergeOrchestrator
+from .concierge.orchestrator import ConciergeOrchestrator  # noqa: E402
 from .manager_office.hallucination import HallucinationDetector  # noqa: E402
 from .cctv.mlflow_tracking import MLflowTracker  # noqa: E402
 from .cctv.logging_utils import setup_logging  # noqa: E402
