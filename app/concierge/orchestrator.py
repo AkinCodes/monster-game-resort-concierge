@@ -27,6 +27,7 @@ from typing import Any, Optional
 
 from .llm_providers import LLMMessage, LLMProvider, LLMResponse
 from .memory import MemoryStore
+from .structured_output import StructuredOutputParser
 from .tools import ToolRegistry
 
 logger = logging.getLogger(__name__)
@@ -65,6 +66,7 @@ class ExecutionResult:
     sources: list[str] = field(default_factory=list)
     latency_ms: float = 0
     token_usage: dict = field(default_factory=dict)
+    confidence: object = None
 
 
 # ---------------------------------------------------------------------------
@@ -227,25 +229,12 @@ class ConciergeOrchestrator:
     def _parse_plan(self, raw: str) -> Plan:
         """Parse the planner's JSON response into a Plan object.
 
-        Handles common LLM quirks: markdown fences, trailing text, etc.
+        Uses StructuredOutputParser._extract_json() for robust JSON extraction
+        that handles markdown fences, surrounding prose, and other LLM quirks.
         """
-        text = raw.strip()
-
-        # Strip markdown code fences if present
-        if text.startswith("```"):
-            lines = text.split("\n")
-            # Remove first and last fence lines
-            lines = [ln for ln in lines if not ln.strip().startswith("```")]
-            text = "\n".join(lines).strip()
-
-        # Try to extract JSON object even if surrounded by prose
-        brace_start = text.find("{")
-        brace_end = text.rfind("}")
-        if brace_start != -1 and brace_end != -1:
-            text = text[brace_start:brace_end + 1]
-
         try:
-            data = json.loads(text)
+            extracted = StructuredOutputParser._extract_json(raw)
+            data = json.loads(extracted)
         except json.JSONDecodeError as exc:
             logger.warning(
                 "planner_json_parse_failed",
@@ -493,6 +482,21 @@ class ConciergeOrchestrator:
         )
 
         result = await self.execute(plan, user_message, session_id)
+
+        # Hallucination detection for knowledge responses
+        if plan.intent == IntentType.KNOWLEDGE:
+            try:
+                from ..manager_office.hallucination import HallucinationDetector
+
+                hal_detector = HallucinationDetector()
+                result.confidence = hal_detector.score_response(
+                    result.response, result.sources, user_message
+                )
+            except Exception as exc:
+                logger.warning(
+                    "hallucination_detection_failed",
+                    extra={"error": str(exc)},
+                )
 
         # Save exchange to memory
         self.memory.add_message(session_id, "user", user_message)
