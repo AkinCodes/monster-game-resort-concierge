@@ -12,6 +12,15 @@ A fully wired AI concierge system with hybrid RAG (BM25 + dense + cross-encoder 
 
 This isn't a wrapper around an API call. It's a complete backend: a 3-stage retrieval pipeline, an agent loop with tool calling, database-backed conversation memory with automatic summarization, hallucination detection on every response, and CI/CD to AWS — all behind JWT auth, rate limiting, and Prometheus observability.
 
+### The 6 Resorts
+
+- **The Mummy Resort & Tomb-Service**
+- **The Werewolf Lodge: Moon & Moor**
+- **Castle Frankenstein: High Voltage Luxury**
+- **Vampire Manor: Eternal Night Inn**
+- **Zombie Bed & Breakfast: Bites & Beds**
+- **Ghostly B&B: Spectral Stay**
+
 <p align="center">
   <img src="assets/chat_ui_1.png" alt="Monster Game Resort Concierge — Spa Query" width="700" />
 </p>
@@ -27,6 +36,7 @@ This isn't a wrapper around an API call. It's a complete backend: a 3-stage retr
 - **Hallucination detection on every response** — token overlap + semantic similarity + source attribution scoring → HIGH / MEDIUM / LOW confidence returned with every answer.
 - **3-provider LLM fallback** — OpenAI → Anthropic → Ollama. If one goes down, the next takes over automatically. No user-facing errors during provider outages.
 - **Function-calling agent** — Tool registry with schema generation, input validation against a 6-property allowlist, and async execution with timing and structured logging.
+- **Two-agent orchestrator (`/chat/v2`)** — Planner classifies intent (knowledge/tool/clarify/chitchat), Executor carries out the plan with structured output parsing and retry logic.
 - **Database-backed conversation memory** — Messages persist across restarts. Automatic summarization at 12 messages compresses context while preserving conversational continuity.
 - **Head-to-head RAG benchmark** — Custom hybrid pipeline vs LangChain RAG, tracked via MLflow. Run `uv run python scripts/benchmark_rag.py` to reproduce.
 - **Full production stack** — JWT + API key auth, rate limiting, Prometheus/Grafana, ECS Fargate deployment, GitHub Actions CI/CD.
@@ -223,6 +233,11 @@ uv run uvicorn app.main:app --reload
 | `POST` | `/chat/stream` | Streaming chat via SSE |
 | `GET` | `/tools` | List registered tools and schemas |
 | `GET` | `/metrics` | Prometheus metrics |
+| `POST` | `/chat/v2` | Orchestrator-based chat (plan-then-execute) |
+| `POST` | `/admin/api-keys` | Create API key |
+| `GET` | `/admin/api-keys` | List API keys |
+| `DELETE` | `/admin/api-keys/{key_id}` | Revoke API key |
+| `GET` | `/admin/api-keys/{key_id}/usage` | View key usage audit log |
 
 ### Authentication
 
@@ -252,7 +267,7 @@ curl -H "Authorization: Bearer <access_token>" \
 
 ## Testing
 
-14 test files covering API endpoints, authentication, hallucination detection, RAG retrieval, LLM provider fallback, MLflow tracking, and RAGAS evaluation.
+18 test files (~1,460 lines) covering API endpoints, authentication, hallucination detection, RAG retrieval, LLM provider fallback, orchestrator, tool execution, MLflow tracking, and RAGAS evaluation.
 
 ```sh
 uv run pytest --cov=app --cov-report=term-missing
@@ -329,7 +344,7 @@ MRC_ENABLE_GRADIO=false
 - **Production engineering** — JWT/API key auth, input sanitization, rate limiting, structured logging
 - **Observability** — Prometheus metrics, Grafana dashboards, health/readiness separation
 - **Cloud deployment** — Docker, AWS ECS Fargate, ECR, Secrets Manager, GitHub Actions CI/CD
-- **Testing** — 14 test files (1,300+ lines) covering auth, RAG, hallucination detection, LLM fallback, and MLOps
+- **Testing** — 18 test files (~1,460 lines) covering auth, RAG, hallucination detection, LLM fallback, orchestrator, and MLOps
 
 ---
 
