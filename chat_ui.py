@@ -1,6 +1,9 @@
 import os
 import gradio as gr
 import requests
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # --- CLEAN MINIMAL THEME ---
 monster_theme = gr.themes.Soft(
