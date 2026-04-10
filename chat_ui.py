@@ -2,36 +2,35 @@ import os
 import gradio as gr
 import requests
 
-# --- REFINED "CLEAN GOTHIC" THEME ---
+# --- CLEAN MINIMAL THEME ---
 monster_theme = gr.themes.Soft(
-    primary_hue="red",
+    primary_hue="slate",
     secondary_hue="slate",
     neutral_hue="slate",
     font=[gr.themes.GoogleFont("Inter"), "ui-sans-serif", "system-ui", "sans-serif"],
 ).set(
-    body_background_fill="*neutral_50",
+    body_background_fill="#fafafa",
     block_background_fill="white",
     block_border_width="1px",
-    button_primary_background_fill="*primary_600",
+    button_primary_background_fill="#1a1a1a",
+    button_primary_background_fill_hover="#000000",
     button_primary_text_color="white",
 )
 
-# We use CSS to target the chatbot container height specifically
 custom_css = """
 footer {visibility: hidden}
-.gradio-container {max-width: 950px !important; margin: auto;} 
-h1 {text-align: center; color: #8B0000; margin-bottom: 0; padding-top: 20px;}
-p.subtitle {text-align: center; color: #64748b; margin-bottom: 10px;}
+.gradio-container {max-width: 900px !important; margin: auto;}
+h1 {text-align: center; color: #1a1a1a; margin-bottom: 0; padding-top: 20px; font-weight: 600;}
+p.subtitle {text-align: center; color: #6b7280; margin-bottom: 20px; font-size: 14px;}
 
-/* Target the chatbot message area to increase height */
-.bubble-wrap {height: 700px !important; max-height: 700px !important;}
-#chatbot-container {height: 800px !important;}
+/* Chat container */
+.bubble-wrap {height: 500px !important; max-height: 500px !important;}
+#chatbot {border-radius: 12px !important;}
 
-/* Loading indicator styling */
-.loading-message {
-    font-style: italic;
-    color: #64748b;
-    opacity: 0.8;
+/* Send button — dark style to match the design */
+button.primary {
+    background-color: #1a1a1a !important;
+    border-radius: 8px !important;
 }
 """
 
@@ -119,45 +118,40 @@ def predict(message, history, session_id):
 
 # Build the Gradio interface
 with gr.Blocks(theme=monster_theme, css=custom_css) as demo:
-    gr.Markdown("# 🧛 Monster Resort Concierge")
+    gr.Markdown("# Monster Game Resort Concierge")
     gr.Markdown(
         "<p class='subtitle'>Your guide to the spookiest stays and eeriest experiences</p>",
         elem_classes="subtitle",
     )
 
-    # Chatbot with type="messages" to support dictionary format
     chatbot = gr.Chatbot(
         elem_id="chatbot",
         type="messages",
-        height=600,
+        height=500,
         show_copy_button=True,
-        avatar_images=(
-            None,  # User avatar (None = default)
-            "🧛",  # Assistant avatar (vampire emoji)
-        ),
+        show_label=False,
+        avatar_images=(None, None),
     )
 
-    # Input row with textbox and button
     with gr.Row():
         msg = gr.Textbox(
             placeholder="Ask about rooms, amenities, or make a booking...",
-            label="Your Message",
+            show_label=False,
             lines=1,
             max_lines=3,
-            scale=4,
+            scale=5,
+            container=False,
         )
-        submit_btn = gr.Button("Send 🦇", variant="primary", scale=1)
+        submit_btn = gr.Button("Send", variant="primary", scale=1)
 
-    # Example queries for quick testing
     examples = gr.Examples(
         examples=[
-            "What rooms are available?",
-            "Book a room at Vampire Manor for tonight",
-            "What time is check-in?",
-            "Tell me about the spa services",
+            "What rooms does Vampire Manor have?",
+            "Tell me about the Mummy Resort spa",
+            "What happens during the Full Moon Festival?",
         ],
         inputs=msg,
-        label="Quick Questions",
+        label="",
     )
 
     # Hidden state to track the session across turns
@@ -178,7 +172,7 @@ with gr.Blocks(theme=monster_theme, css=custom_css) as demo:
 
 # Launch the interface
 if __name__ == "__main__":
-    print("🧛 Starting Monster Resort Concierge UI...")
+    print("Starting Monster Game Resort Concierge UI...")
     print("📍 Access the interface at: http://localhost:7861")
     print("🔧 Make sure your FastAPI server is running on http://localhost:8000")
     demo.launch(server_port=7861, share=False, show_error=True, server_name="127.0.0.1")
