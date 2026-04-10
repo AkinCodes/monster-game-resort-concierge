@@ -146,9 +146,10 @@ with gr.Blocks(theme=monster_theme, css=custom_css) as demo:
 
     examples = gr.Examples(
         examples=[
-            "What rooms does Vampire Manor have?",
-            "Tell me about the Mummy Resort spa",
-            "What happens during the Full Moon Festival?",
+            "How many monster properties can I stay at?",
+            "Take me inside Vampire Manor — what rooms are there?",
+            "What luxury treatments does the Mummy Resort spa offer?",
+            "Tell me everything about the Full Moon Festival",
         ],
         inputs=msg,
         label="",
