@@ -153,15 +153,16 @@ def build_app() -> FastAPI:
     @profile
     async def _agent_reply(session_id: str, user_text: str) -> dict:
         try:
-            print(
-                f"\n=== DEBUG: USER INPUT ===\nSession: {session_id}\nMessage: {user_text}\n"
+            text = validate_message(user_text)
+            logger.debug(
+                "agent_reply received message",
+                extra={"session_id": session_id, "message_length": len(text)},
             )
-            validate_message(user_text)
 
             if router is None:
                 return {"message": "AI services are offline.", "tool_calls": []}
 
-            knowledge = rag.search(user_text)
+            knowledge = rag.search(text)
             results = knowledge.get("results", [])
             rag_contexts = [r["text"] for r in results]
 
@@ -192,8 +193,6 @@ def build_app() -> FastAPI:
                 "8. FAREWELL: End with 'We await your shadow' or 'May your rest be eternal (until check-out).'\n"
             )
 
-            print(f"=== DEBUG: SYSTEM PROMPT ===\n{system_prompt_content[:500]}...\n")
-
             # Build LLMMessage history
             past_messages = memory.get_messages(session_id)
             chat_history: list[LLMMessage] = [
@@ -204,14 +203,12 @@ def build_app() -> FastAPI:
                     chat_history.append(
                         LLMMessage(role=m["role"], content=m["content"])
                     )
-            chat_history.append(LLMMessage(role="user", content=user_text))
+            chat_history.append(LLMMessage(role="user", content=text))
 
             tool_schemas = registry.get_openai_tool_schemas()
 
             # Phase 1: initial LLM call (may include tool calls)
             llm_resp = await router.chat(chat_history, tools=tool_schemas)
-
-            print(f"=== DEBUG: LLM INITIAL RESPONSE ===\n{llm_resp.content}\n")
 
             if llm_resp.tool_calls:
                 # Add assistant message with tool calls to history
@@ -227,7 +224,10 @@ def build_app() -> FastAPI:
                 for tc in llm_resp.tool_calls:
                     t_name = tc.name
                     t_args = json.loads(tc.arguments)
-                    print(f"DEBUG: AI calling tool '{t_name}' with args: {t_args}")
+                    logger.debug(
+                        "tool_call_invoked",
+                        extra={"tool": t_name, "args": t_args},
+                    )
 
                     # Defense 6: Validate tool call before execution
                     is_valid, error_msg = _validate_tool_call(t_name, t_args)
@@ -245,7 +245,10 @@ def build_app() -> FastAPI:
                         continue
 
                     res = await registry.async_execute_with_timing(t_name, **t_args)
-                    print(f"DEBUG: Tool '{t_name}' returned: {res}")
+                    logger.debug(
+                        "tool_call_result",
+                        extra={"tool": t_name, "ok": res.get("ok", True)},
+                    )
 
                     tool_results.append({"tool": t_name, "result": res})
                     chat_history.append(
@@ -260,11 +263,9 @@ def build_app() -> FastAPI:
                 llm_resp2 = await router.chat(chat_history)
                 final_message = llm_resp2.content
 
-                print(f"=== DEBUG: FINAL LLM RESPONSE AFTER TOOL ===\n{final_message}")
-
                 # Confidence scoring
                 confidence = detector.score_response(
-                    final_message, rag_contexts, user_text
+                    final_message, rag_contexts, text
                 )
 
                 # Optional MLflow logging
@@ -279,7 +280,7 @@ def build_app() -> FastAPI:
 
             # No tool calls — direct response
             confidence = detector.score_response(
-                llm_resp.content, rag_contexts, user_text
+                llm_resp.content, rag_contexts, text
             )
             tracker.log_confidence_metrics(confidence, provider=llm_resp.provider)
 
