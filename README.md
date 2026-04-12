@@ -127,21 +127,33 @@ app/
 │   ├── tools.py            # Tool registry + book_room, get_booking, search_amenities
 │   ├── memory.py           # MemoryStore — DB-backed persistence + auto-summarization
 │   ├── llm_providers.py    # ModelRouter — OpenAI / Anthropic / Ollama fallback
+│   ├── orchestrator.py     # Two-agent orchestrator — Planner + Executor
+│   ├── structured_output.py # JSON output parser with retry logic
 │   └── stream_client.py    # SSE streaming client
 ├── rag/
 │   ├── advanced_rag.py     # Hybrid RAG: BM25 + dense + RRF + cross-encoder
+│   ├── vector_rag.py       # Base vector RAG implementation
 │   ├── langchain_rag.py    # LangChain RAG (same interface, for benchmarking)
-│   └── vector_rag.py       # Base vector RAG implementation
+│   └── ingest_knowledge.py # CLI script to populate the knowledge base
 ├── database/
-│   └── db.py               # SQLite manager with WAL, migrations, auto-backups
+│   ├── db.py               # SQLite manager with WAL, migrations, auto-backups
+│   └── cache_utils.py      # TTL cache for RAG search results
 ├── auth/
-│   ├── jwt_auth.py         # JWT + API key authentication
-│   └── security.py         # Rate limiting, input sanitization
+│   ├── jwt_auth.py         # JWT token creation and verification
+│   ├── security.py         # API key manager (SHA-256 hashing, rotation, audit)
+│   ├── auth_mixins.py      # FastAPI dependency — JWT or API key auth
+│   └── users_db.py         # Demo user store
 ├── validation/
 │   ├── hallucination.py    # Confidence scoring (overlap + semantic + attribution)
+│   ├── validators.py       # Input sanitization and message validation
 │   └── ragas_eval.py       # RAGAS evaluation framework
 ├── monitoring/
-│   └── metrics.py          # Prometheus metrics
+│   ├── metrics.py          # Prometheus counters, histograms, gauges
+│   ├── logging_utils.py    # Structured JSON logging + custom exceptions
+│   ├── mlflow_tracking.py  # MLflow experiment tracking
+│   └── profile_utils.py    # Performance profiling decorator
+├── api/
+│   └── admin_routes.py     # Admin endpoints — API key CRUD
 └── services/
     └── pdf_generator.py    # ReportLab PDF receipts
 ```
