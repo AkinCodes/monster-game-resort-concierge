@@ -6,7 +6,7 @@ Run this manually or as part of a deployment pipeline.
 import argparse
 import logging
 from app.config import get_settings
-from app.records_room.rag import VectorRAG
+from app.rag.vector_rag import VectorRAG
 
 
 def main():

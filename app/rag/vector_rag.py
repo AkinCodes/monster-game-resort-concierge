@@ -3,7 +3,7 @@ import re
 import time
 import numpy as np
 from typing import Iterable, List, Optional
-from ..cctv.monitoring import Counter
+from ..monitoring.metrics import Counter
 
 RAG_HIT_COUNT = Counter("mrc_rag_hits_total", "Total RAG search hits", ["query"])
 
@@ -11,9 +11,9 @@ RAG_HIT_COUNT = Counter("mrc_rag_hits_total", "Total RAG search hits", ["query"]
 import chromadb  # noqa: E402
 from chromadb.utils.embedding_functions import SentenceTransformerEmbeddingFunction  # noqa: E402
 from pathlib import Path  # noqa: E402
-from ..cctv.logging_utils import logger, AIServiceError  # noqa: E402
-from ..cctv.profile_utils import profile  # noqa: E402
-from ..back_office.cache_utils import cache_response  # noqa: E402
+from ..monitoring.logging_utils import logger, AIServiceError  # noqa: E402
+from ..monitoring.profile_utils import profile  # noqa: E402
+from ..database.cache_utils import cache_response  # noqa: E402
 
 
 class VectorRAG:

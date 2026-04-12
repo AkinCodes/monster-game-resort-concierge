@@ -9,7 +9,7 @@ from typing import Iterator, Optional
 from datetime import datetime, timezone
 
 from ..config import Settings
-from ..cctv.logging_utils import logger, DatabaseError
+from ..monitoring.logging_utils import logger, DatabaseError
 
 # Incremented to 3 to reflect the addition of booking_reference
 SCHEMA_VERSION = 3

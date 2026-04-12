@@ -15,7 +15,7 @@ from typing import Dict, List
 
 from prometheus_client import Counter, Histogram
 
-from ..cctv.logging_utils import logger
+from ..monitoring.logging_utils import logger
 
 # Prometheus metrics
 RESPONSE_CONFIDENCE = Histogram(

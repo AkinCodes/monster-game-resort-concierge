@@ -17,8 +17,8 @@ import time
 # Allow running from project root
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app.records_room.advanced_rag import AdvancedRAG
-from app.cctv.mlflow_tracking import MLflowTracker
+from app.rag.advanced_rag import AdvancedRAG
+from app.monitoring.mlflow_tracking import MLflowTracker
 
 
 BENCHMARK_QUERIES = [

@@ -1,7 +1,7 @@
 import jwt as pyjwt
 from fastapi import Header, HTTPException, Request, Security
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from .auth import SECRET_KEY, ALGORITHM
+from .jwt_auth import SECRET_KEY, ALGORITHM
 from ..config import get_settings
 
 security = HTTPBearer(auto_error=False)

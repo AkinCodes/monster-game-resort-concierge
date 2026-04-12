@@ -1,9 +1,9 @@
 from app.config import Settings
-from app.concierge.tools import make_registry
-from app.concierge.memory import MemoryStore
+from app.core.tools import make_registry
+from app.core.memory import MemoryStore
 from app.services.pdf_generator import PDFGenerator
-from app.records_room.rag import VectorRAG
-from app.back_office.database import DatabaseManager
+from app.rag.vector_rag import VectorRAG
+from app.database.db import DatabaseManager
 
 
 def test_settings_load():

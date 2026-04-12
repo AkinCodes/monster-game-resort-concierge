@@ -2,7 +2,7 @@ import re
 from datetime import datetime, timedelta
 from email_validator import validate_email as _validate_email, EmailNotValidError
 import bleach
-from app.cctv.logging_utils import ValidationError
+from app.monitoring.logging_utils import ValidationError
 
 
 def sanitize_html(text: str) -> str:

@@ -20,9 +20,9 @@ Performance Improvements vs Basic RAG:
 from typing import List, Dict, Optional, Tuple
 from rank_bm25 import BM25Okapi
 from sentence_transformers import CrossEncoder
-from .rag import VectorRAG
-from ..cctv.logging_utils import logger
-from ..back_office.cache_utils import cache_response
+from .vector_rag import VectorRAG
+from ..monitoring.logging_utils import logger
+from ..database.cache_utils import cache_response
 
 
 class AdvancedRAG(VectorRAG):

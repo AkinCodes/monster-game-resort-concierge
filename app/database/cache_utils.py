@@ -92,5 +92,5 @@ def cache_response(ttl: int = CACHE_TTL_SECONDS):
 #   ────────────────────────────────────────
 #   Problem: No external dependencies
 #   Fix: Zero new packages — stdlib only (OrderedDict, threading, hashlib)
-#   The @cache_response(ttl=300) decorator API is identical, so rag.py and
+#   The @cache_response(ttl=300) decorator API is identical, so vector_rag.py and
 #   advanced_rag.py need no changes.

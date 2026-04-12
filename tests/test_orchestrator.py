@@ -5,7 +5,7 @@ Tests for the ConciergeOrchestrator, focusing on _parse_plan() and data types.
 import json
 import pytest
 
-from app.concierge.orchestrator import (
+from app.core.orchestrator import (
     ConciergeOrchestrator,
     ExecutionResult,
     IntentType,

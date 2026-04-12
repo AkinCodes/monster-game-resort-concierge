@@ -187,12 +187,12 @@ class LivePipelineRunner(PipelineRunner):
         if self._initialized:
             return
         # Lazy imports so the harness can load even if deps are missing
-        from app.concierge.llm_providers import (
+        from app.core.llm_providers import (
             LLMMessage,
             ModelRouter,
             OpenAIProvider,
         )
-        from app.concierge.tools import VALID_HOTELS
+        from app.core.tools import VALID_HOTELS
 
         api_key = os.environ.get("OPENAI_API_KEY", "")
         if not api_key:
@@ -266,7 +266,7 @@ def _compute_hallucination_score(
     dependencies (sentence-transformers) are unavailable.
     """
     try:
-        from app.manager_office.hallucination import HallucinationDetector
+        from app.validation.hallucination import HallucinationDetector
 
         detector = HallucinationDetector()
         result = detector.score_response(response, contexts, query)

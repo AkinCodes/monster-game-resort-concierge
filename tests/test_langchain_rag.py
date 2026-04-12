@@ -5,7 +5,7 @@ import tempfile
 import shutil
 import pytest
 
-from app.records_room.langchain_rag import LangChainRAG
+from app.rag.langchain_rag import LangChainRAG
 
 
 @pytest.fixture

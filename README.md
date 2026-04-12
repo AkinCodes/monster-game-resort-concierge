@@ -123,25 +123,25 @@ v                 v            v
 app/
 ├── main.py                 # FastAPI app, agent loop, /chat endpoint
 ├── config.py               # Settings from .env (pydantic BaseSettings)
-├── concierge/
+├── core/
 │   ├── tools.py            # Tool registry + book_room, get_booking, search_amenities
 │   ├── memory.py           # MemoryStore — DB-backed persistence + auto-summarization
 │   ├── llm_providers.py    # ModelRouter — OpenAI / Anthropic / Ollama fallback
 │   └── stream_client.py    # SSE streaming client
-├── records_room/
+├── rag/
 │   ├── advanced_rag.py     # Hybrid RAG: BM25 + dense + RRF + cross-encoder
 │   ├── langchain_rag.py    # LangChain RAG (same interface, for benchmarking)
-│   └── rag.py              # Base vector RAG implementation
-├── back_office/
-│   └── database.py         # SQLite manager with WAL, migrations, auto-backups
-├── security_dept/
-│   ├── auth.py             # JWT + API key authentication
+│   └── vector_rag.py       # Base vector RAG implementation
+├── database/
+│   └── db.py               # SQLite manager with WAL, migrations, auto-backups
+├── auth/
+│   ├── jwt_auth.py         # JWT + API key authentication
 │   └── security.py         # Rate limiting, input sanitization
-├── manager_office/
+├── validation/
 │   ├── hallucination.py    # Confidence scoring (overlap + semantic + attribution)
 │   └── ragas_eval.py       # RAGAS evaluation framework
-├── cctv/
-│   └── monitoring.py       # Prometheus metrics
+├── monitoring/
+│   └── metrics.py          # Prometheus metrics
 └── services/
     └── pdf_generator.py    # ReportLab PDF receipts
 ```

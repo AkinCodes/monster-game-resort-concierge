@@ -2,8 +2,8 @@ from typing import Optional
 from pydantic import BaseModel, Field
 from fastapi import APIRouter, Depends, HTTPException, Request
 
-from ..security_dept.auth_mixins import jwt_or_api_key
-from ..security_dept.security import APIKeyManager
+from ..auth.auth_mixins import jwt_or_api_key
+from ..auth.security import APIKeyManager
 
 
 # --- Pydantic models ---

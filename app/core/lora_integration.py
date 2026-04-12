@@ -21,7 +21,7 @@ from pathlib import Path
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from peft import PeftModel
 import torch
-from ..cctv.logging_utils import logger
+from ..monitoring.logging_utils import logger
 
 
 class LoRABackend:

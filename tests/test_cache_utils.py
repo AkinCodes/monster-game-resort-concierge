@@ -1,6 +1,6 @@
 import time
 import threading
-from app.back_office.cache_utils import TTLCache, cache_response, _make_key
+from app.database.cache_utils import TTLCache, cache_response, _make_key
 
 
 # ── TTLCache unit tests ──────────────────────────────────

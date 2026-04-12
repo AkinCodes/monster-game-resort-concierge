@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Optional
 
-from ..back_office.database import DatabaseManager
+from ..database.db import DatabaseManager
 
 
 @dataclass

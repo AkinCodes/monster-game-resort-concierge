@@ -5,7 +5,7 @@ import hashlib
 from fastapi import Request
 
 from ..config import Settings
-from ..cctv.logging_utils import logger
+from ..monitoring.logging_utils import logger
 
 
 class APIKeyManager:

@@ -13,7 +13,7 @@ import uuid
 from pathlib import Path
 from typing import List
 
-from ..cctv.logging_utils import logger
+from ..monitoring.logging_utils import logger
 
 
 class LangChainRAG:

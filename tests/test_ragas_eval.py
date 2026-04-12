@@ -1,6 +1,6 @@
 import os
 import pytest
-from app.manager_office.ragas_eval import evaluate_rag_batch
+from app.validation.ragas_eval import evaluate_rag_batch
 
 HAS_REAL_KEY = (
     os.environ.get("MRC_OPENAI_API_KEY", "dummy") != "dummy"

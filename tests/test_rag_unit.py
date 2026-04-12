@@ -1,4 +1,4 @@
-from app.records_room.rag import VectorRAG
+from app.rag.vector_rag import VectorRAG
 
 
 def test_rag_ingest_and_search(tmp_path):

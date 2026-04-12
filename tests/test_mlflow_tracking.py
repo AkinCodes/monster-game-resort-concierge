@@ -2,8 +2,8 @@
 
 import pytest
 from unittest.mock import MagicMock, patch
-from app.cctv.mlflow_tracking import MLflowTracker
-from app.manager_office.hallucination import ConfidenceResult, ConfidenceLevel
+from app.monitoring.mlflow_tracking import MLflowTracker
+from app.validation.hallucination import ConfidenceResult, ConfidenceLevel
 
 
 class TestMLflowTrackerDisabled:

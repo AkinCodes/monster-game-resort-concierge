@@ -1,7 +1,7 @@
 """Tests for hallucination detection and confidence scoring."""
 
 import pytest
-from app.manager_office.hallucination import (
+from app.validation.hallucination import (
     HallucinationDetector,
     ConfidenceLevel,
     _tokenize,

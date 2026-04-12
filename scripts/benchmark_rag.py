@@ -17,9 +17,9 @@ import tempfile
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app.records_room.advanced_rag import AdvancedRAG
-from app.records_room.langchain_rag import LangChainRAG
-from app.cctv.mlflow_tracking import MLflowTracker
+from app.rag.advanced_rag import AdvancedRAG
+from app.rag.langchain_rag import LangChainRAG
+from app.monitoring.mlflow_tracking import MLflowTracker
 
 
 BENCHMARK_QUERIES = [

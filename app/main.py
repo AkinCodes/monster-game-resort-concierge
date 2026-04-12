@@ -8,29 +8,29 @@ from fastapi import Depends, FastAPI, HTTPException
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 # Local module imports — must come after os.environ setup
-from .cctv.profile_utils import profile  # noqa: E402
+from .monitoring.profile_utils import profile  # noqa: E402
 from .config import get_settings  # noqa: E402
-from .back_office.database import DatabaseManager  # noqa: E402
-from .concierge.memory import MemoryStore  # noqa: E402
-from .cctv.monitoring import install_metrics  # noqa: E402
+from .database.db import DatabaseManager  # noqa: E402
+from .core.memory import MemoryStore  # noqa: E402
+from .monitoring.metrics import install_metrics  # noqa: E402
 from .services.pdf_generator import PDFGenerator  # noqa: E402
-from .records_room.advanced_rag import AdvancedRAG  # noqa: E402
-from .security_dept.security import install_rate_limiter, APIKeyManager  # noqa: E402
-from .front_desk.admin_routes import router as admin_router  # noqa: E402
-from .security_dept.auth_mixins import jwt_or_api_key  # noqa: E402
-from .concierge.tools import make_registry, VALID_HOTELS  # noqa: E402
-from .concierge.llm_providers import (  # noqa: E402
+from .rag.advanced_rag import AdvancedRAG  # noqa: E402
+from .auth.security import install_rate_limiter, APIKeyManager  # noqa: E402
+from .api.admin_routes import router as admin_router  # noqa: E402
+from .auth.auth_mixins import jwt_or_api_key  # noqa: E402
+from .core.tools import make_registry, VALID_HOTELS  # noqa: E402
+from .core.llm_providers import (  # noqa: E402
     ModelRouter,
     LLMMessage,
     OpenAIProvider,
     AnthropicProvider,
     OllamaProvider,
 )
-from .concierge.orchestrator import ConciergeOrchestrator  # noqa: E402
-from .manager_office.hallucination import HallucinationDetector  # noqa: E402
-from .cctv.mlflow_tracking import MLflowTracker  # noqa: E402
-from .cctv.logging_utils import setup_logging  # noqa: E402
-from .manager_office.validation import validate_message  # noqa: E402
+from .core.orchestrator import ConciergeOrchestrator  # noqa: E402
+from .validation.hallucination import HallucinationDetector  # noqa: E402
+from .monitoring.mlflow_tracking import MLflowTracker  # noqa: E402
+from .monitoring.logging_utils import setup_logging  # noqa: E402
+from .validation.validators import validate_message  # noqa: E402
 
 # Initialize Logger
 logger = setup_logging()

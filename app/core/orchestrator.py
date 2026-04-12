@@ -486,7 +486,7 @@ class ConciergeOrchestrator:
         # Hallucination detection for knowledge responses
         if plan.intent == IntentType.KNOWLEDGE:
             try:
-                from ..manager_office.hallucination import HallucinationDetector
+                from ..validation.hallucination import HallucinationDetector
 
                 hal_detector = HallucinationDetector()
                 result.confidence = hal_detector.score_response(

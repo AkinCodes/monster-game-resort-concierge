@@ -2,7 +2,7 @@ import os
 import pytest
 from datetime import datetime, timedelta
 
-from app.security_dept.security import APIKeyManager
+from app.auth.security import APIKeyManager
 
 
 # ---------------------------------------------------------------------------

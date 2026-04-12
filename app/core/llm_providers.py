@@ -16,7 +16,7 @@ from typing import Any, Dict, List, Optional
 
 import httpx
 
-from ..cctv.logging_utils import logger
+from ..monitoring.logging_utils import logger
 
 # ---------------------------------------------------------------------------
 # Normalized data types

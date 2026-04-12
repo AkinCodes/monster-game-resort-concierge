@@ -4,10 +4,10 @@ from typing import Any, Callable, Dict
 from time import time
 import uuid
 
-from ..back_office.database import DatabaseManager
+from ..database.db import DatabaseManager
 from ..services.pdf_generator import PDFGenerator
-from ..cctv.logging_utils import logger, MonsterResortError
-from ..cctv.monitoring import Counter
+from ..monitoring.logging_utils import logger, MonsterResortError
+from ..monitoring.metrics import Counter
 
 logger.info("tool_module_initialized")
 

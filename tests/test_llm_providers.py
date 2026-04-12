@@ -3,7 +3,7 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock
 
-from app.concierge.llm_providers import (
+from app.core.llm_providers import (
     LLMMessage,
     LLMToolCall,
     LLMResponse,
