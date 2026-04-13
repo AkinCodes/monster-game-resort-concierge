@@ -9825,8 +9825,8 @@ async def book_room(
 # Big Bird reads it, picks a COLORED FLAG, and sends it to the right
 # department. That department does the work and sends back the answer.
 #
-# This is a two-agent system:
-#   Agent 1 (Planner)  = Big Bird reading the request, picking a flag
+# Two desks, two jobs:
+#   Desk 1 (Planner)   = Big Bird reading the request, picking a flag
 #   Agent 2 (Executor) = The department that actually handles it
 #
 # The architecture: Guest -> Planner -> Plan -> Executor -> Response
@@ -10089,17 +10089,17 @@ def _compute_context_overlap(self, response_text, contexts):
 
 # ─── Elmo: checking if the story MEANS the same thing ───
 # "Elmo doesn't care about exact words! Elmo turns everything
-#  into meaning-codes (embeddings) and checks how close they are."
+#  into meaning-codes and checks how close they are."
 
 def _compute_semantic_similarity(self, response_text, contexts):
-    model = self._get_model()   # all-MiniLM-L6-v2, lazy-loaded
+    model = self._get_model()   # all-MiniLM-L6-v2, wakes up on first call
     if model is None or not contexts:
         return 0.0
     resp_emb = model.encode([response_text])[0]
     ctx_emb = model.encode(contexts)
     similarities = []
     for emb in ctx_emb:
-        # How close are two meaning-codes? (dot product / magnitudes)
+        # How close are two meaning-codes? (compare direction and distance)
         cos_sim = float(
             np.dot(resp_emb, emb)
             / (np.linalg.norm(resp_emb) * np.linalg.norm(emb) + 1e-10)
@@ -10151,7 +10151,7 @@ def score_response(self, response_text, rag_contexts, user_query):
     else:                                  #       RED
         level = ConfidenceLevel.LOW
 
-    # Post to the tally board in the lobby (Prometheus metrics)
+    # Post to the tally board in the lobby
     RESPONSE_CONFIDENCE.observe(overall)
     HALLUCINATIONS_DETECTED.labels(level=level.value).inc()
 
@@ -10201,7 +10201,7 @@ class LLMToolCall:
     """One service request — 'Please look up room 304.'"""
     id: str
     name: str
-    arguments: str   # JSON string
+    arguments: str   # the details, as a form string
 
 @dataclass
 class LLMMessage:
@@ -10268,7 +10268,7 @@ class OpenAIProvider(LLMProvider):
                 msg["tool_call_id"] = m.tool_call_id
             openai_msgs.append(msg)
 
-        # Build the API call
+        # Build the call to the outside line
         kwargs = {
             "model": model or self.model,
             "messages": openai_msgs,
@@ -10289,7 +10289,7 @@ class OpenAIProvider(LLMProvider):
                 tool_calls.append(LLMToolCall(
                     id=tc.id,
                     name=tc.function.name,
-                    arguments=tc.function.arguments,  # JSON string
+                    arguments=tc.function.arguments,  # the form details
                 ))
 
         # Parse token usage
@@ -10316,7 +10316,7 @@ class OpenAIProvider(LLMProvider):
 
 class AnthropicProvider(LLMProvider):
     def translate_tool_schemas(self, openai_schemas):
-        # Translate: {function: {name, parameters}} -> {name, input_schema}
+        # Translate Operator #1's form layout into Operator #2's dialect
         return [{"name": s["function"]["name"],
                  "description": s["function"].get("description", ""),
                  "input_schema": s["function"].get("parameters", {})}
