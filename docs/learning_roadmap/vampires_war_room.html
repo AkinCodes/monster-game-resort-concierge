@@ -1,0 +1,1475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The War Room — Where the General Plans the Battle</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600&family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --void: #05030a;
+  --crypt: #0d0918;
+  --catacombs: #150e24;
+  --dungeon: #1c1430;
+  --stone: #2a1f42;
+  --mist: #3d2d5e;
+  --amber: #f5a623;
+  --amber-glow: #ffcc55;
+  --crimson: #c0392b;
+  --purple: #9b59b6;
+  --violet: #7c3aed;
+  --gold: #ffd700;
+  --text-bright: #f0eaff;
+  --text-mid: #9f8dbf;
+  --text-dim: #5c4d7a;
+  --book: #22d3ee;
+  --get: #10b981;
+  --search: #f59e0b;
+  --flag-blue: #60a5fa;
+  --flag-red: #f87171;
+  --flag-yellow: #fbbf24;
+  --flag-green: #34d399;
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--void);
+  color: var(--text-bright);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* ── TORCH FLAME ── */
+@keyframes flicker {
+  0%,100% { opacity: 1; transform: scaleY(1) scaleX(1); }
+  20% { opacity: .85; transform: scaleY(1.05) scaleX(.97); }
+  40% { opacity: .92; transform: scaleY(.96) scaleX(1.02); }
+  60% { opacity: .88; transform: scaleY(1.08) scaleX(.96); }
+  80% { opacity: .95; transform: scaleY(.98) scaleX(1.01); }
+}
+@keyframes torchGlow {
+  0%,100% { box-shadow: 0 0 20px 6px rgba(245,166,35,.35), 0 0 40px 12px rgba(245,166,35,.15); }
+  50% { box-shadow: 0 0 28px 10px rgba(245,166,35,.5), 0 0 55px 18px rgba(245,166,35,.2); }
+}
+@keyframes pulse {
+  0%,100% { opacity: 1; }
+  50% { opacity: .55; }
+}
+@keyframes slideDown {
+  from { opacity:0; transform:translateY(-10px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+@keyframes stepAppear {
+  from { opacity:0; transform:translateX(-12px); }
+  to   { opacity:1; transform:translateX(0); }
+}
+@keyframes glow {
+  0%,100% { box-shadow: 0 0 8px 2px currentColor; }
+  50% { box-shadow: 0 0 16px 6px currentColor; }
+}
+
+.torch {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+.torch-flame {
+  font-size: 28px;
+  animation: flicker 1.8s ease-in-out infinite;
+  line-height: 1;
+}
+.torch-body {
+  width: 10px; height: 28px;
+  background: linear-gradient(to bottom, #8B4513, #5C3317);
+  border-radius: 3px 3px 5px 5px;
+}
+
+/* ── HEADER ── */
+.site-header {
+  background: linear-gradient(180deg, var(--void) 0%, var(--crypt) 60%, var(--catacombs) 100%);
+  border-bottom: 1px solid var(--stone);
+  padding: 48px 24px 36px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.site-header::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 0%, rgba(124,58,237,.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+.header-torches {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 32px;
+  margin-bottom: 16px;
+}
+.site-header h1 {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(26px, 5vw, 46px);
+  font-weight: 900;
+  color: var(--gold);
+  text-shadow: 0 0 20px rgba(255,215,0,.4), 0 2px 4px rgba(0,0,0,.6);
+  letter-spacing: 2px;
+  animation: torchGlow 3s ease-in-out infinite;
+}
+.site-header .subtitle {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(13px, 2vw, 17px);
+  color: var(--text-mid);
+  margin-top: 8px;
+  letter-spacing: 1px;
+}
+.site-header .file-badge {
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--violet);
+  background: rgba(124,58,237,.12);
+  border: 1px solid rgba(124,58,237,.3);
+  border-radius: 20px;
+  padding: 4px 14px;
+  margin-top: 12px;
+}
+.header-intro {
+  max-width: 680px;
+  margin: 20px auto 0;
+  color: var(--text-mid);
+  font-size: 15px;
+  line-height: 1.7;
+}
+.header-intro em {
+  color: var(--amber);
+  font-style: normal;
+}
+
+/* ── RECAP BOX ── */
+.recap-wrapper {
+  max-width: 860px;
+  margin: 28px auto 0;
+  padding: 0 20px;
+}
+.recap-toggle {
+  width: 100%;
+  background: var(--crypt);
+  border: 1px solid var(--mist);
+  border-radius: var(--radius);
+  padding: 14px 20px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--text-mid);
+  transition: all .2s;
+}
+.recap-toggle:hover { border-color: var(--amber); color: var(--amber); }
+.recap-toggle .room-tag {
+  font-family: 'Cinzel', serif;
+  color: var(--gold);
+  font-size: 14px;
+}
+.recap-toggle .arrow {
+  transition: transform .3s cubic-bezier(.4,0,.2,1);
+  font-size: 16px;
+}
+.recap-toggle.open .arrow { transform: rotate(180deg); }
+.recap-body {
+  display: none;
+  background: linear-gradient(135deg, rgba(13,9,24,.95), rgba(21,14,36,.95));
+  border: 1px solid var(--mist);
+  border-top: none;
+  border-radius: 0 0 var(--radius) var(--radius);
+  padding: 20px 24px;
+  animation: slideDown .25s ease;
+}
+.recap-body.open { display: block; }
+.recap-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.recap-item {
+  background: rgba(42,31,66,.5);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: 13px;
+}
+.recap-item .label { color: var(--text-dim); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
+.recap-item .value { color: var(--text-bright); font-family: 'JetBrains Mono', monospace; margin-top: 2px; }
+.recap-note {
+  color: var(--text-mid);
+  font-size: 14px;
+  border-left: 3px solid var(--amber);
+  padding-left: 14px;
+  margin-top: 4px;
+}
+
+/* ── TAB NAV ── */
+.tab-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px;
+  padding: 28px 16px 0;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+.tab-btn {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 11px 20px;
+  border: 2px solid transparent;
+  border-bottom: none;
+  border-radius: 12px 12px 0 0;
+  cursor: pointer;
+  transition: all .2s;
+  background: var(--crypt);
+  color: var(--text-dim);
+  position: relative;
+}
+.tab-btn:hover { color: var(--text-mid); background: var(--catacombs); }
+.tab-btn.active {
+  background: var(--catacombs);
+  color: var(--gold);
+  border-color: var(--mist);
+  border-bottom-color: var(--catacombs);
+}
+.tab-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px; left: -1px; right: -1px;
+  height: 3px;
+  background: var(--catacombs);
+}
+
+/* ── TAB PANELS ── */
+.tab-content {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 0 16px 60px;
+}
+.tab-panel {
+  display: none;
+  background: var(--catacombs);
+  border: 1px solid var(--mist);
+  border-radius: 0 12px 12px 12px;
+  padding: 36px 32px;
+  animation: slideDown .3s ease;
+}
+.tab-panel.active { display: block; }
+
+/* ── SECTION TITLES ── */
+.section-title {
+  font-family: 'Cinzel', serif;
+  font-size: 22px;
+  color: var(--gold);
+  margin-bottom: 8px;
+}
+.section-sub {
+  color: var(--text-mid);
+  font-size: 14px;
+  margin-bottom: 28px;
+  line-height: 1.6;
+}
+
+/* ── SESAME STREET BOX ── */
+.ss-box {
+  background: linear-gradient(135deg, rgba(245,166,35,.06), rgba(255,204,85,.04));
+  border: 2px solid rgba(245,166,35,.35);
+  border-radius: var(--radius);
+  padding: 20px 22px;
+  margin: 20px 0;
+  position: relative;
+}
+.ss-box::before {
+  content: '🐦';
+  position: absolute;
+  top: -12px; left: 16px;
+  font-size: 22px;
+  background: var(--catacombs);
+  padding: 0 6px;
+  line-height: 1;
+}
+.ss-box .ss-char {
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 700;
+  color: var(--amber);
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+.ss-box p {
+  color: var(--text-mid);
+  font-size: 14px;
+  line-height: 1.7;
+}
+.ss-box p + p { margin-top: 8px; }
+.ss-box strong { color: var(--amber-glow); }
+
+/* ── CODE BLOCK ── */
+.code-block {
+  background: #0a0612;
+  border: 1px solid var(--stone);
+  border-radius: var(--radius-sm);
+  padding: 18px 20px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  line-height: 1.8;
+  overflow-x: auto;
+  margin: 16px 0;
+  position: relative;
+}
+.code-block .code-label {
+  position: absolute;
+  top: 8px; right: 12px;
+  font-size: 10px;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.kw  { color: #c084fc; }
+.fn  { color: var(--gold); }
+.str { color: #86efac; }
+.cm  { color: var(--text-dim); font-style: italic; }
+.dec { color: var(--amber); }
+.num { color: #fb923c; }
+.var { color: #67e8f9; }
+
+/* ── INSIGHT BOX ── */
+.insight {
+  background: rgba(124,58,237,.1);
+  border: 1px solid rgba(124,58,237,.3);
+  border-radius: var(--radius-sm);
+  padding: 16px 20px;
+  margin: 20px 0;
+  font-size: 14px;
+  color: var(--text-mid);
+  line-height: 1.7;
+}
+.insight strong { color: var(--violet); }
+.insight .insight-icon { font-size: 18px; margin-right: 8px; }
+
+/* ── FLAG DIAGRAM ── */
+.flag-rack {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+  margin: 24px 0;
+}
+.flag-card {
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  border: 2px solid;
+  position: relative;
+  transition: transform .2s, box-shadow .2s;
+}
+.flag-card:hover {
+  transform: translateY(-2px);
+}
+.flag-card .flag-icon {
+  font-size: 28px;
+  margin-bottom: 8px;
+}
+.flag-card .flag-name {
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  margin-bottom: 4px;
+}
+.flag-card .flag-route {
+  font-size: 13px;
+  color: var(--text-mid);
+  line-height: 1.5;
+}
+.flag-card .flag-enum {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  margin-top: 8px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.flag-blue {
+  border-color: var(--flag-blue);
+  background: rgba(96,165,250,.06);
+}
+.flag-blue .flag-name { color: var(--flag-blue); }
+.flag-blue .flag-enum { background: rgba(96,165,250,.15); color: var(--flag-blue); }
+
+.flag-red {
+  border-color: var(--flag-red);
+  background: rgba(248,113,113,.06);
+}
+.flag-red .flag-name { color: var(--flag-red); }
+.flag-red .flag-enum { background: rgba(248,113,113,.15); color: var(--flag-red); }
+
+.flag-yellow {
+  border-color: var(--flag-yellow);
+  background: rgba(251,191,36,.06);
+}
+.flag-yellow .flag-name { color: var(--flag-yellow); }
+.flag-yellow .flag-enum { background: rgba(251,191,36,.15); color: var(--flag-yellow); }
+
+.flag-green {
+  border-color: var(--flag-green);
+  background: rgba(52,211,153,.06);
+}
+.flag-green .flag-name { color: var(--flag-green); }
+.flag-green .flag-enum { background: rgba(52,211,153,.15); color: var(--flag-green); }
+
+/* ── FLOW DIAGRAM ── */
+.flow-diagram {
+  background: var(--dungeon);
+  border: 1px solid var(--stone);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin: 24px 0;
+}
+.flow-diagram h3 {
+  font-family: 'Cinzel', serif;
+  font-size: 15px;
+  color: var(--text-dim);
+  text-align: center;
+  margin-bottom: 20px;
+  letter-spacing: 1px;
+}
+.flow-steps {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+.flow-node {
+  background: linear-gradient(135deg, var(--stone), var(--mist));
+  border-radius: var(--radius-sm);
+  padding: 12px 20px;
+  text-align: center;
+  min-width: 200px;
+  border: 1px solid var(--mist);
+  font-size: 13px;
+  color: var(--text-bright);
+}
+.flow-node .flow-icon { font-size: 20px; margin-bottom: 4px; display: block; }
+.flow-node .flow-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--amber);
+  font-weight: 600;
+}
+.flow-arrow {
+  color: var(--text-dim);
+  font-size: 20px;
+  padding: 4px 0;
+}
+.flow-branch {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.flow-branch-node {
+  border-radius: var(--radius-sm);
+  padding: 10px 16px;
+  text-align: center;
+  min-width: 140px;
+  font-size: 12px;
+  border: 2px solid;
+}
+.flow-branch-blue { border-color: var(--flag-blue); color: var(--flag-blue); background: rgba(96,165,250,.06); }
+.flow-branch-red { border-color: var(--flag-red); color: var(--flag-red); background: rgba(248,113,113,.06); }
+.flow-branch-yellow { border-color: var(--flag-yellow); color: var(--flag-yellow); background: rgba(251,191,36,.06); }
+.flow-branch-green { border-color: var(--flag-green); color: var(--flag-green); background: rgba(52,211,153,.06); }
+
+/* ── ROUTE CARDS (accordion) ── */
+.route-card {
+  border-radius: var(--radius);
+  margin-bottom: 16px;
+  overflow: hidden;
+  border: 1px solid var(--stone);
+}
+.route-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 22px;
+  cursor: pointer;
+  transition: background .2s;
+  background: var(--dungeon);
+}
+.route-card-header:hover { background: var(--stone); }
+.route-card-header.open { background: var(--stone); }
+.route-card-left { display: flex; align-items: center; gap: 14px; }
+.route-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-weight: 600;
+}
+.route-card-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 16px;
+  font-weight: 600;
+}
+.route-card-desc { font-size: 13px; color: var(--text-dim); margin-top: 2px; }
+.route-card-arrow {
+  font-size: 18px;
+  color: var(--text-dim);
+  transition: transform .3s cubic-bezier(.4,0,.2,1);
+}
+.route-card-header.open .route-card-arrow { transform: rotate(180deg); }
+.route-card-body {
+  display: none;
+  padding: 24px 22px;
+  background: var(--catacombs);
+  border-top: 1px solid var(--stone);
+  animation: slideDown .25s ease;
+}
+.route-card-body.open { display: block; }
+
+/* Route card color variants */
+.card-knowledge .route-card-title { color: var(--flag-blue); }
+.card-knowledge .route-badge { background: rgba(96,165,250,.15); color: var(--flag-blue); border: 1px solid rgba(96,165,250,.3); }
+.card-knowledge .route-card-header { border-left: 4px solid var(--flag-blue); }
+
+.card-tool .route-card-title { color: var(--flag-red); }
+.card-tool .route-badge { background: rgba(248,113,113,.15); color: var(--flag-red); border: 1px solid rgba(248,113,113,.3); }
+.card-tool .route-card-header { border-left: 4px solid var(--flag-red); }
+
+.card-clarify .route-card-title { color: var(--flag-yellow); }
+.card-clarify .route-badge { background: rgba(251,191,36,.15); color: var(--flag-yellow); border: 1px solid rgba(251,191,36,.3); }
+.card-clarify .route-card-header { border-left: 4px solid var(--flag-yellow); }
+
+.card-chitchat .route-card-title { color: var(--flag-green); }
+.card-chitchat .route-badge { background: rgba(52,211,153,.15); color: var(--flag-green); border: 1px solid rgba(52,211,153,.3); }
+.card-chitchat .route-card-header { border-left: 4px solid var(--flag-green); }
+
+/* ── DISPATCHER TIMELINE ── */
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  position: relative;
+  margin: 20px 0;
+}
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 19px; top: 20px; bottom: 20px;
+  width: 2px;
+  background: linear-gradient(to bottom, var(--stone), var(--mist), var(--stone));
+}
+.tl-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 10px 0;
+  position: relative;
+}
+.tl-dot {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  border: 2px solid;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px;
+  font-weight: 700;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+  background: var(--catacombs);
+}
+.tl-dot.violet { color: #a78bfa; border-color: #a78bfa; }
+.tl-dot.cyan   { color: var(--book); border-color: var(--book); }
+.tl-dot.amber  { color: var(--amber); border-color: var(--amber); }
+.tl-dot.red    { color: #f87171; border-color: #f87171; }
+.tl-dot.green  { color: var(--get); border-color: var(--get); }
+.tl-dot.blue   { color: var(--flag-blue); border-color: var(--flag-blue); }
+.tl-content { flex: 1; padding-top: 1px; }
+.tl-label {
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--text-bright);
+}
+.tl-detail {
+  font-size: 13px;
+  color: var(--text-dim);
+  margin-top: 2px;
+  line-height: 1.5;
+}
+.tl-code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-mid);
+  background: var(--dungeon);
+  padding: 2px 8px;
+  border-radius: 4px;
+  display: inline-block;
+  margin-top: 4px;
+}
+
+/* ── FULL TIMELINE ── */
+.full-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 24px 0;
+}
+.ftl-step {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  padding: 16px 0;
+  position: relative;
+}
+.ftl-step + .ftl-step::before {
+  content: '';
+  position: absolute;
+  left: 11px; top: 0;
+  width: 2px; height: 16px;
+  background: var(--stone);
+}
+.ftl-dot {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  border: 2px solid;
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px;
+  background: var(--catacombs);
+  margin-top: 2px;
+}
+.ftl-dot.cyan   { color: var(--book);   border-color: var(--book);   }
+.ftl-dot.amber  { color: var(--amber);  border-color: var(--amber);  }
+.ftl-dot.violet { color: #a78bfa;       border-color: #a78bfa;       }
+.ftl-dot.red    { color: #f87171;       border-color: #f87171;       }
+.ftl-dot.green  { color: var(--get);    border-color: var(--get);    }
+.ftl-dot.dim    { color: var(--text-dim); border-color: var(--text-dim); }
+.ftl-dot.blue   { color: var(--flag-blue); border-color: var(--flag-blue); }
+.ftl-content { flex: 1; }
+.ftl-label {
+  font-family: 'Cinzel', serif;
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.ftl-step .ftl-dot.cyan   ~ .ftl-content .ftl-label { color: var(--book); }
+.ftl-step .ftl-dot.amber  ~ .ftl-content .ftl-label { color: var(--amber); }
+.ftl-step .ftl-dot.violet ~ .ftl-content .ftl-label { color: #a78bfa; }
+.ftl-step .ftl-dot.red    ~ .ftl-content .ftl-label { color: #f87171; }
+.ftl-step .ftl-dot.green  ~ .ftl-content .ftl-label { color: var(--get); }
+.ftl-step .ftl-dot.dim    ~ .ftl-content .ftl-label { color: var(--text-dim); }
+.ftl-step .ftl-dot.blue   ~ .ftl-content .ftl-label { color: var(--flag-blue); }
+.ftl-desc {
+  font-size: 13px;
+  color: var(--text-dim);
+  line-height: 1.7;
+}
+.ftl-note {
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-mid);
+  background: var(--dungeon);
+  padding: 3px 10px;
+  border-radius: 4px;
+  margin-top: 6px;
+}
+
+/* ── ROOM MAP VISUAL ── */
+.room-map {
+  background: var(--dungeon);
+  border: 1px solid var(--stone);
+  border-radius: var(--radius);
+  padding: 28px;
+  margin: 28px 0;
+}
+.room-map h3 {
+  font-family: 'Cinzel', serif;
+  font-size: 15px;
+  color: var(--text-dim);
+  text-align: center;
+  margin-bottom: 24px;
+  letter-spacing: 1px;
+}
+.map-layer {
+  border-radius: var(--radius-sm);
+  padding: 16px 20px;
+  margin-bottom: 8px;
+}
+.map-layer-top    { background: rgba(34,211,238,.05); border: 1px solid rgba(34,211,238,.2); }
+.map-layer-middle { background: rgba(124,58,237,.05); border: 1px solid rgba(124,58,237,.2); }
+.map-layer-bottom { background: rgba(16,185,129,.05); border: 1px solid rgba(16,185,129,.2); }
+.map-layer-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+}
+.map-layer-top    .map-layer-label { color: var(--book); }
+.map-layer-middle .map-layer-label { color: var(--violet); }
+.map-layer-bottom .map-layer-label { color: var(--get); }
+.map-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.map-item {
+  background: rgba(42,31,66,.5);
+  border-radius: var(--radius-sm);
+  padding: 6px 14px;
+  font-size: 13px;
+  color: var(--text-mid);
+  font-family: 'JetBrains Mono', monospace;
+}
+.map-arrow {
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 20px;
+  margin: 4px 0;
+}
+
+/* ── ONE-LINER ── */
+.one-liner {
+  text-align: center;
+  font-family: 'Cinzel', serif;
+  font-size: clamp(14px, 2.2vw, 18px);
+  color: var(--gold);
+  padding: 24px 20px;
+  border-top: 1px solid var(--stone);
+  margin-top: 28px;
+  line-height: 1.6;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 900px) {
+  .tab-panel { padding: 28px 20px; }
+  .flag-rack { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 700px) {
+  .tab-btn { font-size: 12px; padding: 9px 13px; }
+  .tab-panel { padding: 20px 14px; }
+  .flag-rack { grid-template-columns: 1fr; }
+  .flow-branch { flex-direction: column; align-items: center; }
+  .recap-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 480px) {
+  .recap-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<a href="destruction_lab_20_experiments.html" style="position:fixed;top:12px;left:16px;z-index:9999;background:rgba(13,9,24,0.85);backdrop-filter:blur(8px);border:1px solid rgba(159,141,191,0.2);border-radius:8px;padding:6px 14px;color:#9f8dbf;text-decoration:none;font-size:0.8rem;font-family:system-ui,sans-serif;transition:all 0.2s;" onmouseover="this.style.color='#ffd700';this.style.borderColor='rgba(255,215,0,0.3)'" onmouseout="this.style.color='#9f8dbf';this.style.borderColor='rgba(159,141,191,0.2)'">&larr; Home</a>
+
+<!-- ═══════════════════════════════════════════════
+     HEADER
+═══════════════════════════════════════════════ -->
+<header class="site-header">
+  <div class="header-torches">
+    <div class="torch"><div class="torch-flame">🔥</div><div class="torch-body"></div></div>
+    <h1>The War Room</h1>
+    <div class="torch"><div class="torch-flame">🔥</div><div class="torch-body"></div></div>
+  </div>
+  <div class="subtitle">Where the General Plans the Battle</div>
+  <div class="file-badge">app/concierge/orchestrator.py</div>
+  <p class="header-intro">
+    Every guest request enters this room. The General (<em>Big Bird</em>) reads it, picks a colored flag, and routes it to the right department. One desk plans. Another executes. The guest never sees the machinery.
+  </p>
+</header>
+
+<!-- ═══════════════════════════════════════════════
+     RECAP BOX
+═══════════════════════════════════════════════ -->
+<div class="recap-wrapper">
+  <button class="recap-toggle" id="recapToggle" onclick="toggleRecap()">
+    <span class="room-tag">The War Room — Briefing</span>
+    <span style="color:var(--text-dim);font-size:13px;">Previously, in The Switchboard... (click to expand)</span>
+    <span class="arrow">&#9662;</span>
+  </button>
+  <div class="recap-body" id="recapBody">
+    <div class="recap-grid">
+      <div class="recap-item">
+        <div class="label">Previous Room</div>
+        <div class="value">The Switchboard</div>
+      </div>
+      <div class="recap-item">
+        <div class="label">What You Learned</div>
+        <div class="value">Tool routing</div>
+      </div>
+      <div class="recap-item">
+        <div class="label">Key Concept</div>
+        <div class="value">Register &rarr; Dispatch</div>
+      </div>
+      <div class="recap-item">
+        <div class="label">New Concept</div>
+        <div class="value">Two-desk orchestration</div>
+      </div>
+    </div>
+    <div class="recap-note">
+      In The Switchboard, you learned how tools are registered like service desks and how the dispatcher routes calls to them. Each desk had its equipment wired in before opening. The dispatcher assigned tickets, started stopwatches, and logged everything.
+      <br><br>
+      <strong style="color:var(--amber);">Now:</strong> We zoom out. Before any call reaches the switchboard, someone has to <em>decide</em> whether it's even a switchboard call at all. That someone is the General. He reads the request first, picks a colored flag, and sends it to the right department. Planning and execution are separate jobs &mdash; two desks, one answer.
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     TAB NAV
+═══════════════════════════════════════════════ -->
+<nav class="tab-nav" role="tablist">
+  <button class="tab-btn active" onclick="switchTab('t1')" id="btn-t1" role="tab" aria-selected="true">🚩 The Colored Flags</button>
+  <button class="tab-btn" onclick="switchTab('t2')" id="btn-t2" role="tab">📋 The Planner</button>
+  <button class="tab-btn" onclick="switchTab('t3')" id="btn-t3" role="tab">⚡ The Executor</button>
+  <button class="tab-btn" onclick="switchTab('t4')" id="btn-t4" role="tab">🗺️ The Full Flow</button>
+</nav>
+
+<!-- ═══════════════════════════════════════════════
+     TAB PANELS
+═══════════════════════════════════════════════ -->
+<main class="tab-content">
+
+  <!-- ─────────────────── TAB 1: The Colored Flags ─────────────────── -->
+  <section class="tab-panel active" id="t1" role="tabpanel">
+    <h2 class="section-title">The Colored Flags</h2>
+    <p class="section-sub">Every request that walks through the door gets classified. Big Bird keeps four colored flags in a rack on his desk. He reads the request, grabs the right flag, and attaches it to the paperwork. The flag tells everyone downstream what kind of job this is.</p>
+
+    <div class="ss-box">
+      <div class="ss-char">Big Bird &mdash; The General at His Desk</div>
+      <p>A guest walks in. Big Bird reads the request out loud, slowly. He looks at the flag rack on his desk &mdash; four flags, four colors, four meanings.</p>
+      <p>He grabs a flag:</p>
+      <p>The <strong>blue flag</strong> means "Go ask the library." The guest wants to <em>know</em> something &mdash; what time the pool opens, which restaurant has garlic-free options. This is a research job.</p>
+      <p>The <strong>red flag</strong> means "Go do something." The guest wants to <em>act</em> &mdash; book a room, look up a reservation. This goes straight to the service desk downstairs.</p>
+      <p>The <strong>yellow flag</strong> means "Go back and ask the guest for more details." The request is incomplete &mdash; they said "book a room" but didn't say which hotel or what dates. Can't route it anywhere yet.</p>
+      <p>The <strong>green flag</strong> means "Just chat." No departments needed. The guest said hello, or asked about the weather, or told a joke. Big Bird handles it right here at his desk.</p>
+    </div>
+
+    <!-- FLAG RACK VISUAL -->
+    <div class="flag-rack">
+      <div class="flag-card flag-blue">
+        <div class="flag-icon">🔵</div>
+        <div class="flag-name">KNOWLEDGE</div>
+        <div class="flag-route">"Go ask the library." The guest wants information from the resort's knowledge base.</div>
+        <span class="flag-enum">IntentType.KNOWLEDGE</span>
+      </div>
+      <div class="flag-card flag-red">
+        <div class="flag-icon">🔴</div>
+        <div class="flag-name">TOOL</div>
+        <div class="flag-route">"Go do something." Book a room, look up a booking &mdash; an action that needs the service desk.</div>
+        <span class="flag-enum">IntentType.TOOL</span>
+      </div>
+      <div class="flag-card flag-yellow">
+        <div class="flag-icon">🟡</div>
+        <div class="flag-name">CLARIFY</div>
+        <div class="flag-route">"Go back and ask the guest." The request is missing details &mdash; which hotel? what dates?</div>
+        <span class="flag-enum">IntentType.CLARIFY</span>
+      </div>
+      <div class="flag-card flag-green">
+        <div class="flag-icon">🟢</div>
+        <div class="flag-name">CHITCHAT</div>
+        <div class="flag-route">"Just chat." Greetings, small talk, jokes. No departments needed.</div>
+        <span class="flag-enum">IntentType.CHITCHAT</span>
+      </div>
+    </div>
+
+    <div class="insight">
+      <span class="insight-icon">🏷️</span>
+      <strong>The flag is the decision.</strong> Everything downstream depends on it. A blue flag goes to the library. A red flag goes to the service desk. The flag never changes once it's picked &mdash; the plan is the plan.
+    </div>
+
+    <!-- CODE: IntentType + Plan + ExecutionResult -->
+    <div class="code-block">
+      <span class="code-label">PYTHON</span>
+<span class="cm"># The four colored flags in Big Bird's rack</span>
+<span class="kw">class</span> <span class="fn">IntentType</span>(<span class="var">str</span>, <span class="var">Enum</span>):
+    <span class="var">KNOWLEDGE</span> = <span class="str">"knowledge"</span>   <span class="cm"># blue flag  — ask the library</span>
+    <span class="var">TOOL</span>      = <span class="str">"tool"</span>        <span class="cm"># red flag   — do something at the service desk</span>
+    <span class="var">CLARIFY</span>   = <span class="str">"clarify"</span>     <span class="cm"># yellow flag — ask the guest for more details</span>
+    <span class="var">CHITCHAT</span>  = <span class="str">"chitchat"</span>    <span class="cm"># green flag  — just chat, no departments</span>
+    </div>
+
+    <div class="code-block">
+      <span class="code-label">PYTHON</span>
+<span class="cm"># The form Big Bird fills out after picking a flag</span>
+<span class="dec">@dataclass</span>
+<span class="kw">class</span> <span class="fn">Plan</span>:
+    <span class="var">intent</span>: <span class="var">IntentType</span>              <span class="cm"># which colored flag</span>
+    <span class="var">tool_name</span>: <span class="var">Optional</span>[<span class="var">str</span>] = <span class="kw">None</span>  <span class="cm"># which service desk (only for red flag)</span>
+    <span class="var">tool_args</span>: <span class="var">dict</span> = <span class="fn">field</span>(<span class="var">default_factory</span>=<span class="var">dict</span>)  <span class="cm"># request details for the desk</span>
+    <span class="var">search_query</span>: <span class="var">Optional</span>[<span class="var">str</span>] = <span class="kw">None</span>  <span class="cm"># what to look up (only for blue flag)</span>
+    <span class="var">reasoning</span>: <span class="var">str</span> = <span class="str">""</span>          <span class="cm"># Big Bird's notes on why this flag</span>
+    </div>
+
+    <div class="code-block">
+      <span class="code-label">PYTHON</span>
+<span class="cm"># What comes back after the department finishes the job</span>
+<span class="dec">@dataclass</span>
+<span class="kw">class</span> <span class="fn">ExecutionResult</span>:
+    <span class="var">response</span>: <span class="var">str</span>                   <span class="cm"># the answer for the guest</span>
+    <span class="var">plan</span>: <span class="var">Plan</span>                       <span class="cm"># which flag was picked</span>
+    <span class="var">tool_result</span>: <span class="var">Optional</span>[<span class="var">dict</span>] = <span class="kw">None</span>  <span class="cm"># raw result from service desk</span>
+    <span class="var">sources</span>: <span class="var">list</span>[<span class="var">str</span>] = <span class="fn">field</span>(<span class="var">default_factory</span>=<span class="var">list</span>)  <span class="cm"># which library books were used</span>
+    <span class="var">latency_ms</span>: <span class="var">float</span> = <span class="num">0</span>         <span class="cm"># how long the department took</span>
+    <span class="var">token_usage</span>: <span class="var">dict</span> = <span class="fn">field</span>(<span class="var">default_factory</span>=<span class="var">dict</span>)  <span class="cm"># cost tracking</span>
+    <span class="var">confidence</span>: <span class="var">object</span> = <span class="kw">None</span>     <span class="cm"># Night Watchman's verdict (for library answers)</span>
+    </div>
+
+    <div class="one-liner">
+      "Four flags, four routes. The flag IS the plan."
+    </div>
+  </section>
+
+  <!-- ─────────────────── TAB 2: The Planner ─────────────────── -->
+  <section class="tab-panel" id="t2" role="tabpanel">
+    <h2 class="section-title">The Planner</h2>
+    <p class="section-sub">Agent 1: Big Bird reads the guest's request out loud to the voice upstairs. The voice sends back a form with the flag color and details. But sometimes the form comes back garbled.</p>
+
+    <div class="ss-box">
+      <div class="ss-char">Big Bird &mdash; Reading the Request Aloud</div>
+      <p>Big Bird picks up the guest's request and reads it out loud to <strong>the voice upstairs</strong>. The voice is wise &mdash; it listens to the request, considers what tools are available at the service desks downstairs, and sends back a form.</p>
+      <p>The form says: <em>"This is a blue flag. The guest wants to know about pool hours. Search for 'pool hours' in the library."</em></p>
+      <p>But sometimes the form comes back <strong>garbled</strong>. The ink is smudged. The handwriting is illegible. Big Bird squints at it, holds it up to the light, and... can't read it.</p>
+      <p>So he falls back to his <strong>gut feeling</strong>. He reads the guest's original request again himself. Did the guest say "book"? That sounds like a red flag. Did they mention "spa" or "pool"? That's probably a blue flag. Can't tell at all? Green flag &mdash; just be friendly, you can't go wrong with a warm greeting.</p>
+    </div>
+
+    <!-- FLOW DIAGRAM -->
+    <div class="flow-diagram">
+      <h3>THE PLANNING FLOW</h3>
+      <div class="flow-steps">
+        <div class="flow-node">
+          <span class="flow-icon">💬</span>
+          Guest Request
+          <div class="flow-label">user_message</div>
+        </div>
+        <div class="flow-arrow">&darr;</div>
+        <div class="flow-node">
+          <span class="flow-icon">🐦</span>
+          Big Bird reads it to the voice upstairs
+          <div class="flow-label">plan() &rarr; llm.chat()</div>
+        </div>
+        <div class="flow-arrow">&darr;</div>
+        <div class="flow-node">
+          <span class="flow-icon">📝</span>
+          The voice sends back a form
+          <div class="flow-label">LLMResponse.content</div>
+        </div>
+        <div class="flow-arrow">&darr;</div>
+        <div class="flow-branch">
+          <div class="flow-branch-node flow-branch-green" style="border-color:var(--get);">
+            Form is readable<br>
+            <small style="color:var(--text-dim);">_parse_plan() succeeds</small>
+          </div>
+          <div class="flow-branch-node flow-branch-red" style="border-color:var(--flag-red);">
+            Form is garbled<br>
+            <small style="color:var(--text-dim);">falls back to gut feeling</small>
+          </div>
+        </div>
+        <div class="flow-arrow">&darr;</div>
+        <div class="flow-node">
+          <span class="flow-icon">🚩</span>
+          Flag picked &mdash; Plan is ready
+          <div class="flow-label">Plan(intent, tool_name, ...)</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="insight">
+      <span class="insight-icon">🧠</span>
+      <strong>The gut feeling is the fallback parser.</strong> When the voice upstairs sends back something unreadable, Big Bird doesn't panic &mdash; he scans the original request for keywords. "book" or "reserve" = red flag. "pool" or "spa" = blue flag. Everything else = green flag. It's crude, but it keeps the hotel running.
+    </div>
+
+    <!-- CODE: plan() method -->
+    <div class="code-block">
+      <span class="code-label">PYTHON</span>
+<span class="cm"># Agent 1: Big Bird reads the request and picks a flag</span>
+<span class="kw">async def</span> <span class="fn">plan</span>(<span class="var">self</span>, <span class="var">user_message</span>: <span class="var">str</span>, <span class="var">session_id</span>: <span class="var">str</span>) -> <span class="var">Plan</span>:
+    <span class="var">start</span> = <span class="var">time</span>.<span class="fn">monotonic</span>()
+
+    <span class="cm"># Check what service desks are available downstairs</span>
+    <span class="var">available_tools</span> = <span class="var">self</span>.<span class="var">tools</span>.<span class="fn">list</span>()
+    <span class="var">tool_descriptions</span> = [<span class="str">f"{t.name}: {t.description}"</span> <span class="kw">for</span> <span class="var">t</span> <span class="kw">in</span> <span class="var">available_tools</span>]
+    <span class="var">tool_list</span> = <span class="str">"; "</span>.<span class="fn">join</span>(<span class="var">tool_descriptions</span>)
+
+    <span class="cm"># Peek at the guest's notepad for recent context</span>
+    <span class="var">history</span> = <span class="var">self</span>.<span class="var">memory</span>.<span class="fn">get_messages</span>(<span class="var">session_id</span>, <span class="var">limit</span>=<span class="num">5</span>)
+    <span class="var">history_text</span> = <span class="var">self</span>.<span class="fn">_format_history</span>(<span class="var">history</span>)
+
+    <span class="cm"># Build the instructions for the voice upstairs</span>
+    <span class="var">system_prompt</span> = <span class="var">PLANNER_SYSTEM_PROMPT</span>.<span class="fn">format</span>(<span class="var">tool_list</span>=<span class="var">tool_list</span>)
+
+    <span class="kw">try</span>:
+        <span class="cm"># Ask the voice upstairs to fill out the form</span>
+        <span class="var">response</span> = <span class="kw">await</span> <span class="var">self</span>.<span class="var">llm</span>.<span class="fn">chat</span>(<span class="var">messages</span>)
+        <span class="var">plan</span> = <span class="var">self</span>.<span class="fn">_parse_plan</span>(<span class="var">response</span>.<span class="var">content</span>)
+        <span class="kw">return</span> <span class="var">plan</span>
+
+    <span class="kw">except</span> <span class="var">Exception</span> <span class="kw">as</span> <span class="var">exc</span>:
+        <span class="cm"># Voice upstairs didn't answer — green flag, just be friendly</span>
+        <span class="kw">return</span> <span class="fn">Plan</span>(
+            <span class="var">intent</span>=<span class="var">IntentType</span>.<span class="var">CHITCHAT</span>,
+            <span class="var">reasoning</span>=<span class="str">f"Planner failed ({exc}), falling back to chitchat"</span>,
+        )
+    </div>
+
+    <!-- CODE: _parse_plan() with fallback -->
+    <div class="code-block">
+      <span class="code-label">PYTHON</span>
+<span class="cm"># Reading the form — or falling back to gut feeling</span>
+<span class="kw">def</span> <span class="fn">_parse_plan</span>(<span class="var">self</span>, <span class="var">raw</span>: <span class="var">str</span>) -> <span class="var">Plan</span>:
+    <span class="kw">try</span>:
+        <span class="cm"># Try to read the form (extract the structured data)</span>
+        <span class="var">extracted</span> = <span class="var">StructuredOutputParser</span>.<span class="fn">_extract_json</span>(<span class="var">raw</span>)
+        <span class="var">data</span> = <span class="var">json</span>.<span class="fn">loads</span>(<span class="var">extracted</span>)
+
+    <span class="kw">except</span> <span class="var">json</span>.<span class="var">JSONDecodeError</span>:
+        <span class="cm"># Form is garbled! Fall back to gut feeling...</span>
+        <span class="var">lower</span> = <span class="var">raw</span>.<span class="fn">lower</span>()
+
+        <span class="cm"># Does it sound like a service desk job?</span>
+        <span class="kw">if</span> <span class="kw">any</span>(<span class="var">kw</span> <span class="kw">in</span> <span class="var">lower</span> <span class="kw">for</span> <span class="var">kw</span> <span class="kw">in</span> [<span class="str">"book"</span>, <span class="str">"reserve"</span>, <span class="str">"lookup"</span>]):
+            <span class="kw">return</span> <span class="fn">Plan</span>(<span class="var">intent</span>=<span class="var">IntentType</span>.<span class="var">TOOL</span>, ...)
+
+        <span class="cm"># Does it sound like a library question?</span>
+        <span class="kw">if</span> <span class="kw">any</span>(<span class="var">kw</span> <span class="kw">in</span> <span class="var">lower</span> <span class="kw">for</span> <span class="var">kw</span> <span class="kw">in</span> [<span class="str">"amenities"</span>, <span class="str">"pool"</span>, <span class="str">"spa"</span>]):
+            <span class="kw">return</span> <span class="fn">Plan</span>(<span class="var">intent</span>=<span class="var">IntentType</span>.<span class="var">KNOWLEDGE</span>, ...)
+
+        <span class="cm"># Can't tell? Green flag — just be friendly</span>
+        <span class="kw">return</span> <span class="fn">Plan</span>(<span class="var">intent</span>=<span class="var">IntentType</span>.<span class="var">CHITCHAT</span>, ...)
+
+    <span class="cm"># Form was readable — extract the flag color and details</span>
+    <span class="var">intent</span> = <span class="fn">IntentType</span>(<span class="var">data</span>.<span class="fn">get</span>(<span class="str">"intent"</span>, <span class="str">"chitchat"</span>))
+    <span class="kw">return</span> <span class="fn">Plan</span>(
+        <span class="var">intent</span>=<span class="var">intent</span>,
+        <span class="var">tool_name</span>=<span class="var">data</span>.<span class="fn">get</span>(<span class="str">"tool_name"</span>),
+        <span class="var">tool_args</span>=<span class="var">data</span>.<span class="fn">get</span>(<span class="str">"tool_args"</span>) <span class="kw">or</span> {},
+        <span class="var">search_query</span>=<span class="var">data</span>.<span class="fn">get</span>(<span class="str">"search_query"</span>),
+        <span class="var">reasoning</span>=<span class="var">data</span>.<span class="fn">get</span>(<span class="str">"reasoning"</span>, <span class="str">""</span>),
+    )
+    </div>
+
+    <div class="one-liner">
+      "Read the form if you can. If you can't, trust your gut."
+    </div>
+  </section>
+
+  <!-- ─────────────────── TAB 3: The Executor ─────────────────── -->
+  <section class="tab-panel" id="t3" role="tabpanel">
+    <h2 class="section-title">The Executor</h2>
+    <p class="section-sub">Agent 2: The department that received the flag does the work. Four flags, four routes, four different jobs. Each one knows exactly what to do.</p>
+
+    <div class="ss-box">
+      <div class="ss-char">Big Bird &mdash; Dispatching the Flag</div>
+      <p>Big Bird holds up the flag he picked and calls out to the right department:</p>
+      <p>The <strong>blue flag</strong> goes to the Grand Library. The librarian searches the shelves, finds the relevant pages, and brings back an answer grounded in what the books actually say.</p>
+      <p>The <strong>red flag</strong> goes to the Service Desk downstairs. The desk clerk picks up the phone, executes the tool &mdash; books the room, looks up the reservation &mdash; and comes back with a result. Then Big Bird asks the voice upstairs to turn that raw result into a friendly sentence for the guest.</p>
+      <p>The <strong>yellow flag</strong> goes right back to the guest. "Could you tell me which hotel you'd like? And what dates work for you?" No departments needed &mdash; just a polite question to fill in the blanks.</p>
+      <p>The <strong>green flag</strong> stays right here. Big Bird chats warmly with the guest. No tools, no library, no service desk. Just conversation.</p>
+    </div>
+
+    <!-- 4 ROUTE CARDS (accordion style) -->
+
+    <!-- KNOWLEDGE route -->
+    <div class="route-card card-knowledge">
+      <div class="route-card-header" id="card-knowledge-header" onclick="toggleCard('card-knowledge')">
+        <div class="route-card-left">
+          <span class="route-badge">🔵 KNOWLEDGE</span>
+          <div>
+            <div class="route-card-title">_execute_knowledge()</div>
+            <div class="route-card-desc">Run to the Grand Library, search the shelves, bring back an answer</div>
+          </div>
+        </div>
+        <span class="route-card-arrow">&#9662;</span>
+      </div>
+      <div class="route-card-body" id="card-knowledge-body">
+        <div class="ss-box">
+          <div class="ss-char">The Grand Library Route</div>
+          <p>The blue flag arrives at the Grand Library. The librarian takes the search query (or the guest's original question if no query was specified) and searches the shelves &mdash; up to <strong>5 books</strong> at a time.</p>
+          <p>She stacks the relevant pages on the reading desk, notes which books they came from (the sources list), and calls the voice upstairs: <em>"Here's what the books say. Answer the guest's question using ONLY this material. If it's not in the books, say so honestly."</em></p>
+          <p>The voice reads the pages, composes a response, and sends it back. The librarian wraps it all up &mdash; the response, the sources, and the cost &mdash; into a result package.</p>
+        </div>
+        <div class="code-block">
+          <span class="code-label">PYTHON</span>
+<span class="kw">async def</span> <span class="fn">_execute_knowledge</span>(<span class="var">self</span>, <span class="var">plan</span>, <span class="var">user_message</span>, <span class="var">session_id</span>):
+    <span class="cm"># Search the library shelves</span>
+    <span class="var">query</span> = <span class="var">plan</span>.<span class="var">search_query</span> <span class="kw">or</span> <span class="var">user_message</span>
+    <span class="var">rag_results</span> = <span class="var">self</span>.<span class="var">rag</span>.<span class="fn">search</span>(<span class="var">query</span>, <span class="var">k</span>=<span class="num">5</span>)
+
+    <span class="cm"># Stack the pages and note which books they came from</span>
+    <span class="var">docs</span> = <span class="var">rag_results</span>.<span class="fn">get</span>(<span class="str">"results"</span>, [])
+    <span class="var">context_parts</span>, <span class="var">sources</span> = [], []
+    <span class="kw">for</span> <span class="var">doc</span> <span class="kw">in</span> <span class="var">docs</span>:
+        <span class="var">context_parts</span>.<span class="fn">append</span>(<span class="var">doc</span>[<span class="str">"text"</span>])
+        <span class="var">sources</span>.<span class="fn">append</span>(<span class="var">doc</span>[<span class="str">"meta"</span>][<span class="str">"source"</span>])
+
+    <span class="cm"># Ask the voice upstairs to answer using ONLY these pages</span>
+    <span class="var">prompt</span> = <span class="var">EXECUTOR_KNOWLEDGE_PROMPT</span>.<span class="fn">format</span>(
+        <span class="var">context</span>=<span class="str">"\n---\n"</span>.<span class="fn">join</span>(<span class="var">context_parts</span>),
+        <span class="var">history</span>=<span class="var">self</span>.<span class="fn">_format_history</span>(<span class="var">history</span>),
+        <span class="var">question</span>=<span class="var">user_message</span>,
+    )
+    <span class="var">response</span> = <span class="kw">await</span> <span class="var">self</span>.<span class="var">llm</span>.<span class="fn">chat</span>(<span class="var">messages</span>)
+
+    <span class="kw">return</span> <span class="fn">ExecutionResult</span>(
+        <span class="var">response</span>=<span class="var">response</span>.<span class="var">content</span>,
+        <span class="var">plan</span>=<span class="var">plan</span>,
+        <span class="var">sources</span>=<span class="var">sources</span>,
+    )
+        </div>
+      </div>
+    </div>
+
+    <!-- TOOL route -->
+    <div class="route-card card-tool">
+      <div class="route-card-header" id="card-tool-header" onclick="toggleCard('card-tool')">
+        <div class="route-card-left">
+          <span class="route-badge">🔴 TOOL</span>
+          <div>
+            <div class="route-card-title">_execute_tool()</div>
+            <div class="route-card-desc">Run to the Service Desk, execute the action, bring back a result</div>
+          </div>
+        </div>
+        <span class="route-card-arrow">&#9662;</span>
+      </div>
+      <div class="route-card-body" id="card-tool-body">
+        <div class="ss-box">
+          <div class="ss-char">The Service Desk Route</div>
+          <p>The red flag arrives at the Service Desk. But first &mdash; two safety checks.</p>
+          <p><strong>Check 1:</strong> Did Big Bird actually write down which desk to go to? If the form says "do something" but doesn't specify what, the clerk politely says: "I understood you want to perform an action, but I couldn't determine which one."</p>
+          <p><strong>Check 2:</strong> Does that desk even exist? If the form says "go to the Moon Desk" and there is no Moon Desk, the clerk lists what IS available.</p>
+          <p>If both checks pass, the clerk injects the guest's room number (session ID) into the request, fires off the job with the dispatcher's timing system, and gets a raw result back. Then the voice upstairs turns that raw result into a friendly sentence the guest can understand.</p>
+        </div>
+        <div class="code-block">
+          <span class="code-label">PYTHON</span>
+<span class="kw">async def</span> <span class="fn">_execute_tool</span>(<span class="var">self</span>, <span class="var">plan</span>, <span class="var">user_message</span>, <span class="var">session_id</span>):
+    <span class="cm"># Safety check: did the form specify which desk?</span>
+    <span class="kw">if not</span> <span class="var">plan</span>.<span class="var">tool_name</span>:
+        <span class="kw">return</span> <span class="fn">ExecutionResult</span>(<span class="var">response</span>=<span class="str">"Could you be more specific?"</span>, ...)
+
+    <span class="cm"># Safety check: does that desk exist?</span>
+    <span class="var">tool</span> = <span class="var">self</span>.<span class="var">tools</span>.<span class="fn">get</span>(<span class="var">plan</span>.<span class="var">tool_name</span>)
+    <span class="kw">if not</span> <span class="var">tool</span>:
+        <span class="kw">return</span> <span class="fn">ExecutionResult</span>(<span class="var">response</span>=<span class="str">f"No tool '{plan.tool_name}'"</span>, ...)
+
+    <span class="cm"># Inject the guest's room number into the request</span>
+    <span class="var">args</span> = <span class="kw">dict</span>(<span class="var">plan</span>.<span class="var">tool_args</span>)
+    <span class="var">args</span>[<span class="str">"session_id"</span>] = <span class="var">session_id</span>
+
+    <span class="cm"># Fire off the job through the dispatcher</span>
+    <span class="var">tool_result</span> = <span class="kw">await</span> <span class="var">self</span>.<span class="var">tools</span>.<span class="fn">async_execute_with_timing</span>(
+        <span class="var">plan</span>.<span class="var">tool_name</span>, <span class="var">request_id</span>=<span class="fn">uuid4</span>(), **<span class="var">args</span>
+    )
+
+    <span class="cm"># Ask the voice upstairs to make it guest-friendly</span>
+    <span class="var">response</span> = <span class="kw">await</span> <span class="var">self</span>.<span class="var">llm</span>.<span class="fn">chat</span>(<span class="var">summarize_prompt</span>)
+    <span class="kw">return</span> <span class="fn">ExecutionResult</span>(<span class="var">response</span>=<span class="var">response</span>.<span class="var">content</span>, <span class="var">tool_result</span>=<span class="var">tool_result</span>, ...)
+        </div>
+      </div>
+    </div>
+
+    <!-- CLARIFY route -->
+    <div class="route-card card-clarify">
+      <div class="route-card-header" id="card-clarify-header" onclick="toggleCard('card-clarify')">
+        <div class="route-card-left">
+          <span class="route-badge">🟡 CLARIFY</span>
+          <div>
+            <div class="route-card-title">_execute_clarify()</div>
+            <div class="route-card-desc">Run back to the guest and ask for missing details</div>
+          </div>
+        </div>
+        <span class="route-card-arrow">&#9662;</span>
+      </div>
+      <div class="route-card-body" id="card-clarify-body">
+        <div class="ss-box">
+          <div class="ss-char">The Clarification Route</div>
+          <p>The yellow flag doesn't go to any department. It goes back to the guest.</p>
+          <p>Big Bird reads the planner's reasoning &mdash; "the guest wants to book but didn't specify which hotel or dates" &mdash; and asks the voice upstairs to compose a friendly, specific follow-up question. The voice checks the guest's recent conversation (in case the answer is already there) and writes something like: <em>"I'd love to help you book! Could you tell me which hotel you'd like, and your check-in and check-out dates?"</em></p>
+        </div>
+        <div class="code-block">
+          <span class="code-label">PYTHON</span>
+<span class="kw">async def</span> <span class="fn">_execute_clarify</span>(<span class="var">self</span>, <span class="var">plan</span>, <span class="var">user_message</span>, <span class="var">session_id</span>):
+    <span class="var">history</span> = <span class="var">self</span>.<span class="var">memory</span>.<span class="fn">get_messages</span>(<span class="var">session_id</span>, <span class="var">limit</span>=<span class="num">5</span>)
+    <span class="var">prompt</span> = <span class="var">EXECUTOR_CLARIFY_PROMPT</span>.<span class="fn">format</span>(
+        <span class="var">reasoning</span>=<span class="var">plan</span>.<span class="var">reasoning</span>,   <span class="cm"># what's missing</span>
+        <span class="var">history</span>=<span class="var">self</span>.<span class="fn">_format_history</span>(<span class="var">history</span>),
+        <span class="var">question</span>=<span class="var">user_message</span>,
+    )
+    <span class="var">response</span> = <span class="kw">await</span> <span class="var">self</span>.<span class="var">llm</span>.<span class="fn">chat</span>(<span class="var">messages</span>)
+    <span class="kw">return</span> <span class="fn">ExecutionResult</span>(<span class="var">response</span>=<span class="var">response</span>.<span class="var">content</span>, <span class="var">plan</span>=<span class="var">plan</span>)
+        </div>
+      </div>
+    </div>
+
+    <!-- CHITCHAT route -->
+    <div class="route-card card-chitchat">
+      <div class="route-card-header" id="card-chitchat-header" onclick="toggleCard('card-chitchat')">
+        <div class="route-card-left">
+          <span class="route-badge">🟢 CHITCHAT</span>
+          <div>
+            <div class="route-card-title">_execute_chitchat()</div>
+            <div class="route-card-desc">Stay right here and chat warmly with the guest</div>
+          </div>
+        </div>
+        <span class="route-card-arrow">&#9662;</span>
+      </div>
+      <div class="route-card-body" id="card-chitchat-body">
+        <div class="ss-box">
+          <div class="ss-char">The Chat Route</div>
+          <p>The green flag never leaves the War Room. No library, no service desk, no follow-up question. Big Bird just asks the voice upstairs to respond warmly and in character &mdash; as the Monster Resort Concierge.</p>
+          <p>The voice checks the guest's recent conversation to keep continuity, and writes a brief, helpful, friendly reply. That's it. The simplest route of all.</p>
+        </div>
+        <div class="code-block">
+          <span class="code-label">PYTHON</span>
+<span class="kw">async def</span> <span class="fn">_execute_chitchat</span>(<span class="var">self</span>, <span class="var">plan</span>, <span class="var">user_message</span>, <span class="var">session_id</span>):
+    <span class="var">history</span> = <span class="var">self</span>.<span class="var">memory</span>.<span class="fn">get_messages</span>(<span class="var">session_id</span>, <span class="var">limit</span>=<span class="num">5</span>)
+    <span class="var">prompt</span> = <span class="var">EXECUTOR_CHITCHAT_PROMPT</span>.<span class="fn">format</span>(
+        <span class="var">history</span>=<span class="var">self</span>.<span class="fn">_format_history</span>(<span class="var">history</span>),
+        <span class="var">question</span>=<span class="var">user_message</span>,
+    )
+    <span class="var">response</span> = <span class="kw">await</span> <span class="var">self</span>.<span class="var">llm</span>.<span class="fn">chat</span>(<span class="var">messages</span>)
+    <span class="kw">return</span> <span class="fn">ExecutionResult</span>(<span class="var">response</span>=<span class="var">response</span>.<span class="var">content</span>, <span class="var">plan</span>=<span class="var">plan</span>)
+        </div>
+      </div>
+    </div>
+
+    <div class="insight">
+      <span class="insight-icon">⚡</span>
+      <strong>The execute() method is just a four-way switch.</strong> It reads the flag color on the plan and dispatches to the matching route. If anything goes wrong inside a route, the executor catches the error and sends back a polite apology instead of crashing. The guest never sees a stack trace &mdash; just "I'm terribly sorry, could you try rephrasing?"
+    </div>
+
+    <!-- CODE: execute() dispatch -->
+    <div class="code-block">
+      <span class="code-label">PYTHON</span>
+<span class="cm"># Agent 2: Read the flag, send it to the right department</span>
+<span class="kw">async def</span> <span class="fn">execute</span>(<span class="var">self</span>, <span class="var">plan</span>: <span class="var">Plan</span>, <span class="var">user_message</span>: <span class="var">str</span>, <span class="var">session_id</span>: <span class="var">str</span>) -> <span class="var">ExecutionResult</span>:
+    <span class="var">start</span> = <span class="var">time</span>.<span class="fn">monotonic</span>()
+    <span class="kw">try</span>:
+        <span class="kw">if</span> <span class="var">plan</span>.<span class="var">intent</span> == <span class="var">IntentType</span>.<span class="var">KNOWLEDGE</span>:     <span class="cm"># blue flag</span>
+            <span class="var">result</span> = <span class="kw">await</span> <span class="var">self</span>.<span class="fn">_execute_knowledge</span>(...)
+        <span class="kw">elif</span> <span class="var">plan</span>.<span class="var">intent</span> == <span class="var">IntentType</span>.<span class="var">TOOL</span>:         <span class="cm"># red flag</span>
+            <span class="var">result</span> = <span class="kw">await</span> <span class="var">self</span>.<span class="fn">_execute_tool</span>(...)
+        <span class="kw">elif</span> <span class="var">plan</span>.<span class="var">intent</span> == <span class="var">IntentType</span>.<span class="var">CLARIFY</span>:      <span class="cm"># yellow flag</span>
+            <span class="var">result</span> = <span class="kw">await</span> <span class="var">self</span>.<span class="fn">_execute_clarify</span>(...)
+        <span class="kw">else</span>:                                       <span class="cm"># green flag</span>
+            <span class="var">result</span> = <span class="kw">await</span> <span class="var">self</span>.<span class="fn">_execute_chitchat</span>(...)
+    <span class="kw">except</span> <span class="var">Exception</span>:
+        <span class="cm"># Something broke — apologize gracefully</span>
+        <span class="var">result</span> = <span class="fn">ExecutionResult</span>(
+            <span class="var">response</span>=<span class="str">"I'm terribly sorry, something went wrong..."</span>,
+            <span class="var">plan</span>=<span class="var">plan</span>,
+        )
+    <span class="var">result</span>.<span class="var">latency_ms</span> = (<span class="var">time</span>.<span class="fn">monotonic</span>() - <span class="var">start</span>) * <span class="num">1000</span>
+    <span class="kw">return</span> <span class="var">result</span>
+    </div>
+
+    <div class="one-liner">
+      "Four flags, four departments. Each one knows its job."
+    </div>
+  </section>
+
+  <!-- ─────────────────── TAB 4: The Full Flow ─────────────────── -->
+  <section class="tab-panel" id="t4" role="tabpanel">
+    <h2 class="section-title">The Full Flow</h2>
+    <p class="section-sub">The handle() method is the front door of the War Room. Every guest request enters here, and a complete answer walks out. Two desks, six steps, one answer.</p>
+
+    <div class="full-timeline">
+      <div class="ftl-step">
+        <div class="ftl-dot cyan">1</div>
+        <div class="ftl-content">
+          <div class="ftl-label">Guest Walks into the War Room</div>
+          <div class="ftl-desc">A guest request arrives &mdash; a string of text and a room number. This is the raw input. Nothing has been decided yet. No flags, no departments, no plan.</div>
+          <span class="ftl-note">handle(user_message, session_id)</span>
+        </div>
+      </div>
+      <div class="ftl-step">
+        <div class="ftl-dot amber">2</div>
+        <div class="ftl-content">
+          <div class="ftl-label">Big Bird Reads the Request</div>
+          <div class="ftl-desc">Big Bird reads the request to the voice upstairs. The voice sends back a form with a flag color and details. If the form is garbled, Big Bird falls back to his gut feeling. Either way, a Plan comes out &mdash; a flag is picked.</div>
+          <span class="ftl-note">plan = await self.plan(user_message, session_id)</span>
+        </div>
+      </div>
+      <div class="ftl-step">
+        <div class="ftl-dot violet">3</div>
+        <div class="ftl-content">
+          <div class="ftl-label">Big Bird Picks a Flag and Sends It</div>
+          <div class="ftl-desc">The flag goes to the right department. Blue to the library, red to the service desk, yellow back to the guest, green stays here. The department does its work and returns a result.</div>
+          <span class="ftl-note">result = await self.execute(plan, user_message, session_id)</span>
+        </div>
+      </div>
+      <div class="ftl-step">
+        <div class="ftl-dot red">4</div>
+        <div class="ftl-content">
+          <div class="ftl-label">The Night Watchman Checks (Library Answers Only)</div>
+          <div class="ftl-desc">If the flag was blue &mdash; a library answer &mdash; the Night Watchman inspects the response. Did the librarian make anything up? Is the answer grounded in what the books actually say? He scores the confidence level. For all other flag colors, this step is skipped.</div>
+          <span class="ftl-note">if plan.intent == KNOWLEDGE: hal_detector.score_response(...)</span>
+        </div>
+      </div>
+      <div class="ftl-step">
+        <div class="ftl-dot green">5</div>
+        <div class="ftl-content">
+          <div class="ftl-label">Big Bird Writes in the Guest's File</div>
+          <div class="ftl-desc">The exchange is saved to memory: what the guest said, and what the concierge answered. Both go into the guest's file so the next conversation has context. The notepad grows by two lines.</div>
+          <span class="ftl-note">memory.add_message(session_id, "user", ...) + memory.add_message(session_id, "assistant", ...)</span>
+        </div>
+      </div>
+      <div class="ftl-step">
+        <div class="ftl-dot blue">6</div>
+        <div class="ftl-content">
+          <div class="ftl-label">Guest Receives the Answer</div>
+          <div class="ftl-desc">The ExecutionResult walks out the door. It carries the response text, which flag was picked, any tool results, library sources, timing data, and the Night Watchman's verdict. The guest sees only the response. Everything else is for the hotel's records.</div>
+          <span class="ftl-note">return result</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- CODE: handle() -->
+    <div class="code-block">
+      <span class="code-label">PYTHON</span>
+<span class="cm"># The front door of the War Room — every request enters here</span>
+<span class="kw">async def</span> <span class="fn">handle</span>(<span class="var">self</span>, <span class="var">user_message</span>: <span class="var">str</span>, <span class="var">session_id</span>: <span class="var">str</span>) -> <span class="var">ExecutionResult</span>:
+    <span class="var">overall_start</span> = <span class="var">time</span>.<span class="fn">monotonic</span>()
+
+    <span class="cm"># Step 1-2: Big Bird reads the request and picks a flag</span>
+    <span class="var">plan</span> = <span class="kw">await</span> <span class="var">self</span>.<span class="fn">plan</span>(<span class="var">user_message</span>, <span class="var">session_id</span>)
+
+    <span class="cm"># Step 3: Send the flag to the right department</span>
+    <span class="var">result</span> = <span class="kw">await</span> <span class="var">self</span>.<span class="fn">execute</span>(<span class="var">plan</span>, <span class="var">user_message</span>, <span class="var">session_id</span>)
+
+    <span class="cm"># Step 4: Night Watchman checks library answers</span>
+    <span class="kw">if</span> <span class="var">plan</span>.<span class="var">intent</span> == <span class="var">IntentType</span>.<span class="var">KNOWLEDGE</span>:
+        <span class="kw">try</span>:
+            <span class="var">hal_detector</span> = <span class="fn">HallucinationDetector</span>()
+            <span class="var">result</span>.<span class="var">confidence</span> = <span class="var">hal_detector</span>.<span class="fn">score_response</span>(
+                <span class="var">result</span>.<span class="var">response</span>, <span class="var">result</span>.<span class="var">sources</span>, <span class="var">user_message</span>
+            )
+        <span class="kw">except</span> <span class="var">Exception</span>:
+            <span class="kw">pass</span>  <span class="cm"># Night Watchman is off duty — carry on</span>
+
+    <span class="cm"># Step 5: Write the exchange in the guest's file</span>
+    <span class="var">self</span>.<span class="var">memory</span>.<span class="fn">add_message</span>(<span class="var">session_id</span>, <span class="str">"user"</span>, <span class="var">user_message</span>)
+    <span class="var">self</span>.<span class="var">memory</span>.<span class="fn">add_message</span>(<span class="var">session_id</span>, <span class="str">"assistant"</span>, <span class="var">result</span>.<span class="var">response</span>)
+
+    <span class="cm"># Step 6: Hand the answer to the guest</span>
+    <span class="kw">return</span> <span class="var">result</span>
+    </div>
+
+    <!-- ROOM MAP: connected rooms -->
+    <div class="room-map">
+      <h3>THE WAR ROOM &mdash; Connected Rooms</h3>
+
+      <div class="map-layer map-layer-top">
+        <div class="map-layer-label">The War Room (this file)</div>
+        <div class="map-items">
+          <div class="map-item">🐦 Big Bird (General)</div>
+          <div class="map-item">🚩 Flag Rack (IntentType)</div>
+          <div class="map-item">📋 The Planner (plan())</div>
+          <div class="map-item">⚡ The Executor (execute())</div>
+        </div>
+      </div>
+
+      <div class="map-arrow">&updownarrow;</div>
+
+      <div class="map-layer map-layer-middle">
+        <div class="map-layer-label">Rooms It Calls Into</div>
+        <div class="map-items">
+          <div class="map-item">📚 The Grand Library (RAG)</div>
+          <div class="map-item">☎️ The Switchboard (tools)</div>
+          <div class="map-item">⏳ The Hourglass (memory)</div>
+          <div class="map-item">👁️ The Night Watchman (hallucination)</div>
+        </div>
+      </div>
+
+      <div class="map-arrow">&updownarrow;</div>
+
+      <div class="map-layer map-layer-bottom">
+        <div class="map-layer-label">What The Guest Sees</div>
+        <div class="map-items">
+          <div class="map-item">💬 A single response</div>
+          <div class="map-item">No flags, no routing, no machinery</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="insight">
+      <span class="insight-icon">🏰</span>
+      <strong>The War Room owns the full lifecycle of a request.</strong> It doesn't do the searching (the library does that). It doesn't do the booking (the service desk does that). It doesn't store the memory (the hourglass does that). It doesn't check for lies (the Night Watchman does that). But it <strong>coordinates all of them</strong> &mdash; in the right order, with the right flag, every single time.
+    </div>
+
+    <div class="one-liner">
+      "Two desks, one answer. The guest never sees the flags."
+    </div>
+  </section>
+
+</main>
+
+<script>
+// ── TAB SWITCHING ──
+function switchTab(id) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    b.classList.remove('active');
+    b.setAttribute('aria-selected', 'false');
+  });
+  document.getElementById(id).classList.add('active');
+  const btn = document.getElementById('btn-' + id);
+  btn.classList.add('active');
+  btn.setAttribute('aria-selected', 'true');
+}
+
+// ── RECAP TOGGLE ──
+function toggleRecap() {
+  const toggle = document.getElementById('recapToggle');
+  const body = document.getElementById('recapBody');
+  toggle.classList.toggle('open');
+  body.classList.toggle('open');
+}
+
+// ── ACCORDION CARDS ──
+function toggleCard(id) {
+  const header = document.getElementById(id + '-header');
+  const body = document.getElementById(id + '-body');
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  header.classList.toggle('open', !isOpen);
+}
+
+// ── ESCAPE KEY ──
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    // close recap
+    const recapToggle = document.getElementById('recapToggle');
+    const recapBody = document.getElementById('recapBody');
+    if (recapBody.classList.contains('open')) {
+      recapToggle.classList.remove('open');
+      recapBody.classList.remove('open');
+    }
+    // close all route cards
+    ['card-knowledge', 'card-tool', 'card-clarify', 'card-chitchat'].forEach(id => {
+      const header = document.getElementById(id + '-header');
+      const body = document.getElementById(id + '-body');
+      if (header && body) {
+        header.classList.remove('open');
+        body.classList.remove('open');
+      }
+    });
+  }
+});
+</script>
+<link rel="stylesheet" href="movie_memory_layer.css">
+<script src="movie_memory_data.js"></script>
+<script src="movie_memory_layer.js" defer></script>
+</body>
+</html>

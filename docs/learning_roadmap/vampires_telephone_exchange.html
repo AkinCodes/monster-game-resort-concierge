@@ -1,0 +1,1632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Telephone Exchange — Three Lines to the Outside World</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600&family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --void: #05030a;
+  --crypt: #0d0918;
+  --catacombs: #150e24;
+  --dungeon: #1c1430;
+  --stone: #2a1f42;
+  --mist: #3d2d5e;
+  --amber: #f5a623;
+  --amber-glow: #ffcc55;
+  --crimson: #c0392b;
+  --purple: #9b59b6;
+  --violet: #7c3aed;
+  --gold: #ffd700;
+  --text-bright: #f0eaff;
+  --text-mid: #9f8dbf;
+  --text-dim: #5c4d7a;
+  --book: #22d3ee;
+  --get: #10b981;
+  --search: #f59e0b;
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--void);
+  color: var(--text-bright);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* -- TORCH FLAME -- */
+@keyframes flicker {
+  0%,100% { opacity: 1; transform: scaleY(1) scaleX(1); }
+  20% { opacity: .85; transform: scaleY(1.05) scaleX(.97); }
+  40% { opacity: .92; transform: scaleY(.96) scaleX(1.02); }
+  60% { opacity: .88; transform: scaleY(1.08) scaleX(.96); }
+  80% { opacity: .95; transform: scaleY(.98) scaleX(1.01); }
+}
+@keyframes torchGlow {
+  0%,100% { box-shadow: 0 0 20px 6px rgba(245,166,35,.35), 0 0 40px 12px rgba(245,166,35,.15); }
+  50% { box-shadow: 0 0 28px 10px rgba(245,166,35,.5), 0 0 55px 18px rgba(245,166,35,.2); }
+}
+@keyframes pulse {
+  0%,100% { opacity: 1; }
+  50% { opacity: .55; }
+}
+@keyframes slideDown {
+  from { opacity:0; transform:translateY(-10px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+@keyframes stepAppear {
+  from { opacity:0; transform:translateX(-12px); }
+  to   { opacity:1; transform:translateX(0); }
+}
+@keyframes glow {
+  0%,100% { box-shadow: 0 0 8px 2px currentColor; }
+  50% { box-shadow: 0 0 16px 6px currentColor; }
+}
+
+.torch {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+.torch-flame {
+  font-size: 28px;
+  animation: flicker 1.8s ease-in-out infinite;
+  line-height: 1;
+}
+.torch-body {
+  width: 10px; height: 28px;
+  background: linear-gradient(to bottom, #8B4513, #5C3317);
+  border-radius: 3px 3px 5px 5px;
+}
+
+/* -- HEADER -- */
+.site-header {
+  background: linear-gradient(180deg, var(--void) 0%, var(--crypt) 60%, var(--catacombs) 100%);
+  border-bottom: 1px solid var(--stone);
+  padding: 48px 24px 36px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.site-header::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 0%, rgba(124,58,237,.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+.header-torches {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 32px;
+  margin-bottom: 16px;
+}
+.site-header h1 {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(26px, 5vw, 46px);
+  font-weight: 900;
+  color: var(--gold);
+  text-shadow: 0 0 20px rgba(255,215,0,.4), 0 2px 4px rgba(0,0,0,.6);
+  letter-spacing: 2px;
+  animation: torchGlow 3s ease-in-out infinite;
+}
+.site-header .subtitle {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(13px, 2vw, 17px);
+  color: var(--text-mid);
+  margin-top: 8px;
+  letter-spacing: 1px;
+}
+.site-header .file-badge {
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--violet);
+  background: rgba(124,58,237,.12);
+  border: 1px solid rgba(124,58,237,.3);
+  border-radius: 20px;
+  padding: 4px 14px;
+  margin-top: 12px;
+}
+.header-intro {
+  max-width: 680px;
+  margin: 20px auto 0;
+  color: var(--text-mid);
+  font-size: 15px;
+  line-height: 1.7;
+}
+.header-intro em {
+  color: var(--amber);
+  font-style: normal;
+}
+
+/* -- RECAP BOX -- */
+.recap-wrapper {
+  max-width: 860px;
+  margin: 28px auto 0;
+  padding: 0 20px;
+}
+.recap-toggle {
+  width: 100%;
+  background: var(--crypt);
+  border: 1px solid var(--mist);
+  border-radius: var(--radius);
+  padding: 14px 20px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--text-mid);
+  transition: all .2s;
+}
+.recap-toggle:hover { border-color: var(--amber); color: var(--amber); }
+.recap-toggle .room-tag {
+  font-family: 'Cinzel', serif;
+  color: var(--gold);
+  font-size: 14px;
+}
+.recap-toggle .arrow {
+  transition: transform .3s cubic-bezier(.4,0,.2,1);
+  font-size: 16px;
+}
+.recap-toggle.open .arrow { transform: rotate(180deg); }
+.recap-body {
+  display: none;
+  background: linear-gradient(135deg, rgba(13,9,24,.95), rgba(21,14,36,.95));
+  border: 1px solid var(--mist);
+  border-top: none;
+  border-radius: 0 0 var(--radius) var(--radius);
+  padding: 20px 24px;
+  animation: slideDown .25s ease;
+}
+.recap-body.open { display: block; }
+.recap-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.recap-item {
+  background: rgba(42,31,66,.5);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: 13px;
+}
+.recap-item .label { color: var(--text-dim); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
+.recap-item .value { color: var(--text-bright); font-family: 'JetBrains Mono', monospace; margin-top: 2px; }
+.recap-note {
+  color: var(--text-mid);
+  font-size: 14px;
+  border-left: 3px solid var(--amber);
+  padding-left: 14px;
+  margin-top: 4px;
+}
+
+/* -- TAB NAV -- */
+.tab-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px;
+  padding: 28px 16px 0;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+.tab-btn {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 11px 20px;
+  border: 2px solid transparent;
+  border-bottom: none;
+  border-radius: 12px 12px 0 0;
+  cursor: pointer;
+  transition: all .2s;
+  background: var(--crypt);
+  color: var(--text-dim);
+  position: relative;
+}
+.tab-btn:hover { color: var(--text-mid); background: var(--catacombs); }
+.tab-btn.active {
+  background: var(--catacombs);
+  color: var(--gold);
+  border-color: var(--mist);
+  border-bottom-color: var(--catacombs);
+}
+.tab-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px; left: -1px; right: -1px;
+  height: 3px;
+  background: var(--catacombs);
+}
+
+/* -- TAB PANELS -- */
+.tab-content {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 0 16px 60px;
+}
+.tab-panel {
+  display: none;
+  background: var(--catacombs);
+  border: 1px solid var(--mist);
+  border-radius: 0 12px 12px 12px;
+  padding: 36px 32px;
+  animation: slideDown .3s ease;
+}
+.tab-panel.active { display: block; }
+
+/* -- SECTION TITLES -- */
+.section-title {
+  font-family: 'Cinzel', serif;
+  font-size: 22px;
+  color: var(--gold);
+  margin-bottom: 8px;
+}
+.section-sub {
+  color: var(--text-mid);
+  font-size: 14px;
+  margin-bottom: 28px;
+  line-height: 1.6;
+}
+
+/* -- SESAME STREET BOX -- */
+.ss-box {
+  background: linear-gradient(135deg, rgba(245,166,35,.06), rgba(255,204,85,.04));
+  border: 2px solid rgba(245,166,35,.35);
+  border-radius: var(--radius);
+  padding: 20px 22px;
+  margin: 20px 0;
+  position: relative;
+}
+.ss-box::before {
+  content: attr(data-icon);
+  position: absolute;
+  top: -12px; left: 16px;
+  font-size: 22px;
+  background: var(--catacombs);
+  padding: 0 6px;
+  line-height: 1;
+}
+.ss-box .ss-char {
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 700;
+  color: var(--amber);
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+.ss-box p {
+  color: var(--text-mid);
+  font-size: 14px;
+  line-height: 1.7;
+}
+.ss-box p + p { margin-top: 8px; }
+.ss-box strong { color: var(--amber-glow); }
+
+/* -- CODE BLOCK -- */
+.code-block {
+  background: #0a0612;
+  border: 1px solid var(--stone);
+  border-radius: var(--radius-sm);
+  padding: 18px 20px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  line-height: 1.8;
+  overflow-x: auto;
+  margin: 16px 0;
+  position: relative;
+}
+.code-block .code-label {
+  position: absolute;
+  top: 8px; right: 12px;
+  font-size: 10px;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.kw  { color: #c084fc; }
+.fn  { color: var(--gold); }
+.str { color: #86efac; }
+.cm  { color: var(--text-dim); font-style: italic; }
+.dec { color: var(--amber); }
+.num { color: #fb923c; }
+.var { color: #67e8f9; }
+
+/* -- INSIGHT BOX -- */
+.insight {
+  background: rgba(124,58,237,.1);
+  border: 1px solid rgba(124,58,237,.3);
+  border-radius: var(--radius-sm);
+  padding: 16px 20px;
+  margin: 20px 0;
+  font-size: 14px;
+  color: var(--text-mid);
+  line-height: 1.7;
+}
+.insight strong { color: var(--violet); }
+.insight .insight-icon { font-size: 18px; margin-right: 8px; }
+
+/* -- WIRING DIAGRAM -- */
+.wiring-wrap {
+  background: var(--dungeon);
+  border: 1px solid var(--stone);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin: 24px 0;
+}
+.wiring-wrap h3 {
+  font-family: 'Cinzel', serif;
+  font-size: 15px;
+  color: var(--text-mid);
+  text-align: center;
+  margin-bottom: 20px;
+  letter-spacing: 1px;
+}
+.wiring-diagram {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+.wiring-row {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  width: 100%;
+}
+.equip-box {
+  background: linear-gradient(135deg, var(--stone), var(--mist));
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  text-align: center;
+  min-width: 130px;
+  border: 1px solid var(--mist);
+}
+.equip-box .equip-icon { font-size: 24px; margin-bottom: 4px; }
+.equip-box .equip-name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--amber);
+  font-weight: 600;
+}
+.equip-box .equip-label {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+.wiring-svg-wrap {
+  width: 100%;
+  height: 80px;
+  overflow: visible;
+}
+.desk-box {
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  text-align: center;
+  min-width: 130px;
+  border: 2px solid;
+  position: relative;
+}
+.desk-book { border-color: var(--book); background: rgba(34,211,238,.06); }
+.desk-get  { border-color: var(--get);  background: rgba(16,185,129,.06); }
+.desk-srch { border-color: var(--search); background: rgba(245,158,11,.06); }
+.desk-box .desk-name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.desk-book .desk-name { color: var(--book); }
+.desk-get  .desk-name { color: var(--get); }
+.desk-srch .desk-name { color: var(--search); }
+.desk-box .desk-label { font-size: 11px; color: var(--text-dim); }
+.desk-box .desk-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: center;
+  margin-top: 8px;
+}
+.tag {
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 20px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.tag-db  { background: rgba(124,58,237,.2); color: #a78bfa; border: 1px solid rgba(124,58,237,.3); }
+.tag-pdf { background: rgba(192,57,43,.2);  color: #fca5a5; border: 1px solid rgba(192,57,43,.3); }
+.tag-rag { background: rgba(16,185,129,.2); color: #6ee7b7; border: 1px solid rgba(16,185,129,.3); }
+
+/* -- TOOL CARDS (accordion) -- */
+.tool-card {
+  border-radius: var(--radius);
+  margin-bottom: 16px;
+  overflow: hidden;
+  border: 1px solid var(--stone);
+}
+.tool-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 22px;
+  cursor: pointer;
+  transition: background .2s;
+  background: var(--dungeon);
+}
+.tool-card-header:hover { background: var(--stone); }
+.tool-card-header.open { background: var(--stone); }
+.tool-card-left { display: flex; align-items: center; gap: 14px; }
+.ext-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-weight: 600;
+}
+.tool-card-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 16px;
+  font-weight: 600;
+}
+.tool-card-desc { font-size: 13px; color: var(--text-dim); margin-top: 2px; }
+.tool-card-arrow {
+  font-size: 18px;
+  color: var(--text-dim);
+  transition: transform .3s cubic-bezier(.4,0,.2,1);
+}
+.tool-card-header.open .tool-card-arrow { transform: rotate(180deg); }
+.tool-card-body {
+  display: none;
+  padding: 24px 22px;
+  background: var(--catacombs);
+  border-top: 1px solid var(--stone);
+  animation: slideDown .25s ease;
+}
+.tool-card-body.open { display: block; }
+
+/* provider cards */
+.card-openai .tool-card-title { color: var(--book); }
+.card-openai .ext-badge { background: rgba(34,211,238,.15); color: var(--book); border: 1px solid rgba(34,211,238,.3); }
+.card-openai .tool-card-header { border-left: 4px solid var(--book); }
+.card-anthropic .tool-card-title { color: var(--get); }
+.card-anthropic .ext-badge { background: rgba(16,185,129,.15); color: var(--get); border: 1px solid rgba(16,185,129,.3); }
+.card-anthropic .tool-card-header { border-left: 4px solid var(--get); }
+.card-ollama .tool-card-title { color: var(--search); }
+.card-ollama .ext-badge { background: rgba(245,158,11,.15); color: var(--search); border: 1px solid rgba(245,158,11,.3); }
+.card-ollama .tool-card-header { border-left: 4px solid var(--search); }
+
+.equip-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.equip-chip {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--dungeon);
+  border: 1px solid var(--stone);
+  border-radius: 20px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.equip-chip .chip-icon { font-size: 14px; }
+
+/* -- BOUNCER BOX -- */
+.bouncer-box {
+  background: rgba(192,57,43,.06);
+  border: 1px solid rgba(192,57,43,.3);
+  border-radius: var(--radius-sm);
+  padding: 14px 18px;
+  margin: 14px 0;
+}
+.bouncer-box .bouncer-title {
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 700;
+  color: var(--crimson);
+  font-size: 14px;
+  margin-bottom: 8px;
+  display: flex; align-items: center; gap: 8px;
+}
+.bouncer-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.bouncer-list li {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--text-mid);
+  padding: 4px 10px;
+  background: rgba(192,57,43,.05);
+  border-radius: 4px;
+  border-left: 2px solid rgba(192,57,43,.4);
+}
+
+/* -- DISPATCHER TIMELINE -- */
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  position: relative;
+  margin: 20px 0;
+}
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 19px; top: 20px; bottom: 20px;
+  width: 2px;
+  background: linear-gradient(to bottom, var(--stone), var(--mist), var(--stone));
+}
+.tl-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 10px 0;
+  position: relative;
+}
+.tl-dot {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  border: 2px solid;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px;
+  font-weight: 700;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+  background: var(--catacombs);
+}
+.tl-dot.violet { color: #a78bfa; border-color: #a78bfa; }
+.tl-dot.cyan   { color: var(--book); border-color: var(--book); }
+.tl-dot.amber  { color: var(--amber); border-color: var(--amber); }
+.tl-dot.red    { color: #f87171; border-color: #f87171; }
+.tl-dot.green  { color: var(--get); border-color: var(--get); }
+.tl-content { flex: 1; padding-top: 1px; }
+.tl-label {
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--text-bright);
+}
+.tl-detail {
+  font-size: 13px;
+  color: var(--text-dim);
+  margin-top: 2px;
+  line-height: 1.5;
+}
+.tl-code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-mid);
+  background: var(--dungeon);
+  padding: 2px 8px;
+  border-radius: 4px;
+  display: inline-block;
+  margin-top: 4px;
+}
+
+/* -- ERROR SCENARIO -- */
+.error-scenario {
+  background: rgba(192,57,43,.06);
+  border: 1px solid rgba(192,57,43,.25);
+  border-radius: var(--radius);
+  padding: 20px 22px;
+  margin: 24px 0;
+}
+.error-scenario h3 {
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 700;
+  color: #f87171;
+  font-size: 16px;
+  margin-bottom: 12px;
+  display: flex; align-items: center; gap: 8px;
+}
+.error-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.error-step {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  font-size: 13px;
+}
+.error-step .e-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+.error-step .e-text { color: var(--text-mid); line-height: 1.5; }
+.error-step .e-text strong { color: var(--text-bright); }
+
+/* -- COMPARISON TABLE -- */
+.compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+  font-size: 13px;
+}
+.compare-table th {
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 600;
+  color: var(--gold);
+  text-align: left;
+  padding: 10px 14px;
+  border-bottom: 2px solid var(--stone);
+  background: var(--dungeon);
+}
+.compare-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(42,31,66,.5);
+  color: var(--text-mid);
+  vertical-align: top;
+}
+.compare-table tr:hover td {
+  background: rgba(42,31,66,.3);
+}
+.compare-table .col-label {
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text-bright);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* -- FULL TIMELINE -- */
+.full-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 24px 0;
+}
+.ftl-step {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  padding: 16px 0;
+  position: relative;
+}
+.ftl-step + .ftl-step::before {
+  content: '';
+  position: absolute;
+  left: 11px; top: 0;
+  width: 2px; height: 16px;
+  background: var(--stone);
+}
+.ftl-dot {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  border: 2px solid;
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px;
+  background: var(--catacombs);
+  margin-top: 2px;
+}
+.ftl-dot.cyan   { color: var(--book);   border-color: var(--book);   }
+.ftl-dot.amber  { color: var(--amber);  border-color: var(--amber);  }
+.ftl-dot.violet { color: #a78bfa;       border-color: #a78bfa;       }
+.ftl-dot.red    { color: #f87171;       border-color: #f87171;       }
+.ftl-dot.green  { color: var(--get);    border-color: var(--get);    }
+.ftl-dot.dim    { color: var(--text-dim); border-color: var(--text-dim); }
+.ftl-content { flex: 1; }
+.ftl-label {
+  font-family: 'Cinzel', serif;
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.ftl-step .ftl-dot.cyan   ~ .ftl-content .ftl-label { color: var(--book); }
+.ftl-step .ftl-dot.amber  ~ .ftl-content .ftl-label { color: var(--amber); }
+.ftl-step .ftl-dot.violet ~ .ftl-content .ftl-label { color: #a78bfa; }
+.ftl-step .ftl-dot.red    ~ .ftl-content .ftl-label { color: #f87171; }
+.ftl-step .ftl-dot.green  ~ .ftl-content .ftl-label { color: var(--get); }
+.ftl-step .ftl-dot.dim    ~ .ftl-content .ftl-label { color: var(--text-dim); }
+.ftl-desc {
+  font-size: 13px;
+  color: var(--text-dim);
+  line-height: 1.7;
+}
+.ftl-note {
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-mid);
+  background: var(--dungeon);
+  padding: 3px 10px;
+  border-radius: 4px;
+  margin-top: 6px;
+}
+
+/* -- ROOM MAP VISUAL -- */
+.room-map {
+  background: var(--dungeon);
+  border: 1px solid var(--stone);
+  border-radius: var(--radius);
+  padding: 28px;
+  margin: 28px 0;
+}
+.room-map h3 {
+  font-family: 'Cinzel', serif;
+  font-size: 15px;
+  color: var(--text-dim);
+  text-align: center;
+  margin-bottom: 24px;
+  letter-spacing: 1px;
+}
+.map-layer {
+  border-radius: var(--radius-sm);
+  padding: 16px 20px;
+  margin-bottom: 8px;
+}
+.map-layer-top    { background: rgba(34,211,238,.05); border: 1px solid rgba(34,211,238,.2); }
+.map-layer-middle { background: rgba(124,58,237,.05); border: 1px solid rgba(124,58,237,.2); }
+.map-layer-bottom { background: rgba(16,185,129,.05); border: 1px solid rgba(16,185,129,.2); }
+.map-layer-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+}
+.map-layer-top    .map-layer-label { color: var(--book); }
+.map-layer-middle .map-layer-label { color: var(--violet); }
+.map-layer-bottom .map-layer-label { color: var(--get); }
+.map-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.map-item {
+  background: rgba(42,31,66,.5);
+  border-radius: var(--radius-sm);
+  padding: 6px 14px;
+  font-size: 13px;
+  color: var(--text-mid);
+  font-family: 'JetBrains Mono', monospace;
+}
+.map-arrow {
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 20px;
+  margin: 4px 0;
+}
+
+/* -- ONE-LINER -- */
+.one-liner {
+  text-align: center;
+  font-family: 'Cinzel', serif;
+  font-size: clamp(14px, 2.2vw, 18px);
+  color: var(--gold);
+  padding: 24px 20px;
+  border-top: 1px solid var(--stone);
+  margin-top: 28px;
+  line-height: 1.6;
+}
+
+/* -- FORMS VISUAL -- */
+.forms-visual {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin: 24px 0;
+}
+.form-card {
+  background: var(--dungeon);
+  border: 1px solid var(--stone);
+  border-radius: var(--radius-sm);
+  padding: 18px 16px;
+}
+.form-card h4 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  color: var(--amber);
+  margin-bottom: 10px;
+}
+.form-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+  font-size: 12px;
+  border-bottom: 1px solid rgba(42,31,66,.5);
+}
+.form-field:last-child { border-bottom: none; }
+.form-field .field-name {
+  font-family: 'JetBrains Mono', monospace;
+  color: #67e8f9;
+  min-width: 90px;
+}
+.form-field .field-type {
+  color: var(--text-dim);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+}
+
+/* -- RESPONSIVE -- */
+@media (max-width: 900px) {
+  .tab-panel { padding: 28px 20px; }
+  .wiring-row { gap: 12px; }
+  .equip-box, .desk-box { min-width: 100px; }
+}
+@media (max-width: 700px) {
+  .tab-btn { font-size: 12px; padding: 9px 13px; }
+  .tab-panel { padding: 20px 14px; }
+  .forms-visual { grid-template-columns: 1fr; }
+  .wiring-row { flex-wrap: wrap; }
+  .recap-grid { grid-template-columns: 1fr 1fr; }
+  .compare-table { font-size: 11px; }
+  .compare-table th, .compare-table td { padding: 8px 10px; }
+}
+@media (max-width: 480px) {
+  .forms-visual { grid-template-columns: 1fr; }
+  .recap-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<a href="destruction_lab_20_experiments.html" style="position:fixed;top:12px;left:16px;z-index:9999;background:rgba(13,9,24,0.85);backdrop-filter:blur(8px);border:1px solid rgba(159,141,191,0.2);border-radius:8px;padding:6px 14px;color:#9f8dbf;text-decoration:none;font-size:0.8rem;font-family:system-ui,sans-serif;transition:all 0.2s;" onmouseover="this.style.color='#ffd700';this.style.borderColor='rgba(255,215,0,0.3)'" onmouseout="this.style.color='#9f8dbf';this.style.borderColor='rgba(159,141,191,0.2)'">&larr; Home</a>
+
+<!-- =====================================================
+     HEADER
+===================================================== -->
+<header class="site-header">
+  <div class="header-torches">
+    <div class="torch"><div class="torch-flame">&#x1F525;</div><div class="torch-body"></div></div>
+    <h1>The Telephone Exchange</h1>
+    <div class="torch"><div class="torch-flame">&#x1F525;</div><div class="torch-body"></div></div>
+  </div>
+  <div class="subtitle">Three Lines to the Outside World</div>
+  <div class="file-badge">app/concierge/llm_providers.py</div>
+  <p class="header-intro">
+    The hotel has three phone lines to the outside world. Each operator speaks a slightly different dialect, but every message that comes back gets translated to <em>one standard form</em>. If one line goes down, the Head Operator tries the next. <em>The guest never hears static.</em>
+  </p>
+</header>
+
+<!-- =====================================================
+     RECAP BOX
+===================================================== -->
+<div class="recap-wrapper">
+  <button class="recap-toggle" id="recapToggle" onclick="toggleRecap()">
+    <span class="room-tag">The Engine Room &mdash; Infrastructure</span>
+    <span style="color:var(--text-dim);font-size:13px;">Previously, in the Engine Room... (click to expand)</span>
+    <span class="arrow">&#x25BE;</span>
+  </button>
+  <div class="recap-body" id="recapBody">
+    <div class="recap-grid">
+      <div class="recap-item">
+        <div class="label">Previous Room</div>
+        <div class="value">The Engine Room</div>
+      </div>
+      <div class="recap-item">
+        <div class="label">What It Covered</div>
+        <div class="value">Infrastructure</div>
+      </div>
+      <div class="recap-item">
+        <div class="label">What You Need</div>
+        <div class="value">Outside comms</div>
+      </div>
+      <div class="recap-item">
+        <div class="label">New Concept</div>
+        <div class="value">Provider abstraction</div>
+      </div>
+    </div>
+    <div class="recap-note">
+      The Engine Room taught you how the hotel's infrastructure works &mdash; databases, configuration, the plumbing that keeps everything running.
+      <br><br>
+      <strong style="color:var(--amber);">Now:</strong> The hotel needs to communicate with the outside world. There are three phone lines, each run by a different operator who speaks a slightly different dialect. But every answer that comes back into the hotel arrives on one standard form. If a line goes down, the Head Operator silently tries the next one. The guest never hears static.
+    </div>
+  </div>
+</div>
+
+<!-- =====================================================
+     TAB NAV
+===================================================== -->
+<nav class="tab-nav" role="tablist">
+  <button class="tab-btn active" onclick="switchTab('t1')" id="btn-t1" role="tab" aria-selected="true">&#x1F4CB; The Standard Forms</button>
+  <button class="tab-btn" onclick="switchTab('t2')" id="btn-t2" role="tab">&#x1F4DE; Operator #1</button>
+  <button class="tab-btn" onclick="switchTab('t3')" id="btn-t3" role="tab">&#x1F310; Operator #2</button>
+  <button class="tab-btn" onclick="switchTab('t4')" id="btn-t4" role="tab">&#x1F3DB; The Head Operator</button>
+</nav>
+
+<!-- =====================================================
+     TAB PANELS
+===================================================== -->
+<main class="tab-content">
+
+  <!-- =================== TAB 1: The Standard Forms =================== -->
+  <section class="tab-panel active" id="t1" role="tabpanel">
+    <h2 class="section-title">The Standard Forms</h2>
+    <p class="section-sub">Before any operator picks up the phone, the hotel needs a universal language. These four things &mdash; three paper forms and one set of rules &mdash; make sure every answer looks the same, no matter who answered the call.</p>
+
+    <div class="ss-box" data-icon="&#x1F426;">
+      <div class="ss-char">Big Bird &mdash; The Form Designer</div>
+      <p>Big Bird sits in the back office with a stack of blank paper. He designs <strong>the standard message form</strong> that every operator in the building must use.</p>
+      <p>"It doesn't matter which phone line you use &mdash; when a message comes back, it <strong>must be on THIS form</strong>."</p>
+      <p>The form has four boxes: <strong>who's speaking</strong> (the role), <strong>what they said</strong> (the content), <strong>any service requests</strong> (tool calls &mdash; like asking to book a room mid-call), and <strong>how long the call lasted</strong> (usage &mdash; how many words went in, how many came back).</p>
+      <p>Big Bird also writes a single rule on the wall: "Every operator must know how to <strong>chat</strong> and how to <strong>translate service request formats</strong>. If you can't do those two things, you can't sit at a phone."</p>
+    </div>
+
+    <!-- FORMS VISUAL: Three cards side by side -->
+    <div class="forms-visual">
+      <div class="form-card">
+        <h4>LLMToolCall</h4>
+        <div class="form-field">
+          <span class="field-name">id</span>
+          <span class="field-type">str</span>
+        </div>
+        <div class="form-field">
+          <span class="field-name">name</span>
+          <span class="field-type">str</span>
+        </div>
+        <div class="form-field">
+          <span class="field-name">arguments</span>
+          <span class="field-type">str (JSON)</span>
+        </div>
+      </div>
+
+      <div class="form-card">
+        <h4>LLMMessage</h4>
+        <div class="form-field">
+          <span class="field-name">role</span>
+          <span class="field-type">str</span>
+        </div>
+        <div class="form-field">
+          <span class="field-name">content</span>
+          <span class="field-type">str</span>
+        </div>
+        <div class="form-field">
+          <span class="field-name">tool_calls</span>
+          <span class="field-type">List[LLMToolCall]</span>
+        </div>
+        <div class="form-field">
+          <span class="field-name">tool_call_id</span>
+          <span class="field-type">Optional[str]</span>
+        </div>
+      </div>
+
+      <div class="form-card">
+        <h4>LLMResponse</h4>
+        <div class="form-field">
+          <span class="field-name">content</span>
+          <span class="field-type">str</span>
+        </div>
+        <div class="form-field">
+          <span class="field-name">tool_calls</span>
+          <span class="field-type">List[LLMToolCall]</span>
+        </div>
+        <div class="form-field">
+          <span class="field-name">model</span>
+          <span class="field-type">str</span>
+        </div>
+        <div class="form-field">
+          <span class="field-name">provider</span>
+          <span class="field-type">str</span>
+        </div>
+        <div class="form-field">
+          <span class="field-name">usage</span>
+          <span class="field-type">Dict[str, int]</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- CODE BLOCK: Dataclasses + ABC -->
+    <div class="code-block">
+      <span class="code-label">llm_providers.py</span>
+<span class="cm"># --- The standard forms every operator must use ---</span>
+
+<span class="dec">@dataclass</span>
+<span class="kw">class</span> <span class="fn">LLMToolCall</span>:                   <span class="cm"># A service request slip</span>
+    <span class="var">id</span>: <span class="fn">str</span>                              <span class="cm"># ticket number</span>
+    <span class="var">name</span>: <span class="fn">str</span>                            <span class="cm"># which service desk</span>
+    <span class="var">arguments</span>: <span class="fn">str</span>                       <span class="cm"># details (JSON string)</span>
+
+<span class="dec">@dataclass</span>
+<span class="kw">class</span> <span class="fn">LLMMessage</span>:                      <span class="cm"># One line on the notepad</span>
+    <span class="var">role</span>: <span class="fn">str</span>                             <span class="cm"># who's speaking</span>
+    <span class="var">content</span>: <span class="fn">str</span> = <span class="str">""</span>                   <span class="cm"># what they said</span>
+    <span class="var">tool_calls</span>: <span class="fn">List</span>[<span class="fn">LLMToolCall</span>] = <span class="fn">field</span>(<span class="var">default_factory</span>=<span class="fn">list</span>)
+    <span class="var">tool_call_id</span>: <span class="fn">Optional</span>[<span class="fn">str</span>] = <span class="kw">None</span>  <span class="cm"># links answer to request</span>
+
+<span class="dec">@dataclass</span>
+<span class="kw">class</span> <span class="fn">LLMResponse</span>:                     <span class="cm"># The completed form that comes back</span>
+    <span class="var">content</span>: <span class="fn">str</span>                          <span class="cm"># the answer</span>
+    <span class="var">tool_calls</span>: <span class="fn">List</span>[<span class="fn">LLMToolCall</span>] = <span class="fn">field</span>(<span class="var">default_factory</span>=<span class="fn">list</span>)
+    <span class="var">model</span>: <span class="fn">str</span> = <span class="str">""</span>                     <span class="cm"># which phone was used</span>
+    <span class="var">provider</span>: <span class="fn">str</span> = <span class="str">""</span>                  <span class="cm"># which operator answered</span>
+    <span class="var">usage</span>: <span class="fn">Dict</span>[<span class="fn">str</span>, <span class="fn">int</span>] = <span class="fn">field</span>(<span class="var">default_factory</span>=<span class="fn">dict</span>)
+
+<span class="cm"># --- The rule on the wall: what every operator MUST do ---</span>
+
+<span class="kw">class</span> <span class="fn">LLMProvider</span>(<span class="fn">ABC</span>):               <span class="cm"># The operator job description</span>
+    <span class="dec">@abstractmethod</span>
+    <span class="kw">async def</span> <span class="fn">chat</span>(<span class="var">self</span>, <span class="var">messages</span>, <span class="var">tools</span>, <span class="var">model</span>) -> <span class="fn">LLMResponse</span>: ...
+        <span class="cm"># "You must be able to make a call and return a standard form."</span>
+
+    <span class="dec">@abstractmethod</span>
+    <span class="kw">def</span> <span class="fn">translate_tool_schemas</span>(<span class="var">self</span>, <span class="var">openai_schemas</span>) -> <span class="fn">List</span>[<span class="fn">dict</span>]: ...
+        <span class="cm"># "You must know how to translate service request formats."</span>
+
+    <span class="dec">@property</span>
+    <span class="dec">@abstractmethod</span>
+    <span class="kw">def</span> <span class="fn">name</span>(<span class="var">self</span>) -> <span class="fn">str</span>: ...
+        <span class="cm"># "You must have a name badge."</span>
+    </div>
+
+    <div class="insight">
+      <span class="insight-icon">&#x1F4A1;</span>
+      <strong>The standard forms are the reason the rest of the hotel never needs to know which operator answered.</strong>
+      The War Room, the Night Watchman, the Guest Book &mdash; they all read the same form. Whether Line 1, Line 2, or Line 3 picked up, the form that comes back looks identical. That is the entire point of the abstraction.
+    </div>
+
+    <div class="one-liner">
+      "Three operators, three dialects, one form. The hotel reads the form &mdash; never the dialect."
+    </div>
+  </section>
+
+  <!-- =================== TAB 2: Operator #1 — OpenAI =================== -->
+  <section class="tab-panel" id="t2" role="tabpanel">
+    <h2 class="section-title">Operator #1 &mdash; The Standard Dialect</h2>
+    <p class="section-sub">Operator #1 speaks the standard dialect. Messages go straight through with no translation needed. When service requests come back, they are already in the right format. This is the baseline everyone else is measured against.</p>
+
+    <div class="ss-box" data-icon="&#x1F4DE;">
+      <div class="ss-char">Operator #1 &mdash; The Native Speaker</div>
+      <p>Operator #1 sits at Line 1. When you hand him a stack of messages, he passes them straight to the outside world. <strong>No translation needed</strong> &mdash; the dialect the hotel uses internally is the same one this operator speaks natively.</p>
+      <p>When the answer comes back, Operator #1 reads through the response and fills in the standard form: the content goes in the "what they said" box, any service requests go in the "tool calls" box, and the call length goes in the "usage" box.</p>
+      <p>The service request format is also native. When the hotel says "here are the service desks the guest can use," Operator #1 just takes the list as-is. <strong>Zero translation in either direction.</strong></p>
+    </div>
+
+    <!-- CODE: OpenAIProvider -->
+    <div class="code-block">
+      <span class="code-label">OpenAIProvider</span>
+<span class="kw">class</span> <span class="fn">OpenAIProvider</span>(<span class="fn">LLMProvider</span>):
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="var">self</span>, <span class="var">api_key</span>: <span class="fn">str</span>, <span class="var">model</span>: <span class="fn">str</span> = <span class="str">"gpt-4o-mini"</span>):
+        <span class="kw">import</span> openai
+        <span class="var">self</span>._client = openai.<span class="fn">AsyncOpenAI</span>(<span class="var">api_key</span>=<span class="var">api_key</span>)
+        <span class="var">self</span>._model = <span class="var">model</span>
+
+    <span class="kw">def</span> <span class="fn">translate_tool_schemas</span>(<span class="var">self</span>, <span class="var">openai_schemas</span>):
+        <span class="kw">return</span> <span class="var">openai_schemas</span>  <span class="cm"># native format &mdash; no translation!</span>
+
+    <span class="kw">def</span> <span class="fn">_to_openai_messages</span>(<span class="var">self</span>, <span class="var">messages</span>):
+        <span class="var">out</span> = []
+        <span class="kw">for</span> <span class="var">m</span> <span class="kw">in</span> <span class="var">messages</span>:
+            <span class="var">msg</span> = {<span class="str">"role"</span>: <span class="var">m</span>.role, <span class="str">"content"</span>: <span class="var">m</span>.content}
+            <span class="kw">if</span> <span class="var">m</span>.tool_calls:  <span class="cm"># attach service requests</span>
+                <span class="var">msg</span>[<span class="str">"tool_calls"</span>] = [
+                    {<span class="str">"id"</span>: tc.id, <span class="str">"type"</span>: <span class="str">"function"</span>,
+                     <span class="str">"function"</span>: {<span class="str">"name"</span>: tc.name, <span class="str">"arguments"</span>: tc.arguments}}
+                    <span class="kw">for</span> tc <span class="kw">in</span> <span class="var">m</span>.tool_calls
+                ]
+            <span class="kw">if</span> <span class="var">m</span>.tool_call_id:  <span class="cm"># link answer to its request</span>
+                <span class="var">msg</span>[<span class="str">"tool_call_id"</span>] = <span class="var">m</span>.tool_call_id
+            <span class="var">out</span>.append(<span class="var">msg</span>)
+        <span class="kw">return</span> <span class="var">out</span>
+    </div>
+
+    <div class="code-block">
+      <span class="code-label">OpenAIProvider.chat()</span>
+    <span class="kw">async def</span> <span class="fn">chat</span>(<span class="var">self</span>, <span class="var">messages</span>, <span class="var">tools</span>=<span class="kw">None</span>, <span class="var">model</span>=<span class="kw">None</span>):
+        <span class="var">kwargs</span> = {
+            <span class="str">"model"</span>: <span class="var">model</span> <span class="kw">or</span> <span class="var">self</span>._model,
+            <span class="str">"messages"</span>: <span class="var">self</span>.<span class="fn">_to_openai_messages</span>(<span class="var">messages</span>),
+        }
+        <span class="kw">if</span> <span class="var">tools</span>:  <span class="cm"># hand over the service desk list</span>
+            <span class="var">kwargs</span>[<span class="str">"tools"</span>] = <span class="var">self</span>.<span class="fn">translate_tool_schemas</span>(<span class="var">tools</span>)
+            <span class="var">kwargs</span>[<span class="str">"tool_choice"</span>] = <span class="str">"auto"</span>
+
+        <span class="var">resp</span> = <span class="kw">await</span> <span class="var">self</span>._client.chat.completions.<span class="fn">create</span>(**<span class="var">kwargs</span>)
+        <span class="var">msg</span> = <span class="var">resp</span>.choices[<span class="num">0</span>].message
+
+        <span class="cm"># --- Parse service requests from the response ---</span>
+        <span class="var">tool_calls</span> = []
+        <span class="kw">if</span> <span class="fn">getattr</span>(<span class="var">msg</span>, <span class="str">"tool_calls"</span>, <span class="kw">None</span>):
+            <span class="var">tool_calls</span> = [
+                <span class="fn">LLMToolCall</span>(<span class="var">id</span>=tc.id, <span class="var">name</span>=tc.function.name,
+                            <span class="var">arguments</span>=tc.function.arguments)
+                <span class="kw">for</span> tc <span class="kw">in</span> <span class="var">msg</span>.tool_calls
+            ]
+
+        <span class="cm"># --- Parse call duration (usage) ---</span>
+        <span class="var">usage</span> = {}
+        <span class="kw">if</span> <span class="var">resp</span>.usage:
+            <span class="var">usage</span> = {
+                <span class="str">"prompt_tokens"</span>: <span class="var">resp</span>.usage.prompt_tokens,
+                <span class="str">"completion_tokens"</span>: <span class="var">resp</span>.usage.completion_tokens,
+                <span class="str">"total_tokens"</span>: <span class="var">resp</span>.usage.total_tokens,
+            }
+
+        <span class="cm"># --- Fill in the standard form and return it ---</span>
+        <span class="kw">return</span> <span class="fn">LLMResponse</span>(
+            <span class="var">content</span>=<span class="var">msg</span>.content <span class="kw">or</span> <span class="str">""</span>,
+            <span class="var">tool_calls</span>=<span class="var">tool_calls</span>,
+            <span class="var">model</span>=<span class="var">resp</span>.model,
+            <span class="var">provider</span>=<span class="str">"openai"</span>,
+            <span class="var">usage</span>=<span class="var">usage</span>,
+        )
+    </div>
+
+    <div class="insight">
+      <span class="insight-icon">&#x1F4A1;</span>
+      <strong>Operator #1 is the simplest because the hotel's internal format was modeled after his dialect.</strong>
+      The tool schemas pass through untouched. The messages need only light reshaping (adding the "function" wrapper on tool calls). The response parsing is straightforward: pull content, pull tool_calls, pull usage, fill the form.
+    </div>
+
+    <div class="one-liner">
+      "Line 1 speaks the house language. No phrasebook needed."
+    </div>
+  </section>
+
+  <!-- =================== TAB 3: Operator #2 — Anthropic =================== -->
+  <section class="tab-panel" id="t3" role="tabpanel">
+    <h2 class="section-title">Operator #2 &mdash; The Translator</h2>
+    <p class="section-sub">Operator #2 speaks a different dialect. The hotel must translate messages in both directions. Two key differences make this operator the most educational one in the building.</p>
+
+    <div class="ss-box" data-icon="&#x1F310;">
+      <div class="ss-char">Operator #2 &mdash; The Foreign Correspondent</div>
+      <p>Operator #2 is brilliant but particular. Two things about his dialect are <strong>fundamentally different</strong> from the house language:</p>
+      <p><strong>Difference #1: "The house rules must be sent separately."</strong> In Operator #1's dialect, the house rules (system message) are mixed right into the conversation, just another line on the notepad. Operator #2 insists: "Give me the house rules in a <strong>separate envelope</strong>." So the translator must scan every message, pull out any house rules, and hand them over separately.</p>
+      <p><strong>Difference #2: "Service requests look different."</strong> Operator #1 calls them "function calls." Operator #2 calls them "tool use blocks." The form layout is different &mdash; the name goes in a different box, the details are structured differently. The translator must reformat them in <strong>both directions</strong>: outgoing requests AND incoming responses.</p>
+    </div>
+
+    <!-- COMPARISON TABLE -->
+    <div class="wiring-wrap">
+      <h3>THE TWO DIALECTS &mdash; Side by Side</h3>
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th></th>
+            <th style="color:var(--book);">Operator #1 (OpenAI)</th>
+            <th style="color:var(--get);">Operator #2 (Anthropic)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="col-label">System message</td>
+            <td>Mixed into the message list<br><code style="color:#67e8f9;font-size:11px;">{"role": "system", "content": "..."}</code></td>
+            <td>Sent as a separate parameter<br><code style="color:#67e8f9;font-size:11px;">system="..." (outside the list)</code></td>
+          </tr>
+          <tr>
+            <td class="col-label">Tool calls (outgoing)</td>
+            <td><code style="color:#67e8f9;font-size:11px;">{"type": "function", "function": {"name", "parameters"}}</code></td>
+            <td><code style="color:#67e8f9;font-size:11px;">{"name", "description", "input_schema"}</code></td>
+          </tr>
+          <tr>
+            <td class="col-label">Tool calls (in response)</td>
+            <td><code style="color:#67e8f9;font-size:11px;">msg.tool_calls[].function.name</code></td>
+            <td><code style="color:#67e8f9;font-size:11px;">block.type == "tool_use", block.name</code></td>
+          </tr>
+          <tr>
+            <td class="col-label">Tool results</td>
+            <td><code style="color:#67e8f9;font-size:11px;">{"role": "tool", "tool_call_id": "..."}</code></td>
+            <td><code style="color:#67e8f9;font-size:11px;">{"role": "user", content: [{"type": "tool_result"}]}</code></td>
+          </tr>
+          <tr>
+            <td class="col-label">Usage fields</td>
+            <td><code style="color:#67e8f9;font-size:11px;">prompt_tokens, completion_tokens</code></td>
+            <td><code style="color:#67e8f9;font-size:11px;">input_tokens, output_tokens</code></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- CODE: translate_tool_schemas -->
+    <div class="code-block">
+      <span class="code-label">translate_tool_schemas()</span>
+<span class="kw">def</span> <span class="fn">translate_tool_schemas</span>(<span class="var">self</span>, <span class="var">openai_schemas</span>):
+    <span class="cm"># Translate the hotel's service desk list into Operator #2's dialect</span>
+    <span class="var">anthropic_tools</span> = []
+    <span class="kw">for</span> <span class="var">schema</span> <span class="kw">in</span> <span class="var">openai_schemas</span>:
+        <span class="var">fn</span> = <span class="var">schema</span>.get(<span class="str">"function"</span>, {})
+        <span class="var">anthropic_tools</span>.append({
+            <span class="str">"name"</span>: <span class="var">fn</span>.get(<span class="str">"name"</span>, <span class="str">""</span>),            <span class="cm"># same name, different envelope</span>
+            <span class="str">"description"</span>: <span class="var">fn</span>.get(<span class="str">"description"</span>, <span class="str">""</span>),
+            <span class="str">"input_schema"</span>: <span class="var">fn</span>.get(<span class="str">"parameters"</span>, {   <span class="cm"># "parameters" becomes "input_schema"</span>
+                <span class="str">"type"</span>: <span class="str">"object"</span>, <span class="str">"properties"</span>: {}
+            }),
+        })
+    <span class="kw">return</span> <span class="var">anthropic_tools</span>
+    </div>
+
+    <!-- CODE: _to_anthropic_messages -->
+    <div class="code-block">
+      <span class="code-label">_to_anthropic_messages() &mdash; The System Extraction</span>
+<span class="kw">def</span> <span class="fn">_to_anthropic_messages</span>(<span class="var">self</span>, <span class="var">messages</span>):
+    <span class="cm"># Scan every message. Pull out house rules. Reformat the rest.</span>
+    <span class="var">system_text</span> = <span class="str">""</span>
+    <span class="var">anthropic_msgs</span> = []
+
+    <span class="kw">for</span> <span class="var">m</span> <span class="kw">in</span> <span class="var">messages</span>:
+        <span class="kw">if</span> <span class="var">m</span>.role == <span class="str">"system"</span>:              <span class="cm"># House rules? Separate envelope!</span>
+            <span class="var">system_text</span> += <span class="var">m</span>.content + <span class="str">"\n"</span>
+            <span class="kw">continue</span>
+
+        <span class="kw">if</span> <span class="var">m</span>.role == <span class="str">"tool"</span>:                <span class="cm"># Tool result? Reformat as user msg</span>
+            <span class="var">anthropic_msgs</span>.append({
+                <span class="str">"role"</span>: <span class="str">"user"</span>,            <span class="cm"># Op #2 sees tool results as "user"</span>
+                <span class="str">"content"</span>: [{
+                    <span class="str">"type"</span>: <span class="str">"tool_result"</span>,
+                    <span class="str">"tool_use_id"</span>: <span class="var">m</span>.tool_call_id <span class="kw">or</span> <span class="str">""</span>,
+                    <span class="str">"content"</span>: <span class="var">m</span>.content,
+                }],
+            })
+            <span class="kw">continue</span>
+
+        <span class="kw">if</span> <span class="var">m</span>.role == <span class="str">"assistant"</span> <span class="kw">and</span> <span class="var">m</span>.tool_calls:  <span class="cm"># Assistant with service requests</span>
+            <span class="var">content_blocks</span> = []
+            <span class="kw">if</span> <span class="var">m</span>.content:
+                <span class="var">content_blocks</span>.append({<span class="str">"type"</span>: <span class="str">"text"</span>, <span class="str">"text"</span>: <span class="var">m</span>.content})
+            <span class="kw">for</span> tc <span class="kw">in</span> <span class="var">m</span>.tool_calls:
+                <span class="var">content_blocks</span>.append({
+                    <span class="str">"type"</span>: <span class="str">"tool_use"</span>,   <span class="cm"># "function" becomes "tool_use"</span>
+                    <span class="str">"id"</span>: tc.id,
+                    <span class="str">"name"</span>: tc.name,
+                    <span class="str">"input"</span>: json.loads(tc.arguments),  <span class="cm"># string -> dict</span>
+                })
+            <span class="var">anthropic_msgs</span>.append({<span class="str">"role"</span>: <span class="str">"assistant"</span>, <span class="str">"content"</span>: <span class="var">content_blocks</span>})
+            <span class="kw">continue</span>
+
+        <span class="var">anthropic_msgs</span>.append({<span class="str">"role"</span>: <span class="var">m</span>.role, <span class="str">"content"</span>: <span class="var">m</span>.content})
+
+    <span class="kw">return</span> <span class="var">system_text</span>.strip(), <span class="var">anthropic_msgs</span>
+    </div>
+
+    <!-- CODE: chat -->
+    <div class="code-block">
+      <span class="code-label">AnthropicProvider.chat()</span>
+<span class="kw">async def</span> <span class="fn">chat</span>(<span class="var">self</span>, <span class="var">messages</span>, <span class="var">tools</span>=<span class="kw">None</span>, <span class="var">model</span>=<span class="kw">None</span>):
+    <span class="cm"># Step 1: Translate outgoing messages (extract system, reformat)</span>
+    <span class="var">system_text</span>, <span class="var">anthropic_msgs</span> = <span class="var">self</span>.<span class="fn">_to_anthropic_messages</span>(<span class="var">messages</span>)
+
+    <span class="var">kwargs</span> = {
+        <span class="str">"model"</span>: <span class="var">model</span> <span class="kw">or</span> <span class="var">self</span>._model,
+        <span class="str">"max_tokens"</span>: <span class="num">4096</span>,
+        <span class="str">"messages"</span>: <span class="var">anthropic_msgs</span>,
+    }
+    <span class="kw">if</span> <span class="var">system_text</span>:                        <span class="cm"># hand over the separate envelope</span>
+        <span class="var">kwargs</span>[<span class="str">"system"</span>] = <span class="var">system_text</span>
+    <span class="kw">if</span> <span class="var">tools</span>:
+        <span class="var">kwargs</span>[<span class="str">"tools"</span>] = <span class="var">self</span>.<span class="fn">translate_tool_schemas</span>(<span class="var">tools</span>)
+
+    <span class="var">resp</span> = <span class="kw">await</span> <span class="var">self</span>._client.messages.<span class="fn">create</span>(**<span class="var">kwargs</span>)
+
+    <span class="cm"># Step 2: Translate incoming response blocks to standard form</span>
+    <span class="var">content_text</span> = <span class="str">""</span>
+    <span class="var">tool_calls</span> = []
+    <span class="kw">for</span> <span class="var">block</span> <span class="kw">in</span> <span class="var">resp</span>.content:
+        <span class="kw">if</span> <span class="var">block</span>.type == <span class="str">"text"</span>:
+            <span class="var">content_text</span> += <span class="var">block</span>.text
+        <span class="kw">elif</span> <span class="var">block</span>.type == <span class="str">"tool_use"</span>:      <span class="cm"># "tool_use" back to LLMToolCall</span>
+            <span class="var">tool_calls</span>.append(<span class="fn">LLMToolCall</span>(
+                <span class="var">id</span>=<span class="var">block</span>.id,
+                <span class="var">name</span>=<span class="var">block</span>.name,
+                <span class="var">arguments</span>=json.<span class="fn">dumps</span>(<span class="var">block</span>.input),  <span class="cm"># dict -> string</span>
+            ))
+
+    <span class="cm"># Step 3: Translate usage (different field names!)</span>
+    <span class="var">usage</span> = {}
+    <span class="kw">if</span> <span class="var">resp</span>.usage:
+        <span class="var">usage</span> = {
+            <span class="str">"prompt_tokens"</span>: <span class="var">resp</span>.usage.input_tokens,      <span class="cm"># different name!</span>
+            <span class="str">"completion_tokens"</span>: <span class="var">resp</span>.usage.output_tokens,  <span class="cm"># different name!</span>
+            <span class="str">"total_tokens"</span>: <span class="var">resp</span>.usage.input_tokens + <span class="var">resp</span>.usage.output_tokens,
+        }
+
+    <span class="kw">return</span> <span class="fn">LLMResponse</span>(
+        <span class="var">content</span>=<span class="var">content_text</span>,
+        <span class="var">tool_calls</span>=<span class="var">tool_calls</span>,
+        <span class="var">model</span>=<span class="var">resp</span>.model,
+        <span class="var">provider</span>=<span class="str">"anthropic"</span>,
+        <span class="var">usage</span>=<span class="var">usage</span>,
+    )
+    </div>
+
+    <div class="insight">
+      <span class="insight-icon">&#x1F4A1;</span>
+      <strong>Operator #2 is the most educational.</strong> If you understand the translation &mdash; the system message extraction, the tool_use vs function mapping, the input_tokens vs prompt_tokens rename &mdash; you understand why the standard forms exist. The entire point is that the War Room hands over messages in one format, and Operator #2 quietly reshapes them before sending, then reshapes the response back. The War Room never knows any of this happened.
+    </div>
+
+    <div class="one-liner">
+      "Same conversation, different envelope. The translator handles it all."
+    </div>
+  </section>
+
+  <!-- =================== TAB 4: The Head Operator =================== -->
+  <section class="tab-panel" id="t4" role="tabpanel">
+    <h2 class="section-title">The Head Operator</h2>
+    <p class="section-sub">Operator #3 sits in the basement &mdash; the local switchboard. And above all three operators sits the Head Operator, whose only job is: try Line 1, then Line 2, then Line 3. The guest hears an answer &mdash; never static.</p>
+
+    <div class="ss-box" data-icon="&#x1F3DB;">
+      <div class="ss-char">Operator #3 &mdash; The Basement Switchboard</div>
+      <p>Operator #3 is different from the others. Lines 1 and 2 are long-distance calls &mdash; they go out over the wire to faraway exchanges. Operator #3 uses a <strong>direct wire to the basement</strong> &mdash; a local switchboard running right inside the hotel building.</p>
+      <p>He speaks the same dialect as Operator #1 (no translation needed), but he uses a raw cable (HTTP) instead of the fancy long-distance telephone service. <strong>No call charges</strong> &mdash; it is free. But the connection is slower, and the voice on the other end is less polished.</p>
+      <p>The basement switchboard has a generous timeout &mdash; <strong>120 seconds</strong> &mdash; because local calls sometimes take a while to connect.</p>
+    </div>
+
+    <!-- CODE: OllamaProvider -->
+    <div class="code-block">
+      <span class="code-label">OllamaProvider</span>
+<span class="kw">class</span> <span class="fn">OllamaProvider</span>(<span class="fn">LLMProvider</span>):
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="var">self</span>, <span class="var">base_url</span>=<span class="str">"http://localhost:11434"</span>, <span class="var">model</span>=<span class="str">"llama3"</span>):
+        <span class="var">self</span>._base_url = <span class="var">base_url</span>.rstrip(<span class="str">"/"</span>)
+        <span class="var">self</span>._model = <span class="var">model</span>
+        <span class="var">self</span>._http = httpx.<span class="fn">AsyncClient</span>(<span class="var">timeout</span>=<span class="num">120.0</span>)  <span class="cm"># 2 min — local is slow</span>
+
+    <span class="kw">def</span> <span class="fn">translate_tool_schemas</span>(<span class="var">self</span>, <span class="var">openai_schemas</span>):
+        <span class="kw">return</span> <span class="var">openai_schemas</span>  <span class="cm"># same dialect as Operator #1</span>
+
+    <span class="kw">async def</span> <span class="fn">chat</span>(<span class="var">self</span>, <span class="var">messages</span>, <span class="var">tools</span>=<span class="kw">None</span>, <span class="var">model</span>=<span class="kw">None</span>):
+        <span class="var">payload</span> = {
+            <span class="str">"model"</span>: <span class="var">model</span> <span class="kw">or</span> <span class="var">self</span>._model,
+            <span class="str">"messages"</span>: <span class="var">self</span>.<span class="fn">_to_ollama_messages</span>(<span class="var">messages</span>),
+            <span class="str">"stream"</span>: <span class="kw">False</span>,           <span class="cm"># wait for full answer, no partial</span>
+        }
+        <span class="kw">if</span> <span class="var">tools</span>:
+            <span class="var">payload</span>[<span class="str">"tools"</span>] = <span class="var">self</span>.<span class="fn">translate_tool_schemas</span>(<span class="var">tools</span>)
+
+        <span class="cm"># Raw HTTP call to the basement switchboard</span>
+        <span class="var">resp</span> = <span class="kw">await</span> <span class="var">self</span>._http.<span class="fn">post</span>(
+            f<span class="str">"{self._base_url}/api/chat"</span>, <span class="var">json</span>=<span class="var">payload</span>
+        )
+        <span class="var">resp</span>.<span class="fn">raise_for_status</span>()
+        <span class="var">data</span> = <span class="var">resp</span>.<span class="fn">json</span>()
+        <span class="var">msg</span> = <span class="var">data</span>.get(<span class="str">"message"</span>, {})
+
+        <span class="cm"># Parse tool calls from the response (if any)</span>
+        <span class="var">tool_calls</span> = []
+        <span class="kw">for</span> tc <span class="kw">in</span> <span class="var">msg</span>.get(<span class="str">"tool_calls"</span>, []):
+            <span class="var">fn</span> = tc.get(<span class="str">"function"</span>, {})
+            <span class="var">tool_calls</span>.append(<span class="fn">LLMToolCall</span>(
+                <span class="var">id</span>=tc.get(<span class="str">"id"</span>, <span class="str">""</span>),
+                <span class="var">name</span>=<span class="var">fn</span>.get(<span class="str">"name"</span>, <span class="str">""</span>),
+                <span class="var">arguments</span>=json.<span class="fn">dumps</span>(<span class="var">fn</span>.get(<span class="str">"arguments"</span>, {}))
+                    <span class="kw">if</span> <span class="fn">isinstance</span>(<span class="var">fn</span>.get(<span class="str">"arguments"</span>), <span class="fn">dict</span>)
+                    <span class="kw">else</span> <span class="var">fn</span>.get(<span class="str">"arguments"</span>, <span class="str">"{}"</span>),
+            ))
+
+        <span class="kw">return</span> <span class="fn">LLMResponse</span>(
+            <span class="var">content</span>=<span class="var">msg</span>.get(<span class="str">"content"</span>, <span class="str">""</span>),
+            <span class="var">tool_calls</span>=<span class="var">tool_calls</span>,
+            <span class="var">model</span>=<span class="var">payload</span>[<span class="str">"model"</span>],
+            <span class="var">provider</span>=<span class="str">"ollama"</span>,
+            <span class="var">usage</span>={},  <span class="cm"># local switchboard doesn't track call length</span>
+        )
+    </div>
+
+    <!-- THE HEAD OPERATOR -->
+    <div class="ss-box" data-icon="&#x1F468;&#x200D;&#x2696;&#xFE0F;">
+      <div class="ss-char">The Head Operator &mdash; ModelRouter</div>
+      <p>The Head Operator sits above all three lines. He does not speak any dialect himself &mdash; he has no phone. His only job is <strong>management</strong>.</p>
+      <p>When a call needs to go out, he tries <strong>Line 1 first</strong>. If it is busy or down, he tries <strong>Line 2</strong>. Then <strong>Line 3</strong>. The guest hears an answer &mdash; never static.</p>
+      <p>If ALL three lines are down &mdash; an event so rare it has never happened &mdash; only then does the Head Operator walk to the guest and say: "I'm sorry. All lines are down."</p>
+      <p>He can also be told: <strong>"Don't try the next line."</strong> If fallback is disabled, when Line 1 goes down, the Head Operator immediately reports the failure instead of trying Line 2.</p>
+    </div>
+
+    <!-- CODE: ModelRouter -->
+    <div class="code-block">
+      <span class="code-label">ModelRouter &mdash; The Head Operator</span>
+<span class="kw">class</span> <span class="fn">ModelRouter</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="var">self</span>, <span class="var">providers</span>: <span class="fn">List</span>[<span class="fn">LLMProvider</span>], <span class="var">fallback_enabled</span>=<span class="kw">True</span>):
+        <span class="var">self</span>.providers = <span class="var">providers</span>        <span class="cm"># The three phone lines, in priority order</span>
+        <span class="var">self</span>.fallback_enabled = <span class="var">fallback_enabled</span>
+
+    <span class="kw">async def</span> <span class="fn">chat</span>(<span class="var">self</span>, <span class="var">messages</span>, <span class="var">tools</span>=<span class="kw">None</span>, <span class="var">model</span>=<span class="kw">None</span>):
+        <span class="var">last_error</span> = <span class="kw">None</span>
+
+        <span class="kw">for</span> <span class="var">provider</span> <span class="kw">in</span> <span class="var">self</span>.providers:     <span class="cm"># Try each line in order</span>
+            <span class="kw">try</span>:
+                logger.<span class="fn">info</span>(f<span class="str">"Trying LLM provider: {provider.name}"</span>)
+                <span class="var">response</span> = <span class="kw">await</span> <span class="var">provider</span>.<span class="fn">chat</span>(<span class="var">messages</span>, <span class="var">tools</span>, <span class="var">model</span>)
+                logger.<span class="fn">info</span>(f<span class="str">"LLM provider {provider.name} succeeded"</span>)
+                <span class="kw">return</span> <span class="var">response</span>              <span class="cm"># Got an answer! Return it.</span>
+            <span class="kw">except</span> <span class="fn">Exception</span> <span class="kw">as</span> <span class="var">e</span>:
+                <span class="var">last_error</span> = <span class="var">e</span>
+                logger.<span class="fn">warning</span>(f<span class="str">"LLM provider {provider.name} failed: {e}"</span>)
+                <span class="kw">if not</span> <span class="var">self</span>.fallback_enabled:  <span class="cm"># No fallback? Stop here.</span>
+                    <span class="kw">raise</span>
+
+        <span class="cm"># All lines down. Report failure.</span>
+        <span class="kw">raise</span> <span class="fn">RuntimeError</span>(f<span class="str">"All LLM providers failed. Last error: {last_error}"</span>)
+    </div>
+
+    <!-- ERROR SCENARIO -->
+    <div class="error-scenario">
+      <h3>&#x26A0;&#xFE0F; What Happens When Line 1 Goes Down?</h3>
+      <div class="error-flow">
+        <div class="error-step">
+          <span class="e-icon">&#x1F4E8;</span>
+          <span class="e-text">A call needs to go out. The Head Operator picks up Line 1 (OpenAI).</span>
+        </div>
+        <div class="error-step">
+          <span class="e-icon">&#x26A1;</span>
+          <span class="e-text"><strong>Line 1 is down!</strong> An exception is raised. The Head Operator catches it.</span>
+        </div>
+        <div class="error-step">
+          <span class="e-icon">&#x1F4DD;</span>
+          <span class="e-text">He writes a warning in the log: <strong>"LLM provider openai failed: Connection refused"</strong></span>
+        </div>
+        <div class="error-step">
+          <span class="e-icon">&#x1F504;</span>
+          <span class="e-text">Fallback is enabled, so the loop continues. He picks up Line 2 (Anthropic).</span>
+        </div>
+        <div class="error-step">
+          <span class="e-icon">&#x2705;</span>
+          <span class="e-text"><strong>Line 2 answers!</strong> Operator #2 translates the message, makes the call, translates the response, fills in the standard form.</span>
+        </div>
+        <div class="error-step">
+          <span class="e-icon">&#x1F4CB;</span>
+          <span class="e-text">The standard form goes back to the hotel. <strong>The guest never knew Line 1 was down.</strong></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- FALLBACK TIMELINE -->
+    <div class="wiring-wrap">
+      <h3>THE FALLBACK CHAIN</h3>
+      <div class="timeline">
+        <div class="tl-step">
+          <div class="tl-dot violet">1</div>
+          <div class="tl-content">
+            <div class="tl-label">Call Request Arrives</div>
+            <div class="tl-detail">The War Room (or any part of the hotel) needs an answer from the outside world.</div>
+            <span class="tl-code">router.chat(messages, tools)</span>
+          </div>
+        </div>
+        <div class="tl-step">
+          <div class="tl-dot cyan">2</div>
+          <div class="tl-content">
+            <div class="tl-label">Try Operator #1 (OpenAI)</div>
+            <div class="tl-detail">First line in the priority list. The Head Operator dials Line 1.</div>
+            <span class="tl-code">provider.chat(messages, tools, model)</span>
+          </div>
+        </div>
+        <div class="tl-step">
+          <div class="tl-dot red">3</div>
+          <div class="tl-content">
+            <div class="tl-label">Line 1 Fails</div>
+            <div class="tl-detail">Exception caught. Warning logged. Loop continues because fallback_enabled is True.</div>
+            <span class="tl-code">logger.warning("openai failed: ...")</span>
+          </div>
+        </div>
+        <div class="tl-step">
+          <div class="tl-dot green">4</div>
+          <div class="tl-content">
+            <div class="tl-label">Try Operator #2 (Anthropic)</div>
+            <div class="tl-detail">Next line in the list. Messages get translated, call goes out, response comes back.</div>
+            <span class="tl-code">logger.info("anthropic succeeded")</span>
+          </div>
+        </div>
+        <div class="tl-step">
+          <div class="tl-dot amber">5</div>
+          <div class="tl-content">
+            <div class="tl-label">Standard Form Returned</div>
+            <div class="tl-detail">LLMResponse with content, tool_calls, model, provider="anthropic", and usage. Back to the hotel.</div>
+            <span class="tl-code">return response</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ROOM MAP: Three providers -->
+    <div class="room-map">
+      <h3>THE THREE LINES &mdash; At a Glance</h3>
+
+      <div class="map-layer map-layer-top">
+        <div class="map-layer-label">Line 1 &mdash; OpenAI (Standard Dialect)</div>
+        <div class="map-items">
+          <div class="map-item">Native format</div>
+          <div class="map-item">No translation</div>
+          <div class="map-item">Long-distance</div>
+          <div class="map-item">Paid per call</div>
+        </div>
+      </div>
+
+      <div class="map-arrow">&#x2195;</div>
+
+      <div class="map-layer map-layer-middle">
+        <div class="map-layer-label">Line 2 &mdash; Anthropic (Foreign Dialect)</div>
+        <div class="map-items">
+          <div class="map-item">System extracted</div>
+          <div class="map-item">Tool format translated</div>
+          <div class="map-item">Long-distance</div>
+          <div class="map-item">Paid per call</div>
+        </div>
+      </div>
+
+      <div class="map-arrow">&#x2195;</div>
+
+      <div class="map-layer map-layer-bottom">
+        <div class="map-layer-label">Line 3 &mdash; Ollama (Local Basement Wire)</div>
+        <div class="map-items">
+          <div class="map-item">Same dialect as #1</div>
+          <div class="map-item">Raw HTTP</div>
+          <div class="map-item">Free</div>
+          <div class="map-item">Slower</div>
+          <div class="map-item">No usage tracking</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="insight">
+      <span class="insight-icon">&#x1F4A1;</span>
+      <strong>The Head Operator's power comes from simplicity.</strong> He does not translate. He does not speak any dialect. He simply has a list of operators and a for-loop. Try each one. If it works, return the answer. If it fails and fallback is on, try the next. If all fail, admit defeat. That is the entire ModelRouter &mdash; a for-loop with a try/except.
+    </div>
+
+    <div class="one-liner">
+      "Three lines, one answer. The guest never knows which operator picked up."
+    </div>
+  </section>
+
+</main>
+
+<!-- =====================================================
+     FOOTER CONNECTION
+===================================================== -->
+<div style="max-width:860px;margin:0 auto;padding:0 20px 40px;">
+  <div class="insight">
+    <span class="insight-icon">&#x1F3F0;</span>
+    <strong>Connection:</strong> The War Room calls through this Telephone Exchange to reach the outside world.
+    The Engine Room provides the infrastructure (secret credentials, configuration) that powers each phone line.
+    The standard forms (LLMToolCall, LLMMessage, LLMResponse) are the universal language that lets
+    every other room in the hotel &mdash; the Night Watchman, the Guest Book, the War Room &mdash; work
+    without ever knowing which operator answered.
+  </div>
+</div>
+
+<script>
+// -- TAB SWITCHING --
+function switchTab(id) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    b.classList.remove('active');
+    b.setAttribute('aria-selected', 'false');
+  });
+  document.getElementById(id).classList.add('active');
+  const btn = document.getElementById('btn-' + id);
+  btn.classList.add('active');
+  btn.setAttribute('aria-selected', 'true');
+}
+
+// -- RECAP TOGGLE --
+function toggleRecap() {
+  const toggle = document.getElementById('recapToggle');
+  const body = document.getElementById('recapBody');
+  toggle.classList.toggle('open');
+  body.classList.toggle('open');
+}
+
+// -- ACCORDION CARDS --
+function toggleCard(id) {
+  const header = document.getElementById(id + '-header');
+  const body = document.getElementById(id + '-body');
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  header.classList.toggle('open', !isOpen);
+}
+
+// -- ESCAPE KEY --
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    const recapToggle = document.getElementById('recapToggle');
+    const recapBody = document.getElementById('recapBody');
+    if (recapBody.classList.contains('open')) {
+      recapToggle.classList.remove('open');
+      recapBody.classList.remove('open');
+    }
+  }
+});
+</script>
+<link rel="stylesheet" href="movie_memory_layer.css">
+<script src="movie_memory_data.js"></script>
+<script src="movie_memory_layer.js" defer></script>
+</body>
+</html>
