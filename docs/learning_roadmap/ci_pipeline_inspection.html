@@ -1,0 +1,1379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Oscar's Morning Inspection — CI/CD Pipeline</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600&family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --void: #05030a;
+  --crypt: #0d0918;
+  --catacombs: #150e24;
+  --dungeon: #1c1430;
+  --stone: #2a1f42;
+  --mist: #3d2d5e;
+  --amber: #f5a623;
+  --amber-glow: #ffcc55;
+  --crimson: #c0392b;
+  --purple: #9b59b6;
+  --violet: #7c3aed;
+  --gold: #ffd700;
+  --text-bright: #f0eaff;
+  --text-mid: #9f8dbf;
+  --text-dim: #5c4d7a;
+  --book: #22d3ee;
+  --get: #10b981;
+  --search: #f59e0b;
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--void);
+  color: var(--text-bright);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* ── TORCH FLAME ── */
+@keyframes flicker {
+  0%,100% { opacity: 1; transform: scaleY(1) scaleX(1); }
+  20% { opacity: .85; transform: scaleY(1.05) scaleX(.97); }
+  40% { opacity: .92; transform: scaleY(.96) scaleX(1.02); }
+  60% { opacity: .88; transform: scaleY(1.08) scaleX(.96); }
+  80% { opacity: .95; transform: scaleY(.98) scaleX(1.01); }
+}
+@keyframes torchGlow {
+  0%,100% { box-shadow: 0 0 20px 6px rgba(245,166,35,.35), 0 0 40px 12px rgba(245,166,35,.15); }
+  50% { box-shadow: 0 0 28px 10px rgba(245,166,35,.5), 0 0 55px 18px rgba(245,166,35,.2); }
+}
+@keyframes pulse {
+  0%,100% { opacity: 1; }
+  50% { opacity: .55; }
+}
+@keyframes slideDown {
+  from { opacity:0; transform:translateY(-10px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+@keyframes stepAppear {
+  from { opacity:0; transform:translateX(-12px); }
+  to   { opacity:1; transform:translateX(0); }
+}
+@keyframes glow {
+  0%,100% { box-shadow: 0 0 8px 2px currentColor; }
+  50% { box-shadow: 0 0 16px 6px currentColor; }
+}
+
+.torch {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+.torch-flame {
+  font-size: 28px;
+  animation: flicker 1.8s ease-in-out infinite;
+  line-height: 1;
+}
+.torch-body {
+  width: 10px; height: 28px;
+  background: linear-gradient(to bottom, #8B4513, #5C3317);
+  border-radius: 3px 3px 5px 5px;
+}
+
+/* ── HEADER ── */
+.site-header {
+  background: linear-gradient(180deg, var(--void) 0%, var(--crypt) 60%, var(--catacombs) 100%);
+  border-bottom: 1px solid var(--stone);
+  padding: 48px 24px 36px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.site-header::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 0%, rgba(124,58,237,.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+.header-torches {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 32px;
+  margin-bottom: 16px;
+}
+.site-header h1 {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(26px, 5vw, 46px);
+  font-weight: 900;
+  color: var(--gold);
+  text-shadow: 0 0 20px rgba(255,215,0,.4), 0 2px 4px rgba(0,0,0,.6);
+  letter-spacing: 2px;
+  animation: torchGlow 3s ease-in-out infinite;
+}
+.site-header .subtitle {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(13px, 2vw, 17px);
+  color: var(--text-mid);
+  margin-top: 8px;
+  letter-spacing: 1px;
+}
+.site-header .file-badge {
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--violet);
+  background: rgba(124,58,237,.12);
+  border: 1px solid rgba(124,58,237,.3);
+  border-radius: 20px;
+  padding: 4px 14px;
+  margin-top: 12px;
+}
+.header-intro {
+  max-width: 680px;
+  margin: 20px auto 0;
+  color: var(--text-mid);
+  font-size: 15px;
+  line-height: 1.7;
+}
+.header-intro em {
+  color: var(--amber);
+  font-style: normal;
+}
+
+/* ── RECAP BOX ── */
+.recap-wrapper {
+  max-width: 860px;
+  margin: 28px auto 0;
+  padding: 0 20px;
+}
+.recap-toggle {
+  width: 100%;
+  background: var(--crypt);
+  border: 1px solid var(--mist);
+  border-radius: var(--radius);
+  padding: 14px 20px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--text-mid);
+  transition: all .2s;
+}
+.recap-toggle:hover { border-color: var(--amber); color: var(--amber); }
+.recap-toggle .room-tag {
+  font-family: 'Cinzel', serif;
+  color: var(--gold);
+  font-size: 14px;
+}
+.recap-toggle .arrow {
+  transition: transform .3s cubic-bezier(.4,0,.2,1);
+  font-size: 16px;
+}
+.recap-toggle.open .arrow { transform: rotate(180deg); }
+.recap-body {
+  display: none;
+  background: linear-gradient(135deg, rgba(13,9,24,.95), rgba(21,14,36,.95));
+  border: 1px solid var(--mist);
+  border-top: none;
+  border-radius: 0 0 var(--radius) var(--radius);
+  padding: 20px 24px;
+  animation: slideDown .25s ease;
+}
+.recap-body.open { display: block; }
+.recap-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.recap-item {
+  background: rgba(42,31,66,.5);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: 13px;
+}
+.recap-item .label { color: var(--text-dim); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
+.recap-item .value { color: var(--text-bright); font-family: 'JetBrains Mono', monospace; margin-top: 2px; }
+.recap-note {
+  color: var(--text-mid);
+  font-size: 14px;
+  border-left: 3px solid var(--amber);
+  padding-left: 14px;
+  margin-top: 4px;
+}
+
+/* ── TAB NAV ── */
+.tab-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px;
+  padding: 28px 16px 0;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+.tab-btn {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 11px 20px;
+  border: 2px solid transparent;
+  border-bottom: none;
+  border-radius: 12px 12px 0 0;
+  cursor: pointer;
+  transition: all .2s;
+  background: var(--crypt);
+  color: var(--text-dim);
+  position: relative;
+}
+.tab-btn:hover { color: var(--text-mid); background: var(--catacombs); }
+.tab-btn.active {
+  background: var(--catacombs);
+  color: var(--gold);
+  border-color: var(--mist);
+  border-bottom-color: var(--catacombs);
+}
+.tab-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px; left: -1px; right: -1px;
+  height: 3px;
+  background: var(--catacombs);
+}
+
+/* ── TAB PANELS ── */
+.tab-content {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 0 16px 60px;
+}
+.tab-panel {
+  display: none;
+  background: var(--catacombs);
+  border: 1px solid var(--mist);
+  border-radius: 0 12px 12px 12px;
+  padding: 36px 32px;
+  animation: slideDown .3s ease;
+}
+.tab-panel.active { display: block; }
+
+/* ── SECTION TITLES ── */
+.section-title {
+  font-family: 'Cinzel', serif;
+  font-size: 22px;
+  color: var(--gold);
+  margin-bottom: 8px;
+}
+.section-sub {
+  color: var(--text-mid);
+  font-size: 14px;
+  margin-bottom: 28px;
+  line-height: 1.6;
+}
+
+/* ── SESAME STREET BOX ── */
+.ss-box {
+  background: linear-gradient(135deg, rgba(245,166,35,.06), rgba(255,204,85,.04));
+  border: 2px solid rgba(245,166,35,.35);
+  border-radius: var(--radius);
+  padding: 20px 22px;
+  margin: 20px 0;
+  position: relative;
+}
+.ss-box::before {
+  content: '🐦';
+  position: absolute;
+  top: -12px; left: 16px;
+  font-size: 22px;
+  background: var(--catacombs);
+  padding: 0 6px;
+  line-height: 1;
+}
+.ss-box .ss-char {
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 700;
+  color: var(--amber);
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+.ss-box p {
+  color: var(--text-mid);
+  font-size: 14px;
+  line-height: 1.7;
+}
+.ss-box p + p { margin-top: 8px; }
+.ss-box strong { color: var(--amber-glow); }
+
+/* ── CODE BLOCK ── */
+.code-block {
+  background: #0a0612;
+  border: 1px solid var(--stone);
+  border-radius: var(--radius-sm);
+  padding: 18px 20px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  line-height: 1.8;
+  overflow-x: auto;
+  margin: 16px 0;
+  position: relative;
+}
+.code-block .code-label {
+  position: absolute;
+  top: 8px; right: 12px;
+  font-size: 10px;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.kw  { color: #c084fc; }
+.fn  { color: var(--gold); }
+.str { color: #86efac; }
+.cm  { color: var(--text-dim); font-style: italic; }
+.dec { color: var(--amber); }
+.num { color: #fb923c; }
+.var { color: #67e8f9; }
+
+/* ── INSIGHT BOX ── */
+.insight {
+  background: rgba(124,58,237,.1);
+  border: 1px solid rgba(124,58,237,.3);
+  border-radius: var(--radius-sm);
+  padding: 16px 20px;
+  margin: 20px 0;
+  font-size: 14px;
+  color: var(--text-mid);
+  line-height: 1.7;
+}
+.insight strong { color: var(--violet); }
+.insight .insight-icon { font-size: 18px; margin-right: 8px; }
+
+/* ── TOOL CARDS (accordion) ── */
+.tool-card {
+  border-radius: var(--radius);
+  margin-bottom: 16px;
+  overflow: hidden;
+  border: 1px solid var(--stone);
+}
+.tool-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 22px;
+  cursor: pointer;
+  transition: background .2s;
+  background: var(--dungeon);
+}
+.tool-card-header:hover { background: var(--stone); }
+.tool-card-header.open { background: var(--stone); }
+.tool-card-left { display: flex; align-items: center; gap: 14px; }
+.ext-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-weight: 600;
+}
+.tool-card-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 16px;
+  font-weight: 600;
+}
+.tool-card-desc { font-size: 13px; color: var(--text-dim); margin-top: 2px; }
+.tool-card-arrow {
+  font-size: 18px;
+  color: var(--text-dim);
+  transition: transform .3s cubic-bezier(.4,0,.2,1);
+}
+.tool-card-header.open .tool-card-arrow { transform: rotate(180deg); }
+.tool-card-body {
+  display: none;
+  padding: 24px 22px;
+  background: var(--catacombs);
+  border-top: 1px solid var(--stone);
+  animation: slideDown .25s ease;
+}
+.tool-card-body.open { display: block; }
+
+/* Pipeline step cards */
+.card-checkout .tool-card-title { color: var(--book); }
+.card-checkout .ext-badge { background: rgba(34,211,238,.15); color: var(--book); border: 1px solid rgba(34,211,238,.3); }
+.card-checkout .tool-card-header { border-left: 4px solid var(--book); }
+
+.card-install .tool-card-title { color: var(--get); }
+.card-install .ext-badge { background: rgba(16,185,129,.15); color: var(--get); border: 1px solid rgba(16,185,129,.3); }
+.card-install .tool-card-header { border-left: 4px solid var(--get); }
+
+.card-lint .tool-card-title { color: var(--search); }
+.card-lint .ext-badge { background: rgba(245,158,11,.15); color: var(--search); border: 1px solid rgba(245,158,11,.3); }
+.card-lint .tool-card-header { border-left: 4px solid var(--search); }
+
+.card-test .tool-card-title { color: #a78bfa; }
+.card-test .ext-badge { background: rgba(124,58,237,.15); color: #a78bfa; border: 1px solid rgba(124,58,237,.3); }
+.card-test .tool-card-header { border-left: 4px solid #a78bfa; }
+
+.card-result .tool-card-title { color: var(--gold); }
+.card-result .ext-badge { background: rgba(255,215,0,.15); color: var(--gold); border: 1px solid rgba(255,215,0,.3); }
+.card-result .tool-card-header { border-left: 4px solid var(--gold); }
+
+/* ── BOUNCER BOX ── */
+.bouncer-box {
+  background: rgba(192,57,43,.06);
+  border: 1px solid rgba(192,57,43,.3);
+  border-radius: var(--radius-sm);
+  padding: 14px 18px;
+  margin: 14px 0;
+}
+.bouncer-box .bouncer-title {
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 700;
+  color: var(--crimson);
+  font-size: 14px;
+  margin-bottom: 8px;
+  display: flex; align-items: center; gap: 8px;
+}
+.bouncer-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.bouncer-list li {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--text-mid);
+  padding: 4px 10px;
+  background: rgba(192,57,43,.05);
+  border-radius: 4px;
+  border-left: 2px solid rgba(192,57,43,.4);
+}
+
+/* ── DISPATCHER TIMELINE ── */
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  position: relative;
+  margin: 20px 0;
+}
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 19px; top: 20px; bottom: 20px;
+  width: 2px;
+  background: linear-gradient(to bottom, var(--stone), var(--mist), var(--stone));
+}
+.tl-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 10px 0;
+  position: relative;
+}
+.tl-dot {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  border: 2px solid;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px;
+  font-weight: 700;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+  background: var(--catacombs);
+}
+.tl-dot.violet { color: #a78bfa; border-color: #a78bfa; }
+.tl-dot.cyan   { color: var(--book); border-color: var(--book); }
+.tl-dot.amber  { color: var(--amber); border-color: var(--amber); }
+.tl-dot.red    { color: #f87171; border-color: #f87171; }
+.tl-dot.green  { color: var(--get); border-color: var(--get); }
+.tl-content { flex: 1; padding-top: 1px; }
+.tl-label {
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--text-bright);
+}
+.tl-detail {
+  font-size: 13px;
+  color: var(--text-dim);
+  margin-top: 2px;
+  line-height: 1.5;
+}
+.tl-code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-mid);
+  background: var(--dungeon);
+  padding: 2px 8px;
+  border-radius: 4px;
+  display: inline-block;
+  margin-top: 4px;
+}
+
+/* ── ERROR SCENARIO ── */
+.error-scenario {
+  background: rgba(192,57,43,.06);
+  border: 1px solid rgba(192,57,43,.25);
+  border-radius: var(--radius);
+  padding: 20px 22px;
+  margin: 24px 0;
+}
+.error-scenario h3 {
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 700;
+  color: #f87171;
+  font-size: 16px;
+  margin-bottom: 12px;
+  display: flex; align-items: center; gap: 8px;
+}
+.error-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.error-step {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  font-size: 13px;
+}
+.error-step .e-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+.error-step .e-text { color: var(--text-mid); line-height: 1.5; }
+.error-step .e-text strong { color: var(--text-bright); }
+
+/* ── STEP LIST ── */
+.step-list { display: flex; flex-direction: column; gap: 6px; }
+.step-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  background: rgba(42,31,66,.3);
+  transition: all .4s ease;
+}
+.step-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+.step-text { font-size: 14px; color: var(--text-mid); line-height: 1.5; }
+
+/* ── PIPELINE STEP STATUS COLORS ── */
+.step-pass .step-icon { color: #10b981; }
+.step-fail .step-icon { color: #c0392b; }
+.step-skip .step-icon { color: #5c4d7a; text-decoration: line-through; }
+.step-skip .step-text { color: #5c4d7a; font-style: italic; }
+
+/* ── COMPARISON TABLE ── */
+.compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+  font-size: 13px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.compare-table th {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 14px;
+  color: var(--gold);
+  text-align: left;
+  padding: 10px 14px;
+  border-bottom: 2px solid var(--mist);
+  background: rgba(42,31,66,.5);
+}
+.compare-table td {
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--stone);
+  color: var(--text-mid);
+  line-height: 1.6;
+}
+.compare-table tr:last-child td { border-bottom: none; }
+.compare-table .match { color: var(--get); }
+.compare-table .drift { color: var(--crimson); }
+.compare-table .only-one { color: var(--amber); }
+
+/* ── INTERVIEW TAKEAWAY ── */
+.interview-takeaway {
+  background: rgba(16,185,129,.06);
+  border: 1px solid rgba(16,185,129,.3);
+  border-radius: var(--radius-sm);
+  padding: 16px 20px;
+  margin: 20px 0;
+  font-size: 14px;
+  color: var(--text-mid);
+  line-height: 1.7;
+}
+.interview-takeaway strong { color: var(--get); }
+.interview-takeaway .takeaway-icon { font-size: 18px; margin-right: 8px; }
+
+/* ── FIX BOX ── */
+.fix-box {
+  background: rgba(34,211,238,.06);
+  border: 1px solid rgba(34,211,238,.25);
+  border-radius: var(--radius);
+  padding: 20px 22px;
+  margin: 20px 0;
+}
+.fix-box h3 {
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 700;
+  color: var(--book);
+  font-size: 15px;
+  margin-bottom: 12px;
+  display: flex; align-items: center; gap: 8px;
+}
+.fix-box p {
+  color: var(--text-mid);
+  font-size: 14px;
+  line-height: 1.7;
+}
+.fix-box p + p { margin-top: 8px; }
+.fix-box strong { color: var(--book); }
+.fix-box ol {
+  color: var(--text-mid);
+  font-size: 14px;
+  line-height: 1.7;
+  padding-left: 20px;
+  margin-top: 8px;
+}
+.fix-box ol li { margin-bottom: 6px; }
+.fix-box code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  background: rgba(0,0,0,.3);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: var(--amber-glow);
+}
+
+/* ── ONE-LINER ── */
+.one-liner {
+  text-align: center;
+  font-family: 'Cinzel', serif;
+  font-size: clamp(14px, 2.2vw, 18px);
+  color: var(--gold);
+  padding: 24px 20px;
+  border-top: 1px solid var(--stone);
+  margin-top: 28px;
+  line-height: 1.6;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 900px) {
+  .tab-panel { padding: 28px 20px; }
+}
+@media (max-width: 700px) {
+  .tab-btn { font-size: 12px; padding: 9px 13px; }
+  .tab-panel { padding: 20px 14px; }
+  .recap-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 480px) {
+  .recap-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<a href="destruction_lab_20_experiments.html" style="position:fixed;top:12px;left:16px;z-index:9999;background:rgba(13,9,24,0.85);backdrop-filter:blur(8px);border:1px solid rgba(159,141,191,0.2);border-radius:8px;padding:6px 14px;color:#9f8dbf;text-decoration:none;font-size:0.8rem;font-family:system-ui,sans-serif;transition:all 0.2s;" onmouseover="this.style.color='#ffd700';this.style.borderColor='rgba(255,215,0,0.3)'" onmouseout="this.style.color='#9f8dbf';this.style.borderColor='rgba(159,141,191,0.2)'">&larr; Home</a>
+
+<!-- ═══════════════════════════════════════════════
+     HEADER
+═══════════════════════════════════════════════ -->
+<header class="site-header">
+  <div class="header-torches">
+    <div class="torch"><div class="torch-flame">🔥</div><div class="torch-body"></div></div>
+    <h1>Oscar's Morning Inspection</h1>
+    <div class="torch"><div class="torch-flame">🔥</div><div class="torch-body"></div></div>
+  </div>
+  <div class="subtitle">What happens before any guest sets foot in the building</div>
+  <div class="file-badge">.github/workflows/ci.yml</div>
+  <p class="header-intro">
+    Every morning, before the hotel opens, a delivery truck pulls up to the loading dock.
+    Big Bird dispatches the inspection team. Cookie Monster walks every room checking for crumbs.
+    Grover tests every faucet and lock. Count von Count tallies the results.
+    If anything fails, <em>Oscar writes the rejection notice</em> and the hotel stays closed.
+    <em>No exceptions.</em>
+  </p>
+</header>
+
+<!-- ═══════════════════════════════════════════════
+     RECAP BOX
+═══════════════════════════════════════════════ -->
+<div class="recap-wrapper">
+  <button class="recap-toggle" id="recapToggle" onclick="toggleRecap()">
+    <span class="room-tag">The Loading Dock</span>
+    <span style="color:var(--text-dim);font-size:13px;">What you've built so far... (click to expand)</span>
+    <span class="arrow">▾</span>
+  </button>
+  <div class="recap-body" id="recapBody">
+    <div class="recap-grid">
+      <div class="recap-item">
+        <div class="label">The Engine Room</div>
+        <div class="value">Infrastructure (Docker, hosting, env vars)</div>
+      </div>
+      <div class="recap-item">
+        <div class="label">The War Room</div>
+        <div class="value">Orchestrator routes requests</div>
+      </div>
+      <div class="recap-item">
+        <div class="label">The Switchboard</div>
+        <div class="value">Tools and service desks</div>
+      </div>
+      <div class="recap-item">
+        <div class="label">The Night Watchman</div>
+        <div class="value">Monitoring and logging</div>
+      </div>
+    </div>
+    <div class="recap-note">
+      You've built the hotel. Now you need to make sure it passes inspection every morning before the doors open. That's CI/CD.
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     TAB NAV
+═══════════════════════════════════════════════ -->
+<nav class="tab-nav" role="tablist">
+  <button class="tab-btn active" onclick="switchTab('t1')" id="btn-t1">⚙️ The Assembly Line</button>
+  <button class="tab-btn" onclick="switchTab('t2')" id="btn-t2">🧳 The Stowaway</button>
+  <button class="tab-btn" onclick="switchTab('t3')" id="btn-t3">🌙 The Night Guest</button>
+  <button class="tab-btn" onclick="switchTab('t4')" id="btn-t4">👥 Two Watchmen</button>
+  <button class="tab-btn" onclick="switchTab('t5')" id="btn-t5">🧳 The Luggage Mismatch</button>
+</nav>
+
+<!-- ═══════════════════════════════════════════════
+     TAB PANELS
+═══════════════════════════════════════════════ -->
+<main class="tab-content">
+
+  <!-- ─────────────────── TAB 1: The Assembly Line ─────────────────── -->
+  <section class="tab-panel active" id="t1" role="tabpanel">
+    <h2 class="section-title">The Assembly Line — What a CI Pipeline Actually Does</h2>
+    <p class="section-sub">Every morning, a delivery truck pulls up. Inside is last night's work — code changes from the cleaning crew. Before any guest sees the hotel, the inspection team runs through a strict sequence of checks. Each inspector hands off to the next. If anyone raises a red flag, the line stops. The hotel stays closed.</p>
+
+    <!-- ── Card 1: Checkout ── -->
+    <div class="tool-card card-checkout">
+      <div class="tool-card-header" onclick="toggleCard(this)">
+        <div class="tool-card-left">
+          <span class="ext-badge">STEP 1</span>
+          <div>
+            <div class="tool-card-title">Checkout</div>
+            <div class="tool-card-desc">Big Bird receives the delivery truck</div>
+          </div>
+        </div>
+        <span class="tool-card-arrow">▾</span>
+      </div>
+      <div class="tool-card-body">
+        <div class="ss-box">
+          <div class="ss-char">Big Bird — The Receiving Dock</div>
+          <p>The overnight cleaning crew finished their shift. Now Big Bird needs to see what they actually did. The delivery truck backs up to the loading dock — that's the <strong>git push</strong>. Big Bird opens the back, pulls out every box, and lays them out on the dock so the inspectors can look at everything.</p>
+          <p>Without this step, there's nothing to inspect. Big Bird doesn't judge the contents. He just makes sure everything that was shipped is now <strong>on the table</strong>.</p>
+        </div>
+        <div class="code-block">
+          <span class="code-label">YAML</span>
+<span class="cm"># Pull the code onto the inspection table</span>
+<span class="kw">- uses:</span> <span class="str">actions/checkout@v4</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Card 2: Install ── -->
+    <div class="tool-card card-install">
+      <div class="tool-card-header" onclick="toggleCard(this)">
+        <div class="tool-card-left">
+          <span class="ext-badge">STEP 2</span>
+          <div>
+            <div class="tool-card-title">Install</div>
+            <div class="tool-card-desc">The kitchen stocks up on ingredients</div>
+          </div>
+        </div>
+        <span class="tool-card-arrow">▾</span>
+      </div>
+      <div class="tool-card-body">
+        <div class="ss-box">
+          <div class="ss-char">The Kitchen — Stocking the Pantry</div>
+          <p>Before anyone can cook, the kitchen needs ingredients. <strong>pip install</strong> is the supply truck unloading flour, butter, eggs — every dependency your code needs to run. If the pantry is empty, the chef can't make anything. If a package is missing or the wrong version, the recipe fails.</p>
+          <p>This step reads the recipe list (<strong>requirements.txt</strong>) and fills the pantry with exactly what's needed. Nothing more, nothing less.</p>
+        </div>
+        <div class="code-block">
+          <span class="code-label">YAML</span>
+<span class="kw">- name:</span> <span class="str">Install dependencies</span>
+  <span class="kw">run:</span> <span class="str">pip install -r requirements.txt</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Card 3: Lint ── -->
+    <div class="tool-card card-lint">
+      <div class="tool-card-header" onclick="toggleCard(this)">
+        <div class="tool-card-left">
+          <span class="ext-badge">STEP 3</span>
+          <div>
+            <div class="tool-card-title">Lint</div>
+            <div class="tool-card-desc">Cookie Monster inspects every room for crumbs</div>
+          </div>
+        </div>
+        <span class="tool-card-arrow">▾</span>
+      </div>
+      <div class="tool-card-body">
+        <div class="ss-box">
+          <div class="ss-char">Cookie Monster — The Crumb Inspector</div>
+          <p>"Me walk EVERY room. Me check EVERY corner. One crumb? <strong>FAILED.</strong>"</p>
+          <p>Cookie Monster doesn't care if the room looks nice overall. He's not checking if the bed is comfortable or the view is good. He's looking for <strong>crumbs</strong> — unused imports, missing whitespace, lines that are too long, variables that were never used. Tiny messes that show sloppy work.</p>
+          <p>He walks into <strong>app/</strong>, checks every file. Then <strong>tests/</strong>, checks every file there too. If he finds even one crumb, he slams the clipboard down. <strong>FAILED.</strong> The line stops here.</p>
+        </div>
+        <div class="code-block">
+          <span class="code-label">YAML</span>
+<span class="kw">- name:</span> <span class="str">Lint</span>
+  <span class="kw">run:</span> <span class="str">flake8 app tests</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Card 4: Test ── -->
+    <div class="tool-card card-test">
+      <div class="tool-card-header" onclick="toggleCard(this)">
+        <div class="tool-card-left">
+          <span class="ext-badge">STEP 4</span>
+          <div>
+            <div class="tool-card-title">Test</div>
+            <div class="tool-card-desc">Grover tests every faucet and lock</div>
+          </div>
+        </div>
+        <span class="tool-card-arrow">▾</span>
+      </div>
+      <div class="tool-card-body">
+        <div class="ss-box">
+          <div class="ss-char">Grover — The Meticulous Tester</div>
+          <p>"I, Grover, shall test each room VERY carefully."</p>
+          <p>Grover goes room by room. He turns on every faucet — does water come out? He tries every lock — does it click shut? He flips every light switch — does the bulb turn on? He doesn't just glance at the room. He <strong>uses</strong> everything the way a guest would.</p>
+          <p>If a faucet sprays sideways, that's a failure. If a lock doesn't catch, that's a failure. <strong>pytest</strong> is Grover walking through every room in the hotel, trying every single thing a guest might try, and writing down what broke.</p>
+          <p>The <strong>--cov</strong> flag is Grover's checklist: it tells you which rooms he visited and which ones he skipped. If coverage is low, there are rooms nobody tested.</p>
+        </div>
+        <div class="code-block">
+          <span class="code-label">YAML</span>
+<span class="kw">- name:</span> <span class="str">Run tests</span>
+  <span class="kw">run:</span> <span class="str">pytest --cov=app --cov-report=term-missing</span>
+  <span class="kw">env:</span>
+    <span class="var">MRC_DATABASE_URL</span>: <span class="str">sqlite:///./test_ci.db</span>
+    <span class="var">MRC_OPENAI_API_KEY</span>: <span class="str">dummy</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Card 5: Result ── -->
+    <div class="tool-card card-result">
+      <div class="tool-card-header" onclick="toggleCard(this)">
+        <div class="tool-card-left">
+          <span class="ext-badge">STEP 5</span>
+          <div>
+            <div class="tool-card-title">Result</div>
+            <div class="tool-card-desc">Count von Count tallies. Oscar writes the report.</div>
+          </div>
+        </div>
+        <span class="tool-card-arrow">▾</span>
+      </div>
+      <div class="tool-card-body">
+        <div class="ss-box">
+          <div class="ss-char">Count von Count + Oscar — The Verdict</div>
+          <p>Count von Count stands at the end of the line with his clipboard. He tallies every test result Grover handed him.</p>
+          <p>"<strong>ONE</strong> hundred four tests passed! <strong>ZERO</strong> failed! Ah ah ah!"</p>
+          <p>If everything passed, the green checkmark goes up. The hotel opens. Guests can enter.</p>
+          <p>But if even one test failed? Oscar crawls out of his trash can with the rejection stamp:</p>
+          <p><strong>"REJECTED. Fix your mess."</strong></p>
+          <p>The hotel stays closed. The delivery truck gets sent back. Nobody gets in until the crew fixes what's broken and sends a new shipment.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Insight ── -->
+    <div class="insight">
+      <span class="insight-icon">💡</span>
+      <strong>Sequential gates, not parallel checks.</strong> Steps run in order. If step 3 (lint) fails, step 4 (test) never runs. The pipeline is sequential gates, not parallel checks. Each gate must open before the next inspector even gets to look. This is why a single crumb from Cookie Monster can block the entire hotel from opening — Grover never even gets to start his faucet tests.
+    </div>
+
+  </section>
+
+  <!-- ─────────────────── TAB 2: The Stowaway ─────────────────── -->
+  <section class="tab-panel" id="t2" role="tabpanel">
+    <h2 class="section-title">The Morning Inspection Catches a Stowaway</h2>
+    <p class="section-sub">Cookie Monster finds unclaimed luggage. The hotel stays closed.</p>
+
+    <div class="ss-box">
+      <div class="ss-char">Cookie Monster — Room-by-Room Sweep</div>
+      <p>Cookie Monster arrives for the morning inspection. Clipboard in hand, he walks room by room through <strong>app/database/db.py</strong>. He opens the closet and spots a suitcase: <strong><code>import re</code></strong>. He checks the guest registry — nobody in this room uses <code>re</code>. No <code>re.match()</code>, no <code>re.sub()</code>, no <code>re.findall()</code>. Nobody claimed this bag.</p>
+      <p>"This is <strong>STOWAWAY LUGGAGE!</strong> Somebody left this behind and never came back for it. INSPECTION FAILED!" Cookie Monster slams the clipboard shut. The hotel stays closed. No guest sees the lobby today.</p>
+    </div>
+
+    <div class="ss-box" style="margin-top:16px;">
+      <div class="ss-char">Big Bird — But I Ran the Tests!</div>
+      <p>Big Bird protests: "But I ran all the tests locally! <strong>104 tests passed!</strong> Every single one green!" Oscar pops out of his trash can next to the CI server: "You ran TESTS. You didn't run INSPECTION. <strong>Inspection comes FIRST.</strong> Cookie Monster walks the halls before Grover ever turns on a faucet. You skipped the walk."</p>
+    </div>
+
+    <div class="code-block">
+      <span class="code-label">app/database/db.py</span>
+<span class="kw">from</span> <span class="var">__future__</span> <span class="kw">import</span> <span class="var">annotations</span>
+
+<span class="kw">import</span> <span class="var">re</span>          <span class="cm"># THE STOWAWAY — used nowhere</span>
+<span class="kw">import</span> <span class="var">uuid</span>
+<span class="kw">from</span> <span class="var">sqlalchemy</span> <span class="kw">import</span> <span class="var">create_engine</span>, <span class="var">text</span>
+    </div>
+
+    <div class="code-block">
+      <span class="code-label">CI OUTPUT</span>
+<span class="str">$ flake8 app tests</span>
+<span class="cm">app/database/db.py:3:1: F401 're' imported but unused</span>
+<span style="color:#f87171;font-weight:600;">##[error]Process completed with exit code 1.</span>
+
+<span style="color:#f87171;">Step "Lint" FAILED</span>
+<span style="color:var(--text-dim);">Step "Run tests" SKIPPED — previous step failed</span>
+    </div>
+
+    <div class="insight">
+      <span class="insight-icon">💡</span>
+      <strong>Lint runs BEFORE tests.</strong> A lint failure (exit code 1) kills the pipeline. Tests never even wake up. Always run <code>flake8 app tests && pytest</code> locally — the <code>&&</code> mirrors CI behavior. The double-ampersand means "only run the next command if the previous one succeeded." If lint fails, pytest never starts — exactly like CI.
+    </div>
+
+    <div class="ss-box" style="margin-top:16px;">
+      <div class="ss-char">The Fix — Remove the Stowaway</div>
+      <p>The fix is surgical. No test changes, no logic changes. Just <strong>remove the line that doesn't belong</strong>.</p>
+    </div>
+
+    <div class="code-block">
+      <span class="code-label">app/database/db.py — FIXED</span>
+<span class="kw">from</span> <span class="var">__future__</span> <span class="kw">import</span> <span class="var">annotations</span>
+
+<span class="cm"># import re  ← REMOVED — the stowaway is gone</span>
+<span class="kw">import</span> <span class="var">uuid</span>
+<span class="kw">from</span> <span class="var">sqlalchemy</span> <span class="kw">import</span> <span class="var">create_engine</span>, <span class="var">text</span>
+    </div>
+
+    <div class="interview-takeaway">
+      <span class="takeaway-icon">🎙️</span>
+      <strong>Interview takeaway:</strong> CI pipelines run steps sequentially. A linter failure aborts the job before tests execute. The fix is the lint error, not the tests. "But the tests pass!" is not a defense — if lint fails, tests are never reached. Local dev should mirror CI order: <code>flake8 && pytest</code>. Never run just <code>pytest</code> and assume CI will pass.
+    </div>
+
+  </section>
+
+  <!-- ─────────────────── TAB 3: The Night Guest ─────────────────── -->
+  <section class="tab-panel" id="t3" role="tabpanel">
+    <h2 class="section-title">The Guest Who Only Exists at Night</h2>
+    <p class="section-sub">Grover runs the census. But some guests only check in when the moon is up.</p>
+
+    <div class="ss-box">
+      <div class="ss-char">Grover — The Night Shift Census</div>
+      <p>Grover works the night shift in CI. He walks room by room, checking that every registered guest is actually present. He reaches Room 14 — <strong>test_ragas_eval</strong>. The guest registry says <code>MRC_OPENAI_API_KEY = "dummy"</code>. The RAGAS evaluation needs a <strong>real key</strong> to call OpenAI. With a dummy key, the call fails silently or the test gets skipped entirely.</p>
+      <p>"This guest is not checking in tonight. <strong>SKIP!</strong>" Grover marks Room 14 as empty and moves on. The pipeline glows green. Everything looks fine.</p>
+    </div>
+
+    <div class="ss-box" style="margin-top:16px;">
+      <div class="ss-char">Big Bird — The Daytime Surprise</div>
+      <p>Daytime. Big Bird runs <code>pytest</code> locally. His <strong>.env</strong> has a real API key. Grover opens Room 14 — the guest IS here. The test runs, calls real OpenAI, but the assertion fails because the RAGAS library updated and <strong><code>context_precision</code></strong> is no longer in the results. The metric got renamed upstream.</p>
+      <p>Same code. Same tests. <strong>Different results.</strong> CI says green. Local says red. Who do you trust?</p>
+    </div>
+
+    <!-- ── Comparison: CI vs Local ── -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:24px 0;">
+      <div style="background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.3);border-radius:var(--radius-sm);padding:18px 20px;">
+        <div style="font-family:'Fredoka',sans-serif;font-weight:700;color:#10b981;font-size:14px;margin-bottom:10px;">🌙 CI (Night)</div>
+        <p style="font-size:13px;color:var(--text-mid);line-height:1.7;"><code>MRC_OPENAI_API_KEY: dummy</code></p>
+        <p style="font-size:13px;color:var(--text-mid);line-height:1.7;margin-top:6px;">→ Test skipped or fails silently</p>
+        <p style="font-size:13px;color:#10b981;line-height:1.7;margin-top:6px;font-weight:600;">→ Pipeline GREEN</p>
+      </div>
+      <div style="background:rgba(192,57,43,.06);border:1px solid rgba(192,57,43,.25);border-radius:var(--radius-sm);padding:18px 20px;">
+        <div style="font-family:'Fredoka',sans-serif;font-weight:700;color:#f87171;font-size:14px;margin-bottom:10px;">☀️ Local (Day)</div>
+        <p style="font-size:13px;color:var(--text-mid);line-height:1.7;"><code>MRC_OPENAI_API_KEY: sk-real-...</code></p>
+        <p style="font-size:13px;color:var(--text-mid);line-height:1.7;margin-top:6px;">→ Test runs → assertion error</p>
+        <p style="font-size:13px;color:#f87171;line-height:1.7;margin-top:6px;font-weight:600;">→ RED locally</p>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <span class="code-label">ci.yml — ENV VARS</span>
+<span class="kw">env:</span>
+  <span class="var">MRC_OPENAI_API_KEY</span>: <span class="str">dummy</span>
+  <span class="var">MRC_API_KEY</span>: <span class="str">dummy</span>
+  <span class="var">MRC_DATABASE_URL</span>: <span class="str">sqlite:///./test_ci.db</span>
+    </div>
+
+    <div class="code-block">
+      <span class="code-label">test_ragas.py</span>
+<span class="kw">def</span> <span class="fn">test_ragas_eval_example</span>():
+    <span class="var">results</span> = <span class="fn">evaluate_rag_batch</span>(<span class="var">samples</span>)
+    <span class="kw">assert</span> <span class="str">"faithfulness"</span> <span class="kw">in</span> <span class="var">results</span>      <span class="cm"># passes</span>
+    <span class="kw">assert</span> <span class="str">"context_precision"</span> <span class="kw">in</span> <span class="var">results</span> <span class="cm"># FAILS — metric renamed upstream</span>
+    </div>
+
+    <div class="insight">
+      <span class="insight-icon">💡</span>
+      <strong>A green CI badge doesn't mean your code works.</strong> It means it passed the tests that <em>actually ran</em>. Skipped tests are invisible danger. Audit <code>pytest -v</code> output for SKIPPED counts. If you see "14 passed, 3 skipped" — those 3 skipped tests are rooms Grover never entered. You have no idea what's inside.
+    </div>
+
+    <div class="interview-takeaway">
+      <span class="takeaway-icon">🎙️</span>
+      <strong>Interview takeaway:</strong> Tests that depend on environment variables create divergence between CI and local. The same test suite produces different results depending on which secrets are present. Test BOTH code paths, or use markers to separate integration from unit tests — <code>@pytest.mark.integration</code> lets you run <code>pytest -m "not integration"</code> in CI and <code>pytest -m integration</code> locally with real keys.
+    </div>
+
+  </section>
+
+  <!-- ─────────────────── TAB 4: Two Watchmen ─────────────────── -->
+  <section class="tab-panel" id="t4" role="tabpanel">
+    <h2 class="section-title">Two Inspectors Doing the Same Job</h2>
+    <p class="section-sub">Two workflow files. Same corridor. Double the invoices.</p>
+
+    <div class="ss-box">
+      <div class="ss-char">Oscar — The Budget Auditor</div>
+      <p>Two night watchmen — <strong>Inspector CI</strong> and <strong>Inspector Test Suite</strong> — patrol the same corridor. Both check the locks. Both count the towels. Both file reports. The hotel gets two bills for the same work.</p>
+      <p>Oscar crawls out of his trash can, waving two invoices: <strong>"WHY are we paying TWO people to check the SAME locks?!"</strong></p>
+      <p>He's right. Two workflow files. Same trigger. Same steps. Double the compute time. Double the cost. And if one passes and the other fails because of a trivial difference? Now you're debugging a phantom problem that only exists because you have two inspectors with slightly different clipboards.</p>
+    </div>
+
+    <!-- Side-by-side comparison table -->
+    <table class="compare-table">
+      <tr>
+        <th>What they do</th>
+        <th>ci.yml</th>
+        <th>test.yml</th>
+      </tr>
+      <tr>
+        <td>Trigger</td>
+        <td class="match">push to main</td>
+        <td class="match">push to main</td>
+      </tr>
+      <tr>
+        <td>Python setup</td>
+        <td class="match">actions/setup-python@v5</td>
+        <td class="match">actions/setup-python@v5</td>
+      </tr>
+      <tr>
+        <td>Install deps</td>
+        <td class="match">pip install -r requirements.txt</td>
+        <td class="match">pip install -r requirements.txt</td>
+      </tr>
+      <tr>
+        <td>Pip caching</td>
+        <td class="drift">Yes (actions/cache)</td>
+        <td class="drift">No</td>
+      </tr>
+      <tr>
+        <td>Lint</td>
+        <td class="match">flake8</td>
+        <td class="match">flake8</td>
+      </tr>
+      <tr>
+        <td>Test</td>
+        <td class="match">pytest --cov=app</td>
+        <td class="drift">pytest tests/ -v --cov=app</td>
+      </tr>
+    </table>
+
+    <div class="code-block">
+      <span class="code-label">DIFF</span>
+<span class="cm"># Lint — identical behavior, cosmetic difference</span>
+<span class="var">ci.yml:</span>           <span class="str">flake8 app tests</span>
+<span class="var">test.yml:</span>         <span class="str">flake8 app/ tests/</span>     <span class="cm">← trailing slashes, identical behavior</span>
+
+<span class="cm"># Test — same tests, one adds -v</span>
+<span class="var">ci.yml:</span>           <span class="str">pytest --cov=app</span>
+<span class="var">test.yml:</span>         <span class="str">pytest tests/ -v --cov=app</span>   <span class="cm">← adds -v, same tests</span>
+    </div>
+
+    <div class="insight">
+      <span class="insight-icon">💸</span>
+      <strong>Every workflow file is a separate inspector on the payroll.</strong> If two inspectors check the same things, you're paying double for nothing. GitHub Actions bills by the minute. Two identical workflows on the same trigger means every push costs twice as much — and you get zero extra safety from it.
+    </div>
+
+    <!-- The fix -->
+    <div class="fix-box">
+      <h3>🔧 The Fix — One Inspector, One Corridor</h3>
+      <p>Delete the duplicate. Consolidate into a single workflow that does everything:</p>
+    </div>
+
+    <div class="code-block">
+      <span class="code-label">YAML — consolidated ci.yml</span>
+<span class="kw">name:</span> <span class="str">CI</span>
+
+<span class="kw">on:</span>
+  <span class="kw">push:</span>
+    <span class="kw">branches:</span> [<span class="str">main</span>]
+  <span class="kw">pull_request:</span>
+    <span class="kw">branches:</span> [<span class="str">main</span>]
+
+<span class="kw">jobs:</span>
+  <span class="kw">test:</span>
+    <span class="kw">runs-on:</span> <span class="str">ubuntu-latest</span>
+    <span class="kw">steps:</span>
+      <span class="kw">- uses:</span> <span class="str">actions/checkout@v4</span>
+      <span class="kw">- uses:</span> <span class="str">actions/setup-python@v5</span>
+        <span class="kw">with:</span>
+          <span class="kw">python-version:</span> <span class="str">"3.12"</span>
+          <span class="kw">cache:</span> <span class="str">"pip"</span>
+      <span class="kw">- run:</span> <span class="str">pip install -r requirements.txt</span>
+      <span class="kw">- run:</span> <span class="str">flake8 app tests</span>
+      <span class="kw">- run:</span> <span class="str">pytest --cov=app --cov-report=term-missing -v</span>
+    </div>
+
+    <div class="interview-takeaway">
+      <span class="takeaway-icon">🎙️</span>
+      <strong>Interview takeaway:</strong> Multiple workflows make sense when they serve different purposes — test vs deploy vs security scan. Two workflows doing the same thing on the same trigger waste compute. If you see duplicate workflows, the answer is always: consolidate, don't duplicate.
+    </div>
+
+  </section>
+
+  <!-- ─────────────────── TAB 5: The Luggage Mismatch ─────────────────── -->
+  <section class="tab-panel" id="t5" role="tabpanel">
+    <h2 class="section-title">The Luggage Mismatch</h2>
+    <p class="section-sub">Two guest lists that disagree. The day manager packed different bags than the night manager.</p>
+
+    <div class="ss-box">
+      <div class="ss-char">Big Bird — The Confused Front Desk</div>
+      <p>Two front-desk managers are arguing. Day Manager (<strong>pyproject.toml</strong>): "I have <strong>openai</strong> in Room 72 and <strong>anthropic</strong> in Room 73."</p>
+      <p>Night Manager (<strong>requirements.txt</strong>): "I don't have those. But I DO have <strong>psycopg2-binary</strong> in Room 79 and <strong>redis</strong> in Room 84."</p>
+      <p>Big Bird stares at both lists, feathers ruffled: <strong>"This is madness. We have TWO guest lists and they don't agree."</strong></p>
+      <p>Which list is correct? Neither? Both? The hotel opens with whatever the night manager has — because CI uses requirements.txt. Meanwhile the day manager's list has packages that never get tested. And the night manager has packages that aren't in the official manifest. Nobody knows what's actually running in production.</p>
+    </div>
+
+    <!-- Drift table -->
+    <table class="compare-table">
+      <tr>
+        <th>Category</th>
+        <th>Package</th>
+        <th>Status</th>
+      </tr>
+      <tr>
+        <td class="only-one">pyproject.toml ONLY</td>
+        <td>openai</td>
+        <td class="drift">Not tested in CI</td>
+      </tr>
+      <tr>
+        <td class="only-one">pyproject.toml ONLY</td>
+        <td>anthropic</td>
+        <td class="drift">Not tested in CI</td>
+      </tr>
+      <tr>
+        <td class="only-one">pyproject.toml ONLY</td>
+        <td>mlflow</td>
+        <td class="drift">Not tested in CI</td>
+      </tr>
+      <tr>
+        <td class="only-one">pyproject.toml ONLY</td>
+        <td>jupyter</td>
+        <td class="drift">Not tested in CI</td>
+      </tr>
+      <tr>
+        <td class="only-one">requirements.txt ONLY</td>
+        <td>psycopg2-binary</td>
+        <td class="drift">Not in project manifest</td>
+      </tr>
+      <tr>
+        <td class="only-one">requirements.txt ONLY</td>
+        <td>redis</td>
+        <td class="drift">Not in project manifest</td>
+      </tr>
+      <tr>
+        <td>Version drift</td>
+        <td>pandas</td>
+        <td class="drift">&gt;=2.3.3 vs &gt;=2.0.0</td>
+      </tr>
+    </table>
+
+    <div class="insight">
+      <span class="insight-icon">⚠️</span>
+      <strong>Two sources of truth is zero sources of truth.</strong> When pyproject.toml says one thing and requirements.txt says another, you have no idea what's actually installed. The dev environment, CI, and production could all be running different packages. One must be generated from the other — never hand-edit both.
+    </div>
+
+    <!-- The fix -->
+    <div class="fix-box">
+      <h3>🔧 The Fix — One Guest List, One Source</h3>
+      <p>Pick one canonical source and derive the other:</p>
+      <ol>
+        <li><strong>Option A — Generate requirements.txt from pyproject.toml:</strong><br>
+          <code>uv pip compile pyproject.toml -o requirements.txt</code><br>
+          This locks every version and ensures CI installs exactly what the project declares.</li>
+        <li><strong>Option B — Use pyproject.toml directly in CI:</strong><br>
+          <code>pip install ".[dev]"</code><br>
+          Skip requirements.txt entirely. Let the project manifest be the single source.</li>
+      </ol>
+    </div>
+
+    <div class="code-block">
+      <span class="code-label">YAML — Option A</span>
+<span class="cm"># In your CI workflow</span>
+<span class="kw">- name:</span> <span class="str">Install dependencies</span>
+  <span class="kw">run:</span> |
+    <span class="str">pip install uv</span>
+    <span class="str">uv pip compile pyproject.toml -o requirements.txt</span>
+    <span class="str">pip install -r requirements.txt</span>
+    </div>
+
+    <div class="code-block">
+      <span class="code-label">YAML — Option B</span>
+<span class="cm"># Simpler — use pyproject.toml as the source</span>
+<span class="kw">- name:</span> <span class="str">Install dependencies</span>
+  <span class="kw">run:</span> <span class="str">pip install ".[dev]"</span>
+    </div>
+
+    <div class="interview-takeaway">
+      <span class="takeaway-icon">🎙️</span>
+      <strong>Interview takeaway:</strong> Modern Python uses pyproject.toml as the canonical source. If CI needs requirements.txt, generate it — never hand-edit both. When someone asks "how do you manage dependencies?", the answer is: one source of truth, lock files for reproducibility, and CI installs from the lock file.
+    </div>
+
+    <div class="one-liner">
+      "The hotel doesn't open because the rooms are pretty.<br>
+      The hotel opens because the inspector checked every suitcase,<br>
+      every guest list, and every lock — and found nothing wrong."
+    </div>
+  </section>
+
+</main>
+
+<a href="destruction_lab_20_experiments.html" style="position:fixed;top:18px;left:18px;color:var(--amber);font-size:0.85rem;text-decoration:none;z-index:999;font-family:'Inter',sans-serif;">← Back to Destruction Lab</a>
+
+<div style="max-width:860px;margin:40px auto;padding:0 24px;">
+  <div class="insight">
+    <span class="insight-icon">🏰</span>
+    <strong>Connection:</strong> The Morning Inspection (CI) validates everything the other rooms built.
+    The Engine Room provides the infrastructure. The War Room orchestrates the logic.
+    The Night Watchman monitors quality. CI is the final gate before any guest walks through the door.
+  </div>
+</div>
+
+<script>
+// Tab switching (same as switchboard)
+function switchTab(id) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-selected','false'); });
+  document.getElementById(id).classList.add('active');
+  document.getElementById('btn-'+id).classList.add('active');
+  document.getElementById('btn-'+id).setAttribute('aria-selected','true');
+}
+
+// Recap toggle (same as switchboard)
+function toggleRecap() {
+  const body = document.getElementById('recapBody');
+  const toggle = document.getElementById('recapToggle');
+  body.classList.toggle('open');
+  toggle.classList.toggle('open');
+}
+
+// Card toggle (same as switchboard)
+function toggleCard(id) {
+  const header = document.getElementById(id + '-header');
+  const body = document.getElementById(id + '-body');
+  if (header && body) {
+    header.classList.toggle('open');
+    body.classList.toggle('open');
+  }
+}
+
+// Pipeline Simulator
+const pipelineScenarios = {
+  clean: {
+    title: 'CLEAN PUSH — All Steps Pass',
+    steps: [
+      { icon: '📦', text: 'Checkout — pulling latest code from main...', status: 'pass' },
+      { icon: '📥', text: 'Install — pip install -r requirements.txt (47 packages)', status: 'pass' },
+      { icon: '🔍', text: 'Lint — flake8 app tests ... 0 violations found', status: 'pass' },
+      { icon: '🧪', text: 'Test — pytest --cov=app ... 104 passed, 0 failed', status: 'pass' },
+      { icon: '📊', text: 'Coverage — 59% of app/ covered (term-missing report)', status: 'pass' },
+      { icon: '✅', text: 'Result: All checks passed. PR is mergeable.', status: 'pass' },
+    ],
+    explain: 'Every step passed. The hotel opens on time. Guests can check in.'
+  },
+  lint: {
+    title: 'LINT FAILURE — Unused Import',
+    steps: [
+      { icon: '📦', text: 'Checkout — pulling latest code...', status: 'pass' },
+      { icon: '📥', text: 'Install — 47 packages installed', status: 'pass' },
+      { icon: '💥', text: 'Lint — app/database/db.py:3:1: F401 \'re\' imported but unused', status: 'fail' },
+      { icon: '⏭️', text: 'Test — SKIPPED (previous step failed)', status: 'skip' },
+      { icon: '⏭️', text: 'Coverage — SKIPPED', status: 'skip' },
+      { icon: '❌', text: 'Result: Pipeline failed at Lint. Tests never ran.', status: 'fail' },
+    ],
+    explain: 'Cookie Monster found a stowaway. The hotel stays closed. Remove the unused import and push again.'
+  },
+  test: {
+    title: 'TEST FAILURE — Assertion Error',
+    steps: [
+      { icon: '📦', text: 'Checkout — pulling latest code...', status: 'pass' },
+      { icon: '📥', text: 'Install — 47 packages installed', status: 'pass' },
+      { icon: '🔍', text: 'Lint — 0 violations. Cookie Monster is satisfied.', status: 'pass' },
+      { icon: '💥', text: 'Test — FAILED test_ragas_eval.py::test_ragas_eval_example - AssertionError', status: 'fail' },
+      { icon: '⏭️', text: 'Coverage — SKIPPED (tests failed)', status: 'skip' },
+      { icon: '❌', text: 'Result: Pipeline failed at Test. Lint passed but tests didn\'t.', status: 'fail' },
+    ],
+    explain: 'Grover found a broken faucet. The room looked clean (lint passed) but the plumbing was wrong (test failed).'
+  }
+};
+
+let pipelineInterval = null;
+
+function resetPipeline() {
+  clearInterval(pipelineInterval);
+  const theater = document.getElementById('pipeline-theater');
+  const empty = document.getElementById('pipeline-empty');
+  const active = document.getElementById('pipeline-active');
+  if (empty) empty.style.display = '';
+  if (active) active.style.display = 'none';
+  document.querySelectorAll('.pipe-btn').forEach(b => b.classList.remove('selected'));
+}
+
+function runPipeline(key) {
+  resetPipeline();
+  const scenario = pipelineScenarios[key];
+  if (!scenario) return;
+
+  document.getElementById('pipe-' + key).classList.add('selected');
+  document.getElementById('pipeline-empty').style.display = 'none';
+  const active = document.getElementById('pipeline-active');
+  active.style.display = '';
+  document.getElementById('pipeline-title').textContent = scenario.title;
+
+  const list = document.getElementById('pipeline-steps');
+  list.innerHTML = '';
+  const explain = document.getElementById('pipeline-explain');
+  explain.style.display = 'none';
+
+  // Pre-create all steps
+  scenario.steps.forEach((s, i) => {
+    const div = document.createElement('div');
+    div.className = 'step-item step-' + s.status;
+    div.innerHTML = '<span class="step-icon">' + s.icon + '</span><span class="step-text">' + s.text + '</span>';
+    list.appendChild(div);
+  });
+
+  // Animate steps
+  let idx = 0;
+  const items = list.querySelectorAll('.step-item');
+  pipelineInterval = setInterval(() => {
+    if (idx > 0) items[idx-1].classList.add('done');
+    if (idx >= items.length) {
+      clearInterval(pipelineInterval);
+      explain.textContent = scenario.explain;
+      explain.style.display = '';
+      return;
+    }
+    items[idx].classList.add('visible');
+    items[idx].classList.add('active');
+    idx++;
+  }, 800);
+}
+
+// Escape key
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    const recap = document.getElementById('recapBody');
+    if (recap && recap.classList.contains('open')) toggleRecap();
+    resetPipeline();
+  }
+});
+</script>
+
+</body>
+</html>
