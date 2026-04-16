@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Destruction Lab — 21 Experiments</title>
+<title>Destruction Lab — 23 Experiments</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <!-- CodeMirror 5 -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/codemirror.min.css">
@@ -3743,10 +3743,10 @@ pre .highlight { color: var(--accent-yellow); }
 <!-- HERO -->
 <div class="hero">
   <h1>Destruction Lab</h1>
-  <p class="subtitle">20 hands-on experiments to break, stress, and understand every layer of the Monster Resort Concierge — from embeddings to auth to tool execution.</p>
+  <p class="subtitle">23 hands-on experiments to break, stress, and understand every layer of the Monster Resort Concierge — from embeddings to auth to caching, database, and tool execution.</p>
   <div class="meta-badges">
     <span class="meta-badge">Branch: destruction-lab</span>
-    <span class="meta-badge">21 Experiments</span>
+    <span class="meta-badge">23 Experiments</span>
     <span class="meta-badge">8 System Layers</span>
   </div>
 </div>
@@ -3955,8 +3955,9 @@ pre .highlight { color: var(--accent-yellow); }
           <span class="node-label">Memory &mdash; Storage</span>
         </div>
         <ul class="node-items">
-          <li>SQLite &mdash; bookings, users</li>
+          <li>SQLite / PostgreSQL &mdash; bookings, users (switchable via config)</li>
           <li>ChromaDB &mdash; embedded knowledge</li>
+          <li>Redis &mdash; speed shelf cache (falls back to in-memory)</li>
           <li>Session store &mdash; chat history</li>
         </ul>
       </div>
@@ -6040,6 +6041,222 @@ openai_api_key: str = <span class="string">"sk-FAKE-garbage-key-that-will-fail"<
   </div>
 </div>
 
+
+<!-- ═══════════════ EXPERIMENT 22 ═══════════════ -->
+<div class="experiment" data-layer="data">
+  <div class="experiment-header" onclick="toggleExp(this)">
+    <div class="exp-number">22</div>
+    <div class="exp-info">
+      <div class="exp-title">Switch from SQLite to PostgreSQL Mid-Session</div>
+      <div class="exp-tagline">What happens when the filing cabinet changes shape?</div>
+    </div>
+    <div class="exp-layer-tag">Data</div>
+    <div class="exp-chevron">&#9654;</div>
+  </div>
+  <div class="experiment-body">
+    <div class="learn-badge"><strong>What you'll learn:</strong> How SQLAlchemy abstracts the backend, what breaks during a switch, whether bookings survive the migration.</div>
+
+    <div class="step">
+      <div class="step-header"><div class="step-num">1</div><div class="step-title">Start the server with SQLite (default)</div></div>
+      <div class="step-desc">Confirm the system works with the default database backend.</div>
+      <pre><span class="cmd">uv run uvicorn</span> app.main:app --reload</pre>
+    </div>
+
+    <div class="step">
+      <div class="step-header"><div class="step-num">2</div><div class="step-title">Make a booking via the chat UI or curl</div></div>
+      <div class="step-desc">Create some data in the SQLite database so you have something to compare.</div>
+      <pre><span class="cmd">bash test_chat.sh</span> <span class="string">"Book a room at Vampire Manor for Count Orlok, checking in tonight checking out tomorrow"</span></pre>
+      <div class="step-desc">Note the booking_id from the response.</div>
+    </div>
+
+    <div class="step">
+      <div class="step-header"><div class="step-num">3</div><div class="step-title">Stop the server</div></div>
+      <div class="step-desc">Press Ctrl+C in the terminal running uvicorn.</div>
+    </div>
+
+    <div class="step">
+      <div class="step-header"><div class="step-num">4</div><div class="step-title">Start PostgreSQL</div></div>
+      <div class="step-desc">Spin up the Postgres container:</div>
+      <pre><span class="cmd">docker-compose up</span> postgres -d</pre>
+    </div>
+
+    <div class="step">
+      <div class="step-header"><div class="step-num">5</div><div class="step-title">Change .env to point at PostgreSQL</div></div>
+      <div class="step-desc">Switch the database URL in your environment:</div>
+      <pre><span class="cmd">MRC_DATABASE_URL</span>=<span class="string">postgresql://monster:monster_secret@localhost:5432/monster_resort</span></pre>
+    </div>
+
+    <div class="step">
+      <div class="step-header"><div class="step-num">6</div><div class="step-title">Restart the server</div></div>
+      <pre><span class="cmd">uv run uvicorn</span> app.main:app --reload</pre>
+    </div>
+
+    <div class="step">
+      <div class="step-header"><div class="step-num">7</div><div class="step-title">Try to retrieve the old booking</div></div>
+      <div class="step-desc">It won't exist — you're now connected to a different, empty database.</div>
+      <pre><span class="cmd">bash test_chat.sh</span> <span class="string">"Look up my booking"</span></pre>
+    </div>
+
+    <div class="step">
+      <div class="step-header"><div class="step-num">8</div><div class="step-title">Make a new booking — observe it works on Postgres</div></div>
+      <pre><span class="cmd">bash test_chat.sh</span> <span class="string">"Book a room at Werewolf Lodge for Van Helsing, checking in Friday"</span></pre>
+    </div>
+
+    <div class="observe-box">
+      <h4>What to observe</h4>
+      <ul>
+        <li>Does the application behave identically?</li>
+        <li>Are the responses the same?</li>
+        <li>What about the old bookings?</li>
+      </ul>
+    </div>
+
+    <div class="reset-box">
+      <h4>Reset</h4>
+      <code>Change MRC_DATABASE_URL back to sqlite:///./monster_resort.db and restart</code>
+    </div>
+
+    <div class="findings-empty">No findings yet — experiment not attempted.</div>
+
+    <div class="sesame-toggle" onclick="toggleSesame(this)">
+      <span class="sesame-chevron">&#9654;</span>
+      <span class="sesame-icon">&#127467;</span>
+      <h4>Sesame Street Explains This</h4>
+      <span class="sesame-label">Simple version</span>
+    </div>
+    <div class="sesame-content">
+      <h5>Episode 9: The New Filing Cabinet</h5>
+
+      <div class="sesame-scene">
+        <p><span class="character">Big Bird</span> opens the filing cabinet Monday morning and finds ALL the drawers have been rearranged.</p>
+      </div>
+
+      <div class="sesame-scene">
+        <p><span class="character">Big Bird:</span> Wait... where are Count Dracula's booking papers?</p>
+      </div>
+
+      <div class="sesame-lesson">
+        <strong>What happened?</strong>
+        <p>The papers are in the OLD cabinet (SQLite). The NEW cabinet (PostgreSQL) is empty but works perfectly.</p>
+      </div>
+
+      <div class="sesame-scene">
+        <p><span class="character">Big Bird:</span> We need to MOVE the papers, not just change cabinets!</p>
+      </div>
+
+      <div class="sesame-lesson">
+        <strong>One-line version:</strong>
+        <p>"Swapping the cabinet doesn't move the papers — you have to carry them over yourself."</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ EXPERIMENT 23 ═══════════════ -->
+<div class="experiment" data-layer="data">
+  <div class="experiment-header" onclick="toggleExp(this)">
+    <div class="exp-number">23</div>
+    <div class="exp-info">
+      <div class="exp-title">Kill Redis While the Server is Running</div>
+      <div class="exp-tagline">What happens when the speed shelf falls over?</div>
+    </div>
+    <div class="exp-layer-tag">Data</div>
+    <div class="exp-chevron">&#9654;</div>
+  </div>
+  <div class="experiment-body">
+    <div class="learn-badge"><strong>What you'll learn:</strong> Graceful degradation, fail-open caching, whether the hotel stops or just slows down.</div>
+
+    <div class="step">
+      <div class="step-header"><div class="step-num">1</div><div class="step-title">Start full stack</div></div>
+      <div class="step-desc">Bring up all services including Redis:</div>
+      <pre><span class="cmd">docker-compose up</span> -d</pre>
+    </div>
+
+    <div class="step">
+      <div class="step-header"><div class="step-num">2</div><div class="step-title">Verify Redis is running</div></div>
+      <pre><span class="cmd">docker exec</span> -it monster-game-resort-concierge-redis-1 redis-cli ping</pre>
+      <div class="step-desc">You should see: PONG</div>
+    </div>
+
+    <div class="step">
+      <div class="step-header"><div class="step-num">3</div><div class="step-title">Make a search query (triggers cache write)</div></div>
+      <div class="step-desc">Send a query that will be cached in Redis:</div>
+      <pre><span class="cmd">bash test_chat.sh</span> <span class="string">"What amenities does Vampire Manor have?"</span></pre>
+    </div>
+
+    <div class="step">
+      <div class="step-header"><div class="step-num">4</div><div class="step-title">Make the SAME query again (should be faster — cache hit)</div></div>
+      <pre><span class="cmd">bash test_chat.sh</span> <span class="string">"What amenities does Vampire Manor have?"</span></pre>
+      <div class="step-desc">Compare response time — this one should be faster due to cache hit.</div>
+    </div>
+
+    <div class="step">
+      <div class="step-header"><div class="step-num">5</div><div class="step-title">Kill Redis</div></div>
+      <pre><span class="cmd">docker stop</span> monster-game-resort-concierge-redis-1</pre>
+    </div>
+
+    <div class="step">
+      <div class="step-header"><div class="step-num">6</div><div class="step-title">Make the same query again — does it still work?</div></div>
+      <pre><span class="cmd">bash test_chat.sh</span> <span class="string">"What amenities does Vampire Manor have?"</span></pre>
+    </div>
+
+    <div class="step">
+      <div class="step-header"><div class="step-num">7</div><div class="step-title">Check server logs for cache fallback messages</div></div>
+      <pre><span class="cmd">docker logs</span> monster-game-resort-concierge-web-1 --tail 50</pre>
+    </div>
+
+    <div class="observe-box">
+      <h4>What to observe</h4>
+      <ul>
+        <li>Does the response come back?</li>
+        <li>Is it slower?</li>
+        <li>Does the server log a warning?</li>
+        <li>Does the app crash?</li>
+      </ul>
+    </div>
+
+    <div class="reset-box">
+      <h4>Reset</h4>
+      <code>docker start monster-game-resort-concierge-redis-1</code>
+    </div>
+
+    <div class="findings-empty">No findings yet — experiment not attempted.</div>
+
+    <div class="sesame-toggle" onclick="toggleSesame(this)">
+      <span class="sesame-chevron">&#9654;</span>
+      <span class="sesame-icon">&#127467;</span>
+      <h4>Sesame Street Explains This</h4>
+      <span class="sesame-label">Simple version</span>
+    </div>
+    <div class="sesame-content">
+      <h5>Episode 10: The Speed Shelf Collapses</h5>
+
+      <div class="sesame-scene">
+        <p><span class="character">Cookie Monster</span> is happily serving cached answers off the speed shelf.</p>
+      </div>
+
+      <div class="sesame-scene">
+        <p><span class="character">Cookie Monster:</span> Me grab answer FAST! Om nom—</p>
+        <p>CRASH! The shelf falls over.</p>
+      </div>
+
+      <div class="sesame-scene">
+        <p><span class="character">Cookie Monster:</span> *panics*</p>
+        <p><span class="character">Oscar:</span> Relax. The wooden shelf behind the desk still works. It's just smaller and slower.</p>
+      </div>
+
+      <div class="sesame-scene">
+        <p><span class="character">Cookie Monster:</span> *calms down, grabs the answer from the backup shelf* Hotel still open. Me just... run a bit more.</p>
+      </div>
+
+      <div class="sesame-lesson">
+        <strong>One-line version:</strong>
+        <p>"When the fast shelf breaks, you use the slow shelf. The hotel stays open — it just takes longer."</p>
+      </div>
+    </div>
+  </div>
+</div>
+
 </div><!-- end experiments -->
 
 <!-- REFERENCE TABLE -->
@@ -6071,6 +6288,8 @@ openai_api_key: str = <span class="string">"sk-FAKE-garbage-key-that-will-fail"<
       <tr><td>19</td><td>Zero confidence always</td><td><span class="layer-dot" style="background:var(--layer-monitoring)"></span>Monitoring</td><td>Observability vs enforcement</td></tr>
       <tr><td>20</td><td>Kill API key mid-chat</td><td><span class="layer-dot" style="background:var(--layer-e2e)"></span>E2E</td><td>Session resilience, provider failure</td></tr>
       <tr><td>21</td><td>Memory vs Database</td><td><span class="layer-dot" style="background:var(--layer-data)"></span>Data</td><td>Conversation context vs persistent storage</td></tr>
+      <tr><td>22</td><td>SQLite to PostgreSQL</td><td><span class="layer-dot" style="background:var(--layer-data)"></span>Data</td><td>Database abstraction, migration gaps</td></tr>
+      <tr><td>23</td><td>Kill Redis</td><td><span class="layer-dot" style="background:var(--layer-data)"></span>Data</td><td>Graceful degradation, fail-open caching</td></tr>
     </tbody>
   </table>
 </div>
@@ -6633,7 +6852,8 @@ openai_api_key: str = <span class="string">"sk-FAKE-garbage-key-that-will-fail"<
             hallucination_high/medium_threshold &rarr; confidence levels<br>
             api_key &rarr; authentication for /chat endpoint<br>
             rate_limit_per_minute &rarr; request throttling<br>
-            database_url &rarr; SQLite connection string
+            database_url &rarr; SQLite or PostgreSQL connection string (switchable via config)<br>
+            redis_url &rarr; Redis cache connection (falls back to in-memory)
           </div>
         </div>
         <div class="d-connect">
@@ -6659,7 +6879,7 @@ openai_api_key: str = <span class="string">"sk-FAKE-garbage-key-that-will-fail"<
           <div class="bp-tag"><span class="dot"></span>Storage</div>
           <div class="bp-name">The Filing Cabinet</div>
           <div class="bp-code">db = DatabaseManager(settings)</div>
-          <div class="bp-summary">Creates the SQLite database connection. Sets up tables for bookings, sessions, API keys. Every booking and every conversation turn gets stored here.</div>
+          <div class="bp-summary">Creates the database connection (SQLite or PostgreSQL, switchable via config). Sets up tables for bookings, sessions, API keys. Every booking and every conversation turn gets stored here. Redis provides a speed shelf cache layer (falls back to in-memory if unavailable).</div>
           <div class="bp-hint">click to expand &rarr;</div>
         </div>
         <div class="bp-detail">
@@ -6671,8 +6891,9 @@ openai_api_key: str = <span class="string">"sk-FAKE-garbage-key-that-will-fail"<
             <div class="d-label">What it creates</div>
             <div class="d-code">
               Tables: bookings, sessions, api_keys, schema_migrations<br>
-              Connection: sqlite3.connect(settings.database_url)<br>
-              Context manager: get_connection() with auto-commit/rollback
+              Connection: sqlite3 or asyncpg (settings.database_url)<br>
+              Context manager: get_connection() with auto-commit/rollback<br>
+              Cache layer: Redis speed shelf (falls back to in-memory dict)
             </div>
           </div>
           <div class="d-connect">
@@ -7044,7 +7265,7 @@ openai_api_key: str = <span class="string">"sk-FAKE-garbage-key-that-will-fail"<
     <!-- DEPENDENCY MAP -->
     <div class="bp-deps">
       <h4>Dependency Map &mdash; Who needs whom</h4>
-      <div class="dep-row">settings <span class="dep-arrow">&rarr;</span> db, rag, router, detector, tracker, rate_limiter, api_key_manager</div>
+      <div class="dep-row">settings <span class="dep-arrow">&rarr;</span> db, rag, router, detector, tracker, rate_limiter, api_key_manager, redis_cache</div>
       <div class="dep-row">db <span class="dep-arrow">&rarr;</span> memory, registry (book_room, get_booking), api_key_manager</div>
       <div class="dep-row">pdf <span class="dep-arrow">&rarr;</span> registry (book_room invoice generation)</div>
       <div class="dep-row">rag <span class="dep-arrow">&rarr;</span> registry (search_amenities via lambda), _agent_reply (system prompt context)</div>
@@ -7078,6 +7299,8 @@ openai_api_key: str = <span class="string">"sk-FAKE-garbage-key-that-will-fail"<
     <div class="file-tab" onclick="switchFile('providers')"><span class="file-icon">&#128196;</span>llm_providers<span class="unsaved"></span></div>
     <div class="file-tab" onclick="switchFile('embeddings')"><span class="file-icon">&#128196;</span>embeddings_lab<span class="unsaved"></span></div>
     <div class="file-tab" onclick="switchFile('memorydb')"><span class="file-icon">&#128196;</span>memory_vs_db<span class="unsaved"></span></div>
+    <div class="file-tab" onclick="switchFile('dblayer')"><span class="file-icon">&#128196;</span>database_layer<span class="unsaved"></span></div>
+    <div class="file-tab" onclick="switchFile('caching')"><span class="file-icon">&#128196;</span>redis_cache<span class="unsaved"></span></div>
   </div>
 
   <!-- EDITOR -->
@@ -7185,6 +7408,28 @@ openai_api_key: str = <span class="string">"sk-FAKE-garbage-key-that-will-fail"<
       <div class="editor-container" id="cm-memorydb"></div>
       <div class="run-hint">
         <span>&#128161;</span> Save as a .py file and run: <kbd>uv run python memory_vs_db.py</kbd> (requires a running server with an existing DB)
+      </div>
+    </div>
+
+    <!-- DATABASE LAYER -->
+    <div class="file-panel" id="file-dblayer">
+      <div class="template-info">
+        <strong>The Filing Cabinet Upgrade</strong> &mdash; The hotel's filing cabinet now speaks two languages: SQLite for the night shift (local dev) and PostgreSQL for the grand opening (production). SQLAlchemy translates between them. From <code>app/back_office/database.py</code>.
+      </div>
+      <div class="editor-container" id="cm-dblayer"></div>
+      <div class="run-hint">
+        <span>&#128161;</span> Switch backends: set <kbd>MRC_DATABASE_URL=postgresql://monster:monster_secret@localhost:5432/monster_resort</kbd> in <code>.env</code>. Default is SQLite.
+      </div>
+    </div>
+
+    <!-- REDIS CACHE -->
+    <div class="file-panel" id="file-caching">
+      <div class="template-info">
+        <strong>The Speed Shelf</strong> &mdash; A quick-access shelf near the front desk. If a guest asks the same question twice, the answer is already on the shelf — no need to run back to the library. If the shelf breaks, the hotel still works (just slower). From <code>app/back_office/cache_utils.py</code>.
+      </div>
+      <div class="editor-container" id="cm-caching"></div>
+      <div class="run-hint">
+        <span>&#128161;</span> Enable Redis: set <kbd>MRC_REDIS_ENABLED=true</kbd> and <kbd>MRC_REDIS_URL=redis://localhost:6379/0</kbd> in <code>.env</code>. Without Redis, the in-memory shelf is used automatically.
       </div>
     </div>
 
@@ -10561,6 +10806,434 @@ show_database()
 # But they own different tables and serve different purposes:
 #   Memory  -> feeds the LLM with conversation context
 #   Database -> stores real-world facts (bookings, schema)
+`,
+  dblayer: `# ═══ The Filing Cabinet Upgrade — Dual-Backend Database Layer ═══
+# From: app/back_office/database.py
+#
+# The hotel used to have one small filing cabinet (SQLite).
+# Now it has a professional records room (PostgreSQL) for when
+# the hotel scales up. SQLAlchemy is the translator who can
+# speak to both cabinets so the voice upstairs never has to care.
+#
+# Big Bird manages the filing cabinet. He doesn't care which brand
+# it is — he just files and retrieves paperwork the same way.
+
+from __future__ import annotations
+import uuid
+from contextlib import contextmanager
+from pathlib import Path
+from datetime import datetime, timezone
+
+from sqlalchemy import create_engine, text
+from sqlalchemy.engine import Engine
+
+SCHEMA_VERSION = 3  # Bump this when the paperwork forms change
+
+
+# ── Checking which filing cabinet we're using ──
+# Big Bird peeks at the label on the cabinet door.
+# If it says "postgresql://" he knows it's the big professional one.
+
+def _is_postgres(url: str) -> bool:
+    return url.startswith("postgresql://") or url.startswith("postgres://")
+
+
+# ── Translating question marks to named slots ──
+# The old system used ? for blanks on forms. The new translator
+# (SQLAlchemy) prefers named slots like :p0, :p1.
+# This function rewrites the forms so both cabinets understand.
+
+def _convert_qmarks(sql: str):
+    if "?" not in sql:
+        return sql, False
+    parts = sql.split("?")
+    new_parts = [parts[0]]
+    for i, part in enumerate(parts[1:]):
+        new_parts.append(f":p{i}")
+        new_parts.append(part)
+    return "".join(new_parts), True
+
+
+# ── The Translator ──
+# Makes both cabinets look the same to everyone upstairs.
+# The voice upstairs says conn.execute(sql, params) and
+# doesn't know or care which cabinet is underneath.
+
+class _ConnectionProxy:
+    """Big Bird's translator — wraps the real cabinet connection
+    so the old way of talking (sqlite3 style) still works."""
+
+    def __init__(self, sa_conn):
+        self._conn = sa_conn
+
+    def execute(self, sql: str, params=None):
+        converted_sql, was_converted = _convert_qmarks(sql)
+        if params is not None:
+            if was_converted and isinstance(params, (tuple, list)):
+                # Turn positional args into named ones: :p0, :p1 ...
+                params = {f"p{i}": v for i, v in enumerate(params)}
+        else:
+            params = {}
+        result = self._conn.execute(text(converted_sql), params)
+        return _ResultProxy(result)
+
+
+class _ResultProxy:
+    """Wraps raw results so you can still say row['column_name']."""
+
+    def __init__(self, result):
+        self._result = result
+
+    def fetchone(self):
+        row = self._result.fetchone()
+        return _RowProxy(row._mapping) if row else None
+
+    def fetchall(self):
+        return [_RowProxy(r._mapping) for r in self._result.fetchall()]
+
+
+class _RowProxy(dict):
+    """A dict that also supports row.column_name access."""
+    def __getattr__(self, name):
+        try:
+            return self[name]
+        except KeyError:
+            raise AttributeError(name)
+
+
+# ── The forms are slightly different per cabinet ──
+# SQLite uses AUTOINCREMENT (hand-numbered tickets).
+# Postgres uses SERIAL (the cabinet numbers them automatically).
+
+DDL_BOOKINGS_SQLITE = """CREATE TABLE IF NOT EXISTS bookings (
+    id                INTEGER PRIMARY KEY AUTOINCREMENT,
+    booking_reference TEXT UNIQUE NOT NULL,
+    session_id        TEXT,
+    guest_name        TEXT NOT NULL,
+    room_type         TEXT NOT NULL,
+    check_in          TEXT NOT NULL,
+    check_out         TEXT NOT NULL,
+    guests            INTEGER NOT NULL,
+    status            TEXT NOT NULL DEFAULT 'confirmed',
+    created_at        TEXT NOT NULL
+)"""
+
+DDL_BOOKINGS_POSTGRES = """CREATE TABLE IF NOT EXISTS bookings (
+    id                SERIAL PRIMARY KEY,
+    booking_reference TEXT UNIQUE NOT NULL,
+    session_id        TEXT,
+    guest_name        TEXT NOT NULL,
+    room_type         TEXT NOT NULL,
+    check_in          TEXT NOT NULL,
+    check_out         TEXT NOT NULL,
+    guests            INTEGER NOT NULL,
+    status            TEXT NOT NULL DEFAULT 'confirmed',
+    created_at        TEXT NOT NULL
+)"""
+
+
+# ── Opening the right filing cabinet ──
+# Big Bird checks the label and opens accordingly.
+# For Postgres he sets up a waiting room for connections
+# so multiple guests can file paperwork at the same time.
+# For SQLite he just opens the single drawer — no waiting room needed.
+
+class DatabaseManager:
+    def __init__(self, settings):
+        self._db_url = getattr(settings, "database_url",
+                               "sqlite:///./monster_resort.db")
+        # Fix old-style label: postgres:// -> postgresql://
+        if self._db_url.startswith("postgres://"):
+            self._db_url = self._db_url.replace("postgres://",
+                                                 "postgresql://", 1)
+        self._is_pg = _is_postgres(self._db_url)
+        self._engine = self._create_engine()
+        self._init_db()
+
+    def _create_engine(self) -> Engine:
+        if self._is_pg:
+            # Professional records room: set up a waiting room
+            # so 5 staff can file at once, with 10 overflow chairs
+            return create_engine(
+                self._db_url,
+                pool_size=5,       # 5 permanent desks
+                max_overflow=10,   # 10 folding chairs for busy days
+                pool_pre_ping=True # knock before sitting down
+            )
+        else:
+            # Small filing cabinet: just make sure the folder exists
+            db_path = self._db_url.replace("sqlite:///", "")
+            if db_path:
+                Path(db_path).parent.mkdir(parents=True, exist_ok=True)
+            return create_engine(self._db_url)
+
+    # ── Filing and retrieving paperwork ──
+    # Same process regardless of which cabinet Big Bird opens.
+    # The voice upstairs just says "file this" or "find that".
+
+    @contextmanager
+    def get_connection(self):
+        conn = self._engine.connect()
+        proxy = _ConnectionProxy(conn)
+        try:
+            yield proxy
+            conn.commit()          # stamp the paperwork as done
+        except Exception as e:
+            conn.rollback()        # shred the draft, start over
+            raise Exception(f"Filing failed: {e}")
+        finally:
+            conn.close()           # close the cabinet drawer
+
+    def create_booking(self, session_id, guest_name, hotel_name,
+                       room_type, check_in, check_out,
+                       guests=1, special_requests=""):
+        """File a new booking — same form for both cabinets."""
+        booking_ref = str(uuid.uuid4())[:8]
+        now = datetime.now(timezone.utc).isoformat()
+
+        query = """
+            INSERT INTO bookings (
+                booking_reference, session_id, guest_name,
+                hotel_name, room_type, check_in, check_out,
+                guests, special_requests, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """
+        with self.get_connection() as conn:
+            conn.execute(query, (
+                booking_ref, session_id, guest_name, hotel_name,
+                room_type, check_in, check_out, guests,
+                special_requests, now
+            ))
+        return {"booking_id": booking_ref, "status": "confirmed"}
+
+    def get_booking(self, booking_id):
+        """Retrieve paperwork — Big Bird checks both the reference
+        number and the session drawer, same process either way."""
+        query = ("SELECT * FROM bookings "
+                 "WHERE booking_reference = ? OR session_id = ?")
+        with self.get_connection() as conn:
+            cur = conn.execute(query, (booking_id, booking_id))
+            row = cur.fetchone()
+            return dict(row) if row else None
+
+    def _init_db(self):
+        """Set up the cabinet on first use — create all the
+        blank forms (tables) and stamp the schema version."""
+        with self.get_connection() as conn:
+            # Pick the right form style for this cabinet
+            if self._is_pg:
+                conn.execute(DDL_BOOKINGS_POSTGRES)
+            else:
+                conn.execute(DDL_BOOKINGS_SQLITE)
+            # ... (sessions, messages, indexes, migrations)
+
+
+# ═══ The Architecture ═══
+#
+#   Voice upstairs (app code)
+#       |
+#       | "file this booking" / "find booking abc123"
+#       v
+#   DatabaseManager  (Big Bird)
+#       |
+#       | _ConnectionProxy (the translator)
+#       v
+#   +-----------+          +-----------+
+#   |  SQLite   |    OR    | PostgreSQL|
+#   | (night    |          | (grand    |
+#   |  shift)   |          |  opening) |
+#   +-----------+          +-----------+
+#
+# The voice upstairs never changes.
+# Big Bird just opens whichever cabinet the .env file says.
+`,
+  caching: `# ═══ The Speed Shelf — Redis Caching ═══
+# From: app/back_office/cache_utils.py
+#
+# HOTEL ANALOGY — "The Speed Shelf"
+# ──────────────────────────────────
+# Every time a guest asks a question, the librarian runs to the stacks,
+# searches, and comes back. That takes time. The Speed Shelf sits right
+# at the front desk — recent answers are kept here. If the same question
+# comes again, grab it off the shelf instead of running to the library.
+#
+# Cookie Monster guards the shelf:
+#   "Me check if answer already HERE... om nom nom... YES! Here it is!
+#    No need to run!"
+#
+# Oscar explains what happens when Redis dies:
+#   "The fancy shelf fell over? Big deal. We use the wooden one.
+#    Hotel's still open."
+
+import functools, hashlib, json, logging, pickle, threading
+from collections import OrderedDict
+from time import monotonic
+from typing import Callable
+
+logger = logging.getLogger(__name__)
+
+CACHE_TTL_SECONDS = 300   # 5 minutes — answers expire after this
+CACHE_MAX_SIZE    = 256   # max items on the shelf
+
+# ═══════════════════════════════════════════════════════════════
+# TTLCache — "The basic wooden shelf behind the desk"
+# Works fine. Limited space. Entries expire after 5 minutes.
+# No external dependencies — just Python stdlib.
+# ═══════════════════════════════════════════════════════════════
+
+class TTLCache:
+    """Thread-safe, size-bounded cache with per-entry TTL expiry."""
+    def __init__(self, maxsize=CACHE_MAX_SIZE, ttl=CACHE_TTL_SECONDS):
+        self._maxsize = maxsize
+        self._ttl = ttl
+        self._cache: OrderedDict[str, tuple] = OrderedDict()
+        self._lock = threading.Lock()          # one guest at a time!
+
+    def get(self, key: str):
+        with self._lock:
+            if key not in self._cache:
+                return None                    # not on the shelf
+            value, expires = self._cache[key]
+            if monotonic() >= expires:
+                del self._cache[key]           # answer expired — toss it
+                return None
+            self._cache.move_to_end(key)       # recently used = keep near front
+            return value
+
+    def set(self, key: str, value):
+        with self._lock:
+            if key in self._cache:
+                self._cache.move_to_end(key)
+            self._cache[key] = (value, monotonic() + self._ttl)
+            if len(self._cache) > self._maxsize:
+                self._cache.popitem(last=False)  # oldest answer falls off
+
+# ═══════════════════════════════════════════════════════════════
+# RedisCache — "The upgraded metal shelf in the lobby"
+# Shared across all desks (workers). Faster. Bigger.
+# But if it falls over, the wooden shelf takes over automatically.
+# ═══════════════════════════════════════════════════════════════
+
+class RedisCache:
+    """Redis-backed cache — same get/set interface as TTLCache.
+    Every Redis call is wrapped in try/except: a Redis failure
+    NEVER crashes the hotel."""
+    def __init__(self, redis_url: str, ttl=CACHE_TTL_SECONDS):
+        import redis as _redis
+        self._ttl = ttl
+        self._pool = _redis.ConnectionPool.from_url(redis_url)
+        self._client = _redis.Redis(connection_pool=self._pool)
+
+    def get(self, key: str):
+        try:
+            raw = self._client.get(key)
+            if raw is None:
+                return None
+            try:
+                return json.loads(raw)         # try JSON first
+            except (json.JSONDecodeError, UnicodeDecodeError):
+                return pickle.loads(raw)       # fall back to pickle
+        except Exception:
+            logger.warning("RedisCache.get failed key=%s", key)
+            return None   # shelf broke — just say "not found"
+
+    def set(self, key: str, value):
+        try:
+            try:
+                serialized = json.dumps(value)
+            except (TypeError, ValueError):
+                serialized = pickle.dumps(value)
+            self._client.setex(key, self._ttl, serialized)
+        except Exception:
+            logger.warning("RedisCache.set failed key=%s", key)
+
+    def ping(self) -> bool:
+        """Is the metal shelf still standing?"""
+        try:
+            return self._client.ping()
+        except Exception:
+            return False
+
+# ═══════════════════════════════════════════════════════════════
+# get_cache() — "The morning check"
+# Is the metal shelf standing? If yes, use it.
+# If not, use the wooden one. The hotel NEVER stops.
+# ═══════════════════════════════════════════════════════════════
+
+def get_cache(redis_url=None, ttl=CACHE_TTL_SECONDS, maxsize=CACHE_MAX_SIZE):
+    """Factory: RedisCache if reachable, else TTLCache."""
+    if redis_url:
+        try:
+            cache = RedisCache(redis_url=redis_url, ttl=ttl)
+            if cache.ping():
+                logger.info("Using RedisCache at %s", redis_url)
+                return cache                   # metal shelf is up!
+            logger.warning("Redis unreachable, falling back to TTLCache")
+        except Exception:
+            logger.warning("Failed to create RedisCache, using TTLCache")
+    return TTLCache(maxsize=maxsize, ttl=ttl)  # wooden shelf — always works
+
+# ═══════════════════════════════════════════════════════════════
+# set_app_cache() — "Tell everyone which shelf to use today"
+# Called once at startup. Every @cache_response decorator
+# will use this shelf instead of creating its own.
+# ═══════════════════════════════════════════════════════════════
+
+_app_cache = None   # module-level — set once at startup
+
+def set_app_cache(cache):
+    """Set the application-wide cache (called once at startup)."""
+    global _app_cache
+    _app_cache = cache
+
+# ═══════════════════════════════════════════════════════════════
+# cache_response — "A badge on a function"
+# Before doing the work, check the shelf first.
+# Cookie Monster: "Why run to library when answer RIGHT HERE?!"
+# ═══════════════════════════════════════════════════════════════
+
+def _make_key(func_name, args, kwargs):
+    """Build a stable cache key from function name + arguments."""
+    parts = [func_name]
+    for arg in args:
+        parts.append(repr(arg) if not hasattr(arg, '__dict__') else str(id(arg)))
+    for k, v in sorted(kwargs.items()):
+        parts.append(f"{k}={repr(v)}")
+    return hashlib.md5("|".join(parts).encode()).hexdigest()
+
+def cache_response(ttl=CACHE_TTL_SECONDS, cache=None):
+    """Decorator: check the shelf before doing expensive work.
+    Resolution: explicit cache > app cache > local TTLCache."""
+    _local = cache if cache is not None else TTLCache(maxsize=CACHE_MAX_SIZE, ttl=ttl)
+
+    def decorator(func: Callable):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            active = _app_cache if _app_cache is not None else _local
+            key = _make_key(func.__name__, args, kwargs)
+            cached = active.get(key)
+            if cached is not None:
+                return cached          # Cookie Monster: "FOUND IT! Om nom nom!"
+            result = func(*args, **kwargs)
+            active.set(key, result)    # put the answer on the shelf
+            return result
+        wrapper.cache = _local
+        return wrapper
+    return decorator
+
+# ═══════════════════════════════════════════════════════════════
+# GRACEFUL FALLBACK — "The hotel NEVER stops because a shelf fell"
+#
+# Oscar the Grouch: "The fancy shelf fell over? Big deal.
+#   We use the wooden one. Hotel's still open. Now scram."
+#
+# Every layer has the same pattern:
+#   1. get_cache() tries Redis, falls back to TTLCache
+#   2. RedisCache wraps ALL ops in try/except
+#   3. cache_response tries app_cache, falls back to local
+#
+# The hotel just gets a bit slower — it never closes.
+# ═══════════════════════════════════════════════════════════════
 `
 };
 
@@ -11207,7 +11880,9 @@ const CODE_TAB_KEYS = {
   'hallucination': 'hallucination',
   'providers': 'llm_providers',
   'embeddings': 'embeddings_lab',
-  'memorydb': 'memory_vs_db'
+  'memorydb': 'memory_vs_db',
+  'dblayer': 'database_layer',
+  'caching': 'redis_cache'
 };
 
 function initNotesSystem() {
