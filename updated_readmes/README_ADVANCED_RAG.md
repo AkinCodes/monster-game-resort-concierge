@@ -164,7 +164,9 @@ We evaluate using three industry-standard metrics:
 | Hallucination Detection | None | **Confidence scoring (HIGH/MEDIUM/LOW)** |
 | LLM Provider | Single (OpenAI) | **Multi-model fallback (OpenAI/Anthropic/Ollama)** |
 | Evaluation | Manual | **RAGAS Automated + LangChain vs Custom benchmark** |
-| Caching | None | **TTL-based (5min)** |
+| Caching | None | **Dual-layer TTL-based (5min)** |
+
+Caching is provided by a dual-layer system: Redis (when enabled via `MRC_REDIS_ENABLED=true`) for shared, persistent caching across workers, or an in-memory TTL cache (default) for single-process development. Both use the same 5-minute TTL. The `@cache_response(ttl=300)` decorator works with either backend automatically.
 
 ### Trade-offs We Made
 

@@ -248,6 +248,63 @@ If traffic scales significantly: add Application Load Balancer + ECS auto-scalin
 
 ---
 
+## ADR-006: SQLite Default with PostgreSQL Option
+
+### Context
+
+The application needs persistent storage for booking data and other stateful operations. Development needs zero friction — no database server to install or configure. Production needs a real database with proper concurrency, durability, and connection management.
+
+### Decision
+
+**SQLite as default** (`sqlite:///./monster_resort.db`), **PostgreSQL as opt-in** via `MRC_DATABASE_URL`.
+
+### Rationale
+
+1. **Zero-friction dev** — `uvicorn app.main:app --reload` works immediately with no database setup. SQLite creates the database file automatically on first run.
+2. **Single config switch** — Changing one environment variable (`MRC_DATABASE_URL`) switches from SQLite to PostgreSQL. No code changes, no conditional logic in the application layer.
+3. **Docker Compose provides PostgreSQL automatically** — The production-like environment spins up a PostgreSQL container with the correct `MRC_DATABASE_URL` pre-configured.
+4. **SQLAlchemy abstracts the dialect** — Same models, same queries, same ORM code regardless of whether the backend is SQLite or PostgreSQL. The application is database-agnostic by design.
+5. **Connection pooling for Postgres** — PostgreSQL connections are pooled (`pool_size=5`, `max_overflow=10`, `pool_pre_ping=True`) to handle concurrent requests efficiently without exhausting database connections.
+
+### Trade-offs Accepted
+
+- **Two engines to consider** — Subtle SQL dialect differences (e.g., SQLite's loose typing, lack of `ARRAY` or `JSONB` types) could cause bugs that only appear in one environment. Accepted because: the ORM abstracts most differences, and the schema is simple enough to avoid dialect-specific features.
+- **SQLite lacks concurrency** — SQLite uses file-level locking, so concurrent writes will queue. Accepted because: development is single-user, and any deployment with concurrent traffic should use PostgreSQL via `MRC_DATABASE_URL`.
+
+### Migration Path
+
+If the schema grows complex or requires PostgreSQL-specific features (full-text search, JSONB queries, advisory locks): make PostgreSQL the default and drop SQLite support. The migration is seamless — change the default value of `MRC_DATABASE_URL`.
+
+---
+
+## ADR-007: Redis with In-Memory Fallback
+
+### Context
+
+Caching improves RAG response times by avoiding redundant embedding computations and LLM calls for repeated queries. Redis is the industry standard for application caching but adds infrastructure — another process to run, another dependency to manage, another thing that can fail.
+
+### Decision
+
+**Redis as opt-in** (`MRC_REDIS_ENABLED=false` default), **automatic fallback to in-memory TTLCache** when Redis is unavailable.
+
+### Rationale
+
+1. **No extra process for dev** — By default, the application uses an in-memory TTLCache. No Redis server to install, no Docker container to start, no connection strings to configure.
+2. **Docker Compose provides Redis automatically** — The production-like environment starts a Redis container with `MRC_REDIS_ENABLED=true` pre-configured, so the upgrade path is seamless.
+3. **Same cache API regardless of backend** — The `get_cache()` factory returns either a Redis-backed or in-memory cache implementation. Callers use the same `get`/`set` interface without knowing which backend is active.
+4. **Graceful degradation** — If Redis crashes or becomes unreachable, the application continues with in-memory caching. No downtime, no error pages, no manual intervention. The cache is a performance optimisation, not a critical dependency.
+
+### Trade-offs Accepted
+
+- **In-memory cache not shared across workers** — If the application runs with multiple Uvicorn workers, each worker maintains its own cache. Cache hits in one worker don't benefit other workers. Accepted because: development and small deployments use a single worker, and production deployments that need multiple workers should enable Redis.
+- **In-memory cache not persistent** — Cache is lost on application restart. Accepted because: the cache is a performance optimisation, not a data store. Cold start rebuilds the cache naturally as requests come in.
+
+### Migration Path
+
+If caching requirements grow (session storage, rate limiting, pub/sub): Redis becomes a hard dependency rather than opt-in. The `get_cache()` factory already supports Redis — the migration is flipping the default of `MRC_REDIS_ENABLED` to `true` and requiring a Redis connection.
+
+---
+
 ## Summary
 
 | ADR | Decision | Key Driver |
@@ -257,6 +314,8 @@ If traffic scales significantly: add Application Load Balancer + ECS auto-scalin
 | 003 | Hybrid RAG over pure vector search | 72% → 91% accuracy, proper noun handling, benchmarked with MLflow |
 | 004 | Real-time hallucination scoring over LLM-as-judge | 15ms vs 2000ms latency, no additional API cost, multi-signal robustness |
 | 005 | ECS Fargate over EC2/EKS/Lambda | Docker-native, operational simplicity, right-sized for workload |
+| 006 | SQLite default with PostgreSQL option | Zero-friction dev, single config switch, SQLAlchemy abstraction |
+| 007 | Redis with in-memory fallback | No extra infra for dev, graceful degradation, same cache API |
 
 Each decision was driven by **practical trade-offs**, not framework loyalty. Where possible, alternatives were benchmarked (LangChain vs custom RAG) or kept as migration paths (Pinecone, LiteLLM, EKS) for when requirements change.
 

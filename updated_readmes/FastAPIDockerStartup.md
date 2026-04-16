@@ -22,7 +22,7 @@ This is where the confusion usually sits. Docker isn't running your code instead
 
 Dockerfile: This is the blueprint for a single container. It usually ends with a command like CMD ["uvicorn", "main:app", ...]. This is the bridge—it's the moment Docker tells Python to execute that build_app() function.
 
-docker-compose.yaml: This is the "manager." If your project needs a database (PostgreSQL) and a cache (Redis) to work alongside your FastAPI app, Compose starts all three at once so they can talk to each other. In our project, `docker-compose.yml` orchestrates four services: **api**, **prometheus**, **grafana**, and **mlflow**. The **mlflow** service (`app/mlflow_tracking.py`) provides experiment tracking, model versioning, and metric logging at http://localhost:5000. For production deployments, see `docker-compose.prod.yml` which adds production-specific configuration.
+docker-compose.yaml: This is the "manager." If your project needs a database (PostgreSQL) and a cache (Redis) to work alongside your FastAPI app, Compose starts all three at once so they can talk to each other. In our project, `docker-compose.yml` orchestrates six services: **api** (FastAPI application), **postgres** (PostgreSQL 16 database), **redis** (Redis 7 cache), **prometheus** (metrics collection), **grafana** (dashboards), and **mlflow** (experiment tracking). The `api` service depends on `postgres` and `redis` — Docker Compose waits for their health checks to pass before starting the app. The **mlflow** service (`app/mlflow_tracking.py`) provides experiment tracking, model versioning, and metric logging at http://localhost:5000. For production deployments, see `docker-compose.prod.yml` which adds production-specific configuration.
 
 How they work together (The Flow)
 

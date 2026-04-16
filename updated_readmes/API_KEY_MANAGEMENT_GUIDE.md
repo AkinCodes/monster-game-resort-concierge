@@ -192,6 +192,12 @@ CREATE TABLE IF NOT EXISTS api_key_usage (
 );
 ```
 
+**Debugging database contents:**
+
+**SQLite:** `sqlite3 monster_resort.db 'SELECT * FROM api_keys;'`
+
+**PostgreSQL:** `psql -U monster -d monster_resort -c 'SELECT * FROM api_keys;'`
+
 **Important:** The raw API key is **never stored**. Only the SHA-256 hash is persisted. The raw key is returned exactly once during creation.
 
 ---
@@ -537,7 +543,7 @@ Unit tests use a lightweight `_FakeDB` wrapper (no FastAPI, no real DatabaseMana
 
 ### 7.3 Integration Tests Explained
 
-Integration tests use FastAPI's `TestClient` with a real app instance and isolated SQLite database.
+Integration tests use FastAPI's `TestClient` with a real app instance and isolated SQLite database (or PostgreSQL if configured).
 
 | Test | What It Verifies | Why It Matters |
 |------|-----------------|----------------|
@@ -629,7 +635,11 @@ No new environment variables are required. The feature uses the existing databas
 | Setting | Source | Used By | Notes |
 |---------|--------|---------|-------|
 | `MRC_API_KEY` | `.env` | `auth_mixins.py` | Static key, still works as before |
-| `MRC_DATABASE_URL` | `.env` | `APIKeyManager` | Keys stored in same SQLite DB |
+| `MRC_DATABASE_URL` | `.env` | `APIKeyManager` | Keys stored in the app database (SQLite or PostgreSQL) |
+
+**`MRC_DATABASE_URL` formats:**
+- **SQLite:** `sqlite:///./monster_resort.db`
+- **PostgreSQL:** `postgresql://monster:monster_secret@localhost:5432/monster_resort`
 | `MRC_JWT_SECRET_KEY` | `.env` | `auth_mixins.py` | JWT auth still works as before |
 
 ### Database Tables (Auto-Created)

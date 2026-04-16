@@ -53,6 +53,21 @@ export TOKENIZERS_PARALLELISM=false
 
 **Note:** For RAG unit tests, the OpenAI API key is not needed (uses HuggingFace embeddings). For multi-model tests (`test_llm_providers.py`), set the API key for whichever provider you want to test. MLflow tests require a running MLflow server or will use a local file store.
 
+### Database & Cache Test Configuration
+
+Tests use SQLite by default (no PostgreSQL or Redis required):
+
+| Variable | Test Value | Purpose |
+|----------|-----------|---------|
+| `MRC_DATABASE_URL` | `sqlite:///./test.db` | Isolated test database |
+| `MRC_REDIS_ENABLED` | `false` | Tests use in-memory cache |
+| `MRC_REDIS_URL` | (not set) | Redis not needed for tests |
+
+To run tests against PostgreSQL:
+```bash
+MRC_DATABASE_URL=postgresql://monster:monster_secret@localhost:5432/test_monster pytest tests/
+```
+
 ## 🚀 Running Tests
 
 ### Run All Tests

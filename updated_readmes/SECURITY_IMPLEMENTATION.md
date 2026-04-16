@@ -678,6 +678,23 @@ CREATE INDEX IF NOT EXISTS idx_bookings_session_id ON bookings(session_id);
 CREATE INDEX IF NOT EXISTS idx_bookings_reference  ON bookings(booking_reference);
 ```
 
+### PostgreSQL Security (Production)
+
+When using PostgreSQL (`MRC_DATABASE_URL=postgresql://...`):
+- **Connection pooling** with `pool_pre_ping=True` detects stale connections
+- **Parameterized queries** via SQLAlchemy `text()` — same SQL injection protection as SQLite
+- **Credentials in environment variables** — never hardcoded, loaded from `.env` or Docker secrets
+- **Network isolation** — in Docker Compose, postgres is only accessible from the `api` service (no external port binding in production)
+- **Health checks** — `pg_isready` validates the database is accepting connections before the API starts
+
+### Redis Security
+
+When Redis is enabled (`MRC_REDIS_ENABLED=true`):
+- **No authentication by default** in development (Docker Compose)
+- **Production recommendation:** Enable Redis AUTH and TLS
+- **Data serialization:** JSON-first with pickle fallback — be aware of pickle deserialization risks in shared environments
+- **Graceful degradation:** If Redis becomes unavailable, the app falls back to in-memory cache — no data exposure
+
 ---
 
 ## 9. Container & Infrastructure Security

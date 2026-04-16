@@ -371,6 +371,8 @@ curl -X POST http://localhost:8000/chat \
 
 # Check what's in memory
 sqlite3 monster_resort.db "SELECT * FROM messages WHERE session_id='debug-1';"
+
+# For PostgreSQL: `psql -U monster -d monster_resort -c 'YOUR QUERY HERE'`
 ```
 
 **Check 4: Enable debug logging**

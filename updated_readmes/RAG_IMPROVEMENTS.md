@@ -161,6 +161,12 @@ The project includes a side-by-side comparison framework (`app/langchain_rag.py`
 
 ---
 
+## Caching
+
+Caching is provided by a dual-layer system: Redis (when enabled via `MRC_REDIS_ENABLED=true`) for shared, persistent caching across workers, or an in-memory TTL cache (default) for single-process development. Both use the same 5-minute TTL. The `@cache_response(ttl=300)` decorator works with either backend automatically.
+
+---
+
 ## Use Cases
 
 ### When Hybrid Helps

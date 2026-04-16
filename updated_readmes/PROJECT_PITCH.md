@@ -44,7 +44,10 @@ An AI-powered concierge for a fictional monster-themed resort chain. Guests ask 
 
 **6. Production Infrastructure**
 - FastAPI async server with JWT auth, rate limiting, input validation
+- SQLAlchemy ORM with switchable SQLite / PostgreSQL backends
+- Redis caching layer for session and response caching
 - Docker + Prometheus + Grafana monitoring stack
+- docker-compose includes postgres and redis services for local and production parity
 - AWS ECS Fargate deployment with ECR, CloudWatch, Secrets Manager
 - CI/CD via GitHub Actions — push to main auto-deploys
 
@@ -95,12 +98,13 @@ An AI-powered concierge for a fictional monster-themed resort chain. Guests ask 
 
 | Category | Technologies |
 |----------|-------------|
-| **Backend** | Python, FastAPI, SQLite, Pydantic |
+| **Backend** | Python, FastAPI, SQLite / PostgreSQL (switchable via config), SQLAlchemy, Pydantic |
+| **Caching** | Redis |
 | **AI/LLM** | OpenAI GPT-4o-mini, Anthropic Claude, Ollama/Llama3 |
 | **RAG** | ChromaDB, SentenceTransformers, BM25, BGE Reranker, LangChain |
 | **ML/Evaluation** | RAGAS, MLflow, LoRA fine-tuning (Phi-3) |
 | **Security** | JWT, bcrypt, rate limiting, input sanitisation |
-| **Infrastructure** | Docker, AWS ECS Fargate, ECR, CloudWatch, Secrets Manager |
+| **Infrastructure** | Docker, AWS ECS Fargate, ECR, CloudWatch, Secrets Manager, PostgreSQL, Redis |
 | **Monitoring** | Prometheus, Grafana, MLflow |
 | **CI/CD** | GitHub Actions |
 | **Testing** | pytest, 13 test files |
@@ -119,27 +123,35 @@ An AI-powered concierge for a fictional monster-themed resort chain. Guests ask 
                     │  (auth, rate limit, routes)  │
                     └──────────────┬──────────────┘
                                    │
-              ┌────────────────────┼────────────────────┐
-              │                    │                     │
-    ┌─────────▼─────────┐ ┌───────▼────────┐ ┌─────────▼─────────┐
-    │   ModelRouter      │ │  AdvancedRAG   │ │   Tool Registry   │
-    │ (OpenAI/Anthropic  │ │ (BM25+Dense+   │ │ (book_room,       │
-    │  /Ollama fallback) │ │  Reranking)    │ │  generate_invoice) │
-    └─────────┬─────────┘ └───────┬────────┘ └─────────┬─────────┘
-              │                    │                     │
-              └────────────────────┼─────────────────────┘
+         ┌─────────────────────────┼─────────────────────────┐
+         │                         │                         │
+         │              ┌──────────▼──────────┐              │
+         │              │    Redis Cache       │              │
+         │              │ (sessions/responses) │              │
+         │              └──────────┬──────────┘              │
+         │                         │                         │
+┌────────▼────────┐ ┌──────────────▼──────────────┐ ┌────────▼──────────┐
+│  ModelRouter     │ │  AdvancedRAG               │ │  Tool Registry    │
+│ (OpenAI/Anthro-  │ │ (BM25+Dense+Reranking)     │ │ (book_room,       │
+│  pic/Ollama)     │ │                            │ │  generate_invoice) │
+└────────┬────────┘ └──────────────┬──────────────┘ └────────┬──────────┘
+         │                         │                         │
+         └─────────────────────────┼─────────────────────────┘
                                    │
                     ┌──────────────▼──────────────┐
                     │   HallucinationDetector     │
                     │  (confidence: HIGH/MED/LOW)  │
                     └──────────────┬──────────────┘
                                    │
-              ┌────────────────────┼────────────────────┐
-              │                    │                     │
-    ┌─────────▼─────────┐ ┌───────▼────────┐ ┌─────────▼─────────┐
-    │   MLflow Tracker   │ │  Prometheus    │ │   CloudWatch      │
-    │  (experiments)     │ │  + Grafana     │ │   (prod logs)     │
-    └───────────────────┘ └────────────────┘ └───────────────────┘
+    ┌──────────────────────────────┼──────────────────────────────┐
+    │              │               │               │              │
+┌───▼────────┐ ┌───▼──────────┐ ┌──▼───────────┐ ┌▼────────────┐ │
+│ PostgreSQL │ │ MLflow       │ │ Prometheus   │ │ CloudWatch  │ │
+│ / SQLite   │ │ Tracker      │ │ + Grafana    │ │ (prod logs) │ │
+│ (SQLAlch-  │ │ (experiments)│ │              │ │             │ │
+│  emy ORM)  │ │              │ │              │ │             │ │
+└────────────┘ └──────────────┘ └──────────────┘ └─────────────┘ │
+                                                                  │
 ```
 
 ---

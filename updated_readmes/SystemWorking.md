@@ -1,3 +1,30 @@
+# How the System Works
+
+## Infrastructure (docker-compose.yml)
+
+| Service | Image | Port | Purpose |
+|---------|-------|------|---------|
+| api | (built from Dockerfile) | 8000 | FastAPI application |
+| postgres | postgres:16-alpine | 5432 | Persistent database (bookings, sessions) |
+| redis | redis:7-alpine | 6379 | Cache layer (RAG results, responses) |
+| prometheus | prom/prometheus | 9090 | Metrics collection |
+| grafana | grafana/grafana | 3000 | Metrics dashboards |
+| mlflow | ghcr.io/mlflow/mlflow | 5000 | Experiment tracking |
+
+## Database
+
+- **Default:** SQLite at `./monster_resort.db` (zero setup)
+- **Production:** PostgreSQL via `MRC_DATABASE_URL=postgresql://...`
+- SQLAlchemy handles both — same code, same queries, configurable via one env var
+
+## Caching
+
+- **Default:** In-memory TTL cache (per-process, lost on restart)
+- **Production:** Redis via `MRC_REDIS_ENABLED=true`
+- Graceful fallback: if Redis dies, app continues with in-memory cache
+
+---
+
 akin.olusanya@U-SH-HO-MAC211-5 monster-resort-concierge % # Test RAG search
 curl -X POST http://localhost:8000/chat \
   -H "Content-Type: application/json" \

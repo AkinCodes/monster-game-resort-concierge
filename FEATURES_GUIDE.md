@@ -420,6 +420,27 @@ All settings use the `MRC_` prefix. Set them in `.env` or as environment variabl
 | `MRC_RAG_PERSIST_DIR` | `./.rag_store` | RAG storage directory |
 | `MRC_RAG_MAX_RESULTS` | `5` | Max RAG results per query |
 
+### Redis
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `MRC_REDIS_URL` | `redis://localhost:6379/0` | Redis connection URL |
+| `MRC_REDIS_ENABLED` | `false` | Enable Redis caching (falls back to in-memory) |
+
+---
+
+## PostgreSQL Database & Redis Caching
+
+### Database
+- **Default (dev):** SQLite — zero setup, file-based
+- **Production:** PostgreSQL 16 via `MRC_DATABASE_URL=postgresql://monster:monster_secret@localhost:5432/monster_resort`
+- SQLAlchemy handles the dialect switch — same code works on both backends
+
+### Redis Cache
+- **Default:** Disabled — uses in-memory TTL cache
+- **Enabled:** Set `MRC_REDIS_ENABLED=true` and `MRC_REDIS_URL=redis://localhost:6379/0`
+- Graceful fallback: if Redis dies, the app continues with in-memory cache
+
 ---
 
 ## Quick Start — Running Everything Locally
@@ -434,7 +455,7 @@ export MRC_OPENAI_API_KEY=sk-...
 # 3. Run the app
 uvicorn app.main:app --reload
 
-# 4. Start supporting services (Prometheus, Grafana, MLflow)
+# 4. Start supporting services (Prometheus, Grafana, MLflow, Postgres, Redis, App)
 docker-compose up -d
 
 # 5. Run all tests

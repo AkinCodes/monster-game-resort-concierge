@@ -57,6 +57,7 @@ We use a tool called **Docker-Compose** to manage our monitoring tools. Think of
 2. **Navigate to the Folder:** Ensure you are in the `monster-resort-concierge` folder.
 3. **Flip the Switch:** Type `docker-compose up -d` and press Enter.
 * *What is happening?* The `-d` stands for "detached." It means the monitoring tools will run quietly in the background, like a silent security guard, without cluttering your screen.
+* *What comes online?* Docker-Compose starts **6 services**: `api`, `postgres`, `redis`, `prometheus`, `grafana`, and `mlflow`.
 
 ### Phase 2: Accessing the Dashboard
 
