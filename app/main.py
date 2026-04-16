@@ -11,6 +11,7 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 from .monitoring.profile_utils import profile  # noqa: E402
 from .config import get_settings  # noqa: E402
 from .database.db import DatabaseManager  # noqa: E402
+from .database.cache_utils import get_cache, set_app_cache  # noqa: E402
 from .core.memory import MemoryStore  # noqa: E402
 from .monitoring.metrics import install_metrics  # noqa: E402
 from .services.pdf_generator import PDFGenerator  # noqa: E402
@@ -89,6 +90,14 @@ def build_app() -> FastAPI:
     api_key_manager = APIKeyManager(db)
     app.state.api_key_manager = api_key_manager
     pdf = PDFGenerator(settings.pdf_output_dir)
+
+    # Initialize cache — Redis if enabled and reachable, otherwise in-memory
+    app_cache = get_cache(
+        redis_url=settings.redis_url if settings.redis_enabled else None,
+    )
+    cache_type = type(app_cache).__name__
+    set_app_cache(app_cache)
+    logger.info(f"Cache initialized: {cache_type}")
 
     rag = AdvancedRAG(
         settings.rag_persist_dir,

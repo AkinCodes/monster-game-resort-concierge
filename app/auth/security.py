@@ -16,6 +16,7 @@ class APIKeyManager:
         self._ensure_schema()
 
     def _ensure_schema(self):
+        is_pg = getattr(self.db, '_is_postgres', False)
         with self.db.session() as conn:
             conn.execute(
                 """
@@ -29,17 +30,30 @@ class APIKeyManager:
                 )
             """
             )
-            conn.execute(
+            if is_pg:
+                conn.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS api_key_usage (
+                        id SERIAL PRIMARY KEY,
+                        key_hash TEXT NOT NULL,
+                        endpoint TEXT NOT NULL,
+                        timestamp TEXT NOT NULL,
+                        success INTEGER NOT NULL
+                    )
                 """
-                CREATE TABLE IF NOT EXISTS api_key_usage (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    key_hash TEXT NOT NULL,
-                    endpoint TEXT NOT NULL,
-                    timestamp TEXT NOT NULL,
-                    success INTEGER NOT NULL
                 )
-            """
-            )
+            else:
+                conn.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS api_key_usage (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        key_hash TEXT NOT NULL,
+                        endpoint TEXT NOT NULL,
+                        timestamp TEXT NOT NULL,
+                        success INTEGER NOT NULL
+                    )
+                """
+                )
 
     def create_key(self, user_id: str, expires_days: int = 90) -> str:
         """Create new API key"""

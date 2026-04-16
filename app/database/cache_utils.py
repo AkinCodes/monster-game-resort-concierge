@@ -121,28 +121,40 @@ def _make_key(func_name: str, args: tuple, kwargs: dict) -> str:
     return hashlib.md5(raw.encode()).hexdigest()
 
 
-def cache_response(ttl: int = CACHE_TTL_SECONDS, cache: TTLCache | RedisCache | None = None):
+# Module-level app cache — set at startup via set_app_cache().
+# If set, all @cache_response decorators use it instead of per-decorator TTLCache.
+_app_cache = None
+
+
+def set_app_cache(cache):
+    """Set the application-wide cache instance (called once at startup)."""
+    global _app_cache
+    _app_cache = cache
+
+
+def cache_response(ttl: int = CACHE_TTL_SECONDS, cache=None):
     """Decorator that caches function results with TTL expiry and LRU eviction.
 
-    Args:
-        ttl: Time-to-live in seconds for cached entries.
-        cache: Optional pre-built cache instance (TTLCache or RedisCache).
-               If None, a local TTLCache is created (preserving original behaviour).
+    Cache resolution order:
+    1. Explicit `cache` parameter (if provided)
+    2. App-level cache set via set_app_cache() (if set)
+    3. A local TTLCache (fallback, preserves original behaviour)
     """
-    _cache = cache if cache is not None else TTLCache(maxsize=CACHE_MAX_SIZE, ttl=ttl)
+    _local_cache = cache if cache is not None else TTLCache(maxsize=CACHE_MAX_SIZE, ttl=ttl)
 
     def decorator(func: Callable):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
+            active_cache = _app_cache if _app_cache is not None else _local_cache
             key = _make_key(func.__name__, args, kwargs)
-            cached = _cache.get(key)
+            cached = active_cache.get(key)
             if cached is not None:
                 return cached
             result = func(*args, **kwargs)
-            _cache.set(key, result)
+            active_cache.set(key, result)
             return result
 
-        wrapper.cache = _cache
+        wrapper.cache = _local_cache
         return wrapper
 
     return decorator

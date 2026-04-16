@@ -1,5 +1,6 @@
 import time
 import threading
+import app.database.cache_utils as _cache_mod
 from app.database.cache_utils import TTLCache, cache_response, _make_key
 
 
@@ -146,6 +147,10 @@ class TestMakeKey:
 
 
 class TestCacheResponseDecorator:
+    def setup_method(self):
+        """Reset the app-level cache so decorator tests use their own local caches."""
+        _cache_mod._app_cache = None
+
     def test_caches_return_value(self):
         """Decorated function is only called once for the same arguments."""
         call_count = 0

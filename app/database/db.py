@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import re
-import threading
 import uuid
 from contextlib import contextmanager
 from pathlib import Path
@@ -178,9 +176,11 @@ def _is_postgres(url: str) -> bool:
 class DatabaseManager:
     def __init__(self, settings: Settings):
         self._db_url = getattr(settings, "database_url", "sqlite:///./monster_resort.db")
+        # Normalize legacy postgres:// to postgresql:// (required by SQLAlchemy 2.x)
+        if self._db_url.startswith("postgres://"):
+            self._db_url = self._db_url.replace("postgres://", "postgresql://", 1)
         self._is_postgres = _is_postgres(self._db_url)
         self._engine = self._create_engine()
-        self._local = threading.local()
         self._init_db()
 
     def _create_engine(self) -> Engine:
@@ -189,6 +189,7 @@ class DatabaseManager:
                 self._db_url,
                 pool_size=5,
                 max_overflow=10,
+                pool_pre_ping=True,
             )
         else:
             # For SQLite: extract file path for logging purposes
