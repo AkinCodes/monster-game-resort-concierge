@@ -19,6 +19,7 @@ from .cctv.profile_utils import profile
 from .config import get_settings
 
 from .back_office.database import DatabaseManager
+from .back_office.cache_utils import get_cache, set_app_cache
 from .concierge.memory import MemoryStore
 from .cctv.monitoring import install_metrics
 from .services.pdf_generator import PDFGenerator
@@ -107,6 +108,12 @@ def build_app() -> FastAPI:
     api_key_manager = APIKeyManager(db)
     app.state.api_key_manager = api_key_manager
     pdf = PDFGenerator(settings.pdf_output_dir)
+
+    # Initialize cache — Redis if enabled and reachable, otherwise in-memory
+    app_cache = get_cache(
+        redis_url=settings.redis_url if settings.redis_enabled else None,
+    )
+    set_app_cache(app_cache)
 
     rag = AdvancedRAG(
         settings.rag_persist_dir,

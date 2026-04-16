@@ -1,18 +1,13 @@
-# from garage import hammer
-
 from __future__ import annotations
 
-import atexit
-import time
-import threading
-import shutil
-import sqlite3
 import uuid
 from contextlib import contextmanager
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterator, Optional
 from datetime import datetime, timezone
+
+from sqlalchemy import create_engine, text
+from sqlalchemy.engine import Engine
 
 from ..config import Settings
 from ..cctv.logging_utils import logger, DatabaseError
@@ -34,49 +29,182 @@ DDL = [
         summary       TEXT,
         metadata_json TEXT
     )""",
-    """CREATE TABLE IF NOT EXISTS messages (
-        id         INTEGER PRIMARY KEY AUTOINCREMENT,
-        session_id TEXT NOT NULL,
-        role       TEXT NOT NULL,
-        content    TEXT NOT NULL,
-        created_at TEXT NOT NULL,
-        FOREIGN KEY(session_id) REFERENCES sessions(session_id)
-    )""",
-    # --- Business Logic: Bookings ---
-    """CREATE TABLE IF NOT EXISTS bookings (
-        id                INTEGER PRIMARY KEY AUTOINCREMENT,
-        booking_reference TEXT UNIQUE NOT NULL, -- Public UUID-based ID for guests
-        session_id        TEXT,
-        guest_name        TEXT NOT NULL,
-        hotel_name        TEXT,
-        room_type         TEXT NOT NULL,
-        check_in          TEXT NOT NULL,
-        check_out         TEXT NOT NULL,
-        guests            INTEGER NOT NULL,
-        special_requests  TEXT,
-        status            TEXT NOT NULL DEFAULT 'confirmed',
-        created_at        TEXT NOT NULL
-    )""",
     # --- Performance Optimization ---
     """CREATE INDEX IF NOT EXISTS idx_messages_session_id ON messages(session_id)""",
     """CREATE INDEX IF NOT EXISTS idx_bookings_session_id ON bookings(session_id)""",
     """CREATE INDEX IF NOT EXISTS idx_bookings_reference  ON bookings(booking_reference)""",
 ]
 
+# Tables with AUTOINCREMENT need different syntax for Postgres (SERIAL/GENERATED)
+# We handle this by generating DDL per-backend.
+
+DDL_MESSAGES_SQLITE = """CREATE TABLE IF NOT EXISTS messages (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_id TEXT NOT NULL,
+    role       TEXT NOT NULL,
+    content    TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    FOREIGN KEY(session_id) REFERENCES sessions(session_id)
+)"""
+
+DDL_MESSAGES_POSTGRES = """CREATE TABLE IF NOT EXISTS messages (
+    id         SERIAL PRIMARY KEY,
+    session_id TEXT NOT NULL,
+    role       TEXT NOT NULL,
+    content    TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    FOREIGN KEY(session_id) REFERENCES sessions(session_id)
+)"""
+
+DDL_BOOKINGS_SQLITE = """CREATE TABLE IF NOT EXISTS bookings (
+    id                INTEGER PRIMARY KEY AUTOINCREMENT,
+    booking_reference TEXT UNIQUE NOT NULL,
+    session_id        TEXT,
+    guest_name        TEXT NOT NULL,
+    hotel_name        TEXT,
+    room_type         TEXT NOT NULL,
+    check_in          TEXT NOT NULL,
+    check_out         TEXT NOT NULL,
+    guests            INTEGER NOT NULL,
+    special_requests  TEXT,
+    status            TEXT NOT NULL DEFAULT 'confirmed',
+    created_at        TEXT NOT NULL
+)"""
+
+DDL_BOOKINGS_POSTGRES = """CREATE TABLE IF NOT EXISTS bookings (
+    id                SERIAL PRIMARY KEY,
+    booking_reference TEXT UNIQUE NOT NULL,
+    session_id        TEXT,
+    guest_name        TEXT NOT NULL,
+    hotel_name        TEXT,
+    room_type         TEXT NOT NULL,
+    check_in          TEXT NOT NULL,
+    check_out         TEXT NOT NULL,
+    guests            INTEGER NOT NULL,
+    special_requests  TEXT,
+    status            TEXT NOT NULL DEFAULT 'confirmed',
+    created_at        TEXT NOT NULL
+)"""
+
+# Postgres uses ON CONFLICT ... DO UPDATE instead of INSERT OR REPLACE
+UPSERT_MIGRATION_SQLITE = (
+    "INSERT OR REPLACE INTO schema_migrations(version, applied_at) VALUES(:version, :applied_at)"
+)
+UPSERT_MIGRATION_POSTGRES = (
+    "INSERT INTO schema_migrations(version, applied_at) VALUES(:version, :applied_at) "
+    "ON CONFLICT (version) DO UPDATE SET applied_at = EXCLUDED.applied_at"
+)
+
+
+def _convert_qmarks(sql: str):
+    """Convert ?-style positional params to :p0, :p1, ... named params.
+
+    Returns (new_sql, True) if conversion happened, (original_sql, False) otherwise.
+    This allows callers that pass (sql, tuple_args) in sqlite3 style to work
+    transparently with SQLAlchemy's text() which requires named params.
+    """
+    if "?" not in sql:
+        return sql, False
+    parts = sql.split("?")
+    new_parts = [parts[0]]
+    for i, part in enumerate(parts[1:]):
+        new_parts.append(f":p{i}")
+        new_parts.append(part)
+    return "".join(new_parts), True
+
+
+class _ConnectionProxy:
+    """Wraps a SQLAlchemy connection so that callers using the old sqlite3
+    interface (conn.execute(sql, tuple), row['col']) keep working."""
+
+    def __init__(self, sa_conn):
+        self._conn = sa_conn
+
+    def execute(self, sql: str, params=None):
+        converted_sql, was_converted = _convert_qmarks(sql)
+        if params is not None:
+            if was_converted and isinstance(params, (tuple, list)):
+                # Map positional args to named params :p0, :p1, ...
+                params = {f"p{i}": v for i, v in enumerate(params)}
+            elif isinstance(params, (tuple, list)) and not was_converted:
+                # Named params already in SQL but tuple passed — shouldn't happen
+                # but handle gracefully
+                pass
+        else:
+            params = {}
+
+        result = self._conn.execute(text(converted_sql), params)
+        return _ResultProxy(result)
+
+
+class _ResultProxy:
+    """Wraps a SQLAlchemy CursorResult to provide sqlite3.Row-like behaviour:
+    row['column'] access and .fetchone() / .fetchall() returning dict-like rows.
+    """
+
+    def __init__(self, result):
+        self._result = result
+
+    def fetchone(self):
+        row = self._result.fetchone()
+        if row is None:
+            return None
+        return _RowProxy(row._mapping)
+
+    def fetchall(self):
+        rows = self._result.fetchall()
+        return [_RowProxy(r._mapping) for r in rows]
+
+
+class _RowProxy(dict):
+    """A dict subclass that also supports attribute access, mimicking sqlite3.Row."""
+
+    def __init__(self, mapping):
+        super().__init__(mapping)
+
+    def __getattr__(self, name):
+        try:
+            return self[name]
+        except KeyError:
+            raise AttributeError(name)
+
+
+def _is_postgres(url: str) -> bool:
+    return url.startswith("postgresql://") or url.startswith("postgres://")
+
 
 class DatabaseManager:
     def __init__(self, settings: Settings):
-        self.db_path = Path(getattr(settings, "sqlite_db", "monster_resort.db"))
-        self.db_path.parent.mkdir(parents=True, exist_ok=True)
-        self._local = threading.local()
+        self._db_url = getattr(settings, "database_url", "sqlite:///./monster_resort.db")
+        # Normalize legacy postgres:// to postgresql:// (required by SQLAlchemy 2.x)
+        if self._db_url.startswith("postgres://"):
+            self._db_url = self._db_url.replace("postgres://", "postgresql://", 1)
+        self._is_postgres = _is_postgres(self._db_url)
+        self._engine = self._create_engine()
         self._init_db()
 
+    def _create_engine(self) -> Engine:
+        if self._is_postgres:
+            return create_engine(
+                self._db_url,
+                pool_size=5,
+                max_overflow=10,
+                pool_pre_ping=True,
+            )
+        else:
+            # For SQLite: extract file path for logging purposes
+            # sqlite:///./monster_resort.db -> ./monster_resort.db
+            db_path_str = self._db_url.replace("sqlite:///", "")
+            if db_path_str:
+                Path(db_path_str).parent.mkdir(parents=True, exist_ok=True)
+            return create_engine(self._db_url)
+
     @contextmanager
-    def get_connection(self) -> Iterator[sqlite3.Connection]:
-        conn = sqlite3.connect(self.db_path, check_same_thread=False)
-        conn.row_factory = sqlite3.Row
+    def get_connection(self) -> Iterator[_ConnectionProxy]:
+        conn = self._engine.connect()
+        proxy = _ConnectionProxy(conn)
         try:
-            yield conn
+            yield proxy
             conn.commit()
         except Exception as e:
             conn.rollback()
@@ -85,29 +213,41 @@ class DatabaseManager:
             conn.close()
 
     @contextmanager
-    def session(self) -> Iterator[sqlite3.Connection]:
+    def session(self) -> Iterator[_ConnectionProxy]:
         with self.get_connection() as conn:
             yield conn
 
     def _init_db(self):
         try:
             with self.get_connection() as conn:
-                for stmt in DDL:
+                # Create tables — pick correct DDL per backend
+                all_ddl = list(DDL)  # copy shared DDL
+                if self._is_postgres:
+                    # Insert table DDL before the index DDL
+                    all_ddl.insert(1, DDL_MESSAGES_POSTGRES)
+                    all_ddl.insert(2, DDL_BOOKINGS_POSTGRES)
+                else:
+                    all_ddl.insert(1, DDL_MESSAGES_SQLITE)
+                    all_ddl.insert(2, DDL_BOOKINGS_SQLITE)
+
+                for stmt in all_ddl:
                     conn.execute(stmt)
 
                 cur = conn.execute("SELECT MAX(version) AS v FROM schema_migrations")
                 row = cur.fetchone()
-                current = int(row["v"] or 0)
+                current = int(row["v"] or 0) if row["v"] is not None else 0
 
                 if current < SCHEMA_VERSION:
-                    print(
-                        f"DEBUG [DB]: Upgrading schema from {current} to {SCHEMA_VERSION}"
+                    logger.info("Upgrading schema from %s to %s", current, SCHEMA_VERSION)
+                    upsert_sql = (
+                        UPSERT_MIGRATION_POSTGRES if self._is_postgres
+                        else UPSERT_MIGRATION_SQLITE
                     )
                     conn.execute(
-                        "INSERT OR REPLACE INTO schema_migrations(version, applied_at) VALUES(?, ?)",
-                        (SCHEMA_VERSION, datetime.now(timezone.utc).isoformat()),
+                        upsert_sql,
+                        {"version": SCHEMA_VERSION, "applied_at": datetime.now(timezone.utc).isoformat()},
                     )
-            print(f"DEBUG [DB]: Database initialized at {self.db_path}")
+            logger.info("Database initialized (%s)", "PostgreSQL" if self._is_postgres else "SQLite")
         except Exception as e:
             logger.error(f"Database initialization failed: {e}")
             raise DatabaseError(f"Database initialization failed: {e}")
@@ -127,11 +267,9 @@ class DatabaseManager:
         booking_ref = str(uuid.uuid4())[:8]
         now = datetime.now(timezone.utc).isoformat()
 
-        print(f"DEBUG [DB]: Attempting to create booking record. Ref: {booking_ref}")
-
         query = """
             INSERT INTO bookings (
-                booking_reference, session_id, guest_name, hotel_name, 
+                booking_reference, session_id, guest_name, hotel_name,
                 room_type, check_in, check_out, guests, special_requests, created_at
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """
@@ -154,7 +292,7 @@ class DatabaseManager:
                     ),
                 )
 
-            print(f"DEBUG [DB]: Success! Booking {booking_ref} saved to SQL.")
+            logger.info("Booking %s saved to database", booking_ref)
             return {
                 "booking_id": booking_ref,
                 "guest_name": guest_name,
@@ -179,205 +317,3 @@ class DatabaseManager:
         except Exception as e:
             logger.error(f"Failed to get booking: {e}")
             raise DatabaseError(f"Failed to get booking: {e}")
-
-
-# One sentence to remember
-# CREATE INDEX IF NOT EXISTS idx_messages_session_id ON messages(session_id) = “Make
-# a fast lookup for the session_id column in messages, but don’t make it twice.”
-
-
-# @contextmanager
-# 10 Very Simple Analogies
-# 1. Borrowing a library book 📚
-# @contextmanager = the librarian system
-# get_connection() = borrowing the book
-# You get the book (yield)
-# When you’re done, you must return it
-# The system makes sure the book always gets returned
-# 2. Using a bathroom 🚻
-# Enter bathroom → door locks
-# Do your thing (yield)
-# Exit → door unlocks automatically
-# You don’t have to remember to unlock it — it just happens.
-# 3. Renting a car 🚗
-# Pick up the car (open DB connection)
-# Drive it (yield)
-# Return it clean and fueled (close connection)
-# Even if something goes wrong on the drive, the return still happens.
-# 4. Borrowing a phone charger 🔌
-# Friend hands you the charger
-# You charge your phone
-# When you’re done, charger goes back to them
-# @contextmanager is your friend making sure you don’t walk away with it.
-
-
-# Polished hotel analogy (exact match)
-# Think of @contextmanager like the hotel’s automatic room system, not the maid watching you.
-# What actually happens
-# You check into the hotel
-# → database connection opens
-# You turn on the tap
-# → you use the connection (yield conn)
-# You leave the room
-# → no matter what (even if you flood the bathroom)
-# The hotel system automatically:
-# turns off the tap 🚰
-# cleans the room 🧹
-# locks the door 🔒
-# That automatic cleanup only exists because the hotel is wired for it.
-# That wiring = @contextmanager
-
-
-# so what happens if this is missing -
-# conn.row_factory = sqlite3.Row
-
-# That line controls how rows come back from SQLite.
-# If it’s missing, nothing explodes—but the shape of your query
-# results changes in ways that can quietly mess you up.
-# Here’s the breakdown 👇
-
-# With this line
-# conn.row_factory = sqlite3.Row
-
-# Each row behaves like a dictionary + tuple hybrid.
-# You can do:
-# row["username"]
-# row["email"]
-# row[0]
-
-# This is great because:
-
-
-# Code is more readable
-
-
-# Column order doesn’t matter
-
-
-# Safer when schemas change
-
-
-# Example:
-# cur.execute("SELECT id, name FROM users")
-# row = cur.fetchone()
-# print(row["name"])
-
-# ✅ Works
-
-# Without it (default behavior)
-# Rows come back as plain tuples:
-# (1, "Alice")
-
-# So this:
-# row["name"]
-
-# ❌ Breaks with
-# TypeError: tuple indices must be integers or slices
-
-# You’re forced to do:
-# row[1]  # hope name is always column #1 😬
-
-
-### What `yield` means (plain English)
-# `yield` **hands something out temporarily and then pauses**, expecting to **come back later**.
-# `return` **hands something out and ends the function forever**.
-
-# In a `@contextmanager`, that pause-and-resume behavior is *the whole point*.
-
-# ---
-
-# ## 5 very simple analogies
-
-# ### 1️⃣ Lending someone your keys
-
-# * **`yield`**: “Here are my keys—bring them back when you’re done.”
-# * **`return`**: “Here are my keys. I’m gone forever.”
-
-# The context manager needs the keys back to lock the door (`close()` the connection).
-
-# ---
-
-# ### 2️⃣ Restaurant table
-
-# * **`yield`**: You sit at the table, eat, then leave so the staff can clean it.
-# * **`return`**: You sit at the table and disappear—no cleanup ever happens.
-
-# ---
-
-# ### 3️⃣ Borrowing a library book
-
-# * **`yield`**: You borrow the book, read it, then return it.
-# * **`return`**: You borrow the book and the library burns down.
-
-# ---
-
-# ### 4️⃣ Pausing a movie
-
-# * **`yield`**: Pause → do something → resume → finish the movie.
-# * **`return`**: Stop the movie and eject the DVD.
-
-# ---
-
-# ### 5️⃣ Bathroom key at a gas station
-
-# * **`yield`**: Take the key, use the bathroom, give it back.
-# * **`return`**: Take the key and drive away.
-
-# ---
-
-# ## Why `yield` is required here
-
-# Your code:
-
-# ```python
-# @contextmanager
-# def session(self) -> Iterator[sqlite3.Connection]:
-#     with self.get_connection() as conn:
-#         yield conn
-# ```
-
-# What actually happens when someone writes:
-
-# ```python
-# with db.session() as conn:
-#     do_stuff(conn)
-# ```
-
-# ### Step-by-step
-
-# 1. `get_connection()` opens the DB
-# 2. `yield conn` → **hands the connection to the `with` block**
-# 3. `do_stuff(conn)` runs
-# 4. The `with` block ends
-# 5. Execution **resumes after `yield`**
-# 6. `get_connection()` cleans up (connection closes)
-
-# That pause between steps 2 and 5 is **impossible with `return`**.
-
-# ---
-
-# ## Why `return` does NOT work
-
-# If you did this:
-
-# ```python
-# @contextmanager
-# def session(self):
-#     conn = self.get_connection()
-#     return conn
-# ```
-
-# Then:
-
-# * The function ends immediately
-# * Python has **no place to resume**
-# * Cleanup code never runs
-# * Connections leak 😬
-
-# The context manager protocol literally depends on `yield`.
-
-# ---
-
-# ## One-sentence mental model
-
-# > **`yield` says: “Here, use this—but I’m coming back when you’re done.”**

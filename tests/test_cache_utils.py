@@ -3,6 +3,7 @@ import threading
 import pytest
 from unittest.mock import patch
 from app.back_office.cache_utils import TTLCache, cache_response, _make_key
+import app.back_office.cache_utils as _cache_mod
 
 
 # ── TTLCache unit tests ──────────────────────────────────────────────
@@ -148,6 +149,9 @@ class TestMakeKey:
 
 
 class TestCacheResponseDecorator:
+    def setup_method(self):
+        _cache_mod._app_cache = None
+
     def test_caches_return_value(self):
         """Decorated function is only called once for the same arguments."""
         call_count = 0
