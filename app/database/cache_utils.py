@@ -1,9 +1,14 @@
 import functools
 import hashlib
+import json
+import logging
+import pickle
 import threading
 from collections import OrderedDict
 from time import monotonic
 from typing import Callable
+
+logger = logging.getLogger(__name__)
 
 CACHE_TTL_SECONDS = 300  # 5 minutes
 CACHE_MAX_SIZE = 256
@@ -38,6 +43,71 @@ class TTLCache:
                 self._cache.popitem(last=False)
 
 
+class RedisCache:
+    """Redis-backed cache with the same get/set interface as TTLCache.
+
+    All Redis operations are wrapped in try/except so a Redis failure
+    never crashes the application.
+    """
+
+    def __init__(self, redis_url: str, ttl: int = CACHE_TTL_SECONDS):
+        import redis as _redis
+
+        self._ttl = ttl
+        self._pool = _redis.ConnectionPool.from_url(redis_url)
+        self._client = _redis.Redis(connection_pool=self._pool)
+
+    def get(self, key: str):
+        try:
+            raw = self._client.get(key)
+            if raw is None:
+                return None
+            # Try JSON first, fall back to pickle
+            try:
+                return json.loads(raw)
+            except (json.JSONDecodeError, UnicodeDecodeError):
+                return pickle.loads(raw)
+        except Exception:
+            logger.warning("RedisCache.get failed for key=%s, returning None", key)
+            return None
+
+    def set(self, key: str, value):
+        try:
+            # Try JSON serialization first, fall back to pickle
+            try:
+                serialized = json.dumps(value)
+            except (TypeError, ValueError):
+                serialized = pickle.dumps(value)
+            self._client.setex(key, self._ttl, serialized)
+        except Exception:
+            logger.warning("RedisCache.set failed for key=%s, value not cached", key)
+
+    def ping(self) -> bool:
+        """Return True if Redis is reachable."""
+        try:
+            return self._client.ping()
+        except Exception:
+            return False
+
+
+def get_cache(
+    redis_url: str | None = None,
+    ttl: int = CACHE_TTL_SECONDS,
+    maxsize: int = CACHE_MAX_SIZE,
+) -> TTLCache | RedisCache:
+    """Factory: return a RedisCache if Redis is reachable, else a TTLCache."""
+    if redis_url:
+        try:
+            cache = RedisCache(redis_url=redis_url, ttl=ttl)
+            if cache.ping():
+                logger.info("Using RedisCache at %s", redis_url)
+                return cache
+            logger.warning("Redis not reachable at %s, falling back to TTLCache", redis_url)
+        except Exception:
+            logger.warning("Failed to create RedisCache, falling back to TTLCache")
+    return TTLCache(maxsize=maxsize, ttl=ttl)
+
+
 def _make_key(func_name: str, args: tuple, kwargs: dict) -> str:
     """Build a stable, hashable cache key from function name + arguments."""
     parts = [func_name]
@@ -51,22 +121,28 @@ def _make_key(func_name: str, args: tuple, kwargs: dict) -> str:
     return hashlib.md5(raw.encode()).hexdigest()
 
 
-def cache_response(ttl: int = CACHE_TTL_SECONDS):
-    """Decorator that caches function results with TTL expiry and LRU eviction."""
-    _ttl_cache = TTLCache(maxsize=CACHE_MAX_SIZE, ttl=ttl)
+def cache_response(ttl: int = CACHE_TTL_SECONDS, cache: TTLCache | RedisCache | None = None):
+    """Decorator that caches function results with TTL expiry and LRU eviction.
+
+    Args:
+        ttl: Time-to-live in seconds for cached entries.
+        cache: Optional pre-built cache instance (TTLCache or RedisCache).
+               If None, a local TTLCache is created (preserving original behaviour).
+    """
+    _cache = cache if cache is not None else TTLCache(maxsize=CACHE_MAX_SIZE, ttl=ttl)
 
     def decorator(func: Callable):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             key = _make_key(func.__name__, args, kwargs)
-            cached = _ttl_cache.get(key)
+            cached = _cache.get(key)
             if cached is not None:
                 return cached
             result = func(*args, **kwargs)
-            _ttl_cache.set(key, result)
+            _cache.set(key, result)
             return result
 
-        wrapper.cache = _ttl_cache
+        wrapper.cache = _cache
         return wrapper
 
     return decorator

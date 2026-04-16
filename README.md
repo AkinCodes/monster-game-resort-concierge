@@ -2,6 +2,8 @@
   <img src="https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white" />
   <img src="https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white" />
   <img src="https://img.shields.io/badge/LangChain-RAG-1C3C3C?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" />
+  <img src="https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white" />
   <img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" />
   <img src="https://img.shields.io/badge/AWS_ECS-FF9900?style=for-the-badge&logo=amazonaws&logoColor=white" />
 </p>
@@ -136,8 +138,8 @@ app/
 │   ├── langchain_rag.py    # LangChain RAG (same interface, for benchmarking)
 │   └── ingest_knowledge.py # CLI script to populate the knowledge base
 ├── database/
-│   ├── db.py               # SQLite manager with WAL, migrations, auto-backups
-│   └── cache_utils.py      # TTL cache for RAG search results
+│   ├── db.py               # SQLite + PostgreSQL manager with WAL, migrations, auto-backups
+│   └── cache_utils.py      # TTL cache for RAG search results (in-memory or Redis)
 ├── auth/
 │   ├── jwt_auth.py         # JWT token creation and verification
 │   ├── security.py         # API key manager (SHA-256 hashing, rotation, audit)
@@ -170,13 +172,13 @@ app/
 
 **Trade-off:** Adds ~50ms latency per query vs single-vector search. The precision improvement justifies the cost — proper noun queries (e.g., "What does Vampire Manor offer?") went from partial matches to consistent top-1 hits. Run `uv run python scripts/benchmark_rag.py` to compare against a LangChain baseline.
 
-### Why SQLite over Postgres?
+### Why SQLite by default, with PostgreSQL support?
 
-**Context:** Single-instance deployment on ECS Fargate. Write volume is low (bookings, conversation messages). No concurrent multi-writer workload.
+**Context:** Single-instance deployment on ECS Fargate. Write volume is low (bookings, conversation messages). No concurrent multi-writer workload in the default case.
 
-**Decision:** SQLite with WAL mode. Zero operational overhead, no managed database dependency, $0 cost.
+**Decision:** SQLite with WAL mode as the default — zero operational overhead, no managed database dependency, $0 cost. PostgreSQL is supported via `MRC_DATABASE_URL` for multi-instance deployments. `docker-compose up` provisions Postgres automatically.
 
-**Trade-off:** Cannot horizontally scale writes. Would migrate to Postgres/RDS if scaling beyond a single task or needing concurrent writers.
+**Trade-off:** SQLite cannot horizontally scale writes. For multi-instance or high-concurrency deployments, switch to PostgreSQL (set `MRC_DATABASE_URL` to a `postgresql://` connection string).
 
 ### Why multi-provider fallback instead of just OpenAI?
 
@@ -307,7 +309,7 @@ CI runs on every push to main via GitHub Actions (lint + test + deploy).
 docker build -t monster-game-resort-concierge .
 docker run -p 8000:8000 --env-file .env monster-game-resort-concierge
 
-# Full stack (API + Prometheus + Grafana + MLflow)
+# Full stack (API + Postgres + Redis + Prometheus + Grafana + MLflow)
 docker-compose up --build
 ```
 
@@ -335,11 +337,26 @@ MRC_MLFLOW_ENABLED=false
 MRC_ENABLE_GRADIO=false
 ```
 
+### Database
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `MRC_DATABASE_URL` | `sqlite:///./monster_resort.db` | Database connection string. Use `postgresql://user:pass@host:5432/dbname` to switch to PostgreSQL. |
+
+SQLite is the default for local development (zero setup). For production or multi-instance deployments, set `MRC_DATABASE_URL` to a PostgreSQL connection string.
+
+### Redis Caching
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `MRC_REDIS_URL` | `redis://localhost:6379/0` | Redis connection URL |
+| `MRC_REDIS_ENABLED` | `false` | Set to `true` to use Redis for RAG result caching. When disabled, an in-memory TTL cache is used. |
+
 ---
 
 ## Known Limitations
 
-- **SQLite** limits horizontal scaling to a single writer — would migrate to Postgres for multi-instance deployment
+- **SQLite** is the default database — set `MRC_DATABASE_URL` to a PostgreSQL connection string for multi-instance deployment
 - **Hallucination detector** uses heuristic scoring (token overlap + semantic similarity), not a trained classifier — effective for high-confidence cases, less reliable in ambiguous ones
 - **Cross-encoder reranking** adds ~50ms latency per query — a deliberate accuracy/latency trade-off
 - **No prompt injection defense** beyond input sanitization — adversarial prompt attacks are not actively mitigated

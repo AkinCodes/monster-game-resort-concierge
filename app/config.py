@@ -23,8 +23,18 @@ class Settings(BaseSettings):
     port: int = 8000
     log_level: str = "info"
 
-    # Database (SQLite by default)
+    # Database (SQLite by default, set to postgresql://... for Postgres)
     database_url: str = Field(default="sqlite:///./monster_resort.db")
+
+    # Redis (optional caching / agent messaging layer)
+    redis_url: str = Field(
+        default="redis://localhost:6379/0",
+        description="Redis connection URL for caching and agent messaging",
+    )
+    redis_enabled: bool = Field(
+        default=False,
+        description="Enable Redis-backed caching (falls back to in-memory TTL cache when disabled)",
+    )
 
     # RAG
     rag_collection: str = "monster_resort_knowledge"
