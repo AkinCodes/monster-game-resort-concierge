@@ -1,0 +1,1333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Monster Resort Hotel - Docker Compose Analogy</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+    --ss-red: #e53935;
+    --ss-blue: #1e88e5;
+    --ss-yellow: #fdd835;
+    --ss-green: #43a047;
+    --ss-orange: #fb8c00;
+    --ss-purple: #8e24aa;
+    --ss-pink: #d81b60;
+    --ss-teal: #00897b;
+    --ss-brown: #6d4c41;
+    --ss-warm-bg: #fef9ef;
+    --ss-warm-bg2: #fdf3e0;
+    --ss-card-bg: #ffffff;
+    --ss-text: #3e2723;
+    --ss-text-light: #6d4c41;
+    --ss-text-muted: #a1887f;
+    --ss-border: #e0c9a6;
+    --ss-code-bg: #1e1e2e;
+    --radius: 16px;
+    --radius-sm: 10px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: 'Fredoka', sans-serif;
+    background: var(--ss-warm-bg);
+    color: var(--ss-text);
+    line-height: 1.6;
+    min-height: 100vh;
+}
+
+/* Street Sign Header */
+.street-header {
+    background: linear-gradient(135deg, #5d4037 0%, #3e2723 100%);
+    padding: 32px 24px 24px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+.street-header::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(90deg, transparent, transparent 60px, rgba(255,255,255,0.03) 60px, rgba(255,255,255,0.03) 62px);
+}
+.street-sign {
+    display: inline-block;
+    background: var(--ss-brown);
+    border: 4px solid var(--ss-yellow);
+    border-radius: 8px;
+    padding: 12px 36px;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    position: relative;
+}
+.street-sign h1 {
+    font-size: 30px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 1px;
+    text-shadow: 2px 2px 0 rgba(0,0,0,0.2);
+}
+.street-header .subtitle {
+    color: rgba(255,255,255,0.9);
+    font-size: 16px;
+    font-weight: 500;
+    max-width: 750px;
+    margin: 0 auto;
+    position: relative;
+}
+
+/* Tab Navigation */
+.tab-nav {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 4px;
+    padding: 16px 16px 0;
+    background: linear-gradient(180deg, #3e2723, var(--ss-warm-bg) 100%);
+}
+.tab-btn {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 12px 22px;
+    border: 3px solid transparent;
+    border-bottom: none;
+    border-radius: 12px 12px 0 0;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: #fff;
+    position: relative;
+    top: 4px;
+}
+.tab-btn:hover { transform: translateY(-2px); }
+.tab-btn.active {
+    border-color: var(--ss-border);
+    color: var(--ss-text);
+    top: 0;
+    box-shadow: 0 -2px 8px rgba(0,0,0,0.08);
+}
+.tab-btn[data-tab="building"] { background: var(--ss-brown); }
+.tab-btn[data-tab="building"].active { background: var(--ss-card-bg); color: var(--ss-brown); }
+.tab-btn[data-tab="opening"] { background: var(--ss-green); }
+.tab-btn[data-tab="opening"].active { background: var(--ss-card-bg); color: var(--ss-green); }
+.tab-btn[data-tab="guest"] { background: var(--ss-blue); }
+.tab-btn[data-tab="guest"].active { background: var(--ss-card-bg); color: var(--ss-blue); }
+.tab-btn[data-tab="closes"] { background: var(--ss-red); }
+.tab-btn[data-tab="closes"].active { background: var(--ss-card-bg); color: var(--ss-red); }
+
+/* Tab Content */
+.tab-content { display: none; padding: 0 24px 60px; max-width: 1000px; margin: 0 auto; }
+.tab-content.active { display: block; }
+
+/* Block Header */
+.block-header {
+    text-align: center;
+    padding: 36px 16px 24px;
+}
+.block-number {
+    display: inline-block;
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    color: #fff;
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 56px;
+    text-align: center;
+    margin-bottom: 12px;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+}
+.block-header h2 {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+.block-header .block-desc {
+    font-size: 16px;
+    color: var(--ss-text-light);
+    max-width: 650px;
+    margin: 0 auto;
+}
+
+/* Department Card */
+.dept-card {
+    background: var(--ss-card-bg);
+    border: 3px solid var(--ss-border);
+    border-radius: var(--radius);
+    margin: 20px 0;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.dept-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+}
+.dept-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px 24px;
+    cursor: pointer;
+    user-select: none;
+}
+.dept-avatar {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px;
+    flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+}
+.dept-name {
+    font-size: 20px;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+}
+.dept-role {
+    font-size: 14px;
+    color: var(--ss-text-light);
+    font-weight: 500;
+}
+.dept-toggle {
+    margin-left: auto;
+    font-size: 22px;
+    color: var(--ss-text-muted);
+    transition: transform 0.3s;
+    flex-shrink: 0;
+}
+.dept-card.open .dept-toggle { transform: rotate(180deg); }
+.dept-body {
+    display: none;
+    padding: 0 24px 24px;
+}
+.dept-card.open .dept-body { display: block; }
+
+/* Speech Bubbles */
+.speech {
+    background: var(--ss-warm-bg2);
+    border: 2px solid var(--ss-border);
+    border-radius: 18px;
+    padding: 16px 20px;
+    margin: 12px 0;
+    position: relative;
+    font-size: 15px;
+    line-height: 1.7;
+}
+.speech::before {
+    content: '';
+    position: absolute;
+    top: -10px; left: 24px;
+    width: 0; height: 0;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-bottom: 10px solid var(--ss-border);
+}
+.speech::after {
+    content: '';
+    position: absolute;
+    top: -7px; left: 26px;
+    width: 0; height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-bottom: 8px solid var(--ss-warm-bg2);
+}
+.speech .speaker {
+    font-weight: 700;
+    margin-bottom: 4px;
+    display: block;
+}
+
+/* Info boxes */
+.info-box {
+    border-radius: var(--radius-sm);
+    padding: 16px 20px;
+    margin: 12px 0;
+    font-size: 14px;
+    line-height: 1.7;
+}
+.info-hotel {
+    background: rgba(109,76,65,0.08);
+    border: 2px solid rgba(109,76,65,0.2);
+}
+.info-hotel .info-title { color: var(--ss-brown); }
+.info-docker {
+    background: rgba(30,136,229,0.08);
+    border: 2px solid rgba(30,136,229,0.2);
+}
+.info-docker .info-title { color: var(--ss-blue); }
+.info-danger {
+    background: rgba(229,57,53,0.08);
+    border: 2px solid rgba(229,57,53,0.2);
+}
+.info-danger .info-title { color: var(--ss-red); }
+.info-flow {
+    background: rgba(67,160,71,0.08);
+    border: 2px solid rgba(67,160,71,0.2);
+}
+.info-flow .info-title { color: var(--ss-green); }
+.info-count {
+    background: rgba(142,36,170,0.08);
+    border: 2px solid rgba(142,36,170,0.2);
+}
+.info-count .info-title { color: var(--ss-purple); }
+.info-title {
+    font-weight: 700;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+    display: block;
+}
+
+/* Code blocks */
+.code-block {
+    background: var(--ss-code-bg);
+    border-radius: var(--radius-sm);
+    padding: 18px 20px;
+    margin: 12px 0;
+    overflow-x: auto;
+}
+.code-block pre {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    line-height: 1.65;
+    color: #cdd6f4;
+    margin: 0;
+}
+.code-block .code-label {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #888;
+    margin-bottom: 10px;
+    display: block;
+}
+.kw { color: #cba6f7; }
+.ty { color: #f9e2af; }
+.fn { color: #89b4fa; }
+.st { color: #a6e3a1; }
+.cm { color: #6c7086; font-style: italic; }
+.nu { color: #fab387; }
+.pr { color: #89dceb; }
+
+/* Step card for sequences */
+.step-card {
+    background: var(--ss-card-bg);
+    border: 3px solid var(--ss-border);
+    border-radius: var(--radius);
+    margin: 16px 0;
+    padding: 20px 24px;
+    position: relative;
+    overflow: hidden;
+}
+.step-card::before {
+    content: attr(data-step);
+    position: absolute;
+    top: 0; left: 0;
+    width: 36px; height: 36px;
+    border-radius: 0 0 12px 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    font-weight: 700;
+    color: #fff;
+}
+.step-card .step-title {
+    font-size: 18px;
+    font-weight: 700;
+    margin-left: 28px;
+    margin-bottom: 8px;
+}
+.step-card .step-body {
+    font-size: 15px;
+    line-height: 1.7;
+}
+
+/* Flow arrow connector */
+.flow-arrow {
+    text-align: center;
+    font-size: 28px;
+    color: var(--ss-text-muted);
+    margin: 4px 0;
+}
+
+/* Hotel floor map */
+.hotel-map {
+    background: linear-gradient(180deg, #e8d5b7 0%, #d7c4a0 100%);
+    border: 4px solid var(--ss-brown);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin: 20px 0;
+    position: relative;
+}
+.hotel-map .map-title {
+    text-align: center;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--ss-brown);
+    margin-bottom: 16px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.floor {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    margin: 6px 0;
+    border-radius: var(--radius-sm);
+    background: rgba(255,255,255,0.7);
+    border: 2px solid rgba(109,76,65,0.15);
+}
+.floor-icon {
+    font-size: 28px;
+    flex-shrink: 0;
+}
+.floor-label {
+    font-weight: 600;
+    font-size: 15px;
+}
+.floor-sublabel {
+    font-size: 12px;
+    color: var(--ss-text-light);
+    font-family: 'JetBrains Mono', monospace;
+}
+.floor-char {
+    margin-left: auto;
+    font-size: 24px;
+    flex-shrink: 0;
+}
+
+/* The Count box */
+.count-box {
+    background: linear-gradient(135deg, rgba(142,36,170,0.08), rgba(30,136,229,0.08));
+    border: 2px dashed var(--ss-purple);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    margin: 20px 0;
+    text-align: center;
+}
+.count-box .count-number {
+    font-size: 48px;
+    font-weight: 700;
+    color: var(--ss-purple);
+    line-height: 1;
+}
+.count-box .count-text {
+    font-size: 16px;
+    color: var(--ss-text-light);
+    margin-top: 4px;
+}
+.count-box .count-laugh {
+    font-size: 13px;
+    color: var(--ss-purple);
+    font-style: italic;
+    margin-top: 4px;
+}
+
+/* Scenario box */
+.scenario {
+    background: linear-gradient(135deg, rgba(251,140,0,0.06), rgba(253,216,53,0.06));
+    border: 2px solid rgba(251,140,0,0.25);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    margin: 16px 0;
+}
+.scenario-title {
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--ss-orange);
+    margin-bottom: 10px;
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================================ -->
+<!-- HEADER -->
+<!-- ============================================================ -->
+<div class="street-header">
+    <div class="street-sign">
+        <h1>The Monster Resort Hotel</h1>
+    </div>
+    <p class="subtitle">Docker Compose as a Hotel Building -- 6 departments, 6 characters, one building that opens and closes together</p>
+</div>
+
+<!-- ============================================================ -->
+<!-- TAB NAVIGATION -->
+<!-- ============================================================ -->
+<nav class="tab-nav">
+    <button class="tab-btn active" data-tab="building" onclick="switchTab('building')">The Hotel Building</button>
+    <button class="tab-btn" data-tab="opening" onclick="switchTab('opening')">Opening the Hotel</button>
+    <button class="tab-btn" data-tab="guest" onclick="switchTab('guest')">A Guest Arrives</button>
+    <button class="tab-btn" data-tab="closes" onclick="switchTab('closes')">When a Department Closes</button>
+</nav>
+
+<!-- ============================================================ -->
+<!-- TAB 1: THE HOTEL BUILDING -->
+<!-- ============================================================ -->
+<div id="tab-building" class="tab-content active">
+
+    <div class="block-header">
+        <div class="block-number" style="background: var(--ss-brown);">1</div>
+        <h2>The Hotel Building</h2>
+        <p class="block-desc">Docker Compose is the hotel building itself. Each service is a department inside it. One key opens the whole building. One key locks it all up.</p>
+    </div>
+
+    <div class="info-box info-docker">
+        <span class="info-title">The Big Idea</span>
+        <code>docker-compose up -d</code> = Opening the hotel for the day. Every department powers on, staff take their positions, the building hums to life.<br>
+        <code>docker-compose down</code> = Closing for the night. Lights off, doors locked, the building goes quiet. But the filing cabinets keep their papers (volumes persist).
+    </div>
+
+    <!-- Hotel Floor Map -->
+    <div class="hotel-map">
+        <div class="map-title">Monster Resort -- Floor Plan</div>
+        <div class="floor">
+            <span class="floor-icon">B2</span>
+            <div>
+                <div class="floor-label">The Filing Cabinet Room</div>
+                <div class="floor-sublabel">PostgreSQL :5432</div>
+            </div>
+            <span class="floor-char" title="Count von Count">🧛</span>
+        </div>
+        <div class="floor">
+            <span class="floor-icon">B1</span>
+            <div>
+                <div class="floor-label">The Speed Shelf</div>
+                <div class="floor-sublabel">Redis :6379</div>
+            </div>
+            <span class="floor-char" title="Cookie Monster">🍪</span>
+        </div>
+        <div class="floor">
+            <span class="floor-icon">G</span>
+            <div>
+                <div class="floor-label">The Front Desk</div>
+                <div class="floor-sublabel">FastAPI :8000</div>
+            </div>
+            <span class="floor-char" title="Big Bird">🐤</span>
+        </div>
+        <div class="floor">
+            <span class="floor-icon">L</span>
+            <div>
+                <div class="floor-label">The Tally Board</div>
+                <div class="floor-sublabel">Prometheus :9090</div>
+            </div>
+            <span class="floor-char" title="Count von Count">🧛</span>
+        </div>
+        <div class="floor">
+            <span class="floor-icon">2</span>
+            <div>
+                <div class="floor-label">The Big Display Board</div>
+                <div class="floor-sublabel">Grafana :3000</div>
+            </div>
+            <span class="floor-char" title="Elmo">🔴</span>
+        </div>
+        <div class="floor">
+            <span class="floor-icon">3</span>
+            <div>
+                <div class="floor-label">The Experiment Lab</div>
+                <div class="floor-sublabel">MLflow :5000</div>
+            </div>
+            <span class="floor-char" title="Grover">🔵</span>
+        </div>
+    </div>
+
+    <!-- Department 1: API / Front Desk -->
+    <div class="dept-card">
+        <div class="dept-header" onclick="toggleCard(this)">
+            <div class="dept-avatar" style="background: var(--ss-yellow); color: #fff;">🐤</div>
+            <div>
+                <div class="dept-name">The Front Desk</div>
+                <div class="dept-role">Big Bird manages the API (FastAPI :8000)</div>
+            </div>
+            <span class="dept-toggle">&#9660;</span>
+        </div>
+        <div class="dept-body">
+            <div class="speech">
+                <span class="speaker" style="color: var(--ss-yellow);">Big Bird:</span>
+                "Welcome to Monster Resort! I am the very first face you see when you walk through those big revolving doors. Every single guest -- every request, every question, every complaint -- comes to me first. I stand right here at my desk, I smile, and I say: How can I help you today?"
+            </div>
+
+            <div class="info-box info-hotel">
+                <span class="info-title">Hotel Analogy</span>
+                The Front Desk is the ground floor, right by the entrance. Every guest walks up to Big Bird. He checks them in, looks up their reservation, routes them to the right room. He never leaves until the Filing Cabinet Room and the Speed Shelf are both open -- he refuses to stand at his desk unless his support systems are ready.
+            </div>
+
+            <div class="info-box info-docker">
+                <span class="info-title">What This Really Is</span>
+                The FastAPI application. It handles every HTTP request. It exposes <code>/health</code>, <code>/chat</code>, <code>/metrics</code>, and all other endpoints. It depends on Postgres and Redis -- it literally will not start until both report healthy.
+            </div>
+
+            <div class="code-block">
+                <span class="code-label">docker-compose.yml -- api service</span>
+<pre><span class="kw">api</span>:
+  <span class="fn">build</span>: <span class="st">.</span>
+  <span class="fn">ports</span>:
+    - <span class="st">"8000:8000"</span>
+  <span class="fn">environment</span>:
+    - <span class="ty">MRC_DATABASE_URL</span>=<span class="st">postgresql://monster:monster_secret@postgres:5432/monster_resort</span>
+    - <span class="ty">MRC_REDIS_URL</span>=<span class="st">redis://redis:6379/0</span>
+  <span class="fn">depends_on</span>:
+    <span class="kw">postgres</span>:
+      <span class="fn">condition</span>: <span class="st">service_healthy</span>   <span class="cm"># Won't open desk until filing room is ready</span>
+    <span class="kw">redis</span>:
+      <span class="fn">condition</span>: <span class="st">service_healthy</span>   <span class="cm"># Won't open desk until speed shelf is stocked</span>
+  <span class="fn">healthcheck</span>:
+    <span class="fn">test</span>: [<span class="st">"CMD"</span>, <span class="st">"curl"</span>, <span class="st">"-f"</span>, <span class="st">"http://localhost:8000/health"</span>]
+    <span class="fn">interval</span>: <span class="nu">30s</span>
+  <span class="fn">restart</span>: <span class="st">unless-stopped</span></pre>
+            </div>
+        </div>
+    </div>
+
+    <!-- Department 2: PostgreSQL / Filing Cabinet Room -->
+    <div class="dept-card">
+        <div class="dept-header" onclick="toggleCard(this)">
+            <div class="dept-avatar" style="background: var(--ss-purple); color: #fff;">🧛</div>
+            <div>
+                <div class="dept-name">The Filing Cabinet Room</div>
+                <div class="dept-role">Count von Count manages PostgreSQL (:5432)</div>
+            </div>
+            <span class="dept-toggle">&#9660;</span>
+        </div>
+        <div class="dept-body">
+            <div class="speech">
+                <span class="speaker" style="color: var(--ss-purple);">Count von Count:</span>
+                "Down here in the basement, I have ONE THOUSAND, TWO HUNDRED and FORTY-THREE filing cabinets! Ah ah ah! Every guest who has ever stayed, every booking ever made, every session ever created -- it is all here, organized, numbered, and COUNTED. When Big Bird needs to know if a guest has a reservation, he sends a little note down the pneumatic tube, and I pull the folder. I never forget. I never lose a file. The cabinets stay full even when the hotel closes for the night."
+            </div>
+
+            <div class="info-box info-hotel">
+                <span class="info-title">Hotel Analogy</span>
+                Deep in the basement, behind a heavy door, sits the Filing Cabinet Room. It is the oldest department in the hotel -- it was here before everything else. It holds every record permanently. When the hotel closes, the cabinets stay locked and full. When it reopens, every file is exactly where it was. The Count is always the first to arrive and the last to leave.
+            </div>
+
+            <div class="info-box info-docker">
+                <span class="info-title">What This Really Is</span>
+                PostgreSQL 16. The persistent relational database. Stores bookings, sessions, user data. The <code>postgres_data</code> volume means data survives <code>docker-compose down</code>. The healthcheck runs <code>pg_isready</code> every 10 seconds. Nothing else starts until this reports healthy.
+            </div>
+
+            <div class="code-block">
+                <span class="code-label">docker-compose.yml -- postgres service</span>
+<pre><span class="kw">postgres</span>:
+  <span class="fn">image</span>: <span class="st">postgres:16-alpine</span>
+  <span class="fn">environment</span>:
+    <span class="ty">POSTGRES_DB</span>: <span class="st">monster_resort</span>
+    <span class="ty">POSTGRES_USER</span>: <span class="st">monster</span>
+    <span class="ty">POSTGRES_PASSWORD</span>: <span class="st">monster_secret</span>
+  <span class="fn">ports</span>:
+    - <span class="st">"5432:5432"</span>
+  <span class="fn">volumes</span>:
+    - <span class="st">postgres_data:/var/lib/postgresql/data</span>  <span class="cm"># Filing cabinets survive the night</span>
+  <span class="fn">healthcheck</span>:
+    <span class="fn">test</span>: [<span class="st">"CMD-SHELL"</span>, <span class="st">"pg_isready -U monster"</span>]
+    <span class="fn">interval</span>: <span class="nu">10s</span>
+    <span class="fn">retries</span>: <span class="nu">5</span></pre>
+            </div>
+
+            <div class="count-box">
+                <div class="count-number">5,432</div>
+                <div class="count-text">Port number for the Filing Cabinet Room</div>
+                <div class="count-laugh">"Five thousand, four hundred and thirty-two! Ah ah ah!"</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Department 3: Redis / Speed Shelf -->
+    <div class="dept-card">
+        <div class="dept-header" onclick="toggleCard(this)">
+            <div class="dept-avatar" style="background: var(--ss-orange); color: #fff;">🍪</div>
+            <div>
+                <div class="dept-name">The Speed Shelf</div>
+                <div class="dept-role">Cookie Monster manages Redis (:6379)</div>
+            </div>
+            <span class="dept-toggle">&#9660;</span>
+        </div>
+        <div class="dept-body">
+            <div class="speech">
+                <span class="speaker" style="color: var(--ss-orange);">Cookie Monster:</span>
+                "Me have SHELF right next to Big Bird desk! It tiny shelf -- not big like Count filing cabinets -- but it FAST. So fast! When guest ask same question that someone already ask today, Big Bird no need to run all the way down to basement. He just reach over to me shelf and GRAB answer! Om nom nom! Quick like cookie into mouth! But if hotel close for night and reopen... some cookies on shelf might be gone. That okay. Me restock."
+            </div>
+
+            <div class="info-box info-hotel">
+                <span class="info-title">Hotel Analogy</span>
+                Right next to the front desk, within arm's reach, is a small speed shelf. Cookie Monster keeps the most frequently needed items right there -- room keys that keep getting requested, today's breakfast menu, the wifi password. Instead of Big Bird running to the basement every time someone asks the same question, he just grabs it off the shelf. The shelf is small and temporary -- some items vanish overnight. But that is fine. They can always be fetched from the basement again.
+            </div>
+
+            <div class="info-box info-docker">
+                <span class="info-title">What This Really Is</span>
+                Redis 7. An in-memory cache. Stores recently fetched data for fast retrieval. The API checks Redis first before hitting Postgres. TTL (time-to-live) means cached items expire automatically. The healthcheck runs <code>redis-cli ping</code> -- if Redis says PONG, the shelf is stocked and ready.
+            </div>
+
+            <div class="code-block">
+                <span class="code-label">docker-compose.yml -- redis service</span>
+<pre><span class="kw">redis</span>:
+  <span class="fn">image</span>: <span class="st">redis:7-alpine</span>
+  <span class="fn">ports</span>:
+    - <span class="st">"6379:6379"</span>
+  <span class="fn">volumes</span>:
+    - <span class="st">redis_data:/data</span>              <span class="cm"># Some cookies survive the night</span>
+  <span class="fn">healthcheck</span>:
+    <span class="fn">test</span>: [<span class="st">"CMD"</span>, <span class="st">"redis-cli"</span>, <span class="st">"ping"</span>]  <span class="cm"># "PONG!" = shelf is ready</span>
+    <span class="fn">interval</span>: <span class="nu">10s</span>
+    <span class="fn">retries</span>: <span class="nu">5</span></pre>
+            </div>
+        </div>
+    </div>
+
+    <!-- Department 4: Prometheus / Tally Board -->
+    <div class="dept-card">
+        <div class="dept-header" onclick="toggleCard(this)">
+            <div class="dept-avatar" style="background: var(--ss-teal); color: #fff;">🧛</div>
+            <div>
+                <div class="dept-name">The Tally Board</div>
+                <div class="dept-role">Count von Count manages Prometheus (:9090)</div>
+            </div>
+            <span class="dept-toggle">&#9660;</span>
+        </div>
+        <div class="dept-body">
+            <div class="speech">
+                <span class="speaker" style="color: var(--ss-purple);">Count von Count:</span>
+                "Yes, I have TWO jobs! Down in the basement I keep the permanent records. But up here in the lobby, I have my TALLY BOARD! Every fifteen seconds -- one, two, three, four, five, six, seven, eight, nine, ten, eleven, twelve, thirteen, fourteen, FIFTEEN! Ah ah ah! -- I walk over to Big Bird's desk and I count things. How many guests checked in? How many are waiting? How long is the line? How much memory is left in the supply closet? I write every number on my board. I never stop counting."
+            </div>
+
+            <div class="info-box info-hotel">
+                <span class="info-title">Hotel Analogy</span>
+                In the lobby, mounted on the wall where everyone can see it, is a massive tally board. The Count walks over to the Front Desk every 15 seconds, counts everything happening, and chalks the numbers onto the board. He tracks how many guests arrived this hour, how long they waited, how many errors occurred. The board is always updating. It does not store records permanently -- it stores trends. "How is today going compared to yesterday?"
+            </div>
+
+            <div class="info-box info-docker">
+                <span class="info-title">What This Really Is</span>
+                Prometheus. A metrics collection system. Every 15 seconds it scrapes the <code>/metrics</code> endpoint on the API. It stores time-series data: request counts, response latencies, error rates, memory usage. It does not trigger alerts itself -- it just records. Grafana reads from this board.
+            </div>
+
+            <div class="code-block">
+                <span class="code-label">docker-compose.yml -- prometheus service</span>
+<pre><span class="kw">prometheus</span>:
+  <span class="fn">image</span>: <span class="st">prom/prometheus:latest</span>
+  <span class="fn">ports</span>:
+    - <span class="st">"9090:9090"</span>
+  <span class="fn">volumes</span>:
+    - <span class="st">./prometheus.yml:/etc/prometheus/prometheus.yml</span>  <span class="cm"># The counting rules</span>
+    - <span class="st">prometheus_data:/prometheus</span>                      <span class="cm"># The tally records</span>
+  <span class="fn">command</span>:
+    - <span class="st">'--config.file=/etc/prometheus/prometheus.yml'</span>
+  <span class="fn">restart</span>: <span class="st">unless-stopped</span></pre>
+            </div>
+
+            <div class="count-box">
+                <div class="count-number">15s</div>
+                <div class="count-text">The Count visits the Front Desk every 15 seconds</div>
+                <div class="count-laugh">"Fifteen wonderful seconds! Ah ah ah!"</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Department 5: Grafana / Display Board -->
+    <div class="dept-card">
+        <div class="dept-header" onclick="toggleCard(this)">
+            <div class="dept-avatar" style="background: var(--ss-red); color: #fff;">🔴</div>
+            <div>
+                <div class="dept-name">The Big Display Board</div>
+                <div class="dept-role">Elmo manages Grafana (:3000)</div>
+            </div>
+            <span class="dept-toggle">&#9660;</span>
+        </div>
+        <div class="dept-body">
+            <div class="speech">
+                <span class="speaker" style="color: var(--ss-red);">Elmo:</span>
+                "Elmo has the PRETTIEST board in the whole hotel! Elmo takes all the numbers that the Count writes on his tally board, and Elmo turns them into beautiful colorful pictures! Green lines going up means lots of happy guests! Red lines going up means something is wrong and the manager should come look! Elmo makes it so the grown-ups can understand what is happening without reading all those tiny numbers. Elmo loves colors!"
+            </div>
+
+            <div class="info-box info-hotel">
+                <span class="info-title">Hotel Analogy</span>
+                On the second floor, in the management office, is a wall-sized display board. It shows beautiful charts and graphs -- guest arrival trends, average wait times, satisfaction scores -- all painted in bright colors. The hotel manager walks in each morning, glances at the display, and instantly knows how the hotel is performing. Elmo does not collect any data himself. He reads everything from the Count's tally board and makes it visual.
+            </div>
+
+            <div class="info-box info-docker">
+                <span class="info-title">What This Really Is</span>
+                Grafana. A visualization dashboard. It connects to Prometheus as a data source and renders charts, graphs, and alerts. The admin password is set via environment variable. It stores dashboard configurations in a volume so your custom layouts survive restarts.
+            </div>
+
+            <div class="code-block">
+                <span class="code-label">docker-compose.yml -- grafana service</span>
+<pre><span class="kw">grafana</span>:
+  <span class="fn">image</span>: <span class="st">grafana/grafana:latest</span>
+  <span class="fn">ports</span>:
+    - <span class="st">"3000:3000"</span>
+  <span class="fn">environment</span>:
+    - <span class="ty">GF_SECURITY_ADMIN_PASSWORD</span>=<span class="st">admin</span>  <span class="cm"># Key to the management office</span>
+  <span class="fn">volumes</span>:
+    - <span class="st">grafana_data:/var/lib/grafana</span>       <span class="cm"># Dashboard layouts survive the night</span>
+  <span class="fn">restart</span>: <span class="st">unless-stopped</span></pre>
+            </div>
+        </div>
+    </div>
+
+    <!-- Department 6: MLflow / Experiment Lab -->
+    <div class="dept-card">
+        <div class="dept-header" onclick="toggleCard(this)">
+            <div class="dept-avatar" style="background: var(--ss-blue); color: #fff;">🔵</div>
+            <div>
+                <div class="dept-name">The Experiment Lab</div>
+                <div class="dept-role">Grover manages MLflow (:5000)</div>
+            </div>
+            <span class="dept-toggle">&#9660;</span>
+        </div>
+        <div class="dept-body">
+            <div class="speech">
+                <span class="speaker" style="color: var(--ss-blue);">Grover:</span>
+                "I, Grover, the lovable and hardworking monster, run the Experiment Lab in the back of the hotel! When the manager wants to try a new way of greeting guests, or test whether a different breakfast menu makes people happier, they come to ME. I set up the experiment, I run it, I write down EXACTLY what happened -- which version we tested, what the results were, whether it was better or worse. I keep a notebook of every experiment we have ever tried so we never repeat a bad idea!"
+            </div>
+
+            <div class="info-box info-hotel">
+                <span class="info-title">Hotel Analogy</span>
+                In the back of the third floor, behind a door marked "EXPERIMENTS IN PROGRESS," is Grover's lab. It is full of notebooks, clipboards, and carefully labeled test results. When management wants to compare two different check-in scripts, or test whether a new concierge approach works better, Grover runs the test, records every detail, and reports back. The lab works independently -- it does not affect the guests at all. It just observes and records.
+            </div>
+
+            <div class="info-box info-docker">
+                <span class="info-title">What This Really Is</span>
+                MLflow. An experiment tracking server. It logs ML evaluation runs -- which model was used, what parameters were set, what the accuracy/latency/cost metrics were. It stores everything in a SQLite database and saves artifacts (model files, reports) to a volume. The API can log experiments to MLflow without MLflow being required to serve guests.
+            </div>
+
+            <div class="code-block">
+                <span class="code-label">docker-compose.yml -- mlflow service</span>
+<pre><span class="kw">mlflow</span>:
+  <span class="fn">image</span>: <span class="st">ghcr.io/mlflow/mlflow:latest</span>
+  <span class="fn">ports</span>:
+    - <span class="st">"5000:5000"</span>
+  <span class="fn">command</span>:
+    - <span class="st">mlflow</span>
+    - <span class="st">server</span>
+    - <span class="st">--host=0.0.0.0</span>
+    - <span class="st">--port=5000</span>
+    - <span class="st">--backend-store-uri=sqlite:///mlflow/mlflow.db</span>   <span class="cm"># Grover's notebook</span>
+    - <span class="st">--default-artifact-root=/mlflow/artifacts</span>        <span class="cm"># Shelf of test results</span>
+  <span class="fn">volumes</span>:
+    - <span class="st">mlflow_data:/mlflow</span>                               <span class="cm"># Lab notebooks survive the night</span>
+  <span class="fn">restart</span>: <span class="st">unless-stopped</span></pre>
+            </div>
+        </div>
+    </div>
+
+    <!-- Volumes explanation -->
+    <div class="info-box info-count">
+        <span class="info-title">The Storage Closets (Volumes)</span>
+        At the very bottom of the docker-compose file, five storage closets are declared: <code>postgres_data</code>, <code>redis_data</code>, <code>prometheus_data</code>, <code>grafana_data</code>, <code>mlflow_data</code>. These are physical closets that survive the night. When the hotel closes (<code>docker-compose down</code>), the closets stay locked and full. When it reopens, everything is still there. Only <code>docker-compose down -v</code> empties the closets -- that is like calling in a demolition crew.
+    </div>
+
+</div>
+
+<!-- ============================================================ -->
+<!-- TAB 2: OPENING THE HOTEL -->
+<!-- ============================================================ -->
+<div id="tab-opening" class="tab-content">
+
+    <div class="block-header">
+        <div class="block-number" style="background: var(--ss-green);">2</div>
+        <h2>Opening the Hotel</h2>
+        <p class="block-desc">The morning routine. <code>docker-compose up -d</code> starts the building, but departments open in a strict order.</p>
+    </div>
+
+    <div class="speech">
+        <span class="speaker" style="color: var(--ss-brown);">The Building Manager (Docker Compose):</span>
+        "Good morning, everyone. It is 6:00 AM. Time to open Monster Resort. Now, I cannot just flip every switch at once -- that would be chaos. Big Bird cannot greet guests if the filing cabinets are locked. The tally board means nothing if there is no desk to count. We open in ORDER."
+    </div>
+
+    <!-- Step 1: Postgres -->
+    <div class="step-card" data-step="1" style="border-left: 5px solid var(--ss-purple);">
+        <div class="step-title" style="color: var(--ss-purple);">Step 1: Turn on the Basement Lights</div>
+        <div class="step-body">
+            <div class="speech">
+                <span class="speaker" style="color: var(--ss-purple);">Count von Count:</span>
+                "I arrive first! Always first! I walk down to the basement, I unlock the filing cabinet room, I turn on every fluorescent light -- one! two! three! four! Ah ah ah! -- and then I check every cabinet drawer. Can I open them? Can I read the files? I pull one out, I check the label. Yes! Everything is in order. I pick up the phone and call the building manager: 'The filing room is READY. You may send down the next person.'"
+            </div>
+            <div class="info-box info-docker">
+                <span class="info-title">What Actually Happens</span>
+                Postgres container starts. It initializes the database, runs recovery if needed. Every 10 seconds, the healthcheck runs <code>pg_isready -U monster</code>. Only when this returns success does Docker mark it as <strong>healthy</strong>. Nothing that <code>depends_on: postgres: condition: service_healthy</code> will start until this passes.
+            </div>
+        </div>
+    </div>
+
+    <div class="flow-arrow">&#8595;</div>
+
+    <!-- Step 2: Redis -->
+    <div class="step-card" data-step="2" style="border-left: 5px solid var(--ss-orange);">
+        <div class="step-title" style="color: var(--ss-orange);">Step 2: Stock the Speed Shelf</div>
+        <div class="step-body">
+            <div class="speech">
+                <span class="speaker" style="color: var(--ss-orange);">Cookie Monster:</span>
+                "Me come in next! Me wipe down shelf, me check it clean, me put out fresh labels. Then building manager call me on phone and say: 'Cookie Monster, is shelf ready?' And me say: 'PONG!' That secret code word. If me say PONG, it mean shelf ready for cookies -- I mean, for data. Om nom nom."
+            </div>
+            <div class="info-box info-docker">
+                <span class="info-title">What Actually Happens</span>
+                Redis container starts. It loads any persisted data from the volume. The healthcheck runs <code>redis-cli ping</code> every 10 seconds. When Redis responds with <code>PONG</code>, it is marked healthy. This happens in parallel with Postgres -- both are independent, both just need to pass their own healthchecks.
+            </div>
+        </div>
+    </div>
+
+    <div class="flow-arrow">&#8595;</div>
+
+    <!-- Step 3: API -->
+    <div class="step-card" data-step="3" style="border-left: 5px solid var(--ss-yellow);">
+        <div class="step-title" style="color: #c8a415;">Step 3: Open the Front Desk</div>
+        <div class="step-body">
+            <div class="speech">
+                <span class="speaker" style="color: var(--ss-yellow);">Big Bird:</span>
+                "I have been waiting in the hallway, pacing back and forth, checking my watch. The building manager will NOT let me go to my desk until he gets TWO phone calls: one from the Count saying the filing room is ready, and one from Cookie Monster saying PONG. Only THEN does the manager unlock the front door and say: 'Big Bird, take your position.' I walk to my desk, I straighten my tie, I put out the guest register, and I call the manager: 'The front desk is OPEN.' Oh, what a beautiful morning!"
+            </div>
+            <div class="info-box info-docker">
+                <span class="info-title">What Actually Happens</span>
+                The API container waits because of <code>depends_on</code> with <code>condition: service_healthy</code> for both Postgres and Redis. Docker does not even start the API container until both dependencies are healthy. Once started, the API connects to Postgres and Redis using environment variable URLs, runs its own healthcheck (<code>curl -f http://localhost:8000/health</code>), and begins accepting requests.
+            </div>
+        </div>
+    </div>
+
+    <div class="flow-arrow">&#8595;</div>
+
+    <!-- Step 4: Prometheus -->
+    <div class="step-card" data-step="4" style="border-left: 5px solid var(--ss-teal);">
+        <div class="step-title" style="color: var(--ss-teal);">Step 4: The Tally Board Starts Ticking</div>
+        <div class="step-body">
+            <div class="speech">
+                <span class="speaker" style="color: var(--ss-purple);">Count von Count:</span>
+                "Now that Big Bird is at his desk, I can begin my SECOND job! I walk to the lobby, I pick up my chalk, I look at my pocket watch, and I begin. Every fifteen seconds: I walk to the front desk, I count everything happening, I walk back to my board, I write the numbers. Walk, count, write. Walk, count, write. I will do this all day. I will NEVER stop. This is the best job in the world!"
+            </div>
+            <div class="info-box info-docker">
+                <span class="info-title">What Actually Happens</span>
+                Prometheus starts independently (no <code>depends_on</code> in the compose file). It reads <code>prometheus.yml</code> which tells it to scrape <code>http://api:8000/metrics</code> every 15 seconds. If the API is not ready yet, the first few scrapes fail silently and Prometheus just retries on the next interval. No crash, no panic -- just empty tally marks until the desk opens.
+            </div>
+        </div>
+    </div>
+
+    <div class="flow-arrow">&#8595;</div>
+
+    <!-- Step 5: Grafana -->
+    <div class="step-card" data-step="5" style="border-left: 5px solid var(--ss-red);">
+        <div class="step-title" style="color: var(--ss-red);">Step 5: Management Checks the Display</div>
+        <div class="step-body">
+            <div class="speech">
+                <span class="speaker" style="color: var(--ss-red);">Elmo:</span>
+                "Elmo is here! Elmo turns on the big screen on the second floor! But Elmo's screen is blank at first -- Elmo needs to connect to the Count's tally board so Elmo can read the numbers and make pretty pictures. Once Elmo sees the numbers flowing in, Elmo paints the lines green -- that means everything is wonderful! Elmo will keep painting all day! La la la!"
+            </div>
+            <div class="info-box info-docker">
+                <span class="info-title">What Actually Happens</span>
+                Grafana starts independently. On first run, you configure it to use Prometheus as a data source (URL: <code>http://prometheus:9090</code>). It loads saved dashboards from the volume. If Prometheus has not started yet, dashboards show "No data" until the connection is established. No crash -- just empty charts until the tally board has numbers.
+            </div>
+        </div>
+    </div>
+
+    <div class="flow-arrow">&#8595;</div>
+
+    <!-- Step 6: MLflow -->
+    <div class="step-card" data-step="6" style="border-left: 5px solid var(--ss-blue);">
+        <div class="step-title" style="color: var(--ss-blue);">Step 6: The Experiment Lab Opens</div>
+        <div class="step-body">
+            <div class="speech">
+                <span class="speaker" style="color: var(--ss-blue);">Grover:</span>
+                "I, Grover, arrive last -- and that is perfectly fine! My lab does not affect the guests at all. I turn on my lab lights, I open my notebook to the last page, I sharpen my pencil, and I sit down at my desk. I am ready. Whenever the manager wants to test something new, they send a note to my lab and I begin the experiment. But until then? I sit here, organized and prepared, like the adorable and patient monster that I am."
+            </div>
+            <div class="info-box info-docker">
+                <span class="info-title">What Actually Happens</span>
+                MLflow starts independently. It launches a web server on port 5000, connects to its SQLite backend, and waits for experiment logging calls from the API. It is a passive service -- it does not reach out to anyone. The API calls MLflow when it wants to log an evaluation run. If MLflow is not running, the API simply skips experiment tracking.
+            </div>
+        </div>
+    </div>
+
+    <!-- Full command -->
+    <div class="info-box info-flow" style="margin-top: 24px;">
+        <span class="info-title">The One Command That Does All of This</span>
+        <code style="font-size: 18px; font-family: 'JetBrains Mono', monospace;">docker-compose up -d</code><br><br>
+        The <code>-d</code> flag means "detached" -- the building manager opens everything and then goes to his office. He does not stand in the lobby watching. The hotel runs on its own. If you want to watch the opening happen in real time, drop the <code>-d</code>: <code>docker-compose up</code> and you will see every log message from every department as they power on.
+    </div>
+
+    <div class="count-box">
+        <div class="count-number">6</div>
+        <div class="count-text">Six departments, opened in order, with ONE command!</div>
+        <div class="count-laugh">"Six! Six beautiful services! Ah ah ah!"</div>
+    </div>
+
+</div>
+
+<!-- ============================================================ -->
+<!-- TAB 3: A GUEST ARRIVES -->
+<!-- ============================================================ -->
+<div id="tab-guest" class="tab-content">
+
+    <div class="block-header">
+        <div class="block-number" style="background: var(--ss-blue);">3</div>
+        <h2>A Guest Arrives</h2>
+        <p class="block-desc">A single HTTP request walks through all six departments. Follow the guest from the front door to checkout.</p>
+    </div>
+
+    <div class="scenario">
+        <div class="scenario-title">The Scenario</div>
+        A monster named Zoe walks through the front door. She says: "I would like to check in. My name is Zoe, and I have a reservation." This is a <code>POST /chat</code> request with the message "I'd like to check in."
+    </div>
+
+    <!-- Step 1: Front Desk -->
+    <div class="step-card" data-step="1" style="border-left: 5px solid var(--ss-yellow);">
+        <div class="step-title" style="color: #c8a415;">Zoe walks up to the Front Desk</div>
+        <div class="step-body">
+            <div class="speech">
+                <span class="speaker" style="color: var(--ss-yellow);">Big Bird:</span>
+                "Oh! Hello, Zoe! Welcome to Monster Resort! Let me help you check in. First, let me look at my speed shelf to see if you have checked in recently -- sometimes guests come back within the same day and I already have their information handy."
+            </div>
+            <div class="info-box info-docker">
+                <span class="info-title">What Happens</span>
+                The FastAPI endpoint receives the POST request. It parses the message, identifies the intent, and prepares to look up Zoe's information. First stop: the cache.
+            </div>
+        </div>
+    </div>
+
+    <div class="flow-arrow">&#8595;</div>
+
+    <!-- Step 2: Speed Shelf -->
+    <div class="step-card" data-step="2" style="border-left: 5px solid var(--ss-orange);">
+        <div class="step-title" style="color: var(--ss-orange);">Big Bird checks the Speed Shelf</div>
+        <div class="step-body">
+            <div class="speech">
+                <span class="speaker" style="color: var(--ss-yellow);">Big Bird:</span>
+                "Cookie Monster, do you have anything for Zoe on the shelf?"
+            </div>
+            <div class="speech">
+                <span class="speaker" style="color: var(--ss-orange);">Cookie Monster:</span>
+                "Me look... me look... Nope! Shelf no have Zoe. She new today. Big Bird need to go to basement."
+            </div>
+            <div class="info-box info-docker">
+                <span class="info-title">What Happens</span>
+                The API checks Redis for a cached session or previous response for this user. Cache MISS -- nothing found. The API must now query the database.
+            </div>
+        </div>
+    </div>
+
+    <div class="flow-arrow">&#8595;</div>
+
+    <!-- Step 3: Filing Cabinet Room -->
+    <div class="step-card" data-step="3" style="border-left: 5px solid var(--ss-purple);">
+        <div class="step-title" style="color: var(--ss-purple);">Big Bird sends a note to the Filing Cabinet Room</div>
+        <div class="step-body">
+            <div class="speech">
+                <span class="speaker" style="color: var(--ss-yellow);">Big Bird:</span>
+                <em>*writes a note, puts it in the pneumatic tube, pulls the lever*</em> "Count! I need the reservation for Zoe, please!"
+            </div>
+            <div class="speech">
+                <span class="speaker" style="color: var(--ss-purple);">Count von Count:</span>
+                <em>*catches the capsule, opens it, reads the note, walks to cabinet Z, pulls drawer 14, flips through folders*</em> "Zoe... Zoe... AH HA! ONE reservation for Zoe! Checked in at 3:00 PM, Room 442, two nights, breakfast included! I shall send this back!" <em>*loads the folder into the tube, pulls the lever*</em> "One reservation FOUND! Ah ah ah!"
+            </div>
+            <div class="info-box info-docker">
+                <span class="info-title">What Happens</span>
+                The API sends a SQL query to PostgreSQL: <code>SELECT * FROM bookings WHERE guest_name = 'Zoe'</code>. Postgres finds the record and returns it. The API now has the data it needs.
+            </div>
+        </div>
+    </div>
+
+    <div class="flow-arrow">&#8595;</div>
+
+    <!-- Step 4: Stash on Speed Shelf -->
+    <div class="step-card" data-step="4" style="border-left: 5px solid var(--ss-orange);">
+        <div class="step-title" style="color: var(--ss-orange);">Big Bird stashes a copy on the Speed Shelf</div>
+        <div class="step-body">
+            <div class="speech">
+                <span class="speaker" style="color: var(--ss-yellow);">Big Bird:</span>
+                "Cookie Monster, hold onto a copy of Zoe's info on the shelf. If she comes back to ask about her room number or breakfast time, I want to grab it fast without running to the basement again."
+            </div>
+            <div class="speech">
+                <span class="speaker" style="color: var(--ss-orange);">Cookie Monster:</span>
+                <em>*carefully places the card on the shelf*</em> "Me got it! But me only keep it for thirty minutes. After that, it go stale like old cookie. Big Bird have to ask basement again."
+            </div>
+            <div class="info-box info-docker">
+                <span class="info-title">What Happens</span>
+                The API writes the result to Redis with a TTL (time-to-live). Next time this data is requested, the API finds it in Redis (cache HIT) and skips the Postgres query entirely. After the TTL expires, the cache entry is automatically deleted.
+            </div>
+        </div>
+    </div>
+
+    <div class="flow-arrow">&#8595;</div>
+
+    <!-- Step 5: Response to guest -->
+    <div class="step-card" data-step="5" style="border-left: 5px solid var(--ss-yellow);">
+        <div class="step-title" style="color: #c8a415;">Big Bird responds to Zoe</div>
+        <div class="step-body">
+            <div class="speech">
+                <span class="speaker" style="color: var(--ss-yellow);">Big Bird:</span>
+                "Wonderful news, Zoe! I have your reservation right here. Room 442, two nights, breakfast included. Here is your key. The elevator is to your left. Welcome to Monster Resort!"
+            </div>
+            <div class="info-box info-docker">
+                <span class="info-title">What Happens</span>
+                The API formats the response and sends the HTTP response back to the client. Status 200, JSON body with the chat response. The guest's request is complete.
+            </div>
+        </div>
+    </div>
+
+    <div class="flow-arrow">&#8595;</div>
+
+    <!-- Step 6: Meanwhile, in the background... -->
+    <div class="step-card" data-step="6" style="border-left: 5px solid var(--ss-teal);">
+        <div class="step-title" style="color: var(--ss-teal);">Meanwhile, in the Background...</div>
+        <div class="step-body">
+            <div class="speech">
+                <span class="speaker" style="color: var(--ss-purple);">Count von Count:</span>
+                <em>*glances at pocket watch, walks to front desk*</em> "It has been fifteen seconds! Let me count. ONE guest checked in since my last visit. Response time was 0.3 seconds. ZERO errors. Beautiful!" <em>*walks back to tally board, writes the numbers*</em>
+            </div>
+            <div class="speech">
+                <span class="speaker" style="color: var(--ss-red);">Elmo:</span>
+                <em>*sees new numbers appear on the tally board*</em> "Ooh! Elmo sees a new dot on the response time chart! It is green and LOW -- that means the hotel is fast! Elmo draws the line!"
+            </div>
+            <div class="speech">
+                <span class="speaker" style="color: var(--ss-blue);">Grover:</span>
+                <em>*sitting quietly in the lab, pencil ready*</em> "No experiment request for me this time. I shall wait. But if the manager decides to A/B test a new greeting style, they know where to find me!"
+            </div>
+            <div class="info-box info-docker">
+                <span class="info-title">What Happens</span>
+                Prometheus scrapes <code>/metrics</code> on its next 15-second cycle and picks up the incremented request counter and the recorded latency histogram. Grafana's dashboard auto-refreshes and shows the new data point. MLflow is idle -- it only activates when the API explicitly logs an evaluation experiment.
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary flow -->
+    <div class="info-box info-flow" style="margin-top: 20px;">
+        <span class="info-title">The Complete Flow in One Sentence</span>
+        Guest arrives at Front Desk (API) &#8594; Big Bird checks Speed Shelf (Redis) &#8594; cache miss &#8594; note to Filing Room (Postgres) &#8594; data found &#8594; copy stashed on Speed Shelf (Redis) &#8594; response to guest &#8594; Count tallies the visit (Prometheus) &#8594; Elmo paints the chart (Grafana) &#8594; Grover waits in the lab (MLflow, idle).
+    </div>
+
+    <div class="scenario" style="margin-top: 16px;">
+        <div class="scenario-title">What if Zoe comes back 5 minutes later?</div>
+        She walks up to Big Bird again. Big Bird reaches over to the Speed Shelf. Cookie Monster has her info ready. <strong>Cache HIT.</strong> Big Bird never needs to go to the basement. The response is instant. The Count still tallies it. Elmo still paints it. But the trip was shorter -- no basement visit needed.
+    </div>
+
+</div>
+
+<!-- ============================================================ -->
+<!-- TAB 4: WHEN A DEPARTMENT CLOSES -->
+<!-- ============================================================ -->
+<div id="tab-closes" class="tab-content">
+
+    <div class="block-header">
+        <div class="block-number" style="background: var(--ss-red);">4</div>
+        <h2>When a Department Closes</h2>
+        <p class="block-desc">What happens when a single department goes down? Not the whole hotel -- just one room. Each failure has different consequences.</p>
+    </div>
+
+    <div class="speech">
+        <span class="speaker" style="color: var(--ss-brown);">The Building Manager (Docker Compose):</span>
+        "Every department has a <code>restart: unless-stopped</code> policy. That means if a department goes dark, I try to reopen it automatically. But while it is dark, the rest of the hotel feels the impact differently depending on WHICH department went down."
+    </div>
+
+    <!-- Postgres dies -->
+    <div class="dept-card">
+        <div class="dept-header" onclick="toggleCard(this)">
+            <div class="dept-avatar" style="background: #c62828; color: #fff;">&#x1F4A5;</div>
+            <div>
+                <div class="dept-name">The Filing Cabinet Room Goes Dark</div>
+                <div class="dept-role">PostgreSQL crashes -- SEVERITY: CRITICAL</div>
+            </div>
+            <span class="dept-toggle">&#9660;</span>
+        </div>
+        <div class="dept-body">
+            <div class="speech">
+                <span class="speaker" style="color: var(--ss-purple);">Count von Count:</span>
+                <em>*lights flicker, go out*</em> "No! My cabinets! I cannot see! I cannot count! The pneumatic tube is silent! I... I must rest."
+            </div>
+            <div class="speech">
+                <span class="speaker" style="color: var(--ss-yellow);">Big Bird:</span>
+                <em>*frantically pressing the pneumatic tube button*</em> "Count? COUNT? I need Zoe's reservation! The tube is not responding! I... I can still check the speed shelf for guests who visited recently, but any NEW guest who needs their file? I have to tell them: 'I am sorry, our records room is temporarily unavailable. Please wait.' Oh dear, oh dear."
+            </div>
+
+            <div class="info-box info-danger">
+                <span class="info-title">Impact</span>
+                <strong>This is the worst failure.</strong> The API can still serve cached responses from Redis, but any request that needs a database lookup fails. New sessions cannot be created. Bookings cannot be retrieved from permanent storage. The API stays running but returns errors for database-dependent operations.
+            </div>
+            <div class="info-box info-docker">
+                <span class="info-title">Recovery</span>
+                Docker's <code>restart: unless-stopped</code> automatically restarts the Postgres container. Once it passes the <code>pg_isready</code> healthcheck, the API reconnects. No data is lost -- the volume preserves everything. Typical recovery: 10-30 seconds.
+            </div>
+        </div>
+    </div>
+
+    <!-- Redis dies -->
+    <div class="dept-card">
+        <div class="dept-header" onclick="toggleCard(this)">
+            <div class="dept-avatar" style="background: var(--ss-orange); color: #fff;">&#x1F4A5;</div>
+            <div>
+                <div class="dept-name">The Speed Shelf Falls Over</div>
+                <div class="dept-role">Redis crashes -- SEVERITY: MODERATE</div>
+            </div>
+            <span class="dept-toggle">&#9660;</span>
+        </div>
+        <div class="dept-body">
+            <div class="speech">
+                <span class="speaker" style="color: var(--ss-orange);">Cookie Monster:</span>
+                <em>*shelf wobbles, crashes to the ground, cookies fly everywhere*</em> "NOOO! Me shelf! All the quick-access cards scattered on the floor! Me need to rebuild!"
+            </div>
+            <div class="speech">
+                <span class="speaker" style="color: var(--ss-yellow);">Big Bird:</span>
+                <em>*looks at the mess, sighs, straightens his tie*</em> "Well... the shelf is down. That means every single question now requires a trip to the basement. It is slower, and the Count is going to be very busy with all those pneumatic tube requests. But we CAN still serve every guest. Nobody gets turned away. It just takes longer."
+            </div>
+
+            <div class="info-box info-danger">
+                <span class="info-title">Impact</span>
+                <strong>The hotel is slower but still functional.</strong> Every request bypasses the cache and hits Postgres directly. Response times increase. Postgres load increases. But no requests fail -- the API is designed to fall back to the database when Redis is unavailable.
+            </div>
+            <div class="info-box info-docker">
+                <span class="info-title">Recovery</span>
+                Docker restarts Redis. Once <code>redis-cli ping</code> returns PONG, the API reconnects. The cache is empty (cold cache) so the first wave of requests will all go to Postgres, but as responses are cached, the shelf gradually restocks itself.
+            </div>
+        </div>
+    </div>
+
+    <!-- API dies -->
+    <div class="dept-card">
+        <div class="dept-header" onclick="toggleCard(this)">
+            <div class="dept-avatar" style="background: var(--ss-yellow); color: #fff;">&#x1F4A5;</div>
+            <div>
+                <div class="dept-name">The Front Desk Closes</div>
+                <div class="dept-role">API crashes -- SEVERITY: TOTAL OUTAGE</div>
+            </div>
+            <span class="dept-toggle">&#9660;</span>
+        </div>
+        <div class="dept-body">
+            <div class="speech">
+                <span class="speaker" style="color: var(--ss-yellow);">Big Bird:</span>
+                <em>*collapses behind the desk, feathers everywhere*</em> "I... I need a moment..."
+            </div>
+            <div class="speech">
+                <span class="speaker" style="color: var(--ss-purple);">Count von Count:</span>
+                "The front desk is CLOSED?! But I am still here! My filing cabinets are fine! My tally board is ready! But nobody is sending me notes through the tube because there is nobody at the desk to RECEIVE the guests!"
+            </div>
+            <div class="speech">
+                <span class="speaker" style="color: var(--ss-orange);">Cookie Monster:</span>
+                "Me shelf still has cookies on it! But nobody reaching for them! Everything just... sitting here."
+            </div>
+
+            <div class="info-box info-danger">
+                <span class="info-title">Impact</span>
+                <strong>Complete outage.</strong> No HTTP requests can be served. Guests see connection refused or 502 errors. Prometheus scrapes fail (no /metrics endpoint). Grafana shows gaps in the charts. But Postgres, Redis, and MLflow are all fine -- they are just idle. All data is safe.
+            </div>
+            <div class="info-box info-docker">
+                <span class="info-title">Recovery</span>
+                Docker restarts the API container. It waits for Postgres and Redis healthchecks (they are already healthy since they never went down). The API starts, passes its own healthcheck, and resumes serving. Prometheus picks up scraping on the next 15-second cycle. Grafana fills in the gap. Typical recovery: 40-60 seconds (start_period is 40s).
+            </div>
+        </div>
+    </div>
+
+    <!-- Prometheus dies -->
+    <div class="dept-card">
+        <div class="dept-header" onclick="toggleCard(this)">
+            <div class="dept-avatar" style="background: var(--ss-teal); color: #fff;">&#x1F4A5;</div>
+            <div>
+                <div class="dept-name">The Tally Board Goes Silent</div>
+                <div class="dept-role">Prometheus crashes -- SEVERITY: LOW (guests unaffected)</div>
+            </div>
+            <span class="dept-toggle">&#9660;</span>
+        </div>
+        <div class="dept-body">
+            <div class="speech">
+                <span class="speaker" style="color: var(--ss-purple);">Count von Count:</span>
+                <em>*drops chalk, staggers back from the tally board*</em> "The board! The board has gone dark! I cannot write my numbers! But wait... the filing room is still fine. The guests are still being served. They do not even KNOW the tally board exists. This only affects the managers who like to look at the numbers."
+            </div>
+            <div class="speech">
+                <span class="speaker" style="color: var(--ss-red);">Elmo:</span>
+                "Elmo's screen is frozen! Elmo cannot see new numbers because the Count stopped writing! Elmo's charts have a big gap in them. But Elmo knows the hotel is still open. The guests are fine."
+            </div>
+
+            <div class="info-box info-danger">
+                <span class="info-title">Impact</span>
+                <strong>Guests notice nothing.</strong> The API serves requests normally. Redis and Postgres are unaffected. The only impact is observability: you lose metrics for the duration of the outage. Grafana shows a gap in charts. When Prometheus restarts, it resumes scraping and the gap remains in the historical data.
+            </div>
+        </div>
+    </div>
+
+    <!-- Grafana dies -->
+    <div class="dept-card">
+        <div class="dept-header" onclick="toggleCard(this)">
+            <div class="dept-avatar" style="background: var(--ss-red); color: #fff;">&#x1F4A5;</div>
+            <div>
+                <div class="dept-name">The Display Board Goes Black</div>
+                <div class="dept-role">Grafana crashes -- SEVERITY: MINIMAL</div>
+            </div>
+            <span class="dept-toggle">&#9660;</span>
+        </div>
+        <div class="dept-body">
+            <div class="speech">
+                <span class="speaker" style="color: var(--ss-red);">Elmo:</span>
+                <em>*screen flickers and goes black*</em> "Oh no! Elmo's pretty pictures are gone! But... the Count is STILL writing numbers on his tally board. Elmo just cannot paint them right now. When Elmo comes back, ALL the numbers will still be there on the tally board, and Elmo can paint the whole history again! Nothing is lost!"
+            </div>
+
+            <div class="info-box info-danger">
+                <span class="info-title">Impact</span>
+                <strong>Almost zero impact.</strong> Prometheus is still collecting metrics. All data is still being recorded. You just cannot visualize it until Grafana restarts. No guests are affected. No data is lost. When Grafana comes back, dashboards reload from the volume and Prometheus backfills the charts automatically.
+            </div>
+        </div>
+    </div>
+
+    <!-- MLflow dies -->
+    <div class="dept-card">
+        <div class="dept-header" onclick="toggleCard(this)">
+            <div class="dept-avatar" style="background: var(--ss-blue); color: #fff;">&#x1F4A5;</div>
+            <div>
+                <div class="dept-name">The Experiment Lab Locks Up</div>
+                <div class="dept-role">MLflow crashes -- SEVERITY: MINIMAL</div>
+            </div>
+            <span class="dept-toggle">&#9660;</span>
+        </div>
+        <div class="dept-body">
+            <div class="speech">
+                <span class="speaker" style="color: var(--ss-blue);">Grover:</span>
+                <em>*lab door slams shut, lock clicks*</em> "Oh dear! I, Grover, am locked out of my own laboratory! But the guests will not notice. They do not even know this room exists. The only problem is that if the manager wants to start a new experiment right now, they cannot. But all my previous notebooks are safe inside -- they will be there when I get back in."
+            </div>
+
+            <div class="info-box info-danger">
+                <span class="info-title">Impact</span>
+                <strong>Near zero impact.</strong> The API continues serving all requests. It simply skips the MLflow logging step. Previous experiment data is safe in the volume. When MLflow restarts, it loads its SQLite database and all previous experiments are intact. New experiments can resume.
+            </div>
+        </div>
+    </div>
+
+    <!-- Severity ranking -->
+    <div class="info-box info-hotel" style="margin-top: 24px;">
+        <span class="info-title">Failure Severity Ranking</span>
+        <strong>1. API down</strong> = Total outage. Nobody gets in the front door.<br>
+        <strong>2. Postgres down</strong> = Critical. New guests cannot be looked up. Cached data still works.<br>
+        <strong>3. Redis down</strong> = Moderate. Everything works but slower. All requests hit the database.<br>
+        <strong>4. Prometheus down</strong> = Low. Guests unaffected. You lose visibility into metrics.<br>
+        <strong>5. Grafana down</strong> = Minimal. Data still collected. You just cannot see the charts.<br>
+        <strong>6. MLflow down</strong> = Minimal. Experiments paused. All guest services unaffected.<br>
+    </div>
+
+    <!-- Full shutdown -->
+    <div class="scenario" style="margin-top: 16px;">
+        <div class="scenario-title">What about docker-compose down?</div>
+        <div class="speech">
+            <span class="speaker" style="color: var(--ss-brown);">The Building Manager:</span>
+            "That is not a failure -- that is a planned closing. I walk through the building in reverse order. I close the experiment lab. I turn off the display. I stop the tally board. I close the front desk. I lock the speed shelf. And finally, I turn off the lights in the basement. Everyone goes home. But the storage closets (volumes) stay locked and full. Tomorrow morning, <code>docker-compose up -d</code>, and we do it all again."
+        </div>
+    </div>
+
+    <div class="count-box">
+        <div class="count-number">0</div>
+        <div class="count-text">Number of guest records lost when any single service restarts</div>
+        <div class="count-laugh">"Zero! Zero data lost! That is my FAVORITE number to count! Ah ah ah!"</div>
+    </div>
+
+</div>
+
+<!-- ============================================================ -->
+<!-- JAVASCRIPT -->
+<!-- ============================================================ -->
+<script>
+function switchTab(tabId) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    document.querySelector(`.tab-btn[data-tab="${tabId}"]`).classList.add('active');
+    document.getElementById('tab-' + tabId).classList.add('active');
+}
+
+function toggleCard(headerEl) {
+    const card = headerEl.closest('.dept-card');
+    card.classList.toggle('open');
+}
+</script>
+</body>
+</html>
