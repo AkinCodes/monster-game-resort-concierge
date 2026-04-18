@@ -7303,6 +7303,8 @@ openai_api_key: str = <span class="string">"sk-FAKE-garbage-key-that-will-fail"<
     <div class="file-tab" onclick="switchFile('memorydb')"><span class="file-icon">&#128196;</span>memory_vs_db<span class="unsaved"></span></div>
     <div class="file-tab" onclick="switchFile('dblayer')"><span class="file-icon">&#128196;</span>database_layer<span class="unsaved"></span></div>
     <div class="file-tab" onclick="switchFile('caching')"><span class="file-icon">&#128196;</span>redis_cache<span class="unsaved"></span></div>
+    <div class="file-tab" onclick="switchFile('structout')"><span class="file-icon">&#128196;</span>structured_output<span class="unsaved"></span></div>
+    <div class="file-tab" onclick="switchFile('inputval')"><span class="file-icon">&#128196;</span>validators<span class="unsaved"></span></div>
   </div>
 
   <!-- EDITOR -->
@@ -7432,6 +7434,28 @@ openai_api_key: str = <span class="string">"sk-FAKE-garbage-key-that-will-fail"<
       <div class="editor-container" id="cm-caching"></div>
       <div class="run-hint">
         <span>&#128161;</span> Enable Redis: set <kbd>MRC_REDIS_ENABLED=true</kbd> and <kbd>MRC_REDIS_URL=redis://localhost:6379/0</kbd> in <code>.env</code>. Without Redis, the in-memory shelf is used automatically.
+      </div>
+    </div>
+
+    <!-- STRUCTURED OUTPUT -->
+    <div class="file-panel" id="file-structout">
+      <div class="template-info">
+        <strong>The Form Translator</strong> &mdash; When the voice upstairs speaks, it sometimes rambles. This translator extracts the clean form from the noise, validates it against a template, and asks for a do-over if it&rsquo;s garbled. From <code>app/concierge/structured_output.py</code>.
+      </div>
+      <div class="editor-container" id="cm-structout"></div>
+      <div class="run-hint">
+        <span>&#128161;</span> Used by the orchestrator&rsquo;s planner to parse intent. If the form is garbled, the parser asks the voice upstairs to try again (up to 2 retries).
+      </div>
+    </div>
+
+    <!-- VALIDATORS -->
+    <div class="file-panel" id="file-inputval">
+      <div class="template-info">
+        <strong>The Bouncer at the Door</strong> &mdash; Before any guest request reaches the concierge, the Bouncer checks it. Too long? Rejected. Suspicious patterns? Blocked. HTML tags? Stripped. Nobody gets past without a clean message. From <code>app/manager_office/validation.py</code>.
+      </div>
+      <div class="editor-container" id="cm-inputval"></div>
+      <div class="run-hint">
+        <span>&#128161;</span> This runs as the FIRST step of every request in <code>_agent_reply()</code>. It&rsquo;s Defense Layer Zero &mdash; everything else trusts that the input has been cleaned.
       </div>
     </div>
 
@@ -11236,6 +11260,359 @@ def cache_response(ttl=CACHE_TTL_SECONDS, cache=None):
 #
 # The hotel just gets a bit slower — it never closes.
 # ═══════════════════════════════════════════════════════════════
+`,
+
+  structout: `# =============================================================================
+# THE FORM TRANSLATOR (structured_output.py)
+# =============================================================================
+# When the voice upstairs speaks, it sometimes rambles — prose around the
+# form, extra commentary, markdown fences wrapping the data. The Form
+# Translator's job: extract the clean form, check it against the template,
+# and if it's garbled, politely ask the voice to try again.
+#
+# Big Bird sends the voice a template: "Fill out THIS form."
+# The voice sends back... something. Maybe clean. Maybe wrapped in
+# backticks. Maybe surrounded by chitchat. The translator handles all of it.
+# =============================================================================
+
+from __future__ import annotations
+import json, logging, re
+from typing import Optional, Type, TypeVar
+from pydantic import BaseModel, ValidationError
+
+T = TypeVar("T", bound=BaseModel)
+
+
+# ---------------------------------------------------------------------------
+# THE FORM TEMPLATES — what the voice upstairs must fill out
+# ---------------------------------------------------------------------------
+# Each template is a strict contract. If the voice returns something
+# that doesn't match, the translator rejects it.
+# ---------------------------------------------------------------------------
+
+class BookingIntent(BaseModel):
+    """Guest wants to book, search, or cancel."""
+    action: str           # "book", "search", "cancel"
+    guest_name: Optional[str] = None
+    room_type: Optional[str] = None
+    dates: Optional[str] = None
+
+class SearchQuery(BaseModel):
+    """Guest wants to look something up."""
+    query: str
+    category: str         # "amenities", "rooms", "policies"
+    top_k: int = 5        # how many results to fetch from the library
+
+class ConciergeResponse(BaseModel):
+    """The concierge's structured answer."""
+    answer: str
+    confidence: str       # "high", "medium", "low"
+    sources: list[str] = []
+    suggested_tools: list[str] = []
+
+
+# ---------------------------------------------------------------------------
+# THE TRANSLATOR — extract, validate, retry
+# ---------------------------------------------------------------------------
+# Three-step process:
+#   1. EXTRACT: Pull the form out of the noise (strip markdown fences,
+#      find the curly braces, ignore the chitchat around it)
+#   2. VALIDATE: Check the form against the template (Pydantic does this)
+#   3. RETRY: If garbled, send the error back to the voice with the
+#      template and say "try again" (up to 2 retries)
+# ---------------------------------------------------------------------------
+
+class StructuredOutputParser:
+    """Extracts and validates forms from the voice upstairs."""
+
+    def __init__(self, max_retries: int = 2):
+        self.max_retries = max_retries
+        self.logger = logging.getLogger(__name__)
+
+    async def parse(self, llm_response: str, schema: Type[T], retry_fn=None) -> T:
+        """Extract a valid form from the voice's response.
+
+        If the form is garbled:
+          1. Log the error
+          2. If retry_fn is provided, send the error back and ask again
+          3. Try up to max_retries times
+          4. If all attempts fail, raise StructuredOutputError
+        """
+        accumulated_errors = []
+        current_text = llm_response
+
+        for attempt in range(1 + self.max_retries):
+            try:
+                # Step 1: Extract — strip markdown fences, find the form
+                json_str = self._extract_json(current_text)
+                # Step 2: Validate — check against the template
+                data = json.loads(json_str)
+                result = schema.model_validate(data)
+                return result
+
+            except json.JSONDecodeError as exc:
+                # The form isn't even valid — garbled beyond recognition
+                accumulated_errors.append(f"Garbled form: {exc}")
+
+            except ValidationError as exc:
+                # The form is valid but doesn't match the template
+                accumulated_errors.append(f"Wrong template: {exc}")
+
+            # Step 3: Retry — ask the voice to try again
+            if retry_fn and attempt < self.max_retries:
+                feedback = (
+                    f"Your previous response could not be parsed. "
+                    f"Error: {accumulated_errors[-1]}\\n\\n"
+                    f"Please respond with ONLY valid data matching this template:\\n"
+                    f"{json.dumps(schema.model_json_schema(), indent=2)}"
+                )
+                try:
+                    current_text = await retry_fn(feedback)
+                except Exception:
+                    break
+
+        raise StructuredOutputError(
+            f"Failed to parse into {schema.__name__} after {len(accumulated_errors)} attempt(s)",
+            raw_response=llm_response,
+            errors=accumulated_errors,
+        )
+
+    # ── NOISE STRIPPER ──
+    # The voice upstairs wraps forms in all sorts of noise:
+    #   - Markdown fences: \\\`\\\`\\\`json { ... } \\\`\\\`\\\`
+    #   - Prose before/after: "Here is the result: { ... } I hope that helps!"
+    #   - Bare form: { ... }
+    # This method handles all three.
+
+    @staticmethod
+    def _extract_json(text: str) -> str:
+        # Try markdown fences first
+        fence_match = re.search(r"\\\`\\\`\\\`(?:json)?\\s*\\n?([\\s\\S]*?)\\n?\\s*\\\`\\\`\\\`", text, re.DOTALL)
+        if fence_match:
+            return fence_match.group(1).strip()
+        # Try bare braces
+        brace_match = re.search(r"\\{[\\s\\S]*\\}", text)
+        if brace_match:
+            return brace_match.group(0).strip()
+        # Last resort — the whole thing
+        return text.strip()
+
+# ═══════════════════════════════════════════════════════════════
+# THE FORM TRANSLATOR — Interview Gold
+# ═══════════════════════════════════════════════════════════════
+# Q: "How do you get structured data from an LLM?"
+# A: "I send a schema prompt, extract the form from the noise
+#     (markdown fences, surrounding prose), validate with Pydantic,
+#     and retry with error feedback if it fails."
+#
+# Q: "What if the LLM ignores your schema?"
+# A: "The parser sends the validation error back with the full
+#     schema and asks for a corrected response. Up to 2 retries."
+#
+# Q: "Why Pydantic and not just json.loads?"
+# A: "json.loads tells you it's valid JSON. Pydantic tells you
+#     it matches the EXPECTED SHAPE — right fields, right types,
+#     right constraints."
+# ═══════════════════════════════════════════════════════════════
+`,
+
+  inputval: `# =============================================================================
+# THE BOUNCER AT THE DOOR (validation.py)
+# =============================================================================
+# Before any guest request reaches the concierge, the Bouncer checks it.
+# He doesn't care what the request is ABOUT. He cares that it's SAFE.
+#
+# Cookie Monster is the Bouncer here — not searching for keywords in a
+# library, but searching for DANGEROUS patterns in the guest's message.
+# Same skill (pattern matching), different job.
+#
+# "Me check EVERY message. Me look for BAD things.
+#  SQL attacks? BLOCKED. Script tags? STRIPPED. Too long? REJECTED.
+#  Clean message only. Then you may enter."
+# =============================================================================
+
+import re
+import bleach
+from datetime import datetime, timedelta
+
+
+# ---------------------------------------------------------------------------
+# STEP 1: STRIP ALL HTML — no tags survive
+# ---------------------------------------------------------------------------
+# bleach.clean with tags=[] removes EVERYTHING.
+# A guest who sends "<b>hello</b>" gets back "hello".
+# A guest who sends "<script>alert('hacked')</script>" gets back "".
+
+def sanitize_html(text: str) -> str:
+    """Strip all HTML tags. No exceptions."""
+    return bleach.clean(text, tags=[], strip=True)
+
+
+# ---------------------------------------------------------------------------
+# STEP 2: THE MAIN GATE — validate_message()
+# ---------------------------------------------------------------------------
+# This is the function that runs on EVERY request, BEFORE anything else.
+# It's the first line of _agent_reply() in main.py:
+#
+#     text = validate_message(user_text)
+#
+# If the message fails ANY check, the guest is turned away with a
+# ValidationError. The concierge never even sees the request.
+# ---------------------------------------------------------------------------
+
+def validate_message(message) -> str:
+    """Validate and sanitize a guest's message. Returns the clean text."""
+
+    # ── Check 1: Does the message exist? ──
+    if message is None:
+        raise ValidationError("Message cannot be None")
+
+    # ── Check 2: Extract text from dict if needed ──
+    if isinstance(message, dict):
+        if "text" not in message:
+            raise ValidationError("Message dict must have 'text' key")
+        user_text = message["text"]
+    else:
+        user_text = str(message)
+
+    user_text = user_text.strip()
+
+    # ── Check 3: Not empty ──
+    if not user_text:
+        raise ValidationError("Message cannot be empty")
+
+    # ── Check 4: Not too long (5000 chars max) ──
+    if len(user_text) > 5000:
+        raise ValidationError("Message too long (max 5000 characters)")
+
+    # ── Check 5: SQL injection patterns ──
+    # Cookie Monster scans for dangerous SQL keywords.
+    # "Me see 'DROP TABLE'? Me see 'OR 1=1'? BLOCKED!"
+    dangerous_sql = [
+        "DROP TABLE", "DELETE FROM", "INSERT INTO",
+        "UPDATE ", "--", "/*", "*/", "';", "OR 1=1",
+    ]
+    if any(pattern in user_text.upper() for pattern in dangerous_sql):
+        raise ValidationError("Potentially malicious SQL detected")
+
+    # ── Check 6: XSS patterns ──
+    # Cookie Monster scans for script tags, event handlers, iframes.
+    # "Me see '<script>'? Me see 'javascript:'? STRIPPED AND BLOCKED!"
+    xss_patterns = [
+        r"<script[^>]*>.*?</script>",
+        r"javascript:",
+        r"on\\w+\\s*=",       # onclick=, onload=, etc.
+        r"<iframe", r"<object", r"<embed",
+    ]
+    for pattern in xss_patterns:
+        if re.search(pattern, user_text, re.IGNORECASE):
+            raise ValidationError("Potentially malicious HTML detected")
+
+    # ── Check 7: Strip any remaining HTML ──
+    user_text = sanitize_html(user_text)
+
+    return user_text  # Clean. Safe. Ready for the concierge.
+
+
+# ---------------------------------------------------------------------------
+# GUEST NAME VALIDATION
+# ---------------------------------------------------------------------------
+# Letters, spaces, hyphens, apostrophes only. No numbers, no symbols.
+# "Count Dracula" — valid. "Bobby <script>Tables</script>" — rejected.
+
+def validate_guest_name(name: str) -> str:
+    if not name or len(name) < 2:
+        raise ValidationError("Guest name too short (minimum 2 characters)")
+    if len(name) > 100:
+        raise ValidationError("Guest name too long (maximum 100 characters)")
+    if not re.match(r"^[a-zA-Z\\s\\-'.]+$", name):
+        raise ValidationError("Guest name contains invalid characters")
+    return name.strip()
+
+
+# ---------------------------------------------------------------------------
+# DATE VALIDATION
+# ---------------------------------------------------------------------------
+# Must be YYYY-MM-DD. Not in the past. Not more than 1 year ahead.
+
+def validate_date(date_str: str, field_name: str = "Date") -> str:
+    try:
+        date = datetime.strptime(date_str, "%Y-%m-%d")
+    except ValueError:
+        raise ValidationError(f"{field_name} must be in YYYY-MM-DD format")
+    if date < datetime.now() - timedelta(days=1):
+        raise ValidationError(f"{field_name} cannot be in the past")
+    if date > datetime.now() + timedelta(days=365):
+        raise ValidationError(f"{field_name} cannot be more than 1 year in the future")
+    return date_str
+
+
+# ---------------------------------------------------------------------------
+# FULL BOOKING VALIDATION
+# ---------------------------------------------------------------------------
+# Combines all validators: name + room type + dates + guest count.
+# If ANY check fails, the entire booking is rejected with all errors.
+
+def validate_booking(guest_name, room_type, check_in, check_out, guests):
+    errors = []
+    try:
+        guest_name = validate_guest_name(guest_name)
+    except ValidationError as e:
+        errors.append(str(e))
+
+    valid_rooms = ["Standard Lair", "Deluxe Crypt", "Crypt Suite", "Penthouse Tomb"]
+    if room_type not in valid_rooms:
+        errors.append(f"Invalid room type. Must be one of: {', '.join(valid_rooms)}")
+
+    try:
+        check_in = validate_date(check_in, "Check-in date")
+        check_out = validate_date(check_out, "Check-out date")
+        ci = datetime.strptime(check_in, "%Y-%m-%d")
+        co = datetime.strptime(check_out, "%Y-%m-%d")
+        if co <= ci:
+            errors.append("Check-out must be after check-in")
+        if (co - ci).days > 30:
+            errors.append("Maximum stay is 30 nights")
+    except ValidationError as e:
+        errors.append(str(e))
+
+    if not isinstance(guests, int) or guests < 1:
+        errors.append("Number of guests must be at least 1")
+    if guests > 10:
+        errors.append("Maximum 10 guests per room")
+
+    if errors:
+        raise ValidationError("; ".join(errors))
+
+    return {
+        "guest_name": guest_name,
+        "room_type": room_type,
+        "check_in": check_in,
+        "check_out": check_out,
+        "guests": guests,
+    }
+
+# ═══════════════════════════════════════════════════════════════
+# THE BOUNCER — Interview Gold
+# ═══════════════════════════════════════════════════════════════
+# Q: "How do you handle input validation?"
+# A: "Every request passes through validate_message() first.
+#     It checks: not null, not empty, under 5000 chars,
+#     no SQL injection patterns, no XSS patterns, then
+#     strips all HTML with bleach. The cleaned text is what
+#     the rest of the pipeline sees."
+#
+# Q: "Why validate at the input layer, not inside the LLM call?"
+# A: "Defense in depth. The LLM shouldn't have to deal with
+#     '<script>alert(1)</script>' in the prompt. Cleaning at
+#     the boundary means every downstream component can trust
+#     the input is safe."
+#
+# Q: "What about the booking validation?"
+# A: "validate_booking() aggregates ALL errors before rejecting.
+#     It doesn't stop at the first error — it collects them all
+#     and returns a single rejection with every problem listed."
+# ═══════════════════════════════════════════════════════════════
 `
 };
 
@@ -11884,7 +12261,9 @@ const CODE_TAB_KEYS = {
   'embeddings': 'embeddings_lab',
   'memorydb': 'memory_vs_db',
   'dblayer': 'database_layer',
-  'caching': 'redis_cache'
+  'caching': 'redis_cache',
+  'structout': 'structured_output',
+  'inputval': 'validators'
 };
 
 function initNotesSystem() {
