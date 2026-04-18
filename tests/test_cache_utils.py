@@ -132,17 +132,18 @@ class TestMakeKey:
         k2 = _make_key("fn", (), {"b": 2, "a": 1})
         assert k1 == k2
 
-    def test_object_args_use_id(self):
-        """Object arguments are keyed by id, not value."""
+    def test_object_args_use_repr(self):
+        """Object arguments are keyed by repr, making keys deterministic across restarts."""
 
         class Dummy:
-            pass
+            def __repr__(self):
+                return "Dummy()"
 
         obj1 = Dummy()
         obj2 = Dummy()
         k1 = _make_key("fn", (obj1,), {})
         k2 = _make_key("fn", (obj2,), {})
-        assert k1 != k2
+        assert k1 == k2  # same repr = same key (deterministic)
 
 
 # ── cache_response decorator tests ───────────────────────────────────
