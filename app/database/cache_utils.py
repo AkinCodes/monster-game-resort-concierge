@@ -112,9 +112,7 @@ def _make_key(func_name: str, args: tuple, kwargs: dict) -> str:
     """Build a stable, hashable cache key from function name + arguments."""
     parts = [func_name]
     for arg in args:
-        parts.append(
-            f"{type(arg).__name__}:{id(arg) if hasattr(arg, '__dict__') else repr(arg)}"  # noqa: E231
-        )
+        parts.append(f"{type(arg).__name__}:{repr(arg)}")
     for k, v in sorted(kwargs.items()):
         parts.append(f"{k}={repr(v)}")
     raw = "|".join(parts)
