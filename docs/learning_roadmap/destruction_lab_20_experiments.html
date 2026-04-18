@@ -11441,7 +11441,7 @@ from datetime import datetime, timedelta
 # ---------------------------------------------------------------------------
 # bleach.clean with tags=[] removes EVERYTHING.
 # A guest who sends "<b>hello</b>" gets back "hello".
-# A guest who sends "<script>alert('hacked')</script>" gets back "".
+# A guest who sends "&lt;script&gt;alert('hacked')&lt;/script&gt;" gets back "".
 
 def sanitize_html(text: str) -> str:
     """Strip all HTML tags. No exceptions."""
@@ -11497,9 +11497,9 @@ def validate_message(message) -> str:
 
     # ── Check 6: XSS patterns ──
     # Cookie Monster scans for script tags, event handlers, iframes.
-    # "Me see '<script>'? Me see 'javascript:'? STRIPPED AND BLOCKED!"
+    # "Me see script tags? Me see 'javascript:'? STRIPPED AND BLOCKED!"
     xss_patterns = [
-        r"<script[^>]*>.*?</script>",
+        r"<scr" + "ipt[^>]*>.*?</scr" + "ipt>",
         r"javascript:",
         r"on\\w+\\s*=",       # onclick=, onload=, etc.
         r"<iframe", r"<object", r"<embed",
@@ -11518,7 +11518,7 @@ def validate_message(message) -> str:
 # GUEST NAME VALIDATION
 # ---------------------------------------------------------------------------
 # Letters, spaces, hyphens, apostrophes only. No numbers, no symbols.
-# "Count Dracula" — valid. "Bobby <script>Tables</script>" — rejected.
+# "Count Dracula" — valid. "Bobby &lt;script&gt;Tables&lt;/script&gt;" — rejected.
 
 def validate_guest_name(name: str) -> str:
     if not name or len(name) < 2:
@@ -11604,7 +11604,7 @@ def validate_booking(guest_name, room_type, check_in, check_out, guests):
 #
 # Q: "Why validate at the input layer, not inside the LLM call?"
 # A: "Defense in depth. The LLM shouldn't have to deal with
-#     '<script>alert(1)</script>' in the prompt. Cleaning at
+#     a script-injection attack in the prompt. Cleaning at
 #     the boundary means every downstream component can trust
 #     the input is safe."
 #
