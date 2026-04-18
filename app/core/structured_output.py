@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import json
 import logging
-import re
 from typing import Optional, Type, TypeVar
 
 from pydantic import BaseModel, ValidationError
@@ -173,24 +172,28 @@ class StructuredOutputParser:
 
     @staticmethod
     def _extract_json(text: str) -> str:
-        """Best-effort extraction of JSON from LLM text.
+        """Extract the first valid JSON value from LLM text.
 
-        Handles:
-          1. Bare JSON objects
-          2. JSON inside markdown code fences (```json ... ``` or ``` ... ```)
-          3. JSON embedded in surrounding prose
+        Uses json.JSONDecoder.raw_decode() instead of regex so the
+        actual JSON parser determines where the value ends. This
+        correctly handles nested braces, escaped characters, prose
+        around the JSON, and markdown fences — without guessing.
         """
-        # Strip markdown fences first
-        fence_match = re.search(
-            r"```(?:json)?\s*\n?([\s\S]*?)\n?\s*```", text, re.DOTALL
-        )
-        if fence_match:
-            return fence_match.group(1).strip()
+        start_obj = text.find("{")
+        start_arr = text.find("[")
+        candidates = [s for s in (start_obj, start_arr) if s != -1]
 
-        # Try to find a top-level JSON object
-        brace_match = re.search(r"\{[\s\S]*\}", text)
-        if brace_match:
-            return brace_match.group(0).strip()
+        if not candidates:
+            return text.strip()
 
-        # Fall back to the full text
+        decoder = json.JSONDecoder()
+        for i in range(min(candidates), len(text)):
+            if text[i] not in ("{", "["):
+                continue
+            try:
+                obj, end = decoder.raw_decode(text[i:])
+                return json.dumps(obj)
+            except json.JSONDecodeError:
+                continue
+
         return text.strip()
