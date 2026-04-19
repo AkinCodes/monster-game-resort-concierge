@@ -158,6 +158,12 @@ app/
 │   └── admin_routes.py     # Admin endpoints — API key CRUD
 └── services/
     └── pdf_generator.py    # ReportLab PDF receipts
+
+scripts/
+├── benchmark_rag.py            # Hybrid RAG vs LangChain benchmark (MLflow tracked)
+├── prep_finetune_data.py       # Generate train/valid JSONL from knowledge base
+├── finetune_mlx.py             # LoRA fine-tune TinyLlama-1.1B on Apple Silicon (MLX)
+└── compare_rag_vs_finetune.py  # Head-to-head: RAG vs fine-tuned vs combined
 ```
 
 ---
@@ -279,6 +285,26 @@ curl -H "Authorization: Bearer <access_token>" \
 
 ---
 
+## Fine-Tuning (LoRA)
+
+Compare RAG retrieval against a locally fine-tuned model to understand the trade-offs:
+
+```bash
+# 1. Prepare training data from the knowledge base (generates train/valid splits)
+python scripts/prep_finetune_data.py
+
+# 2. Fine-tune TinyLlama-1.1B with LoRA on Apple Silicon (~20 min on M1 Pro)
+pip install mlx-lm
+python scripts/finetune_mlx.py
+
+# 3. Head-to-head evaluation: RAG vs fine-tuned vs combined
+python scripts/compare_rag_vs_finetune.py
+```
+
+RAG wins on factual accuracy and freshness (can retrieve new docs without retraining). Fine-tuning wins on latency and cost (no API calls, no retrieval step). The comparison script produces a metrics table showing where each approach excels.
+
+---
+
 ## Testing
 
 18 test files (~1,460 lines) covering API endpoints, authentication, hallucination detection, RAG retrieval, LLM provider fallback, orchestrator, tool execution, MLflow tracking, and RAGAS evaluation.
@@ -373,6 +399,7 @@ SQLite is the default for local development (zero setup). For production or mult
 - **Production engineering** — JWT/API key auth, input sanitization, rate limiting, structured logging
 - **Observability** — Prometheus metrics, Grafana dashboards, health/readiness separation
 - **Cloud deployment** — Docker, AWS ECS Fargate, ECR, Secrets Manager, GitHub Actions CI/CD
+- **Parameter-efficient fine-tuning (LoRA)** — RAG vs fine-tuned vs combined comparison with metrics
 - **Testing** — 18 test files (~1,460 lines) covering auth, RAG, hallucination detection, LLM fallback, orchestrator, and MLOps
 
 ---
