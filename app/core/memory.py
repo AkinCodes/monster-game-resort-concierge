@@ -56,13 +56,6 @@ class MemoryStore:
             ).fetchall()
         return [dict(r) for r in rows]
 
-    def get_summary(self, session_id: str) -> Optional[str]:
-        with self.db.session() as conn:
-            row = conn.execute(
-                "SELECT summary FROM sessions WHERE session_id = ?", (session_id,)
-            ).fetchone()
-        return row["summary"] if row else None
-
     def _maybe_summarise(self, session_id: str) -> None:
         import os
         import logging

@@ -1,6 +1,5 @@
 import re
-from datetime import datetime, timedelta
-from email_validator import validate_email as _validate_email, EmailNotValidError
+
 import bleach
 from app.monitoring.logging_utils import ValidationError
 
@@ -54,81 +53,3 @@ def validate_message(message) -> str:
     # Sanitize HTML
     user_text = sanitize_html(user_text)
     return user_text
-
-
-def validate_guest_name(name: str) -> str:
-    """Validate guest name"""
-    if not name or len(name) < 2:
-        raise ValidationError("Guest name too short (minimum 2 characters)")
-    if len(name) > 100:
-        raise ValidationError("Guest name too long (maximum 100 characters)")
-    # Allow letters, spaces, hyphens, apostrophes
-    if not re.match(r"^[a-zA-Z\s\-'.]+$", name):
-        raise ValidationError("Guest name contains invalid characters")
-    return name.strip()
-
-
-def validate_date(date_str: str, field_name: str = "Date") -> str:
-    """Validate date format and range"""
-    try:
-        date = datetime.strptime(date_str, "%Y-%m-%d")
-    except ValueError:
-        raise ValidationError(f"{field_name} must be in YYYY-MM-DD format")
-    # Check not too far in past
-    if date < datetime.now() - timedelta(days=1):
-        raise ValidationError(f"{field_name} cannot be in the past")
-    # Check not too far in future (1 year)
-    if date > datetime.now() + timedelta(days=365):
-        raise ValidationError(f"{field_name} cannot be more than 1 year in the future")
-    return date_str
-
-
-def validate_booking(
-    guest_name: str, room_type: str, check_in: str, check_out: str, guests: int
-) -> dict:
-    """Validate complete booking request"""
-    errors = []
-    # Validate guest name
-    try:
-        guest_name = validate_guest_name(guest_name)
-    except ValidationError as e:
-        errors.append(str(e))
-    # Validate room type
-    valid_rooms = ["Standard Lair", "Deluxe Crypt", "Crypt Suite", "Penthouse Tomb"]
-    if room_type not in valid_rooms:
-        errors.append(f"Invalid room type. Must be one of: {', '.join(valid_rooms)}")
-    # Validate dates
-    try:
-        check_in = validate_date(check_in, "Check-in date")
-        check_out = validate_date(check_out, "Check-out date")
-        # Check check_out after check_in
-        ci = datetime.strptime(check_in, "%Y-%m-%d")
-        co = datetime.strptime(check_out, "%Y-%m-%d")
-        if co <= ci:
-            errors.append("Check-out must be after check-in")
-        if (co - ci).days > 30:
-            errors.append("Maximum stay is 30 nights")
-    except ValidationError as e:
-        errors.append(str(e))
-    # Validate guests
-    if not isinstance(guests, int) or guests < 1:
-        errors.append("Number of guests must be at least 1")
-    if guests > 10:
-        errors.append("Maximum 10 guests per room")
-    if errors:
-        raise ValidationError("; ".join(errors))
-    return {
-        "guest_name": guest_name,
-        "room_type": room_type,
-        "check_in": check_in,
-        "check_out": check_out,
-        "guests": guests,
-    }
-
-
-def validate_email(email: str) -> str:
-    try:
-        v = _validate_email(email)
-        return v.email.lower()
-    except EmailNotValidError as e:
-        raise ValidationError(f"Invalid email format: {e}")
