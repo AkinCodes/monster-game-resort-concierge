@@ -2,8 +2,6 @@
 Multi-Agent Orchestrator for Monster Resort Concierge.
 
 Separates PLANNING (what to do) from EXECUTION (how to do it).
-This is a production pattern used at scale -- the planner is cheap and fast,
-the executor handles the expensive work.
 
 Architecture:
     User query --> Planner (lightweight LLM) --> Plan --> Executor --> Response
@@ -31,11 +29,6 @@ from .structured_output import StructuredOutputParser
 from .tools import ToolRegistry
 
 logger = logging.getLogger(__name__)
-
-
-# ---------------------------------------------------------------------------
-# Data types
-# ---------------------------------------------------------------------------
 
 
 class IntentType(str, Enum):
@@ -68,10 +61,6 @@ class ExecutionResult:
     token_usage: dict = field(default_factory=dict)
     confidence: object = None
 
-
-# ---------------------------------------------------------------------------
-# Prompt templates
-# ---------------------------------------------------------------------------
 
 PLANNER_SYSTEM_PROMPT = """\
 You are the Monster Resort Concierge planner. Your job is to classify the \
@@ -142,11 +131,6 @@ Guest's original request: {question}\
 """
 
 
-# ---------------------------------------------------------------------------
-# Orchestrator
-# ---------------------------------------------------------------------------
-
-
 class ConciergeOrchestrator:
     """Two-agent orchestrator: Planner decides, Executor acts."""
 
@@ -163,8 +147,6 @@ class ConciergeOrchestrator:
         self.memory = memory_store
         self._total_planner_tokens = 0
         self._total_executor_tokens = 0
-
-    # -- Agent 1: Planner --------------------------------------------------
 
     async def plan(self, user_message: str, session_id: str) -> Plan:
         """Agent 1: Analyze the user's intent and create an execution plan.
@@ -271,8 +253,6 @@ class ConciergeOrchestrator:
             search_query=data.get("search_query"),
             reasoning=data.get("reasoning", ""),
         )
-
-    # -- Agent 2: Executor --------------------------------------------------
 
     async def execute(
         self, plan: Plan, user_message: str, session_id: str
@@ -461,8 +441,6 @@ class ConciergeOrchestrator:
             token_usage=response.usage,
         )
 
-    # -- Top-level entry point -----------------------------------------------
-
     async def handle(self, user_message: str, session_id: str) -> ExecutionResult:
         """Full orchestration: plan then execute.
 
@@ -516,8 +494,6 @@ class ConciergeOrchestrator:
 
         return result
 
-    # -- Helpers -------------------------------------------------------------
-
     def _format_history(self, messages: list[dict]) -> str:
         """Format conversation history for prompt injection."""
         if not messages:
@@ -544,191 +520,3 @@ class ConciergeOrchestrator:
             "executor_tokens": self._total_executor_tokens,
             "total_tokens": self._total_planner_tokens + self._total_executor_tokens,
         }
-
-
-# ---------------------------------------------------------------------------
-# Demo / __main__
-# ---------------------------------------------------------------------------
-
-if __name__ == "__main__":
-    import asyncio
-    import os
-
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-    )
-
-    async def demo():
-        """Run the orchestrator with a few example queries.
-
-        Requires:
-            - OPENAI_API_KEY set in environment (or adapt for another provider)
-            - A populated RAG store and database (or use mocks below)
-        """
-        # -- Try real providers first, fall back to mocks --------------------
-        api_key = os.getenv("OPENAI_API_KEY")
-
-        if api_key:
-            from .llm_providers import OpenAIProvider
-
-            llm = OpenAIProvider(api_key=api_key, model="gpt-4o-mini")
-            print("Using OpenAI provider (gpt-4o-mini)")
-        else:
-            print("No OPENAI_API_KEY found. Using mock LLM for demo.\n")
-            llm = _MockLLMProvider()
-
-        rag = _MockRAG()
-        tool_registry = _MockToolRegistry()
-        memory = _MockMemoryStore()
-
-        orchestrator = ConciergeOrchestrator(
-            llm_provider=llm,
-            rag=rag,
-            tool_registry=tool_registry,
-            memory_store=memory,
-        )
-
-        # -- Example queries -------------------------------------------------
-        examples = [
-            ("Hello! I just arrived at the resort.", "greeting"),
-            ("What amenities does the Vampire Manor have?", "knowledge"),
-            ("I'd like to book a room.", "clarify (missing details)"),
-            ("Book a deluxe room at Vampire Manor for Count Dracula, Jan 1-3", "tool"),
-        ]
-
-        session_id = "demo-session-001"
-
-        for query, expected_type in examples:
-            print(f"\n{'='*60}")
-            print(f"Guest: {query}")
-            print(f"Expected intent: {expected_type}")
-            print("-" * 60)
-
-            result = await orchestrator.handle(query, session_id)
-
-            print(f"Intent:  {result.plan.intent.value}")
-            print(f"Reason:  {result.plan.reasoning}")
-            print(f"Latency: {result.latency_ms:.1f}ms")  # noqa: E231
-            if result.sources:
-                print(f"Sources: {result.sources}")
-            if result.tool_result:
-                print(f"Tool:    {result.tool_result}")
-            print(f"\nConcierge: {result.response}")
-
-        # -- Token stats -----------------------------------------------------
-        stats = orchestrator.get_token_stats()
-        print(f"\n{'='*60}")
-        print(f"Token usage -- planner: {stats['planner_tokens']}, "
-              f"executor: {stats['executor_tokens']}, "
-              f"total: {stats['total_tokens']}")
-
-    # -- Mock classes for demo without real services --------------------------
-
-    class _MockLLMProvider:
-        """Fake LLM that returns canned JSON for planner, prose for executor."""
-
-        name = "mock"
-
-        async def chat(self, messages, tools=None, model=None):
-            content = messages[-1].content if messages else ""
-            system = messages[0].content if messages else ""
-
-            # If this is a planner call (system prompt has JSON schema instructions)
-            if "intent" in system and "tool_name" in system:
-                plan = self._classify(content)
-                return LLMResponse(
-                    content=json.dumps(plan),
-                    model="mock",
-                    provider="mock",
-                    usage={"prompt_tokens": 50, "completion_tokens": 20, "total_tokens": 70},
-                )
-
-            # Otherwise it is an executor call
-            return LLMResponse(
-                content=f"[Mock response] I'd be happy to help with: {content[:80]}",
-                model="mock",
-                provider="mock",
-                usage={"prompt_tokens": 100, "completion_tokens": 40, "total_tokens": 140},
-            )
-
-        @staticmethod
-        def _classify(text: str) -> dict:
-            lower = text.lower()
-            if any(w in lower for w in ["hello", "hi", "arrived", "hey"]):
-                return {"intent": "chitchat", "reasoning": "Greeting detected"}
-            if any(w in lower for w in ["amenities", "pool", "spa", "restaurant", "what"]):
-                return {"intent": "knowledge", "search_query": text[:100],
-                        "reasoning": "Information question"}
-            if any(w in lower for w in ["book a room", "reserve"]) and "deluxe" not in lower:
-                return {"intent": "clarify",
-                        "reasoning": "Missing guest name, dates, or hotel"}
-            if "book" in lower:
-                return {"intent": "tool", "tool_name": "book_room",
-                        "tool_args": {"guest_name": "Count Dracula",
-                                      "hotel_name": "Vampire Manor: Eternal Night Inn",
-                                      "room_type": "deluxe",
-                                      "check_in": "2026-01-01",
-                                      "check_out": "2026-01-03"},
-                        "reasoning": "Booking request with details"}
-            return {"intent": "chitchat", "reasoning": "General conversation"}
-
-        def translate_tool_schemas(self, schemas):
-            return schemas
-
-    class _MockRAG:
-        """Fake RAG that returns canned search results."""
-
-        def search(self, query: str, k: int = 5) -> dict:
-            return {
-                "results": [
-                    {
-                        "text": (
-                            "Vampire Manor features a blood-red infinity pool, "
-                            "24-hour coffin spa, moonlit dining terrace, and "
-                            "complimentary bat-wing shuttle service."
-                        ),
-                        "meta": {"source": "vampire_manor_brochure.md"},
-                        "score": 0.12,
-                    }
-                ]
-            }
-
-    class _MockToolRegistry:
-        """Fake ToolRegistry for demo purposes."""
-
-        def list(self):
-            from .tools import Tool
-
-            return [
-                Tool(name="book_room", description="Create a new booking", fn=lambda: None),
-                Tool(name="get_booking", description="Look up a booking", fn=lambda: None),
-                Tool(name="search_amenities", description="Search resort knowledge", fn=lambda: None),
-            ]
-
-        def get(self, name: str):
-            tools = {t.name: t for t in self.list()}
-            return tools.get(name)
-
-        async def async_execute_with_timing(self, name: str, **kwargs):
-            return {
-                "ok": True,
-                "booking_id": "MOCK-001",
-                "message": f"Mock booking at {kwargs.get('hotel_name', 'unknown')}",
-            }
-
-    class _MockMemoryStore:
-        """In-memory conversation store for demo."""
-
-        def __init__(self):
-            self._messages: dict[str, list] = {}
-
-        def get_messages(self, session_id: str, limit: int = 50) -> list[dict]:
-            return self._messages.get(session_id, [])[-limit:]
-
-        def add_message(self, session_id: str, role: str, content: str) -> None:
-            self._messages.setdefault(session_id, []).append(
-                {"role": role, "content": content}
-            )
-
-    asyncio.run(demo())

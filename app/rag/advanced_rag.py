@@ -11,10 +11,6 @@ Key Features:
 - Reciprocal Rank Fusion for combining results
 - Production-ready with caching and error handling
 
-Performance Improvements vs Basic RAG:
-- 40% better accuracy on proper noun queries (e.g., "Vampire Manor")
-- 30% reduction in irrelevant context
-- 25% cost savings from better context selection
 """
 
 from typing import List, Dict, Optional, Tuple

@@ -112,7 +112,7 @@ def _make_key(func_name: str, args: tuple, kwargs: dict) -> str:
     """Build a stable, hashable cache key from function name + arguments."""
     parts = [func_name]
     for arg in args:
-        parts.append(f"{type(arg).__name__}:{repr(arg)}")
+        parts.append(f"{type(arg).__name__}:{repr(arg)}")  # noqa: E231
     for k, v in sorted(kwargs.items()):
         parts.append(f"{k}={repr(v)}")
     raw = "|".join(parts)
@@ -156,27 +156,3 @@ def cache_response(ttl: int = CACHE_TTL_SECONDS, cache=None):
         return wrapper
 
     return decorator
-
-
-# Problem: Unbounded memory
-#   Fix: CACHE_MAX_SIZE = 256 — oldest entry evicted when full (LRU via
-#     OrderedDict)
-#   ────────────────────────────────────────
-#   Problem: Expired entries linger
-#   Fix: Expired entries are deleted on access, not just skipped
-#   ────────────────────────────────────────
-#   Problem: self in cache key
-#   Fix: _make_key uses id(obj) for objects (same instance = same key), repr() for
-
-#     primitives
-#   ────────────────────────────────────────
-#   Problem: Unhashable kwargs crash
-#   Fix: Key is built with repr() + hashed to MD5 — works with any argument type
-#   ────────────────────────────────────────
-#   Problem: Not thread-safe
-#   Fix: threading.Lock() around all reads/writes
-#   ────────────────────────────────────────
-#   Problem: No external dependencies
-#   Fix: Zero new packages — stdlib only (OrderedDict, threading, hashlib)
-#   The @cache_response(ttl=300) decorator API is identical, so vector_rag.py and
-#   advanced_rag.py need no changes.

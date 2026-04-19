@@ -1,7 +1,7 @@
 from langchain_huggingface import HuggingFaceEmbeddings
 from ragas import evaluate
 from ragas.metrics import faithfulness, answer_relevancy
-from datasets import Dataset  # <-- ADD THIS LINE
+from datasets import Dataset
 
 
 # Initialize a lightweight, stable local embedding model

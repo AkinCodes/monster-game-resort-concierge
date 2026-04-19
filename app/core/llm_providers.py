@@ -18,10 +18,6 @@ import httpx
 
 from ..monitoring.logging_utils import logger
 
-# ---------------------------------------------------------------------------
-# Normalized data types
-# ---------------------------------------------------------------------------
-
 
 @dataclass
 class LLMToolCall:
@@ -47,11 +43,6 @@ class LLMResponse:
     usage: Dict[str, int] = field(default_factory=dict)
 
 
-# ---------------------------------------------------------------------------
-# Abstract base
-# ---------------------------------------------------------------------------
-
-
 class LLMProvider(ABC):
     @abstractmethod
     async def chat(
@@ -69,11 +60,6 @@ class LLMProvider(ABC):
     @property
     @abstractmethod
     def name(self) -> str: ...
-
-
-# ---------------------------------------------------------------------------
-# OpenAI Provider
-# ---------------------------------------------------------------------------
 
 
 class OpenAIProvider(LLMProvider):
@@ -149,11 +135,6 @@ class OpenAIProvider(LLMProvider):
             provider="openai",
             usage=usage,
         )
-
-
-# ---------------------------------------------------------------------------
-# Anthropic Provider
-# ---------------------------------------------------------------------------
 
 
 class AnthropicProvider(LLMProvider):
@@ -281,11 +262,6 @@ class AnthropicProvider(LLMProvider):
         )
 
 
-# ---------------------------------------------------------------------------
-# Ollama Provider (local models via HTTP API)
-# ---------------------------------------------------------------------------
-
-
 class OllamaProvider(LLMProvider):
     def __init__(self, base_url: str = "http://localhost:11434", model: str = "llama3"):
         self._base_url = base_url.rstrip("/")
@@ -358,11 +334,6 @@ class OllamaProvider(LLMProvider):
             provider="ollama",
             usage={},
         )
-
-
-# ---------------------------------------------------------------------------
-# Model Router — tries providers in priority order with fallback
-# ---------------------------------------------------------------------------
 
 
 class ModelRouter:

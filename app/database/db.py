@@ -108,7 +108,7 @@ def _convert_qmarks(sql: str):
     parts = sql.split("?")
     new_parts = [parts[0]]
     for i, part in enumerate(parts[1:]):
-        new_parts.append(f":p{i}")
+        new_parts.append(f":p{i}")  # noqa: E231
         new_parts.append(part)
     return "".join(new_parts), True
 

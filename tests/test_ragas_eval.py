@@ -37,20 +37,23 @@ def test_ragas_eval_example():
         "Faithfulness metric should be present"
     assert "answer_relevancy" in results, \
         "Answer relevancy metric should be present"
-    assert "context_precision" in results, \
-        "Context precision metric should be present"
-    assert "context_recall" in results, \
-        "Context recall metric should be present"
+    # context_precision and context_recall are not included in the
+    # current metric set (faithfulness + answer_relevancy only)
 
     # Optionally print results for debugging
-    print("\n📊 RAGAS Evaluation Results:")
+    print("\nRAGAS Evaluation Results:")
     for metric, value in results.items():
         if isinstance(value, dict):
-            # Per-question scores
-            avg = sum(value.values()) / len(value) if value else 0
-            print("  {}: {:.3f} (average)".format(metric, avg))
-        else:
+            numeric_vals = [v for v in value.values() if isinstance(v, (int, float))]
+            if numeric_vals:
+                avg = sum(numeric_vals) / len(numeric_vals)
+                print("  {}: {:.3f} (average)".format(metric, avg))
+            else:
+                print("  {}: (non-numeric)".format(metric))
+        elif isinstance(value, (int, float)):
             print("  {}: {:.3f}".format(metric, value))
+        else:
+            print("  {}: {}".format(metric, value))
 
 
 def test_ragas_eval_with_poor_answer():
