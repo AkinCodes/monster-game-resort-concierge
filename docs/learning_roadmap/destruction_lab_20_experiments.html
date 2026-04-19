@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Destruction Lab — 23 Experiments</title>
+<title>Destruction Lab — 24 Experiments</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <!-- CodeMirror 5 -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/codemirror.min.css">
@@ -3746,7 +3746,7 @@ pre .highlight { color: var(--accent-yellow); }
   <p class="subtitle">23 hands-on experiments to break, stress, and understand every layer of the Monster Resort Concierge — from embeddings to auth to caching, database, and tool execution.</p>
   <div class="meta-badges">
     <span class="meta-badge">Branch: destruction-lab</span>
-    <span class="meta-badge">23 Experiments</span>
+    <span class="meta-badge">24 Experiments</span>
     <span class="meta-badge">8 System Layers</span>
   </div>
 </div>
@@ -6259,6 +6259,99 @@ openai_api_key: str = <span class="string">"sk-FAKE-garbage-key-that-will-fail"<
   </div>
 </div>
 
+<!-- ═══════════════ EXPERIMENT 24 ═══════════════ -->
+<div class="experiment" data-layer="llm">
+  <div class="experiment-header" onclick="toggleExp(this)">
+    <div class="exp-number">24</div>
+    <div class="exp-info">
+      <div class="exp-title">Teach the Voice to Speak Without the Library</div>
+      <div class="exp-tagline">When does memorized knowledge beat retrieved knowledge?</div>
+    </div>
+    <div class="exp-layer-tag">LLM</div>
+    <div class="exp-chevron">&#9654;</div>
+  </div>
+  <div class="experiment-body">
+    <div class="learn-badge"><strong>What you'll learn:</strong> Fine-tuning vs RAG trade-offs, LoRA adapters, when baked-in knowledge beats retrieved knowledge.</div>
+
+    <div class="step">
+      <div class="step-header"><div class="step-num">1</div><div class="step-title">Generate training data from resort knowledge</div></div>
+      <div class="step-desc">Convert the resort's Q&amp;A pairs into chat-format JSONL for fine-tuning:</div>
+      <pre><span class="cmd">python scripts/prep_finetune_data.py</span></pre>
+    </div>
+
+    <div class="step">
+      <div class="step-header"><div class="step-num">2</div><div class="step-title">Train the LoRA adapter</div></div>
+      <div class="step-desc">Fine-tune a small local model on the resort knowledge (~5 min on Apple Silicon):</div>
+      <pre><span class="cmd">python scripts/finetune_mlx.py</span></pre>
+    </div>
+
+    <div class="step">
+      <div class="step-header"><div class="step-num">3</div><div class="step-title">Ask both pipelines the same 20 questions</div></div>
+      <div class="step-desc">Send the same set of resort questions to both the RAG pipeline and the fine-tuned model:</div>
+      <pre><span class="cmd">python scripts/compare_rag_vs_finetune.py</span> --questions 20</pre>
+    </div>
+
+    <div class="step">
+      <div class="step-header"><div class="step-num">4</div><div class="step-title">View the comparison table</div></div>
+      <div class="step-desc">The script outputs a side-by-side table of answers from both approaches:</div>
+      <pre><span class="cmd">python scripts/compare_rag_vs_finetune.py</span> --report</pre>
+    </div>
+
+    <div class="step">
+      <div class="step-header"><div class="step-num">5</div><div class="step-title">Analyze: which questions does each approach win?</div></div>
+      <div class="step-desc">Look at the results. Which questions does RAG answer better? Which does fine-tuning win? Are there questions where both fail?</div>
+    </div>
+
+    <div class="observe-box">
+      <h4>What to observe</h4>
+      <ul>
+        <li>Does the fine-tuned model hallucinate more or less than RAG?</li>
+        <li>Is it faster (no retrieval step)?</li>
+        <li>Does it maintain the gothic tone?</li>
+      </ul>
+    </div>
+
+    <div class="findings-empty">No findings yet — experiment not attempted.</div>
+
+    <div class="sesame-toggle" onclick="toggleSesame(this)">
+      <span class="sesame-chevron">&#9654;</span>
+      <span class="sesame-icon">&#127467;</span>
+      <h4>Sesame Street Explains This</h4>
+      <span class="sesame-label">Simple version</span>
+    </div>
+    <div class="sesame-content">
+      <h5>Episode 11: Big Bird Learns the Answers</h5>
+
+      <div class="sesame-scene">
+        <p><span class="character">Big Bird</span> used to run to the library (RAG) every time a guest asked a question.</p>
+      </div>
+
+      <div class="sesame-scene">
+        <p><span class="character">Big Bird:</span> Hold on, let me go check the books!</p>
+        <p>*runs to library, searches, runs back*</p>
+        <p><span class="character">Big Bird:</span> The Vampire Manor has a blood-temperature pool!</p>
+      </div>
+
+      <div class="sesame-scene">
+        <p>Then someone taught him the answers directly (fine-tuning).</p>
+        <p><span class="character">Big Bird:</span> Oh! I already KNOW this one! The Vampire Manor has a blood-temperature pool!</p>
+      </div>
+
+      <div class="sesame-scene">
+        <p>But what if the hotel adds a new wing?</p>
+        <p><span class="character">Oscar:</span> Hey Big Bird, what about the new Zombie Spa?</p>
+        <p><span class="character">Big Bird:</span> *confused* What Zombie Spa? I don't know about that...</p>
+        <p><span class="character">Oscar:</span> See? He learned the OLD layout. The library always has the latest floor plan.</p>
+      </div>
+
+      <div class="sesame-lesson">
+        <strong>One-line version:</strong>
+        <p>"Memorizing the answers is fast, but the library always has the newest books."</p>
+      </div>
+    </div>
+  </div>
+</div>
+
 </div><!-- end experiments -->
 
 <!-- REFERENCE TABLE -->
@@ -6292,6 +6385,7 @@ openai_api_key: str = <span class="string">"sk-FAKE-garbage-key-that-will-fail"<
       <tr><td>21</td><td>Memory vs Database</td><td><span class="layer-dot" style="background:var(--layer-data)"></span>Data</td><td>Conversation context vs persistent storage</td></tr>
       <tr><td>22</td><td>SQLite to PostgreSQL</td><td><span class="layer-dot" style="background:var(--layer-data)"></span>Data</td><td>Database abstraction, migration gaps</td></tr>
       <tr><td>23</td><td>Kill Redis</td><td><span class="layer-dot" style="background:var(--layer-data)"></span>Data</td><td>Graceful degradation, fail-open caching</td></tr>
+      <tr><td>24</td><td>Fine-Tune vs RAG</td><td><span class="layer-dot" style="background:var(--layer-llm)"></span>LLM</td><td>Fine-tuning trade-offs, LoRA adapters, baked vs retrieved knowledge</td></tr>
     </tbody>
   </table>
 </div>
@@ -7305,6 +7399,7 @@ openai_api_key: str = <span class="string">"sk-FAKE-garbage-key-that-will-fail"<
     <div class="file-tab" onclick="switchFile('caching')"><span class="file-icon">&#128196;</span>redis_cache<span class="unsaved"></span></div>
     <div class="file-tab" onclick="switchFile('structout')"><span class="file-icon">&#128196;</span>structured_output<span class="unsaved"></span></div>
     <div class="file-tab" onclick="switchFile('inputval')"><span class="file-icon">&#128196;</span>validators<span class="unsaved"></span></div>
+    <div class="file-tab" onclick="switchFile('finetune')"><span class="file-icon">&#128196;</span>fine_tuning<span class="unsaved"></span></div>
   </div>
 
   <!-- EDITOR -->
@@ -7456,6 +7551,16 @@ openai_api_key: str = <span class="string">"sk-FAKE-garbage-key-that-will-fail"<
       <div class="editor-container" id="cm-inputval"></div>
       <div class="run-hint">
         <span>&#128161;</span> This runs as the FIRST step of every request in <code>_agent_reply()</code>. It&rsquo;s Defense Layer Zero &mdash; everything else trusts that the input has been cleaned.
+      </div>
+    </div>
+
+    <div class="file-panel" id="file-finetune">
+      <div class="template-info">
+        <strong>The Training Ground</strong> &mdash; Take the resort&rsquo;s knowledge and teach a small local model to speak like the Grand Chamberlain. Then compare: does the trained model beat the librarian (RAG)? From <code>scripts/finetune_mlx.py</code> and <code>scripts/compare_rag_vs_finetune.py</code>.
+      </div>
+      <div class="editor-container" id="cm-finetune"></div>
+      <div class="run-hint">
+        <span>&#128161;</span> Requires Apple Silicon + <kbd>pip install mlx-lm</kbd>. Run: <kbd>python scripts/prep_finetune_data.py</kbd> then <kbd>python scripts/finetune_mlx.py</kbd>.
       </div>
     </div>
 
@@ -11613,6 +11718,132 @@ def validate_booking(guest_name, room_type, check_in, check_out, guests):
 #     It doesn't stop at the first error — it collects them all
 #     and returns a single rejection with every problem listed."
 # ═══════════════════════════════════════════════════════════════
+`,
+  finetune: `# =============================================================================
+# THE TRAINING GROUND — Fine-Tuning vs RAG
+# =============================================================================
+# From: scripts/finetune_mlx.py + scripts/compare_rag_vs_finetune.py
+#
+# THE CONCEPT:
+# "Teaching the voice upstairs to speak the resort's language
+#  without needing the library every time."
+#
+# Right now, every guest question goes through the Librarian (RAG):
+#   Guest asks -> Librarian searches -> LLM reads the results -> answers
+#
+# Fine-tuning takes a DIFFERENT approach:
+#   Take the resort's Q&A pairs and bake them INTO the model's weights.
+#   The voice already knows the answers — no library visit needed.
+# =============================================================================
+
+# ── STEP 1: DATA PREP ──
+# Convert our resort knowledge into chat-format training pairs
+# scripts/prep_finetune_data.py
+
+import json
+from pathlib import Path
+
+def prep_training_data():
+    """Turn resort Q&A pairs into chat-format JSONL for fine-tuning."""
+    qa_pairs = load_resort_qa()  # from our existing knowledge base
+    training = []
+
+    for qa in qa_pairs:
+        training.append({
+            "messages": [
+                {"role": "system", "content": "You are the Grand Chamberlain of the Monster Resort."},
+                {"role": "user", "content": qa["question"]},
+                {"role": "assistant", "content": qa["answer"]}
+            ]
+        })
+
+    out = Path("data/finetune_train.jsonl")
+    with open(out, "w") as f:
+        for item in training:
+            f.write(json.dumps(item) + "\\n")
+    print(f"Wrote {len(training)} training examples to {out}")
+
+# ── STEP 2: LoRA FINE-TUNING ──
+# "Only 0.5% of the brain changes — like teaching new phrases
+#  without rewiring the whole brain."
+#
+# LoRA (Low-Rank Adaptation) freezes 99.5% of the model weights
+# and only trains small adapter matrices on top.
+
+# scripts/finetune_mlx.py (Apple Silicon only)
+from mlx_lm import load, generate
+from mlx_lm.tuner import train as lora_train
+
+def finetune_resort_model():
+    """Train a LoRA adapter on resort knowledge."""
+    model, tokenizer = load("mlx-community/Mistral-7B-Instruct-v0.3-4bit")
+
+    lora_train(
+        model=model,
+        tokenizer=tokenizer,
+        data="data/finetune_train.jsonl",
+        adapter_path="adapters/resort-lora",
+        iters=200,           # ~5 min on M1 Pro
+        batch_size=4,
+        lora_rank=8,         # Small rank = small adapter = fast
+        learning_rate=1e-4,
+    )
+    print("LoRA adapter saved to adapters/resort-lora/")
+
+# ── STEP 3: THE COMPARISON ──
+# "RAG = ask the librarian every time.
+#  Fine-tune = the voice already knows. Which wins?"
+
+def compare_rag_vs_finetune(questions: list[str]):
+    """Ask both pipelines the same questions, compare results."""
+    from app.rag import search as rag_search
+    from app.main import get_llm_response
+
+    # Load the fine-tuned model
+    ft_model, ft_tok = load(
+        "mlx-community/Mistral-7B-Instruct-v0.3-4bit",
+        adapter_path="adapters/resort-lora"
+    )
+
+    results = []
+    for q in questions:
+        # RAG path: search + LLM
+        rag_answer = get_llm_response(q, use_rag=True)
+
+        # Fine-tune path: direct generation
+        ft_answer = generate(ft_model, ft_tok, prompt=q, max_tokens=256)
+
+        results.append({
+            "question": q,
+            "rag_answer": rag_answer,
+            "ft_answer": ft_answer,
+        })
+
+    # Print comparison table
+    for r in results:
+        print(f"Q: {r['question']}")
+        print(f"  RAG:       {r['rag_answer'][:80]}...")
+        print(f"  Fine-tune: {r['ft_answer'][:80]}...")
+        print()
+
+# ═══════════════════════════════════════════════════════════════
+# SELF-TEST — Can you answer these from memory?
+#
+# Q: "What does LoRA stand for and why does it only change 0.5%?"
+# A: "Low-Rank Adaptation. It freezes all original weights and
+#     trains small matrices that get ADDED to the frozen layers.
+#     The adapter is tiny (~10MB vs 4GB model) so it's fast."
+#
+# Q: "When does RAG beat fine-tuning?"
+# A: "When knowledge changes frequently. RAG always checks the
+#     latest documents. Fine-tuning only knows what it learned
+#     at training time — stale if the hotel adds a new wing."
+#
+# Q: "When does fine-tuning beat RAG?"
+# A: "When you need consistent tone/style, faster inference
+#     (no retrieval step), or when the knowledge is stable
+#     and well-defined — like the resort's core personality."
+# ═══════════════════════════════════════════════════════════════
 `
 };
 
@@ -12263,7 +12494,8 @@ const CODE_TAB_KEYS = {
   'dblayer': 'database_layer',
   'caching': 'redis_cache',
   'structout': 'structured_output',
-  'inputval': 'validators'
+  'inputval': 'validators',
+  'finetune': 'fine_tuning'
 };
 
 function initNotesSystem() {
