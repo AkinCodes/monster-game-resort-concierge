@@ -11370,154 +11370,95 @@ def cache_response(ttl=CACHE_TTL_SECONDS, cache=None):
   structout: `# =============================================================================
 # THE FORM TRANSLATOR (structured_output.py)
 # =============================================================================
-# When the voice upstairs speaks, it sometimes rambles — prose around the
-# form, extra commentary, markdown fences wrapping the data. The Form
-# Translator's job: extract the clean form, check it against the template,
-# and if it's garbled, politely ask the voice to try again.
+# When the voice upstairs speaks, it rambles — prose around the form,
+# markdown fences wrapping the data, chitchat before and after.
+# The Form Translator's only job: extract the clean JSON form.
 #
-# Big Bird sends the voice a template: "Fill out THIS form."
-# The voice sends back... something. Maybe clean. Maybe wrapped in
-# backticks. Maybe surrounded by chitchat. The translator handles all of it.
+# The key insight: don't GUESS where the form ends with regex.
+# Let the JSON parser itself tell you. Like handing a messy envelope
+# to the mailroom and saying "find the letter inside — you know what
+# a letter looks like better than I do."
+#
+# raw_decode() = the mailroom clerk who reads just enough to find
+# one complete JSON value, then stops. No greedy regex. No hoping
+# the braces balance. The parser KNOWS.
 # =============================================================================
 
 from __future__ import annotations
-import json, logging, re
-from typing import Optional, Type, TypeVar
-from pydantic import BaseModel, ValidationError
 
-T = TypeVar("T", bound=BaseModel)
+import json
 
-
-# ---------------------------------------------------------------------------
-# THE FORM TEMPLATES — what the voice upstairs must fill out
-# ---------------------------------------------------------------------------
-# Each template is a strict contract. If the voice returns something
-# that doesn't match, the translator rejects it.
-# ---------------------------------------------------------------------------
-
-class BookingIntent(BaseModel):
-    """Guest wants to book, search, or cancel."""
-    action: str           # "book", "search", "cancel"
-    guest_name: Optional[str] = None
-    room_type: Optional[str] = None
-    dates: Optional[str] = None
-
-class SearchQuery(BaseModel):
-    """Guest wants to look something up."""
-    query: str
-    category: str         # "amenities", "rooms", "policies"
-    top_k: int = 5        # how many results to fetch from the library
-
-class ConciergeResponse(BaseModel):
-    """The concierge's structured answer."""
-    answer: str
-    confidence: str       # "high", "medium", "low"
-    sources: list[str] = []
-    suggested_tools: list[str] = []
-
-
-# ---------------------------------------------------------------------------
-# THE TRANSLATOR — extract, validate, retry
-# ---------------------------------------------------------------------------
-# Three-step process:
-#   1. EXTRACT: Pull the form out of the noise (strip markdown fences,
-#      find the curly braces, ignore the chitchat around it)
-#   2. VALIDATE: Check the form against the template (Pydantic does this)
-#   3. RETRY: If garbled, send the error back to the voice with the
-#      template and say "try again" (up to 2 retries)
-# ---------------------------------------------------------------------------
 
 class StructuredOutputParser:
-    """Extracts and validates forms from the voice upstairs."""
+    """Extracts JSON from messy LLM responses."""
 
-    def __init__(self, max_retries: int = 2):
-        self.max_retries = max_retries
-        self.logger = logging.getLogger(__name__)
-
-    async def parse(self, llm_response: str, schema: Type[T], retry_fn=None) -> T:
-        """Extract a valid form from the voice's response.
-
-        If the form is garbled:
-          1. Log the error
-          2. If retry_fn is provided, send the error back and ask again
-          3. Try up to max_retries times
-          4. If all attempts fail, raise StructuredOutputError
-        """
-        accumulated_errors = []
-        current_text = llm_response
-
-        for attempt in range(1 + self.max_retries):
-            try:
-                # Step 1: Extract — strip markdown fences, find the form
-                json_str = self._extract_json(current_text)
-                # Step 2: Validate — check against the template
-                data = json.loads(json_str)
-                result = schema.model_validate(data)
-                return result
-
-            except json.JSONDecodeError as exc:
-                # The form isn't even valid — garbled beyond recognition
-                accumulated_errors.append(f"Garbled form: {exc}")
-
-            except ValidationError as exc:
-                # The form is valid but doesn't match the template
-                accumulated_errors.append(f"Wrong template: {exc}")
-
-            # Step 3: Retry — ask the voice to try again
-            if retry_fn and attempt < self.max_retries:
-                feedback = (
-                    f"Your previous response could not be parsed. "
-                    f"Error: {accumulated_errors[-1]}\\n\\n"
-                    f"Please respond with ONLY valid data matching this template:\\n"
-                    f"{json.dumps(schema.model_json_schema(), indent=2)}"
-                )
-                try:
-                    current_text = await retry_fn(feedback)
-                except Exception:
-                    break
-
-        raise StructuredOutputError(
-            f"Failed to parse into {schema.__name__} after {len(accumulated_errors)} attempt(s)",
-            raw_response=llm_response,
-            errors=accumulated_errors,
-        )
-
-    # ── NOISE STRIPPER ──
-    # The voice upstairs wraps forms in all sorts of noise:
-    #   - Markdown fences: \\\`\\\`\\\`json { ... } \\\`\\\`\\\`
-    #   - Prose before/after: "Here is the result: { ... } I hope that helps!"
-    #   - Bare form: { ... }
-    # This method handles all three.
+    # ── THE EXTRACTION — let the parser do the work ──
+    # Old approach (regex): guess where braces start/end. Breaks on
+    #   nested objects, escaped quotes, arrays-of-objects.
+    # New approach (raw_decode): hand the text to Python's own JSON
+    #   parser starting at each { or [. It either finds a valid value
+    #   or it doesn't. No guessing.
+    #
+    # Hotel analogy: a guest slides a note under the door. The note
+    # has doodles, stickers, and somewhere in there, an actual room
+    # request form. Don't try to cut around the doodles — hand it to
+    # the front desk and say "find the first valid form on this page."
 
     @staticmethod
     def _extract_json(text: str) -> str:
-        # Try markdown fences first
-        fence_match = re.search(r"\\\`\\\`\\\`(?:json)?\\s*\\n?([\\s\\S]*?)\\n?\\s*\\\`\\\`\\\`", text, re.DOTALL)
-        if fence_match:
-            return fence_match.group(1).strip()
-        # Try bare braces
-        brace_match = re.search(r"\\{[\\s\\S]*\\}", text)
-        if brace_match:
-            return brace_match.group(0).strip()
-        # Last resort — the whole thing
+        """Extract the first valid JSON value from LLM text.
+
+        Uses json.JSONDecoder.raw_decode() instead of regex so the
+        actual JSON parser determines where the value ends. This
+        correctly handles nested braces, escaped characters, prose
+        around the JSON, and markdown fences — without guessing.
+        """
+        # Find the earliest { or [ — that's where a form might start
+        start_obj = text.find("{")
+        start_arr = text.find("[")
+        candidates = [s for s in (start_obj, start_arr) if s != -1]
+
+        if not candidates:
+            # No braces at all — just return the raw text trimmed
+            return text.strip()
+
+        # The clerk who can read exactly one complete JSON value
+        decoder = json.JSONDecoder()
+
+        # Walk forward from the earliest candidate position
+        for i in range(min(candidates), len(text)):
+            if text[i] not in ("{", "["):
+                continue
+            try:
+                # raw_decode: "I found a valid form starting here,
+                # and it ends at position 'end'. Everything after
+                # that is just more doodles."
+                obj, end = decoder.raw_decode(text[i:])
+                return json.dumps(obj)
+            except json.JSONDecodeError:
+                # Not a valid form starting here — keep looking
+                continue
+
+        # Nothing valid found — return as-is
         return text.strip()
 
 # ═══════════════════════════════════════════════════════════════
 # THE FORM TRANSLATOR — Interview Gold
 # ═══════════════════════════════════════════════════════════════
-# Q: "How do you get structured data from an LLM?"
-# A: "I send a schema prompt, extract the form from the noise
-#     (markdown fences, surrounding prose), validate with Pydantic,
-#     and retry with error feedback if it fails."
+# Q: "How do you extract JSON from noisy LLM output?"
+# A: "I use json.JSONDecoder.raw_decode(). It lets the stdlib
+#     parser find the first complete JSON value in the text.
+#     No regex guessing about brace depth or escaping."
 #
-# Q: "What if the LLM ignores your schema?"
-# A: "The parser sends the validation error back with the full
-#     schema and asks for a corrected response. Up to 2 retries."
+# Q: "Why raw_decode instead of regex?"
+# A: "Regex like r'\\{.*\\}' is greedy — it grabs too much.
+#     Non-greedy r'\\{.*?\\}' grabs too little with nesting.
+#     raw_decode uses the actual JSON grammar, so it always
+#     finds the correct boundary."
 #
-# Q: "Why Pydantic and not just json.loads?"
-# A: "json.loads tells you it's valid JSON. Pydantic tells you
-#     it matches the EXPECTED SHAPE — right fields, right types,
-#     right constraints."
+# Q: "What if there's no JSON in the response?"
+# A: "Return the stripped text as-is — let the caller decide
+#     what to do with it."
 # ═══════════════════════════════════════════════════════════════
 `,
 
