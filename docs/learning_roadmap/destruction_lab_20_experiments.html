@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Destruction Lab — 24 Experiments</title>
+<title>Destruction Lab — 25 Experiments</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <!-- CodeMirror 5 -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/codemirror.min.css">
@@ -3743,10 +3743,10 @@ pre .highlight { color: var(--accent-yellow); }
 <!-- HERO -->
 <div class="hero">
   <h1>Destruction Lab</h1>
-  <p class="subtitle">23 hands-on experiments to break, stress, and understand every layer of the Monster Resort Concierge — from embeddings to auth to caching, database, and tool execution.</p>
+  <p class="subtitle">25 hands-on experiments to break, stress, and understand every layer of the Monster Resort Concierge — from embeddings to auth to caching, database, and tool execution.</p>
   <div class="meta-badges">
     <span class="meta-badge">Branch: destruction-lab</span>
-    <span class="meta-badge">24 Experiments</span>
+    <span class="meta-badge">25 Experiments</span>
     <span class="meta-badge">8 System Layers</span>
   </div>
 </div>
@@ -3774,6 +3774,8 @@ pre .highlight { color: var(--accent-yellow); }
       <a href="vampires_switchboard.html" class="tab-dropdown-item" style="text-decoration:none;display:block;"><span class="dd-icon">&#9742;</span><span class="dd-label">The Switchboard</span><span class="dd-code">make_registry</span></a>
       <a href="vampires_night_shift.html" class="tab-dropdown-item" style="text-decoration:none;display:block;"><span class="dd-icon">&#127769;</span><span class="dd-label">The Night Shift</span><span class="dd-code">Full Lifecycle</span></a>
       <a href="vampires_war_room.html" class="tab-dropdown-item" style="text-decoration:none;display:block;"><span class="dd-icon">&#9876;</span><span class="dd-label">The War Room</span><span class="dd-code">Orchestrator</span></a>
+      <a href="vampires_night_watchman.html" class="tab-dropdown-item" style="text-decoration:none;display:block;"><span class="dd-icon">&#128065;</span><span class="dd-label">The Night Watchman</span><span class="dd-code">Hallucination</span></a>
+      <a href="vampires_telephone_exchange.html" class="tab-dropdown-item" style="text-decoration:none;display:block;"><span class="dd-icon">&#128222;</span><span class="dd-label">The Telephone Exchange</span><span class="dd-code">LLM Providers</span></a>
       <span style="display:block;padding:8px 14px 2px;font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#9f8dbf;opacity:0.5;border-top:1px solid rgba(159,141,191,0.15);margin-top:4px;">Deep Dives</span>
       <button class="tab-dropdown-item" onclick="switchTabFromGroup('dungeon','grp-explore')"><span class="dd-icon">&#127984;</span><span class="dd-label">The Descent</span><span class="dd-code">_agent_reply()</span></button>
       <button class="tab-dropdown-item" onclick="switchTabFromGroup('memengine','grp-explore')"><span class="dd-icon">&#9881;</span><span class="dd-label">Memory Crypt</span><span class="dd-code">MemoryStore</span></button>
@@ -6275,14 +6277,14 @@ openai_api_key: str = <span class="string">"sk-FAKE-garbage-key-that-will-fail"<
 
     <div class="step">
       <div class="step-header"><div class="step-num">1</div><div class="step-title">Generate training data from resort knowledge</div></div>
-      <div class="step-desc">Convert the resort's Q&amp;A pairs into chat-format JSONL for fine-tuning:</div>
-      <pre><span class="cmd">python scripts/prep_finetune_data.py</span></pre>
+      <div class="step-desc">Generate synthetic Q&amp;A pairs from resort knowledge using GPT-4o:</div>
+      <pre><span class="cmd">python scripts/generate_synthetic_dataset.py</span> --output data/concierge_qa.json --num-samples 150</pre>
     </div>
 
     <div class="step">
       <div class="step-header"><div class="step-num">2</div><div class="step-title">Train the LoRA adapter</div></div>
-      <div class="step-desc">Fine-tune a small local model on the resort knowledge (~5 min on Apple Silicon):</div>
-      <pre><span class="cmd">python scripts/finetune_mlx.py</span></pre>
+      <div class="step-desc">Fine-tune Phi-3-mini on the resort knowledge using LoRA (GPU recommended):</div>
+      <pre><span class="cmd">python scripts/finetune_lora.py</span> --dataset data/concierge_qa.json --output lora-concierge --epochs 3</pre>
     </div>
 
     <div class="step">
@@ -7400,6 +7402,9 @@ openai_api_key: str = <span class="string">"sk-FAKE-garbage-key-that-will-fail"<
     <div class="file-tab" onclick="switchFile('structout')"><span class="file-icon">&#128196;</span>structured_output<span class="unsaved"></span></div>
     <div class="file-tab" onclick="switchFile('inputval')"><span class="file-icon">&#128196;</span>validators<span class="unsaved"></span></div>
     <div class="file-tab" onclick="switchFile('finetune')"><span class="file-icon">&#128196;</span>fine_tuning<span class="unsaved"></span></div>
+    <div class="file-tab" onclick="switchFile('config')"><span class="file-icon">&#128196;</span>config.py<span class="unsaved"></span></div>
+    <div class="file-tab" onclick="switchFile('auth')"><span class="file-icon">&#128196;</span>auth_security<span class="unsaved"></span></div>
+    <div class="file-tab" onclick="switchFile('monitoring')"><span class="file-icon">&#128196;</span>monitoring<span class="unsaved"></span></div>
   </div>
 
   <!-- EDITOR -->
@@ -7556,11 +7561,43 @@ openai_api_key: str = <span class="string">"sk-FAKE-garbage-key-that-will-fail"<
 
     <div class="file-panel" id="file-finetune">
       <div class="template-info">
-        <strong>The Training Ground</strong> &mdash; Take the resort&rsquo;s knowledge and teach a small local model to speak like the Grand Chamberlain. Then compare: does the trained model beat the librarian (RAG)? From <code>scripts/finetune_mlx.py</code> and <code>scripts/compare_rag_vs_finetune.py</code>.
+        <strong>The Training Ground</strong> &mdash; Take the resort&rsquo;s knowledge and teach a small local model to speak like the Grand Chamberlain. Then compare: does the trained model beat the librarian (RAG)? From <code>scripts/generate_synthetic_dataset.py</code>, <code>scripts/finetune_lora.py</code>, <code>scripts/test_lora.py</code>, and <code>scripts/compare_rag_vs_finetune.py</code>.
       </div>
       <div class="editor-container" id="cm-finetune"></div>
       <div class="run-hint">
-        <span>&#128161;</span> Requires Apple Silicon + <kbd>pip install mlx-lm</kbd>. Run: <kbd>python scripts/prep_finetune_data.py</kbd> then <kbd>python scripts/finetune_mlx.py</kbd>.
+        <span>&#128161;</span> Run: <kbd>python scripts/generate_synthetic_dataset.py --output data/concierge_qa.json --num-samples 150</kbd> then <kbd>python scripts/finetune_lora.py --dataset data/concierge_qa.json --output lora-concierge --epochs 3</kbd>. Test with <kbd>python scripts/test_lora.py --adapter lora-concierge/final --interactive</kbd>.
+      </div>
+    </div>
+
+    <div class="file-panel" id="file-config">
+      <div class="template-info">
+        <strong>The Hotel Blueprint</strong> &mdash; Every room, every service, every setting lives here. Pydantic reads the <code>.env</code> file and validates everything before the hotel opens. From <code>app/config.py</code>.
+      </div>
+      <div class="editor-container" id="cm-config"></div>
+      <div class="run-hint">
+        <span>&#128161;</span> Test your config: <kbd>uv run python -c "from app.config import get_settings; print(get_settings())"</kbd>
+      </div>
+    </div>
+
+    <!-- MONITORING -->
+    <div class="file-panel" id="file-monitoring">
+      <div class="template-info">
+        <strong>The Watchtower</strong> &mdash; Two systems keep the hotel safe: the diary (structured logging with custom exceptions) and the tally board (Prometheus counters and histograms for every request). From <code>app/cctv/logging_utils.py</code> and <code>app/cctv/monitoring.py</code>.
+      </div>
+      <div class="editor-container" id="cm-monitoring"></div>
+      <div class="run-hint">
+        <span>&#128161;</span> Metrics endpoint: <kbd>curl http://localhost:8000/metrics</kbd>. Logs write to <code>monster_resort.log</code> (JSON) and <code>monster_resort_errors.log</code> (errors only).
+      </div>
+    </div>
+
+
+    <div class="file-panel" id="file-auth">
+      <div class="template-info">
+        <strong>The Guards at the Gate</strong> &mdash; Three layers of security check every guest: the secret key (<code>auth.py</code>), the gate logic (<code>auth_mixins.py</code>), and the key manager (<code>security.py</code>). From <code>app/security_dept/</code>.
+      </div>
+      <div class="editor-container" id="cm-auth"></div>
+      <div class="run-hint">
+        <span>&#128161;</span> Three guards. The first checks if the key exists and is strong enough. The second decides: is this a room key (JWT) or a master key (API key)? The third manages the master key registry.
       </div>
     </div>
 
@@ -11663,7 +11700,8 @@ def validate_booking(guest_name, room_type, check_in, check_out, guests):
   finetune: `# =============================================================================
 # THE TRAINING GROUND — Fine-Tuning vs RAG
 # =============================================================================
-# From: scripts/finetune_mlx.py + scripts/compare_rag_vs_finetune.py
+# From: scripts/generate_synthetic_dataset.py + scripts/finetune_lora.py
+# Also: scripts/test_lora.py + scripts/compare_rag_vs_finetune.py
 #
 # THE CONCEPT:
 # "Teaching the voice upstairs to speak the resort's language
@@ -11679,7 +11717,7 @@ def validate_booking(guest_name, room_type, check_in, check_out, guests):
 
 # ── STEP 1: DATA PREP ──
 # Convert our resort knowledge into chat-format training pairs
-# scripts/prep_finetune_data.py
+# scripts/generate_synthetic_dataset.py
 
 import json
 from pathlib import Path
@@ -11711,25 +11749,28 @@ def prep_training_data():
 # LoRA (Low-Rank Adaptation) freezes 99.5% of the model weights
 # and only trains small adapter matrices on top.
 
-# scripts/finetune_mlx.py (Apple Silicon only)
-from mlx_lm import load, generate
-from mlx_lm.tuner import train as lora_train
+# scripts/finetune_lora.py (cross-platform, GPU recommended)
+from transformers import AutoModelForCausalLM, AutoTokenizer
+from peft import LoraConfig, get_peft_model
 
 def finetune_resort_model():
     """Train a LoRA adapter on resort knowledge."""
-    model, tokenizer = load("mlx-community/Mistral-7B-Instruct-v0.3-4bit")
+    model = AutoModelForCausalLM.from_pretrained("microsoft/Phi-3-mini-4k-instruct")
+    tokenizer = AutoTokenizer.from_pretrained("microsoft/Phi-3-mini-4k-instruct")
+    lora_config = LoraConfig(r=8, lora_alpha=16, target_modules=["q_proj", "v_proj"])
+    model = get_peft_model(model, lora_config)
 
-    lora_train(
-        model=model,
-        tokenizer=tokenizer,
-        data="data/finetune_train.jsonl",
-        adapter_path="adapters/resort-lora",
-        iters=200,           # ~5 min on M1 Pro
-        batch_size=4,
-        lora_rank=8,         # Small rank = small adapter = fast
+    # Uses HuggingFace Trainer under the hood — see finetune_lora.py for full version
+    from transformers import TrainingArguments, Trainer
+    training_args = TrainingArguments(
+        output_dir="lora-concierge",
+        num_train_epochs=3,
+        per_device_train_batch_size=4,
         learning_rate=1e-4,
+        save_strategy="epoch",
     )
-    print("LoRA adapter saved to adapters/resort-lora/")
+    # Full training loop in finetune_lora.py — loads data, trains, saves
+    print("LoRA adapter saved to lora-concierge/")
 
 # ── STEP 3: THE COMPARISON ──
 # "RAG = ask the librarian every time.
@@ -11740,11 +11781,11 @@ def compare_rag_vs_finetune(questions: list[str]):
     from app.rag import search as rag_search
     from app.main import get_llm_response
 
-    # Load the fine-tuned model
-    ft_model, ft_tok = load(
-        "mlx-community/Mistral-7B-Instruct-v0.3-4bit",
-        adapter_path="adapters/resort-lora"
-    )
+    # Load the fine-tuned model (see test_lora.py for full loading logic)
+    from peft import PeftModel
+    base = AutoModelForCausalLM.from_pretrained("microsoft/Phi-3-mini-4k-instruct")
+    ft_model = PeftModel.from_pretrained(base, "lora-concierge/final")
+    ft_tok = AutoTokenizer.from_pretrained("microsoft/Phi-3-mini-4k-instruct")
 
     results = []
     for q in questions:
@@ -11752,7 +11793,9 @@ def compare_rag_vs_finetune(questions: list[str]):
         rag_answer = get_llm_response(q, use_rag=True)
 
         # Fine-tune path: direct generation
-        ft_answer = generate(ft_model, ft_tok, prompt=q, max_tokens=256)
+        inputs = ft_tok(q, return_tensors="pt")
+        output = ft_model.generate(**inputs, max_new_tokens=256)
+        ft_answer = ft_tok.decode(output[0], skip_special_tokens=True)
 
         results.append({
             "question": q,
@@ -11784,6 +11827,603 @@ def compare_rag_vs_finetune(questions: list[str]):
 # A: "When you need consistent tone/style, faster inference
 #     (no retrieval step), or when the knowledge is stable
 #     and well-defined — like the resort's core personality."
+# ═══════════════════════════════════════════════════════════════
+`,
+  config: `# =============================================================================
+# THE HOTEL BLUEPRINT — app/config.py
+# =============================================================================
+# From: app/config.py
+#
+# THE CONCEPT:
+# "The blueprint is read once at opening. If anything is wrong —
+#  weak keys, missing credentials — the hotel refuses to open."
+#
+# Every setting the resort needs — database URLs, API keys,
+# LLM provider choices, hallucination thresholds — is declared
+# here in ONE place. Pydantic validates everything at startup.
+# =============================================================================
+
+from __future__ import annotations
+from functools import lru_cache
+from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import Field, field_validator
+import secrets
+
+
+class Settings(BaseSettings):
+    """Central configuration — all env vars with prefix MRC_."""
+
+    # ── Pydantic reads .env automatically ──
+    model_config = SettingsConfigDict(
+        env_prefix="MRC_",      # MRC_DATABASE_URL -> database_url
+        env_file=".env",        # loads from .env file
+        extra="ignore",         # ignore unknown env vars
+    )
+
+    # ── App ──
+    app_name: str = "Monster Resort Concierge"
+    environment: str = Field(default="dev", description="dev|staging|prod")
+    host: str = "0.0.0.0"
+    port: int = 8000
+    log_level: str = "info"
+
+    # ── Database ──
+    database_url: str = Field(default="sqlite:///./monster_resort.db")
+
+    # ── Redis (optional caching / agent messaging) ──
+    redis_url: str = Field(
+        default="redis://localhost:6379/0",
+        description="Redis connection URL",
+    )
+    redis_enabled: bool = Field(default=False)
+
+    # ── LLM Providers ──
+    openai_api_key: str | None = Field(default=None)
+    openai_model: str = "gpt-4o-mini"
+    anthropic_api_key: str | None = Field(default=None)
+    anthropic_model: str = "claude-sonnet-4-20250514"
+    ollama_base_url: str = "http://localhost:11434"
+    ollama_model: str = "llama3"
+    ollama_enabled: bool = False
+
+    # ── LLM Routing ──
+    llm_provider_priority: str = Field(
+        default="openai",
+        description="Comma-separated: 'openai,anthropic,ollama'",
+    )
+    llm_fallback_enabled: bool = True
+
+    # ── Hallucination Detection ──
+    hallucination_high_threshold: float = 0.7
+    hallucination_medium_threshold: float = 0.4
+
+    # ── Security ──
+    api_key: str = Field(
+        default_factory=lambda: secrets.token_urlsafe(32),
+        description="API key for authentication",
+    )
+    rate_limit_per_minute: int = 60
+
+    # ── VALIDATORS ──
+    # "The hotel inspector checks everything before the doors open."
+
+    @field_validator("environment")
+    @classmethod
+    def validate_environment(cls, v):
+        """Only allow known environments."""
+        allowed = ["dev", "staging", "prod", "production"]
+        if v not in allowed:
+            raise ValueError(f"Invalid environment: {v}. Must be one of {allowed}")
+        return v
+
+    @field_validator("openai_api_key", mode="before")
+    @classmethod
+    def validate_openai_api_key(cls, v, info):
+        """In prod/staging, the key MUST be real — no placeholders."""
+        env = info.data.get("environment", "dev")
+        if env in ["prod", "production", "staging"] and (not v or v == "sk-..."):
+            raise ValueError(
+                "OPENAI_API_KEY must be set in production/staging."
+            )
+        return v
+
+    @field_validator("api_key", mode="before")
+    @classmethod
+    def validate_api_key_strength(cls, v, info):
+        """In prod, the API key must be explicitly set and strong."""
+        env = info.data.get("environment", "dev")
+        if env == "dev":
+            return v  # auto-generated is fine in dev
+        if env in ["prod", "production", "staging"]:
+            if not v or len(v) < 32:
+                raise ValueError(
+                    "API_KEY must be >= 32 chars in production"
+                )
+        return v
+
+
+# ── THE SINGLETON ──
+# "The blueprint is read once at opening and cached forever."
+# @lru_cache means get_settings() only runs once — every subsequent
+# call returns the same Settings object from the cache.
+
+@lru_cache
+def get_settings() -> Settings:
+    return Settings()
+
+# ═══════════════════════════════════════════════════════════════
+# SELF-TEST — Can you answer these from memory?
+#
+# Q: "What does env_prefix='MRC_' do?"
+# A: "Every environment variable must start with MRC_.
+#     So MRC_DATABASE_URL maps to the database_url field.
+#     This prevents collisions with other apps' env vars."
+#
+# Q: "Why @lru_cache on get_settings()?"
+# A: "The blueprint is read once. Pydantic validates all fields,
+#     checks .env, and if anything is invalid the app crashes
+#     immediately. After that, the cached object is reused."
+#
+# Q: "What happens if you deploy to prod with a weak API key?"
+# A: "validate_api_key_strength fires — if the key is missing
+#     or under 32 characters, Pydantic raises ValueError and
+#     the hotel refuses to open. No silent failures."
+#
+# Q: "What's the difference between mode='before' and default?"
+# A: "mode='before' runs the validator BEFORE Pydantic does its
+#     own type coercion. Default mode runs AFTER. We use 'before'
+#     for api_key so we can check the raw string value."
+# ═══════════════════════════════════════════════════════════════
+`,
+  auth: `# =============================================================================
+# THE GUARDS AT THE GATE — Auth + Security (3 files combined)
+# =============================================================================
+# From: app/security_dept/auth.py + auth_mixins.py + security.py
+#
+# THREE GUARDS. Each has a different job:
+#   Guard 1 (auth.py)        — "Does the secret key even exist? Is it strong?"
+#   Guard 2 (auth_mixins.py) — "Is this a room key (JWT) or a master key (API key)?"
+#   Guard 3 (security.py)    — "I manage the master key registry. Create, verify, revoke."
+#
+# Analogy: Three guards. The first checks if the key exists and is strong
+# enough. The second decides: is this a room key (JWT) or a master key
+# (API key)? The third manages the master key registry — creates them,
+# tracks who used them, and can revoke them instantly.
+# =============================================================================
+
+
+# ═══════════════════════════════════════════════════════════════
+# GUARD 1 — auth.py — The Secret Key Validator
+# ═══════════════════════════════════════════════════════════════
+# "Before the hotel even opens, this guard checks:
+#  Does the secret key exist? Is it strong enough? If not — NOBODY gets in."
+
+import os
+from dotenv import load_dotenv
+import jwt
+from datetime import datetime, timedelta
+from fastapi import HTTPException, Security
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from passlib.context import CryptContext
+
+load_dotenv()
+
+# No default value — forces explicit configuration
+SECRET_KEY = os.getenv("MRC_JWT_SECRET_KEY")
+
+# Three rejection gates at startup:
+if not SECRET_KEY:
+    raise ValueError("MRC_JWT_SECRET_KEY environment variable is required.")
+
+if SECRET_KEY == "changeme-super-secret-key":
+    raise ValueError("JWT secret is still set to the default placeholder.")
+
+if len(SECRET_KEY) < 32:
+    raise ValueError(f"JWT secret must be at least 32 characters. Got: {len(SECRET_KEY)}")
+
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
+security = HTTPBearer()
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+
+def create_access_token(data: dict):
+    """Mint a new room key (JWT) with a 30-minute expiry."""
+    to_encode = data.copy()
+    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+
+def verify_token(credentials: HTTPAuthorizationCredentials = Security(security)):
+    """Check if the room key is valid — decode the JWT."""
+    try:
+        payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
+        username = payload.get("sub")
+        if username is None:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        return username
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expired")
+    except jwt.PyJWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+
+# ═══════════════════════════════════════════════════════════════
+# GUARD 2 — auth_mixins.py — The Gate Logic (JWT OR API Key)
+# ═══════════════════════════════════════════════════════════════
+# "This guard stands at the actual door. When someone arrives,
+#  he asks: Are you holding a room key (JWT) or a master key (API key)?
+#  He checks BOTH — X-API-Key header first, then Authorization Bearer."
+
+import jwt as pyjwt
+from fastapi import Header, Request
+
+security_bearer = HTTPBearer(auto_error=False)  # Don't auto-reject
+
+
+async def jwt_or_api_key(
+    request: Request,
+    x_api_key: str = Header(default=None),
+    credentials: HTTPAuthorizationCredentials = Security(security_bearer),
+):
+    settings = get_settings()
+    manager = getattr(request.app.state, "api_key_manager", None)
+
+    # PATH 1: Try X-API-Key header
+    if x_api_key:
+        token = x_api_key.strip()
+        if token == settings.api_key.strip():      # Static key match
+            return "api_key_user"
+        if manager and token.startswith("mr_"):     # Managed key (mr_ prefix)
+            user_id = manager.verify_key(token)
+            if user_id:
+                manager.log_usage(token, endpoint=request.url.path, success=True)
+                return user_id
+            manager.log_usage(token, endpoint=request.url.path, success=False)
+
+    # PATH 2: Try Authorization Bearer header
+    if credentials and credentials.scheme.lower() == "bearer":
+        token = credentials.credentials.strip()
+        if token == settings.api_key.strip():       # Static key as Bearer
+            return "api_key_user"
+        if manager and token.startswith("mr_"):     # Managed key as Bearer
+            user_id = manager.verify_key(token)
+            if user_id:
+                manager.log_usage(token, endpoint=request.url.path, success=True)
+                return user_id
+            manager.log_usage(token, endpoint=request.url.path, success=False)
+        # JWT decode attempt
+        try:
+            payload = pyjwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            username = payload.get("sub")
+            if username:
+                return username
+        except Exception:
+            pass
+
+    raise HTTPException(status_code=401, detail="Invalid token or not authenticated")
+
+
+# ═══════════════════════════════════════════════════════════════
+# GUARD 3 — security.py — The Master Key Registry (APIKeyManager)
+# ═══════════════════════════════════════════════════════════════
+# "This guard doesn't stand at the door — he sits in the back office.
+#  He CREATES master keys, VERIFIES them (SHA-256 hash, never plain text),
+#  REVOKES compromised ones, and keeps an audit log of every use."
+
+import secrets
+import hashlib
+
+
+class APIKeyManager:
+    """Manage API keys with rotation and audit logging."""
+
+    def __init__(self, db):
+        self.db = db
+        self._ensure_schema()  # Create tables if they don't exist
+
+    def create_key(self, user_id: str, expires_days: int = 90) -> str:
+        """Mint a new master key. Store only the HASH — return key once."""
+        key = f"mr_{secrets.token_urlsafe(32)}"         # mr_ prefix = managed key
+        key_hash = hashlib.sha256(key.encode()).hexdigest()
+        now = datetime.utcnow()
+        expires = now + timedelta(days=expires_days)
+        with self.db.session() as conn:
+            conn.execute(
+                "INSERT INTO api_keys (key_hash, user_id, created_at, expires_at) "
+                "VALUES (?, ?, ?, ?)",
+                (key_hash, user_id, now.isoformat(), expires.isoformat()),
+            )
+        return key  # Returned ONCE. Never stored in plain text again.
+
+    def verify_key(self, key: str):
+        """Hash the incoming key, look up the hash. Check expiry + active."""
+        key_hash = hashlib.sha256(key.encode()).hexdigest()
+        with self.db.session() as conn:
+            row = conn.execute(
+                "SELECT user_id, expires_at, is_active FROM api_keys WHERE key_hash = ?",
+                (key_hash,),
+            ).fetchone()
+            if not row:
+                return None
+            if row["expires_at"]:
+                if datetime.utcnow() > datetime.fromisoformat(row["expires_at"]):
+                    return None  # Expired
+            if not row["is_active"]:
+                return None      # Revoked
+            conn.execute(
+                "UPDATE api_keys SET last_used_at = ? WHERE key_hash = ?",
+                (datetime.utcnow().isoformat(), key_hash),
+            )
+            return row["user_id"]
+
+    def revoke_key(self, key_id: str) -> bool:
+        """Instant kill switch — set is_active = 0."""
+        with self.db.session() as conn:
+            row = conn.execute(
+                "SELECT key_hash FROM api_keys WHERE key_hash = ? OR key_hash LIKE ?",
+                (key_id, f"{key_id}%"),
+            ).fetchone()
+            if not row:
+                return False
+            conn.execute(
+                "UPDATE api_keys SET is_active = 0 WHERE key_hash = ?",
+                (row["key_hash"],),
+            )
+            return True
+
+    def log_usage(self, key: str, endpoint: str, success: bool):
+        """Audit trail — every key use is recorded."""
+        key_hash = hashlib.sha256(key.encode()).hexdigest()
+        with self.db.session() as conn:
+            conn.execute(
+                "INSERT INTO api_key_usage (key_hash, endpoint, timestamp, success) "
+                "VALUES (?, ?, ?, ?)",
+                (key_hash, endpoint, datetime.utcnow().isoformat(), int(success)),
+            )
+
+
+# ═══════════════════════════════════════════════════════════════
+# SELF-TEST — Can you answer these from memory?
+#
+# Q: "What happens if SECRET_KEY is missing or too short?"
+# A: "The app refuses to start. ValueError at import time.
+#     Three checks: exists? not default? at least 32 chars?"
+#
+# Q: "How does jwt_or_api_key decide which auth method to use?"
+# A: "It tries X-API-Key header first, then Authorization Bearer.
+#     For each: static key match? managed key (mr_ prefix)? JWT decode?
+#     If ALL fail, 401."
+#
+# Q: "Why does APIKeyManager store hashes instead of plain keys?"
+# A: "SHA-256 one-way hash. If the database leaks, attackers get
+#     hashes — useless without the original key. The plain key is
+#     returned exactly ONCE at creation, never stored."
+#
+# Q: "How does revoke_key work?"
+# A: "Sets is_active = 0 in the database. verify_key checks this
+#     flag — revoked keys are rejected instantly, no restart needed."
+# ═══════════════════════════════════════════════════════════════
+`
+,
+  monitoring: `# =============================================================================
+# THE WATCHTOWER — Logging + Prometheus Metrics
+# =============================================================================
+# From: app/cctv/logging_utils.py + app/cctv/monitoring.py
+#
+# THE CONCEPT:
+# "The diary records what happened (logging).
+#  The tally board records how often and how fast (metrics).
+#  Together they answer: what went wrong AND how is the hotel performing."
+#
+# Two separate systems, two different questions:
+#   Diary (logging)  -> "What exactly happened at 3:47 AM?"
+#   Tally board (metrics) -> "How many guests per hour? Average wait time?"
+# =============================================================================
+
+# ══════════════════════════════════════════════════════════════
+# PART 1: THE DIARY — logging_utils.py
+# ══════════════════════════════════════════════════════════════
+
+# ── STEP 1: CUSTOM EXCEPTION HIERARCHY ──
+# "Every type of problem gets its own label, so the diary
+#  can record exactly what kind of thing went wrong."
+
+class MonsterResortError(Exception):
+    """Base exception for Monster Resort — all custom errors inherit from this."""
+    pass
+
+class DatabaseError(MonsterResortError):
+    """Database operation failed — the filing cabinet is jammed."""
+    pass
+
+class AIServiceError(MonsterResortError):
+    """AI service (OpenAI/ChromaDB) failed — the voice upstairs went silent."""
+    pass
+
+class ValidationError(MonsterResortError):
+    """Input validation failed — the bouncer rejected someone."""
+    pass
+
+# WHY a hierarchy?
+# try:
+#     do_something()
+# except MonsterResortError:   <-- catches ALL resort errors
+#     ...
+# except DatabaseError:        <-- catches ONLY database errors
+#     ...
+
+# ── STEP 2: THE JSON DIARY WRITER ──
+# "Human-readable logs are nice for the console.
+#  But JSON logs are parseable by machines — Datadog, ELK, CloudWatch."
+
+import logging, json, sys
+from datetime import datetime
+from logging.handlers import RotatingFileHandler
+
+class JSONFormatter(logging.Formatter):
+    """Format every log entry as a JSON object."""
+    def format(self, record):
+        log_obj = {
+            "timestamp": datetime.utcnow().isoformat(),
+            "level": record.levelname,
+            "logger": record.name,
+            "message": record.getMessage(),
+            "module": record.module,
+            "function": record.funcName,
+            "line": record.lineno,
+        }
+        if record.exc_info:
+            log_obj["exception"] = self.formatException(record.exc_info)
+        # Extra fields (added via logger.info("msg", extra={"user_id": "abc"}))
+        if hasattr(record, "user_id"):
+            log_obj["user_id"] = record.user_id
+        if hasattr(record, "session_id"):
+            log_obj["session_id"] = record.session_id
+        return json.dumps(log_obj)
+
+# ── STEP 3: SETUP — THREE HANDLERS ──
+# "Three notebooks: one on the desk (console), one in the
+#  filing cabinet (all logs), one in the red binder (errors only)."
+
+def setup_logging(log_level="INFO", log_file="monster_resort.log"):
+    logger = logging.getLogger("monster_resort")
+    logger.setLevel(log_level)
+    logger.handlers.clear()
+
+    # 1. Console handler — human-readable
+    console = logging.StreamHandler(sys.stdout)
+    console.setLevel(log_level)
+    console.setFormatter(logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    ))
+    logger.addHandler(console)
+
+    # 2. File handler — JSON, rotates at 10 MB, keeps 5 backups
+    file_h = RotatingFileHandler(
+        log_file, maxBytes=10 * 1024 * 1024, backupCount=5
+    )
+    file_h.setLevel(log_level)
+    file_h.setFormatter(JSONFormatter())
+    logger.addHandler(file_h)
+
+    # 3. Error-only file — same JSON format, only ERROR and above
+    err_h = RotatingFileHandler(
+        "monster_resort_errors.log", maxBytes=10 * 1024 * 1024, backupCount=5
+    )
+    err_h.setLevel(logging.ERROR)
+    err_h.setFormatter(JSONFormatter())
+    logger.addHandler(err_h)
+
+    return logger
+
+# Module-level singleton — import from anywhere
+logger = setup_logging()
+
+
+# ══════════════════════════════════════════════════════════════
+# PART 2: THE TALLY BOARD — monitoring.py
+# ══════════════════════════════════════════════════════════════
+
+import time, functools
+from fastapi import FastAPI, Request, Response
+from prometheus_client import (
+    CONTENT_TYPE_LATEST, Counter, Histogram, Gauge, generate_latest,
+)
+
+# ── STEP 4: DECLARE THE COUNTERS & HISTOGRAMS ──
+# "Each tally board tracks one thing."
+
+REQUEST_COUNT = Counter(
+    "mrc_http_requests_total", "Total HTTP requests",
+    ["method", "path", "status"]         # label dimensions
+)
+REQUEST_LATENCY = Histogram(
+    "mrc_http_request_latency_seconds", "Request latency",
+    ["path"]
+)
+ERROR_COUNT   = Counter("mrc_errors_total", "Total errors", ["error_type"])
+BOOKING_COUNT = Counter("mrc_bookings_total", "Total bookings", ["hotel"])
+AI_TOKEN_USAGE = Counter("mrc_ai_tokens_total", "AI tokens used", ["model"])
+ACTIVE_SESSIONS = Gauge("mrc_active_sessions", "Active sessions")
+
+# ── STEP 5: THE RECEPTIONIST — metrics middleware ──
+# "Every guest walks past the front desk. The receptionist
+#  starts a stopwatch, notes the room, and logs the visit."
+
+def install_metrics(app: FastAPI) -> None:
+    @app.middleware("http")
+    async def metrics_middleware(request: Request, call_next):
+        start = time.perf_counter()
+        try:
+            response: Response = await call_next(request)
+        except Exception as e:
+            logger.error(f"Metrics middleware error: {e}")
+            raise
+        elapsed = time.perf_counter() - start
+        path = request.url.path
+        REQUEST_COUNT.labels(request.method, path, str(response.status_code)).inc()
+        REQUEST_LATENCY.labels(path).observe(elapsed)
+        return response
+
+    # ── STEP 6: THE DASHBOARD — /metrics endpoint ──
+    # "Anyone (Prometheus, Grafana) can peek at the tally board."
+    @app.get("/metrics")
+    def metrics():
+        return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
+
+# ── STEP 7: DECORATOR FOR ANY FUNCTION ──
+# "Wrap any function to auto-track call count, latency, and errors."
+
+def track_metrics(endpoint_name):
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            REQUEST_COUNT.labels(method="function", path=endpoint_name, status="call").inc()
+            start = time.perf_counter()
+            try:
+                return func(*args, **kwargs)
+            except Exception as e:
+                ERROR_COUNT.labels(error_type=type(e).__name__).inc()
+                raise
+            finally:
+                REQUEST_LATENCY.labels(endpoint_name).observe(
+                    time.perf_counter() - start
+                )
+        return wrapper
+    return decorator
+
+# Helper functions for specific events
+def record_booking(hotel_name):
+    BOOKING_COUNT.labels(hotel=hotel_name).inc()
+
+def record_ai_tokens(model, tokens):
+    AI_TOKEN_USAGE.labels(model=model).inc(tokens)
+
+# ═══════════════════════════════════════════════════════════════
+# SELF-TEST — Can you answer these from memory?
+#
+# Q: "What are the three log handlers and what format does each use?"
+# A: "Console (human-readable), file (JSON, rotates at 10MB),
+#     error file (JSON, ERROR level only). All share the same
+#     logger instance 'monster_resort'."
+#
+# Q: "What is the exception hierarchy and why does it matter?"
+# A: "MonsterResortError is the base. DatabaseError, AIServiceError,
+#     and ValidationError inherit from it. You can catch all resort
+#     errors with one except clause, or be specific per type."
+#
+# Q: "What does install_metrics() do to the FastAPI app?"
+# A: "It adds an HTTP middleware that times every request and
+#     increments REQUEST_COUNT with method/path/status labels,
+#     plus a /metrics GET endpoint that dumps Prometheus text."
+#
+# Q: "Counter vs Histogram vs Gauge — what is each for?"
+# A: "Counter only goes up (total requests, total errors).
+#     Histogram records distributions (latency buckets).
+#     Gauge goes up AND down (active sessions right now)."
 # ═══════════════════════════════════════════════════════════════
 `
 };
@@ -12436,7 +13076,10 @@ const CODE_TAB_KEYS = {
   'caching': 'redis_cache',
   'structout': 'structured_output',
   'inputval': 'validators',
-  'finetune': 'fine_tuning'
+  'finetune': 'fine_tuning',
+  'config': 'config',
+  'auth': 'auth_security',
+  'monitoring': 'monitoring'
 };
 
 function initNotesSystem() {
