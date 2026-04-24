@@ -60,7 +60,13 @@ class LLMProvider(ABC):
         messages: List[LLMMessage],
         tools: Optional[List[dict]] = None,
         model: Optional[str] = None,
+        response_format: Optional[Dict[str, str]] = None,
     ) -> LLMResponse: ...
+
+    @property
+    def supports_response_format(self) -> bool:
+        """Whether this provider supports native response_format parameter."""
+        return False
 
     @abstractmethod
     def translate_tool_schemas(self, openai_schemas: List[dict]) -> List[dict]:
@@ -236,6 +242,7 @@ class AnthropicProvider(LLMProvider):
         messages: List[LLMMessage],
         tools: Optional[List[dict]] = None,
         model: Optional[str] = None,
+        response_format: Optional[Dict[str, str]] = None,
     ) -> LLMResponse:
         system_text, anthropic_msgs = self._to_anthropic_messages(messages)
 
@@ -245,7 +252,14 @@ class AnthropicProvider(LLMProvider):
             "messages": anthropic_msgs,
         }
         if system_text:
-            kwargs["system"] = system_text
+            # Prompt caching: mark system prompt as cacheable
+            kwargs["system"] = [
+                {
+                    "type": "text",
+                    "text": system_text,
+                    "cache_control": {"type": "ephemeral"},
+                }
+            ]
         if tools:
             kwargs["tools"] = self.translate_tool_schemas(tools)
 
@@ -272,6 +286,11 @@ class AnthropicProvider(LLMProvider):
                 "completion_tokens": resp.usage.output_tokens,
                 "total_tokens": resp.usage.input_tokens + resp.usage.output_tokens,
             }
+            cache_creation = getattr(resp.usage, "cache_creation_input_tokens", 0)
+            cache_read = getattr(resp.usage, "cache_read_input_tokens", 0)
+            if cache_creation or cache_read:
+                usage["cache_creation_tokens"] = cache_creation
+                usage["cache_read_tokens"] = cache_read
 
         return LLMResponse(
             content=content_text,
