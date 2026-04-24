@@ -61,7 +61,8 @@ class LLMProvider(ABC):
         tools: Optional[List[dict]] = None,
         model: Optional[str] = None,
         response_format: Optional[Dict[str, str]] = None,
-    ) -> LLMResponse: ...
+    ) -> LLMResponse:
+        ...
 
     @property
     def supports_response_format(self) -> bool:
@@ -75,7 +76,8 @@ class LLMProvider(ABC):
 
     @property
     @abstractmethod
-    def name(self) -> str: ...
+    def name(self) -> str:
+        ...
 
 
 # ---------------------------------------------------------------------------

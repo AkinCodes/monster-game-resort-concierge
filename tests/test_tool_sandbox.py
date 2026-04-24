@@ -2,14 +2,12 @@
 
 import asyncio
 import pytest
-from unittest.mock import AsyncMock
 
 from app.core.tools import (
     ToolRegistry,
     Tool,
     TOOL_TIMEOUT,
     RATE_LIMIT_MAX,
-    RATE_LIMIT_WINDOW,
     _tool_call_timestamps,
 )
 

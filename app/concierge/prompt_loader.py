@@ -51,7 +51,9 @@ def load_prompt(name: str, **kwargs: str) -> str:
     node = data
     for key in parts[1:]:
         if not isinstance(node, dict) or key not in node:
-            raise KeyError(f"Prompt key '{key}' not found in {file_name}.yaml")
+            raise KeyError(
+                f"Prompt key '{key}' not found in {file_name}.yaml"  # noqa: E713
+            )
         node = node[key]
 
     # The final node should either be a string or a dict with a "prompt" key

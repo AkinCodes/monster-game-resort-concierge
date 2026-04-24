@@ -204,11 +204,14 @@ class TestLLMTracer:
         class ToggleProvider(LLMProvider):
             def __init__(self):
                 self._call_count = 0
+
             @property
             def name(self):
                 return "toggle"
+
             def translate_tool_schemas(self, s):
                 return s
+
             async def chat(self, messages, tools=None, model=None):
                 self._call_count += 1
                 return resp1 if self._call_count == 1 else resp2
