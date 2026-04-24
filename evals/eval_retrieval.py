@@ -32,8 +32,10 @@ from __future__ import annotations
 
 import argparse
 import json
+import subprocess
 import sys
 from dataclasses import asdict, dataclass, field
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -332,6 +334,35 @@ def print_report(report: RetrievalReport) -> None:
     print()
 
 
+def _get_git_sha() -> str:
+    """Return short git commit SHA, or 'unknown' if not in a repo."""
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            capture_output=True, text=True,
+        )
+        return result.stdout.strip() or "unknown"
+    except Exception:
+        return "unknown"
+
+
+_METRIC_KEYS = [
+    "mrr", "recall_at_3", "recall_at_5", "recall_at_10",
+    "precision_at_3", "precision_at_5", "precision_at_10",
+]
+
+# Thresholds for pass/fail
+_PASS_THRESHOLDS = {"mrr": 0.5, "recall_at_5": 0.5}
+
+
+def _build_metrics_dict(report: RetrievalReport) -> dict:
+    return {k: getattr(report, k) for k in _METRIC_KEYS}
+
+
+def _passes(metrics: dict) -> bool:
+    return all(metrics.get(k, 0) >= v for k, v in _PASS_THRESHOLDS.items())
+
+
 def save_report(report: RetrievalReport, output_path: Path) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     data = {
@@ -348,6 +379,57 @@ def save_report(report: RetrievalReport, output_path: Path) -> None:
     with open(output_path, "w") as f:
         json.dump(data, f, indent=2)
     print(f"Report saved to {output_path}")
+
+    # Append to eval history (JSONL)
+    metrics = _build_metrics_dict(report)
+    history_path = output_path.parent / "eval_history.jsonl"
+    entry = {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "git_sha": _get_git_sha(),
+        **metrics,
+        "num_queries": report.num_queries,
+        "pass": _passes(metrics),
+    }
+    with open(history_path, "a") as f:
+        f.write(json.dumps(entry) + "\n")
+    print(f"Run appended to {history_path}")
+
+
+def compare_last(history_path: Path) -> None:
+    """Load last two JSONL entries and print a delta."""
+    if not history_path.exists():
+        print("No eval history found.")
+        return
+
+    lines = history_path.read_text().strip().splitlines()
+    if len(lines) < 2:
+        print("Need at least 2 runs in history to compare.")
+        return
+
+    prev = json.loads(lines[-2])
+    curr = json.loads(lines[-1])
+
+    print("\n=== Eval Comparison (last two runs) ===")
+    print(f"  Previous: {prev.get('git_sha', '?')}  @ {prev.get('timestamp', '?')}")
+    print(f"  Current:  {curr.get('git_sha', '?')}  @ {curr.get('timestamp', '?')}")
+    print()
+
+    for key in _METRIC_KEYS:
+        old_val = prev.get(key, 0.0)
+        new_val = curr.get(key, 0.0)
+        delta = new_val - old_val
+        if abs(delta) < 1e-6:
+            status = "unchanged"
+        elif delta > 0:
+            status = f"improved  (+{delta:.4f})"
+        else:
+            status = f"degraded  ({delta:.4f})"
+        print(f"  {key:<16} {old_val:.4f} -> {new_val:.4f}  {status}")
+
+    prev_pass = prev.get("pass", False)
+    curr_pass = curr.get("pass", False)
+    print(f"\n  Pass status: {'PASS' if prev_pass else 'FAIL'} -> {'PASS' if curr_pass else 'FAIL'}")
+    print()
 
 
 # ---------------------------------------------------------------------------
@@ -383,7 +465,19 @@ def main() -> None:
         default=10,
         help="Maximum K for retrieval (default: 10)",
     )
+    parser.add_argument(
+        "--compare-last",
+        action="store_true",
+        default=False,
+        help="Print metric deltas between the two most recent eval runs",
+    )
     args = parser.parse_args()
+
+    history_path = args.output.parent / "eval_history.jsonl"
+
+    if args.compare_last:
+        compare_last(history_path)
+        return
 
     retriever: Retriever
     if args.live:
