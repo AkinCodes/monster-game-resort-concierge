@@ -1,4 +1,6 @@
 from __future__ import annotations
+import asyncio
+from collections import defaultdict
 from dataclasses import dataclass
 from typing import Any, Callable, Dict
 from time import time
@@ -10,6 +12,13 @@ from ..monitoring.logging_utils import logger, MonsterResortError
 from ..monitoring.metrics import Counter
 
 logger.info("tool_module_initialized")
+
+TOOL_TIMEOUT = 10.0  # seconds — max wall-clock time per tool call
+RATE_LIMIT_MAX = 50   # max calls per tool in the rate window
+RATE_LIMIT_WINDOW = 60  # seconds
+
+# Per-tool rate tracking: tool_name -> list of timestamps
+_tool_call_timestamps: dict[str, list[float]] = defaultdict(list)
 
 # Defense 1: Authoritative hotel registry — single source of truth
 VALID_HOTELS = {
@@ -142,6 +151,25 @@ class ToolRegistry:
             )
             raise MonsterResortError(f"Tool {name} not found")
 
+        # --- Rate-limit check ---
+        now = time()
+        timestamps = _tool_call_timestamps[name]
+        # Prune entries older than the window
+        cutoff = now - RATE_LIMIT_WINDOW
+        _tool_call_timestamps[name] = [t for t in timestamps if t > cutoff]
+        if len(_tool_call_timestamps[name]) >= RATE_LIMIT_MAX:
+            logger.warning(
+                "tool_rate_limited",
+                extra={"tool": name, "request_id": request_id},
+            )
+            return {
+                "ok": False,
+                "error": f"Rate limit exceeded for tool '{name}' "
+                         f"({RATE_LIMIT_MAX} calls per {RATE_LIMIT_WINDOW}s)",
+                "request_id": request_id,
+            }
+        _tool_call_timestamps[name].append(now)
+
         clean_kwargs = {k.rstrip(":"): v for k, v in kwargs.items()}
 
         start = time()
@@ -149,7 +177,10 @@ class ToolRegistry:
         try:
             TOOL_CALL_COUNT.labels(tool=name).inc()
 
-            result = await self.tools[name].fn(**clean_kwargs, request_id=request_id)
+            result = await asyncio.wait_for(
+                self.tools[name].fn(**clean_kwargs, request_id=request_id),
+                timeout=TOOL_TIMEOUT,
+            )
 
             elapsed_ms = round((time() - start) * 1000, 2)
 
@@ -164,6 +195,23 @@ class ToolRegistry:
             )
 
             return result
+
+        except asyncio.TimeoutError:
+            elapsed_ms = round((time() - start) * 1000, 2)
+            logger.warning(
+                "tool_execution_timed_out",
+                extra={
+                    "tool": name,
+                    "request_id": request_id,
+                    "elapsed_ms": elapsed_ms,
+                    "timeout_s": TOOL_TIMEOUT,
+                },
+            )
+            return {
+                "ok": False,
+                "error": f"Tool execution timed out after {TOOL_TIMEOUT:.0f}s",
+                "request_id": request_id,
+            }
 
         except Exception as e:
             elapsed_ms = round((time() - start) * 1000, 2)

@@ -214,6 +214,8 @@ scripts/
 
 ## Benchmarks & Metrics
 
+See [EVALUATION.md](EVALUATION.md) for full ablation studies, failure analysis, and reproduction instructions.
+
 ### Retrieval Quality
 
 8-query evaluation over the resort knowledge base (`reports/retrieval_metrics.json`):

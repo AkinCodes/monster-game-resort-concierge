@@ -14,6 +14,7 @@ backups/
 generated_pdfs/
 .rag_store/
 .rag_store_test/
+.ablation_rag_store/
 .uv-cache/
 mlruns/
 monster_resort.log
