@@ -83,6 +83,89 @@ v                 v            v
 
 ---
 
+## Benchmarks & Metrics
+
+### Retrieval Quality
+
+8-query evaluation over the resort knowledge base (`reports/retrieval_metrics.json`):
+
+| Metric | @3 | @5 | @10 |
+|--------|-----|-----|------|
+| Recall | 0.469 | 0.625 | 1.000 |
+| Precision | 0.208 | 0.175 | 0.125 |
+| **MRR** | **0.362** | | |
+
+### Eval Harness
+
+20-case evaluation across knowledge retrieval, tool use, and chitchat (`reports/eval_report.json`):
+
+| Category | Cases | Pass Rate |
+|----------|-------|-----------|
+| Knowledge Retrieval | 11 | 54.5% |
+| Tool Use | 6 | 0.0% |
+| Chitchat | 3 | 66.7% |
+| **Overall** | **20** | **40.0%** |
+
+| Aggregate Metric | Value |
+|------------------|-------|
+| Avg hallucination score | 0.60 |
+| Avg retrieval relevance | 0.379 |
+| Tool selection accuracy | 80.0% |
+
+### Hallucination Detection
+
+Weighted confidence score on every response (`app/validation/hallucination.py`):
+
+| Signal | Weight | Method |
+|--------|--------|--------|
+| Semantic similarity | 50% | Cosine similarity via `all-MiniLM-L6-v2` |
+| Token overlap | 30% | Token-level intersection ratio |
+| Source attribution | 20% | Sentence-level grounding check (>= 30% overlap) |
+
+| Confidence Level | Threshold |
+|------------------|-----------|
+| HIGH | >= 0.7 |
+| MEDIUM | >= 0.4 |
+| LOW | < 0.4 |
+
+### Conversation Memory
+
+Results from context management experiments (`scripts/test_context_management.py`):
+
+| Experiment | Finding |
+|------------|---------|
+| With vs without history | 188 vs 95 tokens; without history the model loses name, room, and prior context |
+| Token scaling (0 to 20 turns) | 12.5x prompt token increase |
+| Auto-summarisation trigger | Fires at 12 messages, compresses older messages to a rolling summary |
+| Window size (last-2 vs all-10) | Last-2 loses dietary restrictions from message 1; all-10 retains everything |
+
+### LLM Cost Tracking
+
+Per-request cost estimates from `app/core/cost_tracker.py` (prices per 1M tokens, USD):
+
+| Model | Input | Output |
+|-------|-------|--------|
+| gpt-4o-mini | $0.15 | $0.60 |
+| gpt-4o | $2.50 | $10.00 |
+| gpt-4-turbo | $10.00 | $30.00 |
+| gpt-3.5-turbo | $0.50 | $1.50 |
+| claude-sonnet-4 | $3.00 | $15.00 |
+| claude-3.5-sonnet | $3.00 | $15.00 |
+| claude-3-haiku | $0.25 | $1.25 |
+| llama3 (local) | $0.00 | $0.00 |
+
+### Infrastructure
+
+| Component | Detail |
+|-----------|--------|
+| Docker services | 6 (API, PostgreSQL, Redis, Prometheus, Grafana, MLflow) |
+| Test count | 189 tests across 18 files |
+| Orchestrator | Two-agent plan-then-execute (Planner classifies intent into knowledge / tool / clarify / chitchat, Executor carries out the plan) |
+| LLM fallback chain | OpenAI -> Anthropic -> Ollama |
+| Deployment | ECS Fargate (1 vCPU, 2 GB RAM) |
+
+---
+
 ## Quick Start
 
 ### Requirements
