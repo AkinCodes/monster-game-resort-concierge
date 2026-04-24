@@ -51,7 +51,8 @@ class LLMProvider(ABC):
         tools: Optional[List[dict]] = None,
         model: Optional[str] = None,
         response_format: Optional[Dict[str, str]] = None,
-    ) -> LLMResponse: ...
+    ) -> LLMResponse:
+        ...
 
     @abstractmethod
     def translate_tool_schemas(self, openai_schemas: List[dict]) -> List[dict]:
@@ -65,7 +66,8 @@ class LLMProvider(ABC):
 
     @property
     @abstractmethod
-    def name(self) -> str: ...
+    def name(self) -> str:
+        ...
 
 
 class OpenAIProvider(LLMProvider):

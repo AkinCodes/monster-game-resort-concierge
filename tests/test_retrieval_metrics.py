@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import sys
 from pathlib import Path
 
@@ -11,9 +10,8 @@ import pytest
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from evals.eval_retrieval import (
+from evals.eval_retrieval import (  # noqa: E402
     MockRetriever,
-    GroundTruthCase,
     evaluate_retrieval,
     precision_at_k,
     recall_at_k,

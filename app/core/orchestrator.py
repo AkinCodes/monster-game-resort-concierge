@@ -64,7 +64,6 @@ class ExecutionResult:
     confidence: object = None
 
 
-
 # Prompts are loaded from YAML files in the prompts/ directory.
 # See: prompts/planner.yaml, prompts/executor.yaml
 

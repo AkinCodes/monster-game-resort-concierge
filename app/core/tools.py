@@ -164,8 +164,10 @@ class ToolRegistry:
             )
             return {
                 "ok": False,
-                "error": f"Rate limit exceeded for tool '{name}' "
-                         f"({RATE_LIMIT_MAX} calls per {RATE_LIMIT_WINDOW}s)",
+                "error": (
+                    f"Rate limit exceeded for tool '{name}' "
+                    f"({RATE_LIMIT_MAX} calls per {RATE_LIMIT_WINDOW}s)"
+                ),
                 "request_id": request_id,
             }
         _tool_call_timestamps[name].append(now)
@@ -209,7 +211,7 @@ class ToolRegistry:
             )
             return {
                 "ok": False,
-                "error": f"Tool execution timed out after {TOOL_TIMEOUT:.0f}s",
+                "error": f"Tool execution timed out after {TOOL_TIMEOUT:.0f}s",  # noqa: E231
                 "request_id": request_id,
             }
 

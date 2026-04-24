@@ -8,16 +8,13 @@ Verifies the fallback chain:
 """
 
 import json
-from unittest.mock import AsyncMock, Mock, PropertyMock
+from unittest.mock import AsyncMock, Mock
 
 import pytest
 
 from app.core.llm_providers import (
-    AnthropicProvider,
-    LLMMessage,
     LLMProvider,
     LLMResponse,
-    ModelRouter,
     OllamaProvider,
     OpenAIProvider,
 )
