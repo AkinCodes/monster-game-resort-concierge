@@ -23,8 +23,10 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Optional
 
+from .cost_tracker import CostAccumulator
 from .llm_providers import LLMMessage, LLMProvider, LLMResponse
 from .memory import MemoryStore
+from .prompt_loader import load_prompt
 from .structured_output import StructuredOutputParser
 from .tools import ToolRegistry
 
@@ -62,73 +64,9 @@ class ExecutionResult:
     confidence: object = None
 
 
-PLANNER_SYSTEM_PROMPT = """\
-You are the Monster Resort Concierge planner. Your job is to classify the \
-user's intent and decide what action to take. You must respond with ONLY a \
-JSON object, no other text.
 
-Available tools: {tool_list}
-
-Intent categories:
-- "knowledge" -- the user is asking about resort information, amenities, \
-policies, or anything that can be answered from the knowledge base.
-- "tool" -- the user wants to perform an action (book a room, look up a \
-booking, etc.). You must specify tool_name and tool_args.
-- "clarify" -- the user's request is ambiguous or missing required \
-information. Specify what you need in the reasoning field.
-- "chitchat" -- greeting, small talk, or anything that does not need tools \
-or knowledge search.
-
-Respond with this exact JSON structure:
-{{"intent": "<knowledge|tool|clarify|chitchat>", "tool_name": null, \
-"tool_args": {{}}, "search_query": null, "reasoning": "<brief explanation>"}}\
-"""
-
-EXECUTOR_KNOWLEDGE_PROMPT = """\
-You are the Monster Resort Concierge. Answer the guest's question using \
-ONLY the context provided below. If the context does not contain the answer, \
-say so honestly -- do not invent information.
-
-Context from resort knowledge base:
-{context}
-
-Conversation history:
-{history}
-
-Guest's question: {question}\
-"""
-
-EXECUTOR_CLARIFY_PROMPT = """\
-You are the Monster Resort Concierge. The guest's request needs \
-clarification. Ask a friendly, specific follow-up question.
-
-What needs clarification: {reasoning}
-
-Conversation history:
-{history}
-
-Guest's message: {question}\
-"""
-
-EXECUTOR_CHITCHAT_PROMPT = """\
-You are the Monster Resort Concierge at a luxury monster-themed resort. \
-Respond warmly and in character. Keep it brief and helpful.
-
-Conversation history:
-{history}
-
-Guest: {question}\
-"""
-
-EXECUTOR_TOOL_RESULT_PROMPT = """\
-You are the Monster Resort Concierge. Summarize the following tool result \
-for the guest in a friendly, helpful way.
-
-Tool: {tool_name}
-Result: {tool_result}
-
-Guest's original request: {question}\
-"""
+# Prompts are loaded from YAML files in the prompts/ directory.
+# See: prompts/planner.yaml, prompts/executor.yaml
 
 
 class ConciergeOrchestrator:
@@ -147,6 +85,7 @@ class ConciergeOrchestrator:
         self.memory = memory_store
         self._total_planner_tokens = 0
         self._total_executor_tokens = 0
+        self._costs = CostAccumulator()
 
     async def plan(self, user_message: str, session_id: str) -> Plan:
         """Agent 1: Analyze the user's intent and create an execution plan.
@@ -165,7 +104,7 @@ class ConciergeOrchestrator:
         history = self.memory.get_messages(session_id, limit=5)
         history_text = self._format_history(history)
 
-        system_prompt = PLANNER_SYSTEM_PROMPT.format(tool_list=tool_list)
+        system_prompt = load_prompt("planner", tool_list=tool_list)
 
         user_content = user_message
         if history_text:
@@ -179,8 +118,15 @@ class ConciergeOrchestrator:
         ]
 
         try:
-            response: LLMResponse = await self.llm.chat(messages)
-            self._track_tokens("planner", response.usage)
+            # Request native structured JSON output when the provider supports it
+            response_format = None
+            if getattr(self.llm, "supports_response_format", False):
+                response_format = {"type": "json_object"}
+
+            response: LLMResponse = await self.llm.chat(
+                messages, response_format=response_format
+            )
+            self._track_tokens("planner", response.usage, response)
 
             plan = self._parse_plan(response.content)
 
@@ -211,16 +157,32 @@ class ConciergeOrchestrator:
     def _parse_plan(self, raw: str) -> Plan:
         """Parse the planner's JSON response into a Plan object.
 
-        Uses StructuredOutputParser._extract_json() for robust JSON extraction
-        that handles markdown fences, surrounding prose, and other LLM quirks.
+        Fallback chain:
+        1. Direct json.loads() -- works when native structured output is enabled
+        2. StructuredOutputParser._extract_json() -- handles markdown fences,
+           surrounding prose, and other LLM quirks via raw_decode()
+        3. Keyword heuristic -- last resort when no valid JSON is found
         """
+        data = None
+
+        # 1) Try direct parse (native structured output produces clean JSON)
         try:
-            extracted = StructuredOutputParser._extract_json(raw)
-            data = json.loads(extracted)
-        except json.JSONDecodeError as exc:
+            data = json.loads(raw)
+        except (json.JSONDecodeError, TypeError):
+            pass
+
+        # 2) Fallback: extract JSON from messy LLM text
+        if data is None:
+            try:
+                extracted = StructuredOutputParser._extract_json(raw)
+                data = json.loads(extracted)
+            except json.JSONDecodeError:
+                data = None
+
+        if data is None:
             logger.warning(
                 "planner_json_parse_failed",
-                extra={"raw": raw[:200], "error": str(exc)},
+                extra={"raw": raw[:200]},
             )
             # Heuristic fallback: check for keywords in raw text
             lower = raw.lower()
@@ -316,7 +278,8 @@ class ConciergeOrchestrator:
         context = "\n---\n".join(context_parts) if context_parts else "(no results found)"
         history = self.memory.get_messages(session_id, limit=5)
 
-        prompt = EXECUTOR_KNOWLEDGE_PROMPT.format(
+        prompt = load_prompt(
+            "executor.knowledge",
             context=context,
             history=self._format_history(history),
             question=user_message,
@@ -328,7 +291,7 @@ class ConciergeOrchestrator:
                 LLMMessage(role="user", content=user_message),
             ]
         )
-        self._track_tokens("executor", response.usage)
+        self._track_tokens("executor", response.usage, response)
 
         return ExecutionResult(
             response=response.content,
@@ -369,7 +332,8 @@ class ConciergeOrchestrator:
         )
 
         # Generate a human-friendly summary of the tool result
-        prompt = EXECUTOR_TOOL_RESULT_PROMPT.format(
+        prompt = load_prompt(
+            "executor.tool_result",
             tool_name=plan.tool_name,
             tool_result=json.dumps(tool_result, default=str),
             question=user_message,
@@ -381,7 +345,7 @@ class ConciergeOrchestrator:
                 LLMMessage(role="user", content=user_message),
             ]
         )
-        self._track_tokens("executor", response.usage)
+        self._track_tokens("executor", response.usage, response)
 
         return ExecutionResult(
             response=response.content,
@@ -396,7 +360,8 @@ class ConciergeOrchestrator:
         """Generate a clarification question."""
         history = self.memory.get_messages(session_id, limit=5)
 
-        prompt = EXECUTOR_CLARIFY_PROMPT.format(
+        prompt = load_prompt(
+            "executor.clarify",
             reasoning=plan.reasoning,
             history=self._format_history(history),
             question=user_message,
@@ -408,7 +373,7 @@ class ConciergeOrchestrator:
                 LLMMessage(role="user", content=user_message),
             ]
         )
-        self._track_tokens("executor", response.usage)
+        self._track_tokens("executor", response.usage, response)
 
         return ExecutionResult(
             response=response.content,
@@ -422,7 +387,8 @@ class ConciergeOrchestrator:
         """Generate a direct conversational response."""
         history = self.memory.get_messages(session_id, limit=5)
 
-        prompt = EXECUTOR_CHITCHAT_PROMPT.format(
+        prompt = load_prompt(
+            "executor.chitchat",
             history=self._format_history(history),
             question=user_message,
         )
@@ -433,7 +399,7 @@ class ConciergeOrchestrator:
                 LLMMessage(role="user", content=user_message),
             ]
         )
-        self._track_tokens("executor", response.usage)
+        self._track_tokens("executor", response.usage, response)
 
         return ExecutionResult(
             response=response.content,
@@ -489,6 +455,7 @@ class ConciergeOrchestrator:
                 "total_ms": total_ms,
                 "planner_tokens_total": self._total_planner_tokens,
                 "executor_tokens_total": self._total_executor_tokens,
+                "estimated_cost_usd": self._costs.total_cost_usd,
             },
         )
 
@@ -505,18 +472,28 @@ class ConciergeOrchestrator:
             lines.append(f"{role}: {content}")
         return "\n".join(lines)
 
-    def _track_tokens(self, agent: str, usage: dict) -> None:
-        """Accumulate token counts for cost tracking."""
+    def _track_tokens(self, agent: str, usage: dict, response: LLMResponse | None = None) -> None:
+        """Accumulate token counts and estimated cost."""
         total = usage.get("total_tokens", 0)
         if agent == "planner":
             self._total_planner_tokens += total
         else:
             self._total_executor_tokens += total
 
+        # Record cost if we have model info
+        model = response.model if response else ""
+        if model:
+            cost = self._costs.record(model, usage)
+            logger.debug(
+                "cost_tracked",
+                extra={"agent": agent, "model": model, "cost_usd": cost},
+            )
+
     def get_token_stats(self) -> dict:
-        """Return cumulative token usage split by agent."""
+        """Return cumulative token usage and estimated cost."""
         return {
             "planner_tokens": self._total_planner_tokens,
             "executor_tokens": self._total_executor_tokens,
             "total_tokens": self._total_planner_tokens + self._total_executor_tokens,
+            "estimated_cost": self._costs.summary(),
         }

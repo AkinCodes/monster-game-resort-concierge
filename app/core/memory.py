@@ -85,11 +85,12 @@ class MemoryStore:
             summary = None
             if openai and openai_api_key:
                 try:
+                    from .prompt_loader import load_prompt
+
                     client = openai.OpenAI(api_key=openai_api_key)
-                    prompt = (
-                        "Summarize the following conversation for context retention. "
-                        "Be concise and capture key facts, requests, and names.\n\n"
-                        + "\n".join(lines)
+                    prompt = load_prompt(
+                        "summarization",
+                        conversation="\n".join(lines),
                     )
                     resp = client.chat.completions.create(
                         model=model,

@@ -50,12 +50,18 @@ class LLMProvider(ABC):
         messages: List[LLMMessage],
         tools: Optional[List[dict]] = None,
         model: Optional[str] = None,
+        response_format: Optional[Dict[str, str]] = None,
     ) -> LLMResponse: ...
 
     @abstractmethod
     def translate_tool_schemas(self, openai_schemas: List[dict]) -> List[dict]:
         """Convert OpenAI-format tool schemas to this provider's format."""
         ...
+
+    @property
+    def supports_response_format(self) -> bool:
+        """Whether this provider supports native response_format parameter."""
+        return False
 
     @property
     @abstractmethod
@@ -72,6 +78,10 @@ class OpenAIProvider(LLMProvider):
     @property
     def name(self) -> str:
         return "openai"
+
+    @property
+    def supports_response_format(self) -> bool:
+        return True
 
     def translate_tool_schemas(self, openai_schemas: List[dict]) -> List[dict]:
         return openai_schemas  # native format
@@ -99,6 +109,7 @@ class OpenAIProvider(LLMProvider):
         messages: List[LLMMessage],
         tools: Optional[List[dict]] = None,
         model: Optional[str] = None,
+        response_format: Optional[Dict[str, str]] = None,
     ) -> LLMResponse:
         kwargs: Dict[str, Any] = {
             "model": model or self._model,
@@ -107,6 +118,8 @@ class OpenAIProvider(LLMProvider):
         if tools:
             kwargs["tools"] = self.translate_tool_schemas(tools)
             kwargs["tool_choice"] = "auto"
+        if response_format:
+            kwargs["response_format"] = response_format
 
         resp = await self._client.chat.completions.create(**kwargs)
         msg = resp.choices[0].message
@@ -216,6 +229,7 @@ class AnthropicProvider(LLMProvider):
         messages: List[LLMMessage],
         tools: Optional[List[dict]] = None,
         model: Optional[str] = None,
+        response_format: Optional[Dict[str, str]] = None,
     ) -> LLMResponse:
         system_text, anthropic_msgs = self._to_anthropic_messages(messages)
 
@@ -225,9 +239,20 @@ class AnthropicProvider(LLMProvider):
             "messages": anthropic_msgs,
         }
         if system_text:
-            kwargs["system"] = system_text
+            # Prompt caching: mark the system prompt as cacheable so repeated
+            # calls with the same system prompt hit Anthropic's prompt cache,
+            # reducing latency and cost on multi-turn conversations.
+            kwargs["system"] = [
+                {
+                    "type": "text",
+                    "text": system_text,
+                    "cache_control": {"type": "ephemeral"},
+                }
+            ]
         if tools:
             kwargs["tools"] = self.translate_tool_schemas(tools)
+        # Anthropic does not support response_format; parameter is accepted
+        # for interface compatibility but ignored.
 
         resp = await self._client.messages.create(**kwargs)
 
@@ -252,6 +277,12 @@ class AnthropicProvider(LLMProvider):
                 "completion_tokens": resp.usage.output_tokens,
                 "total_tokens": resp.usage.input_tokens + resp.usage.output_tokens,
             }
+            # Track prompt cache metrics when available
+            cache_creation = getattr(resp.usage, "cache_creation_input_tokens", 0)
+            cache_read = getattr(resp.usage, "cache_read_input_tokens", 0)
+            if cache_creation or cache_read:
+                usage["cache_creation_tokens"] = cache_creation
+                usage["cache_read_tokens"] = cache_read
 
         return LLMResponse(
             content=content_text,
@@ -298,6 +329,7 @@ class OllamaProvider(LLMProvider):
         messages: List[LLMMessage],
         tools: Optional[List[dict]] = None,
         model: Optional[str] = None,
+        response_format: Optional[Dict[str, str]] = None,
     ) -> LLMResponse:
         payload: Dict[str, Any] = {
             "model": model or self._model,
@@ -306,6 +338,8 @@ class OllamaProvider(LLMProvider):
         }
         if tools:
             payload["tools"] = self.translate_tool_schemas(tools)
+        if response_format and response_format.get("type") == "json_object":
+            payload["format"] = "json"
 
         resp = await self._http.post(f"{self._base_url}/api/chat", json=payload)
         resp.raise_for_status()
@@ -346,13 +380,14 @@ class ModelRouter:
         messages: List[LLMMessage],
         tools: Optional[List[dict]] = None,
         model: Optional[str] = None,
+        response_format: Optional[Dict[str, str]] = None,
     ) -> LLMResponse:
         last_error: Optional[Exception] = None
 
         for provider in self.providers:
             try:
                 logger.info(f"Trying LLM provider: {provider.name}")
-                response = await provider.chat(messages, tools, model)
+                response = await provider.chat(messages, tools, model, response_format)
                 logger.info(f"LLM provider {provider.name} succeeded")
                 return response
             except Exception as e:

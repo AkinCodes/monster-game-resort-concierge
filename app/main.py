@@ -27,11 +27,13 @@ from .core.llm_providers import (  # noqa: E402
     AnthropicProvider,
     OllamaProvider,
 )
+from .core.observability import LLMTracer  # noqa: E402
 from .core.orchestrator import ConciergeOrchestrator  # noqa: E402
 from .validation.hallucination import HallucinationDetector  # noqa: E402
 from .monitoring.mlflow_tracking import MLflowTracker  # noqa: E402
 from .monitoring.logging_utils import setup_logging  # noqa: E402
 from .validation.validators import validate_message  # noqa: E402
+from .core.guardrails import InputGuard, OutputGuard  # noqa: E402
 
 # Initialize Logger
 logger = setup_logging()
@@ -131,8 +133,12 @@ def build_app() -> FastAPI:
             "tools": registry.get_openai_tool_schemas(),
         }
 
-    # Build multi-model router
-    router = _build_router(settings)
+    # Build multi-model router and wrap with observability tracer
+    raw_router = _build_router(settings)
+    tracer: LLMTracer | None = None
+    if raw_router is not None:
+        tracer = LLMTracer(raw_router)
+    router = tracer  # traced router used everywhere; None if no providers
 
     # Hallucination detector
     detector = HallucinationDetector(
@@ -157,12 +163,39 @@ def build_app() -> FastAPI:
             memory_store=memory,
         )
 
+    # Guardrails
+    input_guard = InputGuard()
+
     # --- AGENT LOGIC ---
 
     @profile
     async def _agent_reply(session_id: str, user_text: str) -> dict:
         try:
             text = validate_message(user_text)
+
+            # --- Input guardrails ---
+            injection_safe, injection_reason = input_guard.check_prompt_injection(text)
+            if not injection_safe:
+                logger.warning(f"input_guard_blocked: {injection_reason}")
+                return {
+                    "message": "I'm unable to process that request.",
+                    "tool_calls": [],
+                    "guardrail": "prompt_injection",
+                }
+
+            if not input_guard.check_topic_boundary(text):
+                logger.info("input_guard: off-topic request blocked")
+                return {
+                    "message": (
+                        "I am the Grand Chamberlain of the Monster Resort. "
+                        "I can only assist with resort and hospitality inquiries."
+                    ),
+                    "tool_calls": [],
+                    "guardrail": "off_topic",
+                }
+
+            text, pii_types = input_guard.check_pii(text)
+
             logger.debug(
                 "agent_reply received message",
                 extra={"session_id": session_id, "message_length": len(text)},
@@ -272,6 +305,16 @@ def build_app() -> FastAPI:
                 llm_resp2 = await router.chat(chat_history)
                 final_message = llm_resp2.content
 
+                # Output guardrails
+                output_guard = OutputGuard(input_pii_types=pii_types)
+                out_safe, out_reason = output_guard.check_response(final_message)
+                if not out_safe:
+                    logger.warning(f"output_guard_blocked: {out_reason}")
+                    final_message = (
+                        "I must beg your pardon — let me rephrase. "
+                        "How else may I assist you with your stay?"
+                    )
+
                 # Confidence scoring
                 confidence = detector.score_response(
                     final_message, rag_contexts, text
@@ -288,13 +331,25 @@ def build_app() -> FastAPI:
                 }
 
             # No tool calls — direct response
+            response_text = llm_resp.content
+
+            # Output guardrails
+            output_guard = OutputGuard(input_pii_types=pii_types)
+            out_safe, out_reason = output_guard.check_response(response_text)
+            if not out_safe:
+                logger.warning(f"output_guard_blocked: {out_reason}")
+                response_text = (
+                    "I must beg your pardon — let me rephrase. "
+                    "How else may I assist you with your stay?"
+                )
+
             confidence = detector.score_response(
-                llm_resp.content, rag_contexts, text
+                response_text, rag_contexts, text
             )
             tracker.log_confidence_metrics(confidence, provider=llm_resp.provider)
 
             return {
-                "message": llm_resp.content,
+                "message": response_text,
                 "tool_calls": [],
                 "confidence": confidence.to_dict(),
                 "provider": llm_resp.provider,
@@ -337,6 +392,31 @@ def build_app() -> FastAPI:
         if not user_text:
             raise HTTPException(status_code=400, detail="message is required")
 
+        # --- Input guardrails (v2) ---
+        injection_safe, injection_reason = input_guard.check_prompt_injection(user_text)
+        if not injection_safe:
+            logger.warning(f"input_guard_blocked (v2): {injection_reason}")
+            return {
+                "ok": True,
+                "reply": "I'm unable to process that request.",
+                "session_id": session_id,
+                "guardrail": "prompt_injection",
+            }
+
+        if not input_guard.check_topic_boundary(user_text):
+            logger.info("input_guard (v2): off-topic request blocked")
+            return {
+                "ok": True,
+                "reply": (
+                    "I am the Grand Chamberlain of the Monster Resort. "
+                    "I can only assist with resort and hospitality inquiries."
+                ),
+                "session_id": session_id,
+                "guardrail": "off_topic",
+            }
+
+        sanitized_text, pii_types = input_guard.check_pii(user_text)
+
         if orchestrator is None:
             return {
                 "ok": False,
@@ -344,11 +424,22 @@ def build_app() -> FastAPI:
                 "session_id": session_id,
             }
 
-        result = await orchestrator.handle(user_text, session_id)
+        result = await orchestrator.handle(sanitized_text, session_id)
+
+        # --- Output guardrails (v2) ---
+        reply = result.response
+        output_guard = OutputGuard(input_pii_types=pii_types)
+        out_safe, out_reason = output_guard.check_response(reply)
+        if not out_safe:
+            logger.warning(f"output_guard_blocked (v2): {out_reason}")
+            reply = (
+                "I must beg your pardon — let me rephrase. "
+                "How else may I assist you with your stay?"
+            )
 
         return {
             "ok": True,
-            "reply": result.response,
+            "reply": reply,
             "session_id": session_id,
             "intent": result.plan.intent.value,
             "reasoning": result.plan.reasoning,
@@ -358,6 +449,47 @@ def build_app() -> FastAPI:
             "latency_ms": result.latency_ms,
             "token_usage": result.token_usage,
         }
+
+    # --- OBSERVABILITY ENDPOINT ---
+
+    @app.get("/api/v1/traces")
+    def get_traces(limit: int = 50):
+        """Return recent LLM call traces for debugging and cost monitoring."""
+        if tracer is None:
+            return {"ok": True, "traces": [], "summary": {}}
+        return {
+            "ok": True,
+            "traces": tracer.recent_traces(limit=limit),
+            "summary": tracer.summary(),
+        }
+
+    # ── MCP Server ────────────────────────────────────────────────────
+    from .core.mcp_server import MCPServer
+
+    mcp = MCPServer(tool_registry=registry) if registry else None
+
+    @app.get("/api/v1/mcp/tools")
+    def mcp_list_tools():
+        """MCP tool discovery — list available tools with JSON Schema."""
+        if mcp is None:
+            return {"tools": []}
+        return {"tools": mcp.list_tools()}
+
+    @app.post("/api/v1/mcp/call")
+    async def mcp_call_tool(request: dict):
+        """MCP tool execution — call a tool by name with arguments."""
+        if mcp is None:
+            return {"content": [{"type": "text", "text": "MCP server not available"}], "isError": True}
+        name = request.get("name", "")
+        arguments = request.get("arguments", {})
+        return await mcp.call_tool(name, arguments)
+
+    @app.get("/api/v1/mcp/info")
+    def mcp_server_info():
+        """MCP server metadata for discovery."""
+        if mcp is None:
+            return {"error": "MCP server not available"}
+        return mcp.get_server_info()
 
     # Startup Ingestion
     knowledge_path = os.path.join(os.getcwd(), "data", "knowledge")
