@@ -38,9 +38,18 @@ This isn't a wrapper around an API call. It's a complete backend: a 3-stage retr
 - **Hallucination detection on every response** — token overlap + semantic similarity + source attribution scoring → HIGH / MEDIUM / LOW confidence returned with every answer.
 - **3-provider LLM fallback** — OpenAI → Anthropic → Ollama. If one goes down, the next takes over automatically. No user-facing errors during provider outages.
 - **Function-calling agent** — Tool registry with schema generation, input validation against a 6-property allowlist, and async execution with timing and structured logging.
+- **Tool sandboxing** — 10s timeout and 50/min rate limiting per tool to prevent runaway or abusive calls.
 - **Two-agent orchestrator (`/chat/v2`)** — Planner classifies intent (knowledge/tool/clarify/chitchat), Executor carries out the plan with structured output parsing and retry logic.
+- **Native structured outputs** — `response_format` support with a 3-level fallback chain (native JSON mode → regex extraction → raw).
+- **Input/output guardrails** — Prompt injection defense, PII redaction, topic boundary enforcement, and output filtering (`app/core/guardrails.py`).
 - **Database-backed conversation memory** — Messages persist across restarts. Automatic summarization at 12 messages compresses context while preserving conversational continuity.
+- **MCP tool server** — Model Context Protocol endpoints at `/api/v1/mcp/*` for tool discovery, execution, and server metadata.
+- **LLM observability & tracing** — Per-call tracing with latency, token counts, and cost via `LLMTracer`; query traces at `/api/v1/traces`.
+- **Prompt management** — YAML-based versioned prompts (`prompts/*.yaml`) loaded by `app/core/prompt_loader.py`.
+- **Anthropic prompt caching** — `cache_control` on system prompts to reduce latency and cost on repeated calls.
 - **Head-to-head RAG benchmark** — Custom hybrid pipeline vs LangChain RAG, tracked via MLflow. Run `uv run python scripts/benchmark_rag.py` to reproduce.
+- **Retrieval ablation study** — BM25 vs Dense vs Hybrid vs Full pipeline comparison (`scripts/ablation_retrieval.py`).
+- **Persistent eval store** — JSONL eval history with git SHA tagging and delta comparison across runs.
 - **Full production stack** — JWT + API key auth, rate limiting, Prometheus/Grafana, ECS Fargate deployment, GitHub Actions CI/CD.
 
 ---
@@ -126,11 +135,16 @@ app/
 ├── main.py                 # FastAPI app, agent loop, /chat endpoint
 ├── config.py               # Settings from .env (pydantic BaseSettings)
 ├── core/
-│   ├── tools.py            # Tool registry + book_room, get_booking, search_amenities
+│   ├── tools.py            # Tool registry + book_room, get_booking, search_amenities (sandboxed)
 │   ├── memory.py           # MemoryStore — DB-backed persistence + auto-summarization
-│   ├── llm_providers.py    # ModelRouter — OpenAI / Anthropic / Ollama fallback
+│   ├── llm_providers.py    # ModelRouter — OpenAI / Anthropic / Ollama fallback + prompt caching
 │   ├── orchestrator.py     # Two-agent orchestrator — Planner + Executor
-│   ├── structured_output.py # JSON output parser with retry logic
+│   ├── structured_output.py # JSON output parser with 3-level fallback chain
+│   ├── guardrails.py       # Input/output guardrails — injection defense, PII redaction
+│   ├── mcp_server.py       # MCP tool server — discovery, execution, metadata
+│   ├── observability.py    # LLM call tracing — latency, tokens, cost per call
+│   ├── prompt_loader.py    # YAML prompt loader (versioned prompts from prompts/*.yaml)
+│   ├── cost_tracker.py     # Per-request cost estimation across 8 models
 │   └── stream_client.py    # SSE streaming client
 ├── rag/
 │   ├── advanced_rag.py     # Hybrid RAG: BM25 + dense + RRF + cross-encoder
@@ -159,8 +173,14 @@ app/
 └── services/
     └── pdf_generator.py    # ReportLab PDF receipts
 
+prompts/
+├── planner.yaml                # Planner agent system prompt (versioned)
+├── executor.yaml               # Executor agent system prompt (versioned)
+└── summarization.yaml          # Conversation summarization prompt (versioned)
+
 scripts/
 ├── benchmark_rag.py            # Hybrid RAG vs LangChain benchmark (MLflow tracked)
+├── ablation_retrieval.py       # Retrieval ablation: BM25 vs Dense vs Hybrid vs Full
 ├── prep_finetune_data.py       # Generate train/valid JSONL from knowledge base
 ├── finetune_mlx.py             # LoRA fine-tune TinyLlama-1.1B on Apple Silicon (MLX)
 └── compare_rag_vs_finetune.py  # Head-to-head: RAG vs fine-tuned vs combined
@@ -290,7 +310,7 @@ Per-request cost estimates from `app/core/cost_tracker.py` (prices per 1M tokens
 | Component | Detail |
 |-----------|--------|
 | Docker services | 6 (API, PostgreSQL, Redis, Prometheus, Grafana, MLflow) |
-| Test count | 189 tests across 18 files |
+| Test count | 193 tests across 20 files |
 | Orchestrator | Two-agent plan-then-execute (Planner classifies intent into knowledge / tool / clarify / chitchat, Executor carries out the plan) |
 | LLM fallback chain | OpenAI -> Anthropic -> Ollama |
 | Deployment | ECS Fargate (1 vCPU, 2 GB RAM) |
@@ -339,6 +359,10 @@ uv run uvicorn app.main:app --reload
 | `GET` | `/tools` | List registered tools and schemas |
 | `GET` | `/metrics` | Prometheus metrics |
 | `POST` | `/chat/v2` | Orchestrator-based chat (plan-then-execute) |
+| `GET` | `/api/v1/traces` | Recent LLM call traces (latency, tokens, cost) |
+| `GET` | `/api/v1/mcp/tools` | MCP tool discovery |
+| `POST` | `/api/v1/mcp/call` | MCP tool execution |
+| `GET` | `/api/v1/mcp/info` | MCP server metadata |
 | `POST` | `/admin/api-keys` | Create API key |
 | `GET` | `/admin/api-keys` | List API keys |
 | `DELETE` | `/admin/api-keys/{key_id}` | Revoke API key |
@@ -392,7 +416,7 @@ RAG wins on factual accuracy and freshness (can retrieve new docs without retrai
 
 ## Testing
 
-18 test files (~1,460 lines) covering API endpoints, authentication, hallucination detection, RAG retrieval, LLM provider fallback, orchestrator, tool execution, MLflow tracking, and RAGAS evaluation.
+20 test files covering API endpoints, authentication, guardrails, hallucination detection, RAG retrieval, LLM provider fallback, orchestrator, tool execution, MLflow tracking, and RAGAS evaluation.
 
 ```sh
 uv run pytest --cov=app --cov-report=term-missing
@@ -470,7 +494,7 @@ SQLite is the default for local development (zero setup). For production or mult
 - **SQLite** is the default database — set `MRC_DATABASE_URL` to a PostgreSQL connection string for multi-instance deployment
 - **Hallucination detector** uses heuristic scoring (token overlap + semantic similarity), not a trained classifier — effective for high-confidence cases, less reliable in ambiguous ones
 - **Cross-encoder reranking** adds ~50ms latency per query — a deliberate accuracy/latency trade-off
-- **No prompt injection defense** beyond input sanitization — adversarial prompt attacks are not actively mitigated
+- **Guardrails are rule-based** — prompt injection defense and PII redaction use pattern matching, not a trained classifier
 - **Knowledge base is static** — no automated ingestion pipeline for new content (manual `ingest_knowledge.py`)
 - **Rate limiting is global**, not per-user — all clients share the same quota
 
@@ -481,11 +505,11 @@ SQLite is the default for local development (zero setup). For production or mult
 - **LLM application architecture** — agent loops, tool calling, conversation memory, multi-provider orchestration
 - **Information retrieval** — hybrid search (BM25 + dense + RRF), cross-encoder reranking, retrieval evaluation
 - **MLOps** — MLflow experiment tracking, RAGAS evaluation framework, automated benchmarking
-- **Production engineering** — JWT/API key auth, input sanitization, rate limiting, structured logging
-- **Observability** — Prometheus metrics, Grafana dashboards, health/readiness separation
+- **Production engineering** — JWT/API key auth, input/output guardrails (injection defense, PII redaction), rate limiting, structured logging
+- **Observability** — Prometheus metrics, Grafana dashboards, per-call LLM tracing with cost tracking, health/readiness separation
 - **Cloud deployment** — Docker, AWS ECS Fargate, ECR, Secrets Manager, GitHub Actions CI/CD
 - **Parameter-efficient fine-tuning (LoRA)** — RAG vs fine-tuned vs combined comparison with metrics
-- **Testing** — 18 test files (~1,460 lines) covering auth, RAG, hallucination detection, LLM fallback, orchestrator, and MLOps
+- **Testing** — 20 test files (193 tests) covering auth, guardrails, RAG, hallucination detection, LLM fallback, orchestrator, and MLOps
 
 ---
 
