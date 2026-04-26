@@ -172,3 +172,93 @@ class MCPServer:
             "description": "Monster Game Resort Concierge tool server — "
             "book rooms, retrieve bookings, search resort amenities.",
         }
+
+
+# ==========================================================================
+# STUDY NOTES — What was refactored and why
+# ==========================================================================
+#
+# An external code reviewer flagged 4 issues. Here's what we fixed
+# and what we deliberately left alone.
+#
+# ── FIXED ─────────────────────────────────────────────────────────────────
+#
+# 1. SINGLE SOURCE OF TRUTH (was: hardcoded MCP_TOOLS list)
+#
+#    BEFORE: A 45-line MCP_TOOLS list duplicated every tool's schema.
+#    The ToolRegistry in tools.py ALSO defined schemas via to_openai_schema().
+#    Two places describing the same tools = guaranteed drift.
+#
+#    AFTER: list_tools() dynamically reads from self.tool_registry.list(),
+#    converts each tool's OpenAI schema to MCP format via _openai_to_mcp_schema().
+#    Add a tool to the registry → it automatically appears in MCP. Zero drift.
+#
+#    WHY IT MATTERS: In production, a tool listed in MCP but missing from
+#    the registry would cause call_tool() to return "Unknown tool" — a bug
+#    that's invisible until a client actually calls it.
+#
+#
+# 2. STRUCTURED ERROR HANDLING (was: leaking raw exception messages)
+#
+#    BEFORE: except Exception as e: return {"text": f"Tool execution failed: {e}"}
+#    This leaks internal stack details to any client calling the MCP server.
+#
+#    AFTER: The error response says "Tool 'X' failed. Request ID: abc123"
+#    with no internal details. The actual error type is logged server-side
+#    with the request_id for correlation.
+#
+#    WHY IT MATTERS: Error messages in APIs should help the CLIENT retry
+#    or report the issue, not expose your internals. The request_id lets
+#    you find the real error in logs.
+#
+#
+# 3. NO DOUBLE-SERIALIZATION (was: json.dumps(result) inside text content)
+#
+#    BEFORE: {"type": "text", "text": json.dumps(result, default=str)}
+#    The client receives a JSON response containing a string that is ALSO JSON.
+#    To use the data, they must: parse the outer JSON, extract the text field,
+#    then parse THAT string as JSON again. Two parse steps.
+#
+#    AFTER: {"type": "json", "json": result}
+#    The result object is embedded directly. One parse. Cleaner for tool
+#    chaining where the output of one tool feeds into another.
+#
+#    WHY IT MATTERS: default=str silently converts datetimes, enums, and
+#    custom objects to lossy strings. Direct embedding preserves types.
+#
+#
+# 4. REQUEST ID + LATENCY IN LOGS (was: just tool name and error string)
+#
+#    BEFORE: logger.error("mcp_tool_call_failed", extra={"tool": name, "error": str(e)})
+#    No way to correlate a client's error report with server logs.
+#    No latency data for performance debugging.
+#
+#    AFTER: Every call gets a request_id (uuid4[:8]). Both success and
+#    failure paths log: tool name, request_id, latency_ms, and (on failure)
+#    error_type. The client receives the request_id in error responses.
+#
+#    WHY IT MATTERS: In multi-agent systems, a client might chain 5 tool
+#    calls. When one fails, the request_id is the only way to find the
+#    right log entry among thousands.
+#
+#
+# ── LEFT ALONE (acceptable for portfolio) ─────────────────────────────────
+#
+# - Protocol version "2024-11-05": This IS the real MCP spec version from
+#   Anthropic. Not a placeholder. Clients that hard-match it will work.
+#
+# - No cancellation handling: If a client disconnects mid-tool-execution,
+#   the tool runs to completion anyway. In production you'd use
+#   asyncio.shield() or task cancellation. Overkill here.
+#   INTERVIEW NOTE: mention this as a known limitation.
+#
+# - default=str removed (was in json.dumps): Now that we return structured
+#   JSON directly, this is no longer relevant. But if we ever need to
+#   serialize complex objects, a custom JSONEncoder would be the right fix.
+#
+# - No security filtering on tools: Tools are statically registered at
+#   startup via make_registry(). There's no dynamic tool loading, so
+#   there's nothing to filter. If tools were user-supplied or loaded from
+#   a database, you'd want schema validation + sandboxing before execution.
+#
+# ==========================================================================
