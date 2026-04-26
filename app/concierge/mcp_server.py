@@ -5,78 +5,34 @@ MCP (Model Context Protocol) Server
 Exposes the Monster Game Resort Concierge's tools via the MCP standard,
 allowing any MCP-compatible agent or client to discover and call them.
 
-Runs alongside the existing custom ToolRegistry -- both interfaces
-serve the same underlying tool functions.
+Tools are dynamically read from the ToolRegistry — single source of truth.
+No hardcoded tool list. Add a tool to the registry and it automatically
+appears in MCP.
 
 Usage:
-    python -m app.core.mcp_server          # standalone MCP server on stdio
-    # Or import create_mcp_app() and mount in your FastAPI app
+    # Import and mount in your FastAPI app
+    mcp = MCPServer(tool_registry=registry)
 """
 
 from __future__ import annotations
 
-import json
 import logging
+import time
+import uuid
 from dataclasses import dataclass
 from typing import Any, Dict, List
 
 logger = logging.getLogger(__name__)
 
-# ── Tool definitions (MCP-compatible JSON Schema) ────────────────────────
 
-VALID_HOTELS = [
-    "The Mummy Resort & Tomb-Service",
-    "The Werewolf Lodge: Moon & Moor",
-    "Castle Frankenstein: High Voltage Luxury",
-    "Vampire Manor: Eternal Night Inn",
-    "Zombie Bed & Breakfast: Bites & Beds",
-    "Ghostly B&B: Spectral Stay",
-]
-
-MCP_TOOLS = [
-    {
-        "name": "book_room",
-        "description": "Book a room at one of our official Monster Resort properties.",
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "session_id": {"type": "string", "description": "Guest session ID"},
-                "guest_name": {"type": "string", "description": "Guest full name"},
-                "hotel_name": {
-                    "type": "string",
-                    "description": "Resort property name",
-                    "enum": VALID_HOTELS,
-                },
-                "room_type": {"type": "string", "description": "Room category"},
-                "check_in": {"type": "string", "description": "Check-in date (YYYY-MM-DD)"},
-                "check_out": {"type": "string", "description": "Check-out date (YYYY-MM-DD)"},
-            },
-            "required": ["session_id", "guest_name", "hotel_name", "room_type", "check_in", "check_out"],
-        },
-    },
-    {
-        "name": "get_booking",
-        "description": "Retrieve details for an existing booking by ID.",
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "booking_id": {"type": "string", "description": "The booking ID to look up"},
-            },
-            "required": ["booking_id"],
-        },
-    },
-    {
-        "name": "search_amenities",
-        "description": "Search the resort knowledge base for amenities, activities, and hotel information.",
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "query": {"type": "string", "description": "Search query about resort amenities or services"},
-            },
-            "required": ["query"],
-        },
-    },
-]
+def _openai_to_mcp_schema(openai_schema: dict) -> dict:
+    """Convert an OpenAI function-calling schema to MCP tool format."""
+    fn = openai_schema.get("function", openai_schema)
+    return {
+        "name": fn.get("name", ""),
+        "description": fn.get("description", ""),
+        "inputSchema": fn.get("parameters", {"type": "object", "properties": {}}),
+    }
 
 
 @dataclass
@@ -86,6 +42,9 @@ class MCPServer:
     Implements the core MCP tool discovery and execution protocol
     without requiring the full MCP SDK. Compatible with any client
     that speaks the MCP JSON-RPC protocol over stdio or HTTP.
+
+    Tools are read dynamically from the ToolRegistry — no hardcoded
+    tool list. Single source of truth prevents drift.
     """
 
     tool_registry: Any  # ToolRegistry instance from tools.py
@@ -93,28 +52,70 @@ class MCPServer:
     server_version: str = "1.0.0"
 
     def list_tools(self) -> List[dict]:
-        """MCP tools/list — return available tools with JSON Schema."""
-        return MCP_TOOLS
+        """MCP tools/list — dynamically read from the registry."""
+        mcp_tools = []
+        for tool in self.tool_registry.list():
+            schema = tool.to_openai_schema()
+            if schema:
+                mcp_tools.append(_openai_to_mcp_schema(schema))
+        return mcp_tools
 
     async def call_tool(self, name: str, arguments: Dict[str, Any]) -> dict:
-        """MCP tools/call — execute a tool and return the result."""
+        """MCP tools/call — execute a tool and return structured result."""
+        request_id = str(uuid.uuid4())[:8]
         tool = self.tool_registry.get(name)
+
         if not tool:
+            logger.warning(
+                "mcp_unknown_tool",
+                extra={"tool": name, "request_id": request_id},
+            )
             return {
                 "content": [{"type": "text", "text": f"Unknown tool: {name}"}],
                 "isError": True,
             }
 
+        t0 = time.perf_counter()
         try:
-            result = await self.tool_registry.async_execute_with_timing(name, **arguments)
+            result = await self.tool_registry.async_execute_with_timing(
+                name, request_id=request_id, **arguments
+            )
+            latency_ms = round((time.perf_counter() - t0) * 1000, 2)
+
+            logger.info(
+                "mcp_tool_call_ok",
+                extra={
+                    "tool": name,
+                    "request_id": request_id,
+                    "latency_ms": latency_ms,
+                },
+            )
+
+            # Return structured content — no double-serialization
             return {
-                "content": [{"type": "text", "text": json.dumps(result, default=str)}],
+                "content": [{"type": "json", "json": result}],
                 "isError": False,
             }
-        except Exception as e:
-            logger.error("mcp_tool_call_failed", extra={"tool": name, "error": str(e)})
+
+        except Exception as exc:
+            latency_ms = round((time.perf_counter() - t0) * 1000, 2)
+            logger.error(
+                "mcp_tool_call_failed",
+                extra={
+                    "tool": name,
+                    "request_id": request_id,
+                    "latency_ms": latency_ms,
+                    "error_type": type(exc).__name__,
+                },
+            )
+            # Structured error — no raw exception message leaked to client
             return {
-                "content": [{"type": "text", "text": f"Tool execution failed: {e}"}],
+                "content": [
+                    {
+                        "type": "text",
+                        "text": f"Tool '{name}' failed. Request ID: {request_id}",
+                    }
+                ],
                 "isError": True,
             }
 
@@ -160,12 +161,14 @@ class MCPServer:
 
     def get_server_info(self) -> dict:
         """Return MCP server metadata for discovery endpoints."""
+        tools = self.list_tools()
         return {
             "name": self.server_name,
             "version": self.server_version,
             "protocol": "MCP",
             "protocolVersion": "2024-11-05",
-            "tools": [t["name"] for t in MCP_TOOLS],
+            "tools": [t["name"] for t in tools],
+            "tool_count": len(tools),
             "description": "Monster Game Resort Concierge tool server — "
             "book rooms, retrieve bookings, search resort amenities.",
         }
