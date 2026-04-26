@@ -12,13 +12,13 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 
-from app.core.llm_providers import (
+from app.concierge.llm_providers import (
     LLMProvider,
     LLMResponse,
     OllamaProvider,
     OpenAIProvider,
 )
-from app.core.orchestrator import ConciergeOrchestrator, IntentType
+from app.concierge.orchestrator import ConciergeOrchestrator, IntentType
 
 
 # ---------------------------------------------------------------------------

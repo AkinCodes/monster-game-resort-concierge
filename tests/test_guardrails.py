@@ -1,7 +1,7 @@
 """Tests for input/output guardrails."""
 
 import pytest
-from app.core.guardrails import InputGuard, OutputGuard
+from app.concierge.guardrails import InputGuard, OutputGuard
 
 
 @pytest.fixture

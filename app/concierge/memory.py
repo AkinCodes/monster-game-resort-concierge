@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from ..back_office.database import DatabaseManager
+from .prompt_loader import load_prompt
 
 
 @dataclass
@@ -91,11 +92,17 @@ class MemoryStore:
             if openai and openai_api_key:
                 try:
                     client = openai.OpenAI(api_key=openai_api_key)
-                    prompt = (
-                        "Summarize the following conversation for context retention. "
-                        "Be concise and capture key facts, requests, and names.\n\n"
-                        + "\n".join(lines)
-                    )
+                    try:
+                        prompt = load_prompt(
+                            "summarization",
+                            conversation="\n".join(lines),
+                        )
+                    except Exception:
+                        prompt = (
+                            "Summarize the following conversation for context retention. "
+                            "Be concise and capture key facts, requests, and names.\n\n"
+                            + "\n".join(lines)
+                        )
                     resp = client.chat.completions.create(
                         model=model,
                         messages=[

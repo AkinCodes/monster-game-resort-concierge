@@ -3,7 +3,7 @@
 import asyncio
 import pytest
 
-from app.core.tools import (
+from app.concierge.tools import (
     ToolRegistry,
     Tool,
     TOOL_TIMEOUT,

@@ -21,6 +21,7 @@ from .config import get_settings
 from .back_office.database import DatabaseManager
 from .back_office.cache_utils import get_cache, set_app_cache
 from .concierge.memory import MemoryStore
+from .concierge.guardrails import InputGuard, OutputGuard
 from .cctv.monitoring import install_metrics
 from .services.pdf_generator import PDFGenerator
 from .records_room.advanced_rag import AdvancedRAG
@@ -28,6 +29,7 @@ from .security_dept.security import install_rate_limiter, APIKeyManager
 from .front_desk.admin_routes import router as admin_router
 from .security_dept.auth_mixins import jwt_or_api_key
 from .concierge.tools import make_registry, VALID_HOTELS
+from .concierge.mcp_server import MCPServer
 from .concierge.llm_providers import (
     ModelRouter,
     LLMMessage,
@@ -37,6 +39,7 @@ from .concierge.llm_providers import (
     AnthropicProvider,
     OllamaProvider,
 )
+from .concierge.observability import LLMTracer
 from .concierge.orchestrator import ConciergeOrchestrator
 from .manager_office.hallucination import HallucinationDetector
 from .cctv.mlflow_tracking import MLflowTracker
@@ -127,6 +130,7 @@ def build_app() -> FastAPI:
     registry = make_registry(
         db=db, pdf=pdf, rag_search_fn=lambda query, k=5: rag.search(query=query, k=k)
     )
+    mcp = MCPServer(tool_registry=registry) if registry else None
 
     install_metrics(app)
     install_rate_limiter(app, settings)
@@ -134,6 +138,11 @@ def build_app() -> FastAPI:
 
     # Build multi-model router
     router = _build_router(settings)
+    tracer = LLMTracer(provider=router) if router else None
+
+    # Guardrails
+    input_guard = InputGuard()
+    output_guard = OutputGuard()
 
     # Hallucination detector
     detector = HallucinationDetector(
@@ -152,7 +161,7 @@ def build_app() -> FastAPI:
     orchestrator = None
     if router is not None:
         orchestrator = ConciergeOrchestrator(
-            llm_provider=router,
+            llm_provider=tracer,
             rag=rag,
             tool_registry=registry,
             memory_store=memory,
@@ -163,10 +172,27 @@ def build_app() -> FastAPI:
     @profile
     async def _agent_reply(session_id: str, user_text: str) -> dict:
         try:
-            print(
-                f"\n=== DEBUG: USER INPUT ===\nSession: {session_id}\nMessage: {user_text}\n"
-            )
+            logger.debug("user_input session=%s message=%s", session_id, user_text)
             text = validate_message(user_text)
+
+            # --- Input guardrails ---
+            is_safe, injection_reason = input_guard.check_prompt_injection(user_text)
+            if not is_safe:
+                logger.warning(f"Prompt injection blocked: {injection_reason}")
+                return {
+                    "message": "Ah, a most curious incantation — but the Grand Chamberlain is bound by ancient wards. How may I assist you with your resort stay?",
+                    "tool_calls": [],
+                }
+
+            user_text, pii_found = input_guard.check_pii(user_text)
+            if pii_found:
+                logger.info(f"PII redacted from input: {pii_found}")
+
+            if not input_guard.check_topic_boundary(user_text):
+                return {
+                    "message": "A fascinating pursuit, dear guest, but it falls beyond the purview of our resort. Might I help you with a booking, dining, or spa inquiry instead?",
+                    "tool_calls": [],
+                }
 
             if router is None:
                 return {"message": "AI services are offline.", "tool_calls": []}
@@ -200,7 +226,7 @@ def build_app() -> FastAPI:
                 "8. FAREWELL: End with 'We await your shadow' or 'May your rest be eternal (until check-out).'\n"
             )
 
-            print(f"=== DEBUG: SYSTEM PROMPT ===\n{system_prompt_content[:500]}...\n")
+            logger.debug("system_prompt preview=%s", system_prompt_content[:500])
 
             # Build LLMMessage history
             past_messages = memory.get_messages(session_id)
@@ -217,9 +243,9 @@ def build_app() -> FastAPI:
             tool_schemas = registry.get_openai_tool_schemas()
 
             # Phase 1: initial LLM call (may include tool calls)
-            llm_resp = await router.chat(chat_history, tools=tool_schemas)
+            llm_resp = await tracer.chat(chat_history, tools=tool_schemas)
 
-            print(f"=== DEBUG: LLM INITIAL RESPONSE ===\n{llm_resp.content}\n")
+            logger.debug("llm_initial_response content=%s", llm_resp.content)
 
             if llm_resp.tool_calls:
                 # Add assistant message with tool calls to history
@@ -235,7 +261,7 @@ def build_app() -> FastAPI:
                 for tc in llm_resp.tool_calls:
                     t_name = tc.name
                     t_args = json.loads(tc.arguments)
-                    print(f"DEBUG: AI calling tool '{t_name}' with args: {t_args}")
+                    logger.debug("tool_call name=%s args=%s", t_name, t_args)
 
                     # Defense 6: Validate tool call before execution
                     is_valid, error_msg = _validate_tool_call(t_name, t_args)
@@ -253,7 +279,7 @@ def build_app() -> FastAPI:
                         continue
 
                     res = await registry.async_execute_with_timing(t_name, **t_args)
-                    print(f"DEBUG: Tool '{t_name}' returned: {res}")
+                    logger.debug("tool_result name=%s result=%s", t_name, res)
 
                     tool_results.append({"tool": t_name, "result": res})
                     chat_history.append(
@@ -265,10 +291,10 @@ def build_app() -> FastAPI:
                     )
 
                 # Phase 2: synthesis call
-                llm_resp2 = await router.chat(chat_history)
+                llm_resp2 = await tracer.chat(chat_history)
                 final_message = llm_resp2.content
 
-                print(f"=== DEBUG: FINAL LLM RESPONSE AFTER TOOL ===\n{final_message}")
+                logger.debug("llm_final_response content=%s", final_message)
 
                 # Confidence scoring
                 confidence = detector.score_response(
@@ -277,6 +303,13 @@ def build_app() -> FastAPI:
 
                 # Optional MLflow logging
                 tracker.log_confidence_metrics(confidence, provider=llm_resp2.provider)
+
+                # --- Output guardrail ---
+                output_guard.input_pii_types = pii_found
+                resp_safe, resp_reason = output_guard.check_response(final_message)
+                if not resp_safe:
+                    logger.warning(f"Output guard blocked response: {resp_reason}")
+                    final_message = "The Grand Chamberlain must consult the ancient ledgers before responding. Please rephrase your inquiry, dear guest."
 
                 return {
                     "message": final_message,
@@ -291,8 +324,16 @@ def build_app() -> FastAPI:
             )
             tracker.log_confidence_metrics(confidence, provider=llm_resp.provider)
 
+            # --- Output guardrail ---
+            response_text = llm_resp.content
+            output_guard.input_pii_types = pii_found
+            resp_safe, resp_reason = output_guard.check_response(response_text)
+            if not resp_safe:
+                logger.warning(f"Output guard blocked response: {resp_reason}")
+                response_text = "The Grand Chamberlain must consult the ancient ledgers before responding. Please rephrase your inquiry, dear guest."
+
             return {
-                "message": llm_resp.content,
+                "message": response_text,
                 "tool_calls": [],
                 "confidence": confidence.to_dict(),
                 "provider": llm_resp.provider,
@@ -335,6 +376,27 @@ def build_app() -> FastAPI:
         if not user_text:
             raise HTTPException(status_code=400, detail="message is required")
 
+        # --- Input guardrails (v2) ---
+        is_safe, injection_reason = input_guard.check_prompt_injection(user_text)
+        if not is_safe:
+            logger.warning(f"v2 prompt injection blocked: {injection_reason}")
+            return {
+                "ok": True,
+                "reply": "Ah, a most curious incantation — but the Grand Chamberlain is bound by ancient wards. How may I assist you with your resort stay?",
+                "session_id": session_id,
+            }
+
+        user_text, pii_found = input_guard.check_pii(user_text)
+        if pii_found:
+            logger.info(f"v2 PII redacted from input: {pii_found}")
+
+        if not input_guard.check_topic_boundary(user_text):
+            return {
+                "ok": True,
+                "reply": "A fascinating pursuit, dear guest, but it falls beyond the purview of our resort. Might I help you with a booking, dining, or spa inquiry instead?",
+                "session_id": session_id,
+            }
+
         if orchestrator is None:
             return {
                 "ok": False,
@@ -344,9 +406,17 @@ def build_app() -> FastAPI:
 
         result = await orchestrator.handle(user_text, session_id)
 
+        # --- Output guardrail (v2) ---
+        reply_text = result.response
+        output_guard.input_pii_types = pii_found
+        resp_safe, resp_reason = output_guard.check_response(reply_text)
+        if not resp_safe:
+            logger.warning(f"v2 output guard blocked response: {resp_reason}")
+            reply_text = "The Grand Chamberlain must consult the ancient ledgers before responding. Please rephrase your inquiry, dear guest."
+
         return {
             "ok": True,
-            "reply": result.response,
+            "reply": reply_text,
             "session_id": session_id,
             "intent": result.plan.intent.value,
             "reasoning": result.plan.reasoning,
@@ -356,6 +426,40 @@ def build_app() -> FastAPI:
             "latency_ms": result.latency_ms,
             "token_usage": result.token_usage,
         }
+
+
+    # --- TRACES ENDPOINT ---
+
+    @app.get("/api/v1/traces")
+    def get_traces():
+        if tracer is None:
+            return {"traces": [], "summary": {}}
+        return {
+            "traces": tracer.recent_traces(),
+            "summary": tracer.summary(),
+        }
+
+    # --- MCP ENDPOINTS ---
+
+    @app.get("/api/v1/mcp/tools")
+    def mcp_list_tools():
+        if mcp is None:
+            return {"tools": []}
+        return {"tools": mcp.list_tools()}
+
+    @app.post("/api/v1/mcp/call")
+    async def mcp_call_tool(request: dict):
+        if mcp is None:
+            return {"content": [{"type": "text", "text": "MCP not available"}], "isError": True}
+        name = request.get("name", "")
+        arguments = request.get("arguments", {})
+        return await mcp.call_tool(name, arguments)
+
+    @app.get("/api/v1/mcp/info")
+    def mcp_server_info():
+        if mcp is None:
+            return {"error": "MCP not available"}
+        return mcp.get_server_info()
 
     # Startup Ingestion
     knowledge_path = os.path.join(os.getcwd(), "data", "knowledge")

@@ -4,8 +4,8 @@ Tests for LLM observability: CostCalculator, LLMCallTrace, and LLMTracer.
 
 import pytest
 
-from app.core.llm_providers import LLMMessage, LLMProvider, LLMResponse
-from app.core.observability import CostCalculator, LLMCallTrace, LLMTracer
+from app.concierge.llm_providers import LLMMessage, LLMProvider, LLMResponse
+from app.concierge.observability import CostCalculator, LLMCallTrace, LLMTracer
 
 
 # ---------------------------------------------------------------------------
