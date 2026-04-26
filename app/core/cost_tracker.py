@@ -1,31 +1,57 @@
 """
 Cost Tracker — estimates per-request cost from model name and token counts.
 
-Pricing is approximate and based on published rates as of early 2025.
-Add or update entries in ``MODEL_PRICING`` as models change.
+Pricing is loaded from configs/model_pricing.yaml at startup.
+Update the YAML file when providers change rates — no code changes needed.
 """
 
 from __future__ import annotations
 
 import logging
+import os
 from dataclasses import dataclass, field
+from functools import lru_cache
+from typing import Dict, Tuple
+
+import yaml
 
 logger = logging.getLogger(__name__)
 
-# Prices per 1M tokens (input, output) in USD
-MODEL_PRICING: dict[str, tuple[float, float]] = {
-    # OpenAI
-    "gpt-4o": (2.50, 10.00),
-    "gpt-4o-mini": (0.15, 0.60),
-    "gpt-4-turbo": (10.00, 30.00),
-    "gpt-3.5-turbo": (0.50, 1.50),
-    # Anthropic
-    "claude-sonnet-4-20250514": (3.00, 15.00),
-    "claude-3-5-sonnet-20241022": (3.00, 15.00),
-    "claude-3-haiku-20240307": (0.25, 1.25),
-    # Ollama / local — free
-    "llama3": (0.0, 0.0),
-}
+PRICING_PATH = os.path.join(
+    os.path.dirname(__file__), "..", "..", "configs", "model_pricing.yaml"
+)
+
+
+@lru_cache(maxsize=1)
+def _load_pricing() -> Dict[str, Tuple[float, float]]:
+    """Load model pricing from YAML config. Cached after first call."""
+    try:
+        with open(PRICING_PATH, "r") as f:
+            raw = yaml.safe_load(f) or {}
+        pricing = {}
+        for model, rates in raw.items():
+            if isinstance(rates, dict):
+                pricing[model] = (
+                    float(rates.get("input", 0.0)),
+                    float(rates.get("output", 0.0)),
+                )
+        logger.info("pricing_loaded", extra={"models": len(pricing)})
+        return pricing
+    except FileNotFoundError:
+        logger.warning("pricing_file_not_found", extra={"path": PRICING_PATH})
+        return _fallback_pricing()
+    except Exception as exc:
+        logger.error("pricing_load_failed", extra={"error": str(exc)})
+        return _fallback_pricing()
+
+
+def _fallback_pricing() -> Dict[str, Tuple[float, float]]:
+    """Hardcoded fallback if YAML is missing or corrupt."""
+    return {
+        "gpt-4o-mini": (0.15, 0.60),
+        "gpt-4o": (2.50, 10.00),
+        "llama3": (0.0, 0.0),
+    }
 
 
 def estimate_cost(
@@ -38,17 +64,19 @@ def estimate_cost(
     Falls back to gpt-4o-mini pricing if the model is unknown so the
     tracker never crashes — it just logs a warning.
     """
-    pricing = MODEL_PRICING.get(model)
+    model_pricing = _load_pricing()
+    pricing = model_pricing.get(model)
+
     if pricing is None:
         # Try prefix matching (e.g. "gpt-4o-2024-11-20" -> "gpt-4o")
-        for key in MODEL_PRICING:
+        for key in model_pricing:
             if model.startswith(key):
-                pricing = MODEL_PRICING[key]
+                pricing = model_pricing[key]
                 break
 
     if pricing is None:
         logger.warning("cost_tracker_unknown_model", extra={"model": model})
-        pricing = MODEL_PRICING["gpt-4o-mini"]
+        pricing = model_pricing.get("gpt-4o-mini", (0.15, 0.60))
 
     input_cost = (prompt_tokens / 1_000_000) * pricing[0]
     output_cost = (completion_tokens / 1_000_000) * pricing[1]
