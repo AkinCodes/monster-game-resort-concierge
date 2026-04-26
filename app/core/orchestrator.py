@@ -51,7 +51,6 @@ class ExecutionResult:
     confidence: object = None
 
 
-
 class ConciergeOrchestrator:
     """Two-agent orchestrator: Planner decides, Executor acts."""
 
