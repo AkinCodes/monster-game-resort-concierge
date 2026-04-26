@@ -261,4 +261,88 @@ class MCPServer:
 #   there's nothing to filter. If tools were user-supplied or loaded from
 #   a database, you'd want schema validation + sandboxing before execution.
 #
+#
+# ── KNOWN LIMITATIONS (discuss in interviews) ─────────────────────────────
+#
+# A second code review identified 6 scale-up concerns. None are bugs —
+# they're architecture decisions you'd make at 50 tools and 10 MCP clients,
+# not 3 tools and 1 demo. But knowing them shows you understand the limits.
+#
+# 1. SCHEMA CONVERSION IS PASS-THROUGH, NOT VALIDATED
+#
+#    _openai_to_mcp_schema() does fn.get("name"), fn.get("parameters").
+#    If the OpenAI schema is malformed, you get a silently degraded MCP
+#    tool with empty name or empty properties. No error raised.
+#
+#    AT SCALE: Add validation — if "name" or "parameters" is missing,
+#    raise ValueError. Silent degradation is how tool systems become
+#    unreliable over time.
+#
+#
+# 2. TOOL LIST IS REBUILT ON EVERY CALL
+#
+#    list_tools() iterates the registry and converts schemas every time
+#    tools/list is called. With 3 tools this is instant. With 500 tools
+#    loaded from a database, it's a performance problem.
+#
+#    AT SCALE: Cache the MCP tool list, invalidate when registry changes.
+#    Or memoize per registry version hash.
+#
+#
+# 3. NO EXECUTION TIMEOUT OR CANCELLATION
+#
+#    If a tool hangs (e.g., external API down), call_tool() blocks
+#    indefinitely. If the MCP client disconnects, the tool keeps running.
+#
+#    AT SCALE: Wrap with asyncio.wait_for(timeout=10). Handle
+#    asyncio.CancelledError for client disconnect cleanup.
+#    NOTE: The ToolRegistry already has sandboxing (10s timeout, rate
+#    limiting) — so this is partially mitigated. But MCP-level timeout
+#    would be a second defense layer.
+#
+#
+# 4. TRANSPORT AND LOGIC ARE MIXED
+#
+#    handle_jsonrpc() does protocol routing, business logic dispatch,
+#    AND response formatting in one method. Fine for 3 methods
+#    (initialize, tools/list, tools/call). Painful when you add:
+#    streaming tools, batching, subscriptions, tool interrupts.
+#
+#    AT SCALE: Split into MCPProtocolHandler (parses JSON-RPC),
+#    ToolExecutionLayer (runs tools), and MCPResponseFormatter
+#    (shapes output). Classic separation of concerns.
+#
+#
+# 5. AD-HOC SCHEMA TRANSLATION (the architectural insight)
+#
+#    We translate OpenAI function schemas → MCP tool schemas on the fly.
+#    This works because both are JSON Schema under the hood. But it's
+#    implicit coupling: if OpenAI changes their schema format, MCP
+#    breaks silently.
+#
+#    AT SCALE: Define a CANONICAL internal tool schema that both OpenAI
+#    and MCP adapters translate FROM. Three layers:
+#
+#        Internal Schema (source of truth)
+#            ├── OpenAI Adapter (for LLM function calling)
+#            └── MCP Adapter (for MCP clients)
+#
+#    Each new protocol (A2A, custom) gets its own adapter.
+#    No adapter knows about any other adapter.
+#
+#    INTERVIEW ANSWER: "We do ad-hoc translation now which works for
+#    3 tools. If we added A2A or another protocol, I'd introduce a
+#    canonical internal schema with explicit adapters per protocol."
+#
+#
+# 6. MCP SCHEMA COMPLIANCE IS NOT STRICT
+#
+#    We pass OpenAI's "parameters" directly as MCP "inputSchema".
+#    OpenAI schemas can include $schema, additionalProperties, nested
+#    $defs — fields MCP clients may not expect. We don't normalize.
+#
+#    AT SCALE: Strip non-standard fields or validate against the MCP
+#    JSON Schema spec before exposing. For now, our 3 tools have clean
+#    simple schemas so this doesn't bite.
+#
 # ==========================================================================
