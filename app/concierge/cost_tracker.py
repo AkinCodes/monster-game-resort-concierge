@@ -54,6 +54,12 @@ def _fallback_pricing() -> Dict[str, Tuple[float, float]]:
     }
 
 
+def reload_pricing() -> None:
+    """Clear the pricing cache so the next call re-reads the YAML file."""
+    _load_pricing.cache_clear()
+    logger.info("pricing_cache_cleared")
+
+
 def estimate_cost(
     model: str,
     prompt_tokens: int = 0,
@@ -68,8 +74,8 @@ def estimate_cost(
     pricing = model_pricing.get(model)
 
     if pricing is None:
-        # Try prefix matching (e.g. "gpt-4o-2024-11-20" -> "gpt-4o")
-        for key in model_pricing:
+        # Try prefix matching, longest key first so "gpt-4o" matches before "gpt-4"
+        for key in sorted(model_pricing, key=len, reverse=True):
             if model.startswith(key):
                 pricing = model_pricing[key]
                 break
