@@ -1,10 +1,4 @@
-"""
-Hallucination Mitigation with Confidence Scoring
-=================================================
-
-Scores LLM responses against RAG contexts to detect potential hallucinations.
-Uses token overlap, semantic similarity, and sentence-level source attribution.
-"""
+"""Hallucination detection via confidence scoring against RAG contexts."""
 
 from __future__ import annotations
 
@@ -17,7 +11,6 @@ from prometheus_client import Counter, Histogram
 
 from ..monitoring.logging_utils import logger
 
-# Prometheus metrics
 RESPONSE_CONFIDENCE = Histogram(
     "mrc_response_confidence",
     "Confidence score of LLM responses",
@@ -55,12 +48,12 @@ class ConfidenceResult:
 
 
 def _tokenize(text: str) -> set[str]:
-    """Simple whitespace + lowercase tokenizer."""
+    """Return lowercased word tokens as a set."""
     return set(re.findall(r"\w+", text.lower()))
 
 
 def _split_sentences(text: str) -> List[str]:
-    """Split text into sentences."""
+    """Split text into sentences with at least 3 words."""
     sentences = re.split(r"(?<=[.!?])\s+", text.strip())
     return [s for s in sentences if len(s.split()) >= 3]
 
@@ -73,10 +66,10 @@ class HallucinationDetector:
     ):
         self.high_threshold = high_threshold
         self.medium_threshold = medium_threshold
-        self._model = None  # lazy-loaded SentenceTransformer
+        self._model = None
 
     def _get_model(self):
-        """Lazy load the sentence transformer model (same one used by RAG)."""
+        """Lazy-load the sentence transformer model."""
         if self._model is None:
             try:
                 from sentence_transformers import SentenceTransformer
@@ -91,7 +84,7 @@ class HallucinationDetector:
     def _compute_context_overlap(
         self, response_text: str, contexts: List[str]
     ) -> float:
-        """Token-level intersection ratio between response and contexts."""
+        """Compute token-level overlap ratio between response and contexts."""
         if not contexts:
             return 0.0
 
@@ -109,7 +102,7 @@ class HallucinationDetector:
     def _compute_semantic_similarity(
         self, response_text: str, contexts: List[str]
     ) -> float:
-        """Cosine similarity between response and context embeddings."""
+        """Return max cosine similarity between response and context embeddings."""
         model = self._get_model()
         if model is None or not contexts:
             return 0.0
@@ -136,7 +129,7 @@ class HallucinationDetector:
     def _compute_source_attribution(
         self, response_text: str, contexts: List[str]
     ) -> float:
-        """Sentence-level grounding: what fraction of response sentences are grounded in context."""
+        """Return the fraction of response sentences grounded in context."""
         if not contexts:
             return 0.0
 
@@ -165,10 +158,7 @@ class HallucinationDetector:
         rag_contexts: List[str],
         user_query: str,
     ) -> ConfidenceResult:
-        """Score a response for hallucination risk.
-
-        Weights: 30% overlap + 50% semantic similarity + 20% source attribution
-        """
+        """Score a response for hallucination risk."""
         overlap = self._compute_context_overlap(response_text, rag_contexts)
         semantic = self._compute_semantic_similarity(response_text, rag_contexts)
         attribution = self._compute_source_attribution(response_text, rag_contexts)
@@ -182,7 +172,6 @@ class HallucinationDetector:
         else:
             level = ConfidenceLevel.LOW
 
-        # Record metrics
         RESPONSE_CONFIDENCE.observe(overall)
         HALLUCINATIONS_DETECTED.labels(level=level.value).inc()
 

@@ -7,7 +7,7 @@ from fastapi import Depends, FastAPI, HTTPException
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
-# Local module imports — must come after os.environ setup
+# Must come after os.environ setup
 from .monitoring.profile_utils import profile  # noqa: E402
 from .config import get_settings  # noqa: E402
 from .database.db import DatabaseManager  # noqa: E402
@@ -48,7 +48,7 @@ def _validate_tool_call(tool_name: str, tool_args: dict) -> tuple[bool, str]:
 
 
 def _build_router(settings) -> ModelRouter | None:
-    """Construct LLM providers and router from settings."""
+    """Build LLM provider chain from settings."""
     providers = []
     priority = [
         p.strip() for p in settings.llm_provider_priority.split(",") if p.strip()
@@ -369,7 +369,7 @@ def build_app() -> FastAPI:
 
     @app.post("/chat/v2")
     async def chat_v2(payload: dict, _: str = Depends(jwt_or_api_key)):
-        """Orchestrator-based chat endpoint (plan-then-execute)."""
+        """Orchestrator-based chat endpoint."""
         session_id = payload.get("session_id") or str(uuid.uuid4())
         user_text = payload.get("message")
 
@@ -438,7 +438,7 @@ def build_app() -> FastAPI:
 
     @app.get("/api/v1/traces")
     def get_traces(limit: int = 50):
-        """Return recent LLM call traces for debugging and cost monitoring."""
+        """Return recent LLM call traces."""
         if tracer is None:
             return {"ok": True, "traces": [], "summary": {}}
         return {
@@ -454,14 +454,14 @@ def build_app() -> FastAPI:
 
     @app.get("/api/v1/mcp/tools")
     def mcp_list_tools():
-        """MCP tool discovery — list available tools with JSON Schema."""
+        """MCP tool discovery endpoint."""
         if mcp is None:
             return {"tools": []}
         return {"tools": mcp.list_tools()}
 
     @app.post("/api/v1/mcp/call")
     async def mcp_call_tool(request: dict):
-        """MCP tool execution — call a tool by name with arguments."""
+        """MCP tool execution endpoint."""
         if mcp is None:
             return {"content": [{"type": "text", "text": "MCP server not available"}], "isError": True}
         name = request.get("name", "")
@@ -470,7 +470,7 @@ def build_app() -> FastAPI:
 
     @app.get("/api/v1/mcp/info")
     def mcp_server_info():
-        """MCP server metadata for discovery."""
+        """MCP server metadata endpoint."""
         if mcp is None:
             return {"error": "MCP server not available"}
         return mcp.get_server_info()

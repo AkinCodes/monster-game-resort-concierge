@@ -1,16 +1,4 @@
-"""
-LLM Observability & Tracing
-============================
-
-Lightweight per-call tracing for every LLM invocation. Captures provider,
-model, token counts, latency, and estimated cost -- all without external
-observability dependencies.
-
-Usage:
-    traced_router = LLMTracer(router)
-    response = await traced_router.chat(messages)  # automatically traced
-    traces = traced_router.recent_traces()
-"""
+"""Per-call LLM tracing — captures tokens, latency, and estimated cost."""
 
 from __future__ import annotations
 
@@ -33,7 +21,7 @@ logger = logging.getLogger("monster_resort")
 
 @dataclass
 class LLMCallTrace:
-    """Single LLM invocation record."""
+    """Single LLM call trace record."""
 
     provider_name: str
     model: str
@@ -71,7 +59,7 @@ _DEFAULT_PRICING: Dict[Tuple[str, str], Tuple[float, float]] = {
 
 
 class CostCalculator:
-    """Maps (provider, model) to per-token pricing and computes costs."""
+    """Maps (provider, model) to per-token pricing."""
 
     def __init__(
         self, pricing: Optional[Dict[Tuple[str, str], Tuple[float, float]]] = None
@@ -83,7 +71,7 @@ class CostCalculator:
     def estimate(
         self, provider: str, model: str, prompt_tokens: int, completion_tokens: int
     ) -> float:
-        """Return estimated cost in USD."""
+        """Return estimated cost in USD for the given token counts."""
         key = (provider, model)
         if key not in self._pricing:
             # Try wildcard match for the provider
@@ -102,12 +90,7 @@ class CostCalculator:
 # ---------------------------------------------------------------------------
 
 class LLMTracer(LLMProvider):
-    """Transparent wrapper that traces every chat() call.
-
-    It delegates to the wrapped provider and records latency, token usage,
-    and estimated cost for each invocation. Traces are kept in a bounded
-    in-memory deque and emitted as structured JSON log lines.
-    """
+    """Transparent tracing wrapper for any LLMProvider."""
 
     def __init__(
         self,
@@ -170,13 +153,13 @@ class LLMTracer(LLMProvider):
     # -- Query interface ------------------------------------------------------
 
     def recent_traces(self, limit: int = 100) -> List[dict]:
-        """Return the most recent traces as plain dicts (newest first)."""
+        """Return recent traces as dicts, newest first."""
         traces = list(self._traces)
         traces.reverse()
         return [t.to_dict() for t in traces[:limit]]
 
     def summary(self) -> dict:
-        """Aggregate stats across all stored traces."""
+        """Aggregate stats across stored traces."""
         traces = list(self._traces)
         if not traces:
             return {
@@ -204,7 +187,7 @@ class LLMTracer(LLMProvider):
 
     @property
     def providers(self):
-        """Forward .providers access so ModelRouter attributes stay reachable."""
+        """Forward .providers so ModelRouter attributes stay reachable."""
         return getattr(self._provider, "providers", [])
 
     @property

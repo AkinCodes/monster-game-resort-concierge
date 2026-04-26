@@ -1,17 +1,9 @@
-"""Input and output guardrails for the concierge chatbot.
-
-InputGuard  — screens user messages before they reach the LLM.
-OutputGuard — screens LLM responses before they reach the user.
-"""
+"""Input and output guardrails for the concierge chatbot."""
 
 from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-
-# ---------------------------------------------------------------------------
-# Shared helpers
-# ---------------------------------------------------------------------------
 
 _EMAIL_RE = re.compile(r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+")
 _PHONE_RE = re.compile(
@@ -33,16 +25,11 @@ _SSN_RE = re.compile(r"\b\d{3}-\d{2}-\d{4}\b")
 
 
 def _redact(text: str, pattern: re.Pattern, label: str) -> tuple[str, bool]:
-    """Replace all *pattern* matches in *text* with [REDACTED {label}]."""
+    """Replace all matches of *pattern* with a redaction placeholder."""
     new, n = pattern.subn(f"[REDACTED {label}]", text)
     return new, n > 0
 
 
-# ---------------------------------------------------------------------------
-# InputGuard
-# ---------------------------------------------------------------------------
-
-# Patterns that signal a prompt-injection attempt.
 _INJECTION_PATTERNS: list[re.Pattern] = [
     re.compile(p, re.IGNORECASE)
     for p in [
@@ -62,8 +49,6 @@ _INJECTION_PATTERNS: list[re.Pattern] = [
     ]
 ]
 
-# Off-topic signals: requests that clearly have nothing to do with a
-# hotel/resort concierge.  We keep this narrow so normal chitchat passes.
 _OFFTOPIC_PATTERNS: list[re.Pattern] = [
     re.compile(p, re.IGNORECASE)
     for p in [
@@ -79,20 +64,15 @@ _OFFTOPIC_PATTERNS: list[re.Pattern] = [
 
 @dataclass
 class InputGuard:
-    """Pre-LLM screening of user messages."""
-
     def check_prompt_injection(self, text: str) -> tuple[bool, str]:
-        """Return ``(is_safe, reason)``.
-
-        ``is_safe`` is *True* when no injection pattern is detected.
-        """
+        """Return ``(is_safe, reason)`` after scanning for injection patterns."""
         for pattern in _INJECTION_PATTERNS:
             if pattern.search(text):
                 return False, f"Prompt injection detected: {pattern.pattern}"
         return True, ""
 
     def check_pii(self, text: str) -> tuple[str, list[str]]:
-        """Detect and redact PII.  Returns ``(redacted_text, pii_types_found)``."""
+        """Detect and redact PII, returning the cleaned text and types found."""
         found: list[str] = []
         text, hit = _redact(text, _EMAIL_RE, "EMAIL")
         if hit:
@@ -109,19 +89,12 @@ class InputGuard:
         return text, found
 
     def check_topic_boundary(self, text: str) -> bool:
-        """Return *True* if the message is on-topic (or harmless chitchat).
-
-        Only returns *False* for clearly off-topic / adversarial requests.
-        """
+        """Return *True* if the message is on-topic or harmless chitchat."""
         for pattern in _OFFTOPIC_PATTERNS:
             if pattern.search(text):
                 return False
         return True
 
-
-# ---------------------------------------------------------------------------
-# OutputGuard
-# ---------------------------------------------------------------------------
 
 _LEAKED_PROMPT_PATTERNS: list[re.Pattern] = [
     re.compile(p, re.IGNORECASE)
@@ -145,27 +118,18 @@ _CHARACTER_BREAK_PATTERNS: list[re.Pattern] = [
 
 @dataclass
 class OutputGuard:
-    """Post-LLM screening of responses."""
-
-    # PII types found in the *input* — these are allowed in the output.
     input_pii_types: list[str] = field(default_factory=list)
 
     def check_response(self, text: str) -> tuple[bool, str]:
-        """Return ``(is_safe, reason)``.
-
-        ``is_safe`` is *True* when the response passes all checks.
-        """
-        # 1. Leaked system prompt fragments
+        """Return ``(is_safe, reason)`` after running all output checks."""
         for pattern in _LEAKED_PROMPT_PATTERNS:
             if pattern.search(text):
                 return False, "Response may contain leaked system prompt content"
 
-        # 2. Breaking character
         for pattern in _CHARACTER_BREAK_PATTERNS:
             if pattern.search(text):
                 return False, "Response breaks character (AI self-reference)"
 
-        # 3. New PII that wasn't in the user input
         output_has_email = bool(_EMAIL_RE.search(text))
         output_has_cc = bool(_CC_RE.search(text))
         output_has_ssn = bool(_SSN_RE.search(text))

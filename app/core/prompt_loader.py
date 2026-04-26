@@ -1,10 +1,4 @@
-"""
-Prompt Loader — loads prompt templates from YAML files.
-
-Keeps prompts out of Python source and in version-controlled YAML files
-under the ``prompts/`` directory. Loaded prompts are cached in memory so
-each file is read at most once per process.
-"""
+"""Prompt Loader — loads and caches prompt templates from YAML files."""
 
 from __future__ import annotations
 
@@ -15,7 +9,6 @@ from typing import Any
 
 import yaml
 
-# Default prompts directory: <project_root>/prompts/
 _PROMPTS_DIR = Path(__file__).resolve().parent.parent.parent / "prompts"
 
 
@@ -27,17 +20,7 @@ def _load_yaml(file_path: str) -> dict[str, Any]:
 
 
 def load_prompt(name: str, **kwargs: str) -> str:
-    """Load a prompt template and apply variable substitution.
-
-    ``name`` uses dot-notation to address nested keys:
-      - ``"planner"``            -> prompts/planner.yaml  -> data["prompt"]
-      - ``"executor.knowledge"`` -> prompts/executor.yaml -> data["knowledge"]["prompt"]
-
-    Keyword arguments are substituted into the template using
-    ``str.format_map``, so templates should use ``{variable}`` placeholders.
-    Double braces ``{{`` / ``}}`` are preserved literally (useful for JSON
-    examples inside prompts).
-    """
+    """Return a prompt template resolved by dot-notation name, with optional variable substitution."""
     parts = name.split(".")
     file_name = parts[0]
     yaml_path = str(_PROMPTS_DIR / f"{file_name}.yaml")
@@ -47,7 +30,6 @@ def load_prompt(name: str, **kwargs: str) -> str:
 
     data = _load_yaml(yaml_path)
 
-    # Navigate into nested keys (e.g. "executor.knowledge" -> data["knowledge"])
     node = data
     for key in parts[1:]:
         if not isinstance(node, dict) or key not in node:
@@ -56,7 +38,6 @@ def load_prompt(name: str, **kwargs: str) -> str:
             )
         node = node[key]
 
-    # The final node should either be a string or a dict with a "prompt" key
     if isinstance(node, dict):
         template = node.get("prompt")
         if template is None:

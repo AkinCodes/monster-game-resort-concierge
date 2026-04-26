@@ -1,17 +1,4 @@
-"""
-Multi-Agent Orchestrator for Monster Resort Concierge.
-
-Separates PLANNING (what to do) from EXECUTION (how to do it).
-
-Architecture:
-    User query --> Planner (lightweight LLM) --> Plan --> Executor --> Response
-
-The planner classifies intent into one of four categories:
-    - knowledge: search the RAG for resort information
-    - tool: invoke a registered tool (book_room, get_booking, etc.)
-    - clarify: ask the user for missing information
-    - chitchat: respond directly without tools
-"""
+"""Multi-Agent Orchestrator: Planner classifies intent, Executor acts on it."""
 
 from __future__ import annotations
 
@@ -64,9 +51,6 @@ class ExecutionResult:
     confidence: object = None
 
 
-# Prompts are loaded from YAML files in the prompts/ directory.
-# See: prompts/planner.yaml, prompts/executor.yaml
-
 
 class ConciergeOrchestrator:
     """Two-agent orchestrator: Planner decides, Executor acts."""
@@ -87,11 +71,7 @@ class ConciergeOrchestrator:
         self._costs = CostAccumulator()
 
     async def plan(self, user_message: str, session_id: str) -> Plan:
-        """Agent 1: Analyze the user's intent and create an execution plan.
-
-        Uses a lightweight LLM call with a structured prompt to classify
-        the intent and extract parameters. Falls back to chitchat on error.
-        """
+        """Classify user intent and create an execution plan; falls back to chitchat on error."""
         start = time.monotonic()
 
         available_tools = self.tools.list()
@@ -151,14 +131,7 @@ class ConciergeOrchestrator:
             )
 
     def _parse_plan(self, raw: str) -> Plan:
-        """Parse the planner's JSON response into a Plan object.
-
-        Fallback chain:
-        1. Direct json.loads() -- works when native structured output is enabled
-        2. StructuredOutputParser._extract_json() -- handles markdown fences,
-           surrounding prose, and other LLM quirks via raw_decode()
-        3. Keyword heuristic -- last resort when no valid JSON is found
-        """
+        """Parse planner JSON into a Plan; falls back to keyword heuristic."""
         data = None
 
         try:
@@ -178,7 +151,7 @@ class ConciergeOrchestrator:
                 "planner_json_parse_failed",
                 extra={"raw": raw[:200]},
             )
-            # Heuristic fallback: check for keywords in raw text
+            # Heuristic fallback
             lower = raw.lower()
             if any(kw in lower for kw in ["book", "reserve", "lookup", "get_booking"]):
                 return Plan(
@@ -314,7 +287,6 @@ class ConciergeOrchestrator:
                 plan=plan,
             )
 
-        # Inject session_id if the tool expects it
         args = dict(plan.tool_args)
         if "session_id" not in args:
             args["session_id"] = session_id
@@ -324,7 +296,6 @@ class ConciergeOrchestrator:
             plan.tool_name, request_id=request_id, **args
         )
 
-        # Generate a human-friendly summary of the tool result
         prompt = load_prompt(
             "executor.tool_result",
             tool_name=plan.tool_name,
@@ -401,11 +372,7 @@ class ConciergeOrchestrator:
         )
 
     async def handle(self, user_message: str, session_id: str) -> ExecutionResult:
-        """Full orchestration: plan then execute.
-
-        This is the main entry point. It runs the planner, logs the decision,
-        runs the executor, and saves the exchange to memory.
-        """
+        """Main entry point: plan, execute, save to memory."""
         overall_start = time.monotonic()
 
         plan = await self.plan(user_message, session_id)
@@ -472,7 +439,6 @@ class ConciergeOrchestrator:
         else:
             self._total_executor_tokens += total
 
-        # Record cost if we have model info
         model = response.model if response else ""
         if model:
             cost = self._costs.record(model, usage)

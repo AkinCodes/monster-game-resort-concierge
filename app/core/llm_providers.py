@@ -1,11 +1,4 @@
-"""
-Multi-Model LLM Orchestration Layer
-====================================
-
-Provides a unified interface for multiple LLM providers (OpenAI, Anthropic, Ollama)
-with automatic fallback routing. Each provider translates to/from a normalized
-message format so the rest of the application is provider-agnostic.
-"""
+"""Unified interface for multiple LLM providers with automatic fallback routing."""
 
 from __future__ import annotations
 
@@ -241,9 +234,7 @@ class AnthropicProvider(LLMProvider):
             "messages": anthropic_msgs,
         }
         if system_text:
-            # Prompt caching: mark the system prompt as cacheable so repeated
-            # calls with the same system prompt hit Anthropic's prompt cache,
-            # reducing latency and cost on multi-turn conversations.
+            # Prompt caching: reduces latency/cost on multi-turn conversations
             kwargs["system"] = [
                 {
                     "type": "text",

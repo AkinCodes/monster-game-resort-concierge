@@ -1,18 +1,4 @@
-"""
-MCP (Model Context Protocol) Server
-====================================
-
-Exposes the Monster Game Resort Concierge's tools via the MCP standard,
-allowing any MCP-compatible agent or client to discover and call them.
-
-Tools are dynamically read from the ToolRegistry — single source of truth.
-No hardcoded tool list. Add a tool to the registry and it automatically
-appears in MCP.
-
-Usage:
-    # Import and mount in your FastAPI app
-    mcp = MCPServer(tool_registry=registry)
-"""
+"""MCP tool server — exposes ToolRegistry tools via the MCP JSON-RPC protocol."""
 
 from __future__ import annotations
 
@@ -26,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 def _openai_to_mcp_schema(openai_schema: dict) -> dict:
-    """Convert an OpenAI function-calling schema to MCP tool format."""
+    """Convert OpenAI function-calling schema to MCP tool format."""
     fn = openai_schema.get("function", openai_schema)
     return {
         "name": fn.get("name", ""),
@@ -37,22 +23,14 @@ def _openai_to_mcp_schema(openai_schema: dict) -> dict:
 
 @dataclass
 class MCPServer:
-    """Lightweight MCP-compatible tool server.
-
-    Implements the core MCP tool discovery and execution protocol
-    without requiring the full MCP SDK. Compatible with any client
-    that speaks the MCP JSON-RPC protocol over stdio or HTTP.
-
-    Tools are read dynamically from the ToolRegistry — no hardcoded
-    tool list. Single source of truth prevents drift.
-    """
+    """MCP-compatible tool server backed by ToolRegistry."""
 
     tool_registry: Any  # ToolRegistry instance from tools.py
     server_name: str = "monster-resort-concierge"
     server_version: str = "1.0.0"
 
     def list_tools(self) -> List[dict]:
-        """MCP tools/list — dynamically read from the registry."""
+        """Return all registered tools in MCP format."""
         mcp_tools = []
         for tool in self.tool_registry.list():
             schema = tool.to_openai_schema()
@@ -61,7 +39,7 @@ class MCPServer:
         return mcp_tools
 
     async def call_tool(self, name: str, arguments: Dict[str, Any]) -> dict:
-        """MCP tools/call — execute a tool and return structured result."""
+        """Execute a tool by name and return structured MCP result."""
         request_id = str(uuid.uuid4())[:8]
         tool = self.tool_registry.get(name)
 
@@ -120,7 +98,7 @@ class MCPServer:
             }
 
     async def handle_jsonrpc(self, request: dict) -> dict:
-        """Handle a single MCP JSON-RPC request."""
+        """Dispatch a single MCP JSON-RPC request."""
         method = request.get("method", "")
         req_id = request.get("id")
         params = request.get("params", {})
@@ -160,7 +138,7 @@ class MCPServer:
             }
 
     def get_server_info(self) -> dict:
-        """Return MCP server metadata for discovery endpoints."""
+        """Return server metadata for discovery endpoints."""
         tools = self.list_tools()
         return {
             "name": self.server_name,

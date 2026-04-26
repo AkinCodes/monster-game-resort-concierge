@@ -1,9 +1,4 @@
-"""
-Cost Tracker — estimates per-request cost from model name and token counts.
-
-Pricing is loaded from configs/model_pricing.yaml at startup.
-Update the YAML file when providers change rates — no code changes needed.
-"""
+"""Cost Tracker — estimates per-request cost from model name and token counts."""
 
 from __future__ import annotations
 
@@ -24,7 +19,7 @@ PRICING_PATH = os.path.join(
 
 @lru_cache(maxsize=1)
 def _load_pricing() -> Dict[str, Tuple[float, float]]:
-    """Load model pricing from YAML config. Cached after first call."""
+    """Return model pricing dict from YAML config, cached after first call."""
     try:
         with open(PRICING_PATH, "r") as f:
             raw = yaml.safe_load(f) or {}
@@ -46,7 +41,7 @@ def _load_pricing() -> Dict[str, Tuple[float, float]]:
 
 
 def _fallback_pricing() -> Dict[str, Tuple[float, float]]:
-    """Hardcoded fallback if YAML is missing or corrupt."""
+    """Return hardcoded fallback pricing."""
     return {
         "gpt-4o-mini": (0.15, 0.60),
         "gpt-4o": (2.50, 10.00),
@@ -55,7 +50,7 @@ def _fallback_pricing() -> Dict[str, Tuple[float, float]]:
 
 
 def reload_pricing() -> None:
-    """Clear the pricing cache so the next call re-reads the YAML file."""
+    """Clear the pricing cache so the next call re-reads from disk."""
     _load_pricing.cache_clear()
     logger.info("pricing_cache_cleared")
 
@@ -65,16 +60,11 @@ def estimate_cost(
     prompt_tokens: int = 0,
     completion_tokens: int = 0,
 ) -> float:
-    """Return estimated cost in USD for a single LLM call.
-
-    Falls back to gpt-4o-mini pricing if the model is unknown so the
-    tracker never crashes — it just logs a warning.
-    """
+    """Return estimated cost in USD for a single LLM call."""
     model_pricing = _load_pricing()
     pricing = model_pricing.get(model)
 
     if pricing is None:
-        # Try prefix matching, longest key first so "gpt-4o" matches before "gpt-4"
         for key in sorted(model_pricing, key=len, reverse=True):
             if model.startswith(key):
                 pricing = model_pricing[key]
@@ -91,14 +81,14 @@ def estimate_cost(
 
 @dataclass
 class CostAccumulator:
-    """Tracks cumulative cost across multiple LLM calls."""
+    """Accumulates cost across multiple LLM calls."""
 
     total_cost_usd: float = 0.0
     call_count: int = 0
     _by_model: dict[str, float] = field(default_factory=dict)
 
     def record(self, model: str, usage: dict) -> float:
-        """Record a single call's cost. Returns the cost of this call."""
+        """Record a single call's cost and return it."""
         cost = estimate_cost(
             model,
             prompt_tokens=usage.get("prompt_tokens", 0),

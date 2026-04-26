@@ -125,18 +125,16 @@ class MemoryStore:
                 )
 
     def _cheap_summary(self, lines: list[str]) -> str:
-        """Extract key information without LLM"""
+        """Regex-based fallback when LLM summarization is unavailable."""
         import re
 
         intents = []
         entities = []
         for line in lines:
-            # Extract common intents
             if re.search(r"\b(book|reserve|cancel)\b", line, re.I):
                 intents.append("booking")
             if re.search(r"\b(invoice|receipt|pdf)\b", line, re.I):
                 intents.append("invoice")
-            # Extract capitalized words (likely names/places)
             entities.extend(re.findall(r"\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b", line))
         intent_summary = f"Intents: {', '.join(set(intents))}" if intents else ""
         entity_summary = (
