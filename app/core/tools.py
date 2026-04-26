@@ -154,7 +154,6 @@ class ToolRegistry:
         # --- Rate-limit check ---
         now = time()
         timestamps = _tool_call_timestamps[name]
-        # Prune entries older than the window
         cutoff = now - RATE_LIMIT_WINDOW
         _tool_call_timestamps[name] = [t for t in timestamps if t > cutoff]
         if len(_tool_call_timestamps[name]) >= RATE_LIMIT_MAX:

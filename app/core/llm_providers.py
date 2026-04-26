@@ -23,7 +23,7 @@ from ..monitoring.logging_utils import logger
 class LLMToolCall:
     id: str
     name: str
-    arguments: str  # JSON string
+    arguments: str
 
 
 @dataclass
@@ -86,7 +86,7 @@ class OpenAIProvider(LLMProvider):
         return True
 
     def translate_tool_schemas(self, openai_schemas: List[dict]) -> List[dict]:
-        return openai_schemas  # native format
+        return openai_schemas
 
     def _to_openai_messages(self, messages: List[LLMMessage]) -> List[dict]:
         out = []

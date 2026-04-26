@@ -35,7 +35,6 @@ from .monitoring.logging_utils import setup_logging  # noqa: E402
 from .validation.validators import validate_message  # noqa: E402
 from .core.guardrails import InputGuard, OutputGuard  # noqa: E402
 
-# Initialize Logger
 logger = setup_logging()
 
 
@@ -93,7 +92,6 @@ def build_app() -> FastAPI:
     app.state.api_key_manager = api_key_manager
     pdf = PDFGenerator(settings.pdf_output_dir)
 
-    # Initialize cache — Redis if enabled and reachable, otherwise in-memory
     app_cache = get_cache(
         redis_url=settings.redis_url if settings.redis_enabled else None,
     )
@@ -133,27 +131,23 @@ def build_app() -> FastAPI:
             "tools": registry.get_openai_tool_schemas(),
         }
 
-    # Build multi-model router and wrap with observability tracer
     raw_router = _build_router(settings)
     tracer: LLMTracer | None = None
     if raw_router is not None:
         tracer = LLMTracer(raw_router)
     router = tracer  # traced router used everywhere; None if no providers
 
-    # Hallucination detector
     detector = HallucinationDetector(
         high_threshold=settings.hallucination_high_threshold,
         medium_threshold=settings.hallucination_medium_threshold,
     )
 
-    # MLflow tracker (graceful noop if disabled)
     tracker = MLflowTracker(
         tracking_uri=settings.mlflow_tracking_uri,
         experiment_name=settings.mlflow_experiment_name,
         enabled=settings.mlflow_enabled,
     )
 
-    # Build orchestrator for v2 endpoint
     orchestrator = None
     if router is not None:
         orchestrator = ConciergeOrchestrator(
@@ -163,7 +157,6 @@ def build_app() -> FastAPI:
             memory_store=memory,
         )
 
-    # Guardrails
     input_guard = InputGuard()
 
     # --- AGENT LOGIC ---
@@ -235,7 +228,6 @@ def build_app() -> FastAPI:
                 "8. FAREWELL: End with 'We await your shadow' or 'May your rest be eternal (until check-out).'\n"
             )
 
-            # Build LLMMessage history
             past_messages = memory.get_messages(session_id)
             chat_history: list[LLMMessage] = [
                 LLMMessage(role="system", content=system_prompt_content)
@@ -249,11 +241,9 @@ def build_app() -> FastAPI:
 
             tool_schemas = registry.get_openai_tool_schemas()
 
-            # Phase 1: initial LLM call (may include tool calls)
             llm_resp = await router.chat(chat_history, tools=tool_schemas)
 
             if llm_resp.tool_calls:
-                # Add assistant message with tool calls to history
                 chat_history.append(
                     LLMMessage(
                         role="assistant",
@@ -301,11 +291,9 @@ def build_app() -> FastAPI:
                         )
                     )
 
-                # Phase 2: synthesis call
                 llm_resp2 = await router.chat(chat_history)
                 final_message = llm_resp2.content
 
-                # Output guardrails
                 output_guard = OutputGuard(input_pii_types=pii_types)
                 out_safe, out_reason = output_guard.check_response(final_message)
                 if not out_safe:
@@ -315,12 +303,10 @@ def build_app() -> FastAPI:
                         "How else may I assist you with your stay?"
                     )
 
-                # Confidence scoring
                 confidence = detector.score_response(
                     final_message, rag_contexts, text
                 )
 
-                # Optional MLflow logging
                 tracker.log_confidence_metrics(confidence, provider=llm_resp2.provider)
 
                 return {
@@ -330,10 +316,8 @@ def build_app() -> FastAPI:
                     "provider": llm_resp2.provider,
                 }
 
-            # No tool calls — direct response
             response_text = llm_resp.content
 
-            # Output guardrails
             output_guard = OutputGuard(input_pii_types=pii_types)
             out_safe, out_reason = output_guard.check_response(response_text)
             if not out_safe:
@@ -491,7 +475,6 @@ def build_app() -> FastAPI:
             return {"error": "MCP server not available"}
         return mcp.get_server_info()
 
-    # Startup Ingestion
     knowledge_path = os.path.join(os.getcwd(), "data", "knowledge")
     if os.path.exists(knowledge_path):
         logger.info(f"Ingesting knowledge from {knowledge_path}...")

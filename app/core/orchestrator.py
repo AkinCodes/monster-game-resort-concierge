@@ -94,12 +94,10 @@ class ConciergeOrchestrator:
         """
         start = time.monotonic()
 
-        # Build tool list for the planner prompt
         available_tools = self.tools.list()
         tool_descriptions = [f"{t.name}: {t.description}" for t in available_tools]
         tool_list = "; ".join(tool_descriptions) if tool_descriptions else "(none)"
 
-        # Get recent conversation for context
         history = self.memory.get_messages(session_id, limit=5)
         history_text = self._format_history(history)
 
@@ -117,7 +115,6 @@ class ConciergeOrchestrator:
         ]
 
         try:
-            # Request native structured JSON output when the provider supports it
             response_format = None
             if getattr(self.llm, "supports_response_format", False):
                 response_format = {"type": "json_object"}
@@ -164,13 +161,11 @@ class ConciergeOrchestrator:
         """
         data = None
 
-        # 1) Try direct parse (native structured output produces clean JSON)
         try:
             data = json.loads(raw)
         except (json.JSONDecodeError, TypeError):
             pass
 
-        # 2) Fallback: extract JSON from messy LLM text
         if data is None:
             try:
                 extracted = StructuredOutputParser._extract_json(raw)
@@ -263,7 +258,6 @@ class ConciergeOrchestrator:
         query = plan.search_query or user_message
         rag_results = self.rag.search(query, k=5)
 
-        # Extract documents and sources from RAG results
         docs = rag_results.get("results", [])
         context_parts = []
         sources = []
@@ -441,7 +435,6 @@ class ConciergeOrchestrator:
                     extra={"error": str(exc)},
                 )
 
-        # Save exchange to memory
         self.memory.add_message(session_id, "user", user_message)
         self.memory.add_message(session_id, "assistant", result.response)
 

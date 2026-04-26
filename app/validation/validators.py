@@ -24,7 +24,6 @@ def validate_message(message) -> str:
         raise ValidationError("Message cannot be empty")
     if len(user_text) > 5000:
         raise ValidationError("Message too long (max 5000 characters)")
-    # SQL injection
     dangerous_sql = [
         "DROP TABLE",
         "DELETE FROM",
@@ -38,7 +37,6 @@ def validate_message(message) -> str:
     ]
     if any(pattern in user_text.upper() for pattern in dangerous_sql):
         raise ValidationError("Potentially malicious SQL detected")
-    # XSS prevention
     xss_patterns = [
         r"<script[^>]*>.*?</script>",
         r"javascript:",
@@ -50,6 +48,5 @@ def validate_message(message) -> str:
     for pattern in xss_patterns:
         if re.search(pattern, user_text, re.IGNORECASE):
             raise ValidationError("Potentially malicious HTML detected")
-    # Sanitize HTML
     user_text = sanitize_html(user_text)
     return user_text

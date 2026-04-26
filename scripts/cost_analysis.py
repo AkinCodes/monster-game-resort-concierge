@@ -18,7 +18,6 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-# Ensure project root is on sys.path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
@@ -94,7 +93,6 @@ def main() -> None:
     print(f"- Most expensive for 10 turns: **{most_expensive[0]}** (${most_expensive[3]:.6f})")
     print(f"- Local Llama 3 is free but requires GPU/CPU resources")
 
-    # 10-turn token totals for reference
     total_prompt = sum(200 + (t * 40) for t in range(10))
     total_completion = 100 * 10
     print(f"\n10-turn totals: {total_prompt} prompt tokens + {total_completion} completion tokens = {total_prompt + total_completion} total tokens")

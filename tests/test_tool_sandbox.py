@@ -31,8 +31,6 @@ def _make_registry_with(name: str, fn):
 
 @pytest.mark.asyncio
 async def test_tool_timeout_returns_error():
-    """A tool that sleeps longer than TOOL_TIMEOUT returns a structured error."""
-
     async def slow_tool(**kwargs):
         await asyncio.sleep(TOOL_TIMEOUT + 5)
         return {"ok": True}
@@ -47,8 +45,6 @@ async def test_tool_timeout_returns_error():
 
 @pytest.mark.asyncio
 async def test_fast_tool_succeeds():
-    """A tool that finishes quickly returns its normal result."""
-
     async def fast_tool(**kwargs):
         return {"ok": True, "data": 42}
 
@@ -63,19 +59,15 @@ async def test_fast_tool_succeeds():
 
 @pytest.mark.asyncio
 async def test_rate_limit_rejects_after_threshold():
-    """After RATE_LIMIT_MAX calls, subsequent calls are rejected."""
-
     async def echo(**kwargs):
         return {"ok": True}
 
     reg = _make_registry_with("echo", echo)
 
-    # Fill up the rate window
     for i in range(RATE_LIMIT_MAX):
         result = await reg.async_execute_with_timing("echo", request_id=f"r{i}")
         assert result["ok"] is True
 
-    # Next call should be rejected
     result = await reg.async_execute_with_timing("echo", request_id="over")
     assert result["ok"] is False
     assert "Rate limit" in result["error"]
@@ -83,8 +75,6 @@ async def test_rate_limit_rejects_after_threshold():
 
 @pytest.mark.asyncio
 async def test_rate_limit_different_tools_independent():
-    """Rate limits are tracked per tool, not globally."""
-
     async def noop(**kwargs):
         return {"ok": True}
 
@@ -92,10 +82,8 @@ async def test_rate_limit_different_tools_independent():
     reg.tools["tool_a"] = Tool(name="tool_a", description="a", fn=noop)
     reg.tools["tool_b"] = Tool(name="tool_b", description="b", fn=noop)
 
-    # Exhaust tool_a
     for i in range(RATE_LIMIT_MAX):
         await reg.async_execute_with_timing("tool_a", request_id=f"a{i}")
 
-    # tool_b should still work
     result = await reg.async_execute_with_timing("tool_b", request_id="b0")
     assert result["ok"] is True

@@ -351,7 +351,6 @@ _METRIC_KEYS = [
     "precision_at_3", "precision_at_5", "precision_at_10",
 ]
 
-# Thresholds for pass/fail
 _PASS_THRESHOLDS = {"mrr": 0.5, "recall_at_5": 0.5}
 
 
@@ -380,7 +379,6 @@ def save_report(report: RetrievalReport, output_path: Path) -> None:
         json.dump(data, f, indent=2)
     print(f"Report saved to {output_path}")
 
-    # Append to eval history (JSONL)
     metrics = _build_metrics_dict(report)
     history_path = output_path.parent / "eval_history.jsonl"
     entry = {

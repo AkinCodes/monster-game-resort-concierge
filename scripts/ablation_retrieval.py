@@ -24,7 +24,6 @@ import time
 from pathlib import Path
 from typing import Dict, List
 
-# Ensure project root is on sys.path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
@@ -151,7 +150,6 @@ def run_ablation() -> Dict:
         reranker_model="BAAI/bge-reranker-base",
     )
 
-    # Force re-ingest if empty
     if rag.collection.count() == 0:
         print(f"      Ingesting from {KNOWLEDGE_DIR} ...")
         count = rag.ingest_folder(str(KNOWLEDGE_DIR))
@@ -214,7 +212,6 @@ def run_ablation() -> Dict:
                 "top_result_preview": texts[0][:120] if texts else "(none)",
             })
 
-        # Aggregate
         n = len(config_metrics["latencies_ms"])
         avg_latency = sum(config_metrics["latencies_ms"]) / n if n else 0
         avg_results = sum(config_metrics["result_counts"]) / n if n else 0

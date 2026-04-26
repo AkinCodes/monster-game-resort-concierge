@@ -222,7 +222,6 @@ class TestLLMTracer:
         await tracer.chat(messages)
 
         traces = tracer.recent_traces()
-        # Newest first
         assert traces[0]["model"] == "m2"
         assert traces[1]["model"] == "m1"
 

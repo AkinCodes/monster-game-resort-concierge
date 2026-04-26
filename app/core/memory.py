@@ -45,7 +45,6 @@ class MemoryStore:
                 (now, session_id),
             )
 
-        # summarise if needed
         self._maybe_summarise(session_id)
 
     def get_messages(self, session_id: str, limit: int = 50) -> list[dict]:
@@ -64,7 +63,6 @@ class MemoryStore:
             import openai
         except ImportError:
             openai = None
-        # Try to get model from settings or env, fallback to gpt-4o
         model = os.getenv("MRC_OPENAI_MODEL") or os.getenv("OPENAI_MODEL") or "gpt-4o"
         with self.db.session() as conn:
             count = conn.execute(
@@ -80,7 +78,6 @@ class MemoryStore:
             if not rows:
                 return
             lines = [f"{r['role']}: {r['content']}" for r in rows]
-            # Try LLM summarization if OpenAI API key is set
             openai_api_key = os.getenv("OPENAI_API_KEY")
             summary = None
             if openai and openai_api_key:

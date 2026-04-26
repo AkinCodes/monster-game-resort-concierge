@@ -53,7 +53,6 @@ class TestParsePlanFallbackChain:
         orch = object.__new__(ConciergeOrchestrator)
         return orch._parse_plan
 
-    # Level 1: direct json.loads (native structured output)
     def test_clean_json_parsed_directly(self, parse):
         raw = json.dumps({
             "intent": "tool",
@@ -67,7 +66,6 @@ class TestParsePlanFallbackChain:
         assert plan.tool_name == "book_room"
         assert plan.tool_args == {"guest": "Frankenstein"}
 
-    # Level 2: raw_decode extraction from messy text
     def test_json_with_prose_falls_to_extract(self, parse):
         raw = (
             'Here is my analysis:\n'
@@ -84,7 +82,6 @@ class TestParsePlanFallbackChain:
         plan = parse(raw)
         assert plan.intent == IntentType.CLARIFY
 
-    # Level 3: keyword heuristic
     def test_no_json_uses_keyword_heuristic_tool(self, parse):
         plan = parse("I think we should book a room for the guest")
         assert plan.intent == IntentType.TOOL
