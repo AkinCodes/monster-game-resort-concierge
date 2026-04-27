@@ -492,3 +492,63 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+# ==========================================================================
+# STUDY NOTES — retrieval_ground_truth.json
+# ==========================================================================
+#
+# What is retrieval_ground_truth.json?
+#
+#   It's the ANSWER KEY for measuring how good your RAG retrieval is.
+#
+#   When this script runs, it takes each query (e.g., "What are the
+#   check-in times?"), sends it through the retrieval pipeline (BM25 +
+#   dense + reranker), and checks: did the retrieved chunks contain
+#   these specific snippets?
+#
+#   - "query" = the test question
+#   - "relevant_snippets" = phrases that SHOULD appear in retrieved results
+#   - "source_files" = which knowledge base files contain the answer
+#
+#   Without that file, you can report "retrieval works" but not
+#   "retrieval finds the right answer 75% of the time." That's the
+#   difference between "I built it" and "I measured it."
+#
+#
+# Metrics this script computes:
+#
+#   - MRR (Mean Reciprocal Rank) — where does the first relevant
+#     result appear? 1st position = 1.0, 2nd = 0.5, 3rd = 0.33.
+#
+#   - Precision@K — of the top K results, how many were relevant?
+#     7 out of 10 = 0.7 precision. You retrieved 3 duds.
+#
+#   - Recall@K — of ALL relevant docs, how many appeared in top K?
+#     Found 3 out of 5 = 0.6. You missed 2 hidden gems.
+#
+#
+# How matching works:
+#
+#   Case-insensitive substring matching. For each query, retrieve
+#   top-K chunks from the pipeline, then check if any retrieved chunk
+#   contains each snippet as a substring. A snippet "matches" if it
+#   appears anywhere inside any retrieved chunk.
+#
+#
+# The 13 queries (by type):
+#
+#   1-8:  Factoid lookups (check-in times, pet policy, WiFi, etc.)
+#   9:    Intent query (Zombie B&B booking for non-zombies)
+#   10:   Untested property (Mummy Resort spa)
+#   11:   Multi-hop reasoning (romantic Valentine's — crosses 2 files)
+#   12:   Untested topic (cryptocurrency payment)
+#   13:   Cross-file lookup (Halloween booking timeline)
+#
+#
+# How to run:
+#
+#   python evals/eval_retrieval.py --live          # real RAG pipeline
+#   python evals/eval_retrieval.py --compare-last  # delta vs last run
+#
+# ==========================================================================
