@@ -4,20 +4,48 @@ Quantitative evaluation of the Monster Game Resort Concierge across retrieval qu
 
 ---
 
+## Retrieval Quality (Ground Truth Evaluation)
+
+13 queries evaluated against a ground truth answer key (`evals/retrieval_ground_truth.json`). Each query is sent through the retrieval pipeline and checked: did the retrieved chunks contain the expected snippets?
+
+**Live mode (real AdvancedRAG pipeline — BM25 + dense + cross-encoder reranker):**
+
+| Metric | Score |
+|--------|-------|
+| MRR | 0.756 |
+| Recall@3 | 76.9% |
+| Recall@10 | 78.5% |
+| Precision@3 | 46.2% |
+
+11 of 13 queries find the correct answer in position 1 or 2. Two queries fail completely (Werewolf spa, Frankenstein dining) — both are amenity lookups where the chunker splits the relevant section across chunk boundaries. Fix path: parent-document retrieval or overlapping chunk windows.
+
+```bash
+# Run against live RAG pipeline
+python evals/eval_retrieval.py --live
+
+# Run against mock corpus (fast, reproducible, no ML deps)
+python evals/eval_retrieval.py
+
+# Compare against previous run
+python evals/eval_retrieval.py --compare-last
+```
+
+---
+
 ## Retrieval Ablation
 
-How much does each retrieval stage contribute? The table below isolates the impact of BM25, dense vectors, fusion, and cross-encoder reranking on the 8-query evaluation set.
+How much does each retrieval stage contribute? Isolating BM25, dense vectors, fusion, and reranking.
 
 | Config | MRR@5 | Precision@5 | Latency (ms) |
 |--------|-------|-------------|---------------|
-| BM25-only | Pending | Pending | Pending |
-| Dense-only (ChromaDB) | Pending | Pending | Pending |
-| Hybrid (BM25 + Dense + RRF) | Pending | Pending | Pending |
-| Hybrid + Cross-Encoder Reranker | Pending | Pending | Pending |
+| BM25-only | 0.42 | 0.15 | 0.1 |
+| Dense-only (ChromaDB) | 0.75 | 0.30 | 9.0 |
+| Hybrid (BM25 + Dense + RRF) | 0.58 | 0.30 | 10.2 |
+| Hybrid + Cross-Encoder Reranker | 0.67 | 0.33 | 1,087 |
 
 > Run `python scripts/ablation_retrieval.py` to reproduce.
 
-**What to look for:** BM25-only should win on exact hotel name queries (e.g., "Vampire Manor amenities") but lose on semantic queries (e.g., "somewhere relaxing with a spa"). Dense-only should show the inverse. Hybrid + Reranker should dominate both, at the cost of ~50ms additional latency.
+**Key finding:** Dense-only achieves the best MRR (0.75) on this small corpus. The cross-encoder reranker adds ~1s latency for marginal precision gain (+0.03). On a larger, noisier corpus the reranker's benefit would be more pronounced.
 
 ---
 
@@ -99,7 +127,7 @@ Estimated cost per 10-turn conversation by model, assuming average token usage o
 - **Streaming is incomplete.** The `/chat/stream` endpoint exists but hallucination detection runs after full generation, so confidence scores are only available at the end of the stream, not incrementally.
 - **No online learning.** The knowledge base is static. Guest corrections ("actually, the Mummy Resort pool closes at 8pm, not 10pm") are not fed back into the retrieval index.
 - **Hallucination detector is heuristic.** Token overlap + semantic similarity is not a trained classifier. It works well for high-confidence and low-confidence cases but is unreliable in the 0.4-0.7 range where it matters most.
-- **No prompt injection defense.** Input sanitization strips HTML/script tags, but adversarial prompt attacks (e.g., "ignore previous instructions and...") are not actively detected or blocked.
+- **Guardrails are rule-based.** InputGuard detects 13 injection patterns and redacts PII, but it's regex-based, not ML-based. Sophisticated adversarial attacks could bypass it.
 - **Summarization is lossy.** The auto-summarization at 12 messages compresses context, which means specific details from early in a conversation (allergies, room preferences, accessibility needs) can be lost.
 - **Eval harness tool-use pass rate is 0%.** Tool selection accuracy is 80%, but end-to-end tool execution in the eval harness fails consistently due to mock/integration boundary issues. This needs investigation.
 - **Single-instance SQLite by default.** Cannot horizontally scale writes without switching to PostgreSQL.
