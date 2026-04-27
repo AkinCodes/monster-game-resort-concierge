@@ -65,7 +65,7 @@ class RetrievalReport:
 
 
 # ---------------------------------------------------------------------------
-# Relevance判定 — does a retrieved chunk match a ground-truth snippet?
+# Relevance check
 # ---------------------------------------------------------------------------
 
 
