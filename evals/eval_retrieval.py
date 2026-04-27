@@ -182,6 +182,28 @@ class MockRetriever(Retriever):
         "The Monster Resort features a heated pool and three themed restaurants.",
         "Standard Check-In Times and Standard Check-Out Times vary by property.",
         "Room service is available 24/7.",
+        # Q9: Zombie B&B for non-zombies
+        "ZOMBIE BED & BREAKFAST: Can I check in if I'm not a zombie? "
+        "Non-zombies welcome! Heavily discounted rates for humans. "
+        "Complimentary monster makeover package included.",
+        # Q10: Mummy Resort spa
+        "THE MUMMY RESORT: Eternal Preservation Spa. "
+        "Sand Exfoliation Treatment (authentic Sahara grains), "
+        "Papyrus Wrap Therapy, Hieroglyphic Henna Body Art, "
+        "Resin & Natron Deep Tissue Massage, "
+        "Tomb Temperature Stone Therapy (cooled to 55°F).",
+        # Q11: Valentine's romantic property
+        "VALENTINE'S DARK HEARTS WEEKEND: VAMPIRE MANOR - Eternal Love: "
+        "Couples coffin (king-sized), Crimson elixir & roses ceremony, "
+        "Moonlight flight for two. The Eternal Romance Package.",
+        # Q12: Cryptocurrency payment
+        "PAYMENT METHODS: All major credit cards, Cryptocurrency "
+        "(BitCoffin, EtherGhost), PayPal (for modern monsters). "
+        "Not Accepted: Human souls (regulatory issues).",
+        # Q13: Halloween booking timeline
+        "How far in advance should I book? Halloween week: 6 months. "
+        "Book by: September 1st (sells out every year!). "
+        "Full moon weekends (Werewolf Lodge): 3 months.",
     ]
 
     def search(self, query: str, k: int = 10) -> List[str]:
