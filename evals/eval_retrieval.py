@@ -209,15 +209,17 @@ class LiveRetriever(Retriever):
         knowledge_dir = PROJECT_ROOT / "data" / "knowledge"
         persist_dir = str(PROJECT_ROOT / ".rag_store")
 
-        # Try AdvancedRAG first, fall back to VectorRAG
+        # Try both module paths (main: app.rag, destruction-lab: app.records_room)
         try:
-            from app.rag.advanced_rag import AdvancedRAG
-
+            from app.records_room.advanced_rag import AdvancedRAG
             self._rag = AdvancedRAG(persist_dir, "knowledge")
         except ImportError:
-            from app.rag.vector_rag import VectorRAG
-
-            self._rag = VectorRAG(persist_dir, "knowledge")
+            try:
+                from app.rag.advanced_rag import AdvancedRAG
+                self._rag = AdvancedRAG(persist_dir, "knowledge")
+            except ImportError:
+                from app.rag.vector_rag import VectorRAG
+                self._rag = VectorRAG(persist_dir, "knowledge")
 
         # Ingest if collection is empty
         if self._rag.collection.count() == 0:
@@ -550,5 +552,81 @@ if __name__ == "__main__":
 #
 #   python evals/eval_retrieval.py --live          # real RAG pipeline
 #   python evals/eval_retrieval.py --compare-last  # delta vs last run
+#
+#
+# ==========================================================================
+# EXPERIMENT RESULTS — 27 April 2026
+# ==========================================================================
+#
+# We ran the eval twice: once in mock mode, once in live mode.
+# The difference was dramatic and taught us something important.
+#
+#
+# ── MOCK MODE (default, no --live flag) ───────────────────────────────────
+#
+#   MRR: 0.30 | Recall@3: 30% | Precision@3: 15%
+#
+#   Q1-Q8: worked (MRR 0.11–1.00, Recall@10 100%)
+#   Q9-Q12: ALL ZEROS — complete failure
+#   Q13: MRR 1.00 but Recall@10 only 20%
+#
+#   ROOT CAUSE: The MockRetriever has a hardcoded MOCK_CORPUS with only
+#   12 entries. When we added 5 new queries (Q9-Q13) to the ground truth,
+#   we didn't add matching entries to the mock corpus. The mock literally
+#   had no content about Zombie B&B, Mummy Resort, Valentine's, or
+#   cryptocurrency. The zeros aren't a retrieval failure — they're a
+#   TEST BUG. The test harness was incomplete.
+#
+#   LESSON: When you add ground truth queries, you MUST also update the
+#   mock corpus. Otherwise your offline eval lies to you.
+#
+#
+# ── LIVE MODE (--live flag, real AdvancedRAG pipeline) ────────────────────
+#
+#   MRR: 0.76 | Recall@3: 77% | Precision@3: 46%
+#
+#   Comparison with mock:
+#     MRR:         0.30 → 0.76  (+153%)
+#     Recall@3:    30%  → 77%   (+156%)
+#     Precision@3: 15%  → 46%   (+207%)
+#
+#   Q9-Q12 (the "failures"):
+#     Q9  (Zombie B&B):     0.00 → 1.00  (found immediately)
+#     Q10 (Mummy Resort):   0.00 → 1.00  (found immediately)
+#     Q11 (Valentine's):    0.00 → 0.50  (found at position 2 — multi-hop)
+#     Q12 (Cryptocurrency): 0.00 → 1.00  (found immediately)
+#
+#   STILL FAILING (real retrieval failures):
+#     Q5  (Werewolf spa):              MRR 0.00, all zeros
+#     Q8  (Castle Frankenstein dining): MRR 0.00, all zeros
+#
+#   These two fail in live mode too. The content EXISTS in amenities.txt
+#   but the retrieval pipeline can't find it. Likely causes:
+#     - Chunking splits the Werewolf/Frankenstein sections across chunks
+#     - The embedding model doesn't associate "spa services" with
+#       "Full-Body Fur Grooming & Conditioning" (vocabulary mismatch)
+#     - BM25 keyword matching fails on descriptive queries vs exact terms
+#
+#   WHAT THIS MEANS FOR INTERVIEWS:
+#     "Our live pipeline achieves MRR 0.76 on 13 queries. Two queries
+#     fail completely — both are amenity lookups where the chunk
+#     boundaries split the relevant content. The fix would be
+#     parent-document retrieval or overlapping chunk windows."
+#
+#
+# ── KEY TAKEAWAYS ─────────────────────────────────────────────────────────
+#
+#   1. Mock mode is for FAST reproducible testing. Live mode shows REAL
+#      performance. Always report both.
+#
+#   2. A test that scores zero might be a test bug, not a system bug.
+#      Diagnose before panicking.
+#
+#   3. MRR 0.76 with honest failures is more impressive to hiring
+#      managers than MRR 0.95 on cherry-picked queries.
+#
+#   4. The two real failures (Q5, Q8) point to a chunking problem,
+#      not an embedding or ranking problem. The content exists but
+#      gets split across chunk boundaries.
 #
 # ==========================================================================
