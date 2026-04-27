@@ -1,14 +1,5 @@
 #!/usr/bin/env python3
-"""
-RAG Benchmark: Custom AdvancedRAG vs LangChain RAG
-===================================================
-
-Ingests the same knowledge base into both systems, runs identical queries,
-and compares latency and result quality. Logs to MLflow if available.
-
-Usage:
-    python scripts/benchmark_rag.py
-"""
+"""Benchmarks AdvancedRAG vs LangChain RAG on latency and result quality."""
 
 import os
 import sys

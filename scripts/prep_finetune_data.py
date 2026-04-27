@@ -1,17 +1,4 @@
-"""
-Prepare Fine-Tuning Data for MLX LoRA Training
-================================================
-
-Converts concierge_qa.json into MLX chat-format JSONL files
-for LoRA fine-tuning on Apple Silicon.
-
-Usage:
-    python scripts/prep_finetune_data.py
-
-Input:  data/concierge_qa.json
-Output: data/finetune/train.jsonl
-        data/finetune/valid.jsonl
-"""
+"""Converts concierge_qa.json into MLX chat-format JSONL files for LoRA fine-tuning."""
 
 import json
 import random

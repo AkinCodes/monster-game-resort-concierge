@@ -1,13 +1,4 @@
-"""Context Management Experiments for LinkedIn Article.
-
-Runs 4 experiments against the live Monster Game Resort Concierge
-to produce real data about conversation history management.
-
-Usage:
-    cd /Users/akin.olusanya/Desktop/monster-game-resort-concierge
-    source .venv/bin/activate
-    python scripts/test_context_management.py
-"""
+"""Context management experiments: token scaling, window size, auto-summarisation."""
 
 import asyncio
 import os

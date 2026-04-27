@@ -1,23 +1,4 @@
-"""
-LoRA Fine-tuning Script for Monster Resort Concierge
-=====================================================
-
-Fine-tunes Phi-3-mini (3.8B parameters) on Monster Resort Q&A dataset.
-Uses LoRA for parameter-efficient fine-tuning.
-
-Hardware Requirements:
-- CPU: Works but slow (8-12 hours)
-- GPU: Recommended (1-2 hours on T4, 30-45 min on A100)
-- RAM: 16GB+ recommended
-- Disk: 8GB for model + checkpoints
-
-Usage:
-    # CPU training
-    python finetune_lora.py --dataset data/concierge_qa.json --output lora-concierge --epochs 3
-
-    # GPU training (if available)
-    python finetune_lora.py --dataset data/concierge_qa.json --output lora-concierge --epochs 3 --gpu
-"""
+"""LoRA fine-tuning script for Phi-3-mini on the Monster Resort Q&A dataset."""
 
 import os
 import argparse

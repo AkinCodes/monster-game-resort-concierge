@@ -1,28 +1,5 @@
 #!/usr/bin/env python3
-"""
-Evaluation Harness for Monster Resort RAG Pipeline
-===================================================
-
-Runs a suite of test cases through the full pipeline and produces a quality
-scorecard.  Can operate in two modes:
-
-  **live**   — sends queries through the real LLM + RAG pipeline (requires a
-               running model provider).
-  **mock**   — uses lightweight stubs so the harness itself can be validated
-               without any external dependencies.
-
-Usage
------
-    # Run with mock stubs (no API keys required):
-    python scripts/eval_harness.py
-
-    # Run against the live pipeline:
-    python scripts/eval_harness.py --live
-
-    # Custom test file and output location:
-    python scripts/eval_harness.py --test-file data/eval_cases.json \\
-                                   --output reports/eval_report.json
-"""
+"""Evaluation harness that runs test cases through the RAG pipeline and produces a quality scorecard."""
 
 from __future__ import annotations
 

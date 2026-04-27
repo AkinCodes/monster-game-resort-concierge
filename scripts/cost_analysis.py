@@ -1,17 +1,4 @@
-"""
-LLM Cost Analysis
-==================
-
-Simulates a 10-turn and 100-turn conversation across all supported models
-and outputs a markdown cost comparison table.
-
-Token budget per turn:
-  - Prompt tokens: starts at 200, grows by ~40 per turn (conversation history)
-  - Completion tokens: ~100 per turn (fixed)
-
-Usage:
-    python scripts/cost_analysis.py
-"""
+"""LLM cost comparison across all supported models for 10-turn and 100-turn conversations."""
 
 from __future__ import annotations
 

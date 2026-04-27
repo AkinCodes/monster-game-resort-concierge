@@ -1,23 +1,4 @@
-# Usage:
-#   pip install mlx-lm
-#   python scripts/prep_finetune_data.py
-#   python scripts/finetune_mlx.py
-#
-# Requires: Apple Silicon Mac (M1/M2/M3)
-# Time: ~20-30 minutes on M1 Pro
-# Output: lora-adapters/ directory with adapter weights
-
-"""
-MLX LoRA Fine-Tuning for Monster Resort Concierge
-===================================================
-
-Wrapper around mlx-lm that:
-  1. Checks dependencies
-  2. Downloads TinyLlama-1.1B-Chat if not cached
-  3. Runs LoRA fine-tuning with sensible defaults
-  4. Saves adapter weights to lora-adapters/
-  5. Tests with a sample prompt
-"""
+"""MLX LoRA fine-tuning wrapper for TinyLlama on Apple Silicon."""
 
 import subprocess
 import sys

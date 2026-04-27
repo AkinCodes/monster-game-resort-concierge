@@ -1,19 +1,4 @@
-"""
-Retrieval Ablation Study
-========================
-
-Compares 4 retrieval configurations on the Monster Resort knowledge base:
-  1. BM25 only
-  2. Dense (ChromaDB) only
-  3. Hybrid (BM25 + dense with RRF) — no reranker
-  4. Full pipeline (hybrid + cross-encoder reranker)
-
-Measures latency, result count, Precision@5, and MRR using ground truth
-from evals/retrieval_ground_truth.json.
-
-Usage:
-    python scripts/ablation_retrieval.py
-"""
+"""Retrieval ablation: BM25 vs Dense vs Hybrid vs Full pipeline on the resort knowledge base."""
 
 from __future__ import annotations
 

@@ -1,17 +1,5 @@
 #!/usr/bin/env python3
-"""
-RAG vs Fine-Tune Comparison Framework
-======================================
-
-Runs the same set of guest queries through:
-  1. RAG pipeline (AdvancedRAG retrieval + LLM generation)
-  2. LoRA fine-tuned model (via mlx_lm.generate)
-
-Compares latency, answer length, and (optionally) RAGAS faithfulness.
-
-Usage:
-    python scripts/compare_rag_vs_finetune.py
-"""
+"""Compares RAG pipeline vs LoRA fine-tuned model on latency, answer length, and faithfulness."""
 
 import json
 import os

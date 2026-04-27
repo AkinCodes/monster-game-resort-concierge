@@ -1,32 +1,5 @@
 #!/usr/bin/env python3
-"""
-Retrieval Quality Metrics for Monster Resort RAG Pipeline
-==========================================================
-
-Computes standard information-retrieval metrics against a ground-truth
-set of queries and expected relevant documents.
-
-Metrics
--------
-- **MRR** (Mean Reciprocal Rank): Average of 1/rank for the first
-  relevant document in each result list.
-- **Recall@K**: Of all relevant documents, what fraction appeared in
-  the top K results?
-- **Precision@K**: Of the top K retrieved documents, what fraction
-  were relevant?
-
-Usage
------
-    # With mock retriever (no dependencies required):
-    python evals/eval_retrieval.py
-
-    # With the real VectorRAG pipeline:
-    python evals/eval_retrieval.py --live
-
-    # Custom ground-truth file or output path:
-    python evals/eval_retrieval.py --ground-truth evals/retrieval_ground_truth.json \
-                                   --output reports/retrieval_metrics.json
-"""
+"""Retrieval quality metrics (MRR, Recall@K, Precision@K) against a ground-truth query set."""
 
 from __future__ import annotations
 
