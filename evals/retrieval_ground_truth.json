@@ -87,5 +87,69 @@
       "Frankenstein's Feast"
     ],
     "source_files": ["amenities.txt"]
+  },
+  {
+    "id": 9,
+    "query": "Can I book a room at Zombie B&B if I'm not a zombie?",
+    "relevant_snippets": [
+      "Can I check in if I'm not a zombie?",
+      "Non-zombies welcome!",
+      "Heavily discounted rates for humans",
+      "Complimentary monster makeover package included",
+      "All guests are treated with equal enthusiasm regardless of species"
+    ],
+    "source_files": ["faq.txt"]
+  },
+  {
+    "id": 10,
+    "query": "What spa services does the Mummy Resort offer?",
+    "relevant_snippets": [
+      "Eternal Preservation Spa",
+      "Sand Exfoliation Treatment (authentic Sahara grains)",
+      "Papyrus Wrap Therapy",
+      "Hieroglyphic Henna Body Art",
+      "Resin & Natron Deep Tissue Massage",
+      "Tomb Temperature Stone Therapy (cooled to 55°F)"
+    ],
+    "source_files": ["amenities.txt"]
+  },
+  {
+    "id": 11,
+    "query": "What's the most romantic property for a Valentine's Day stay?",
+    "relevant_snippets": [
+      "VALENTINES DARK HEARTS WEEKEND (February 13-14)",
+      "Love Never Dies... Literally",
+      "VAMPIRE MANOR - \"Eternal Love\"",
+      "Couples coffin (king-sized)",
+      "Moonlight flight for two",
+      "The Eternal Romance Package",
+      "Romantic coffin-for-two",
+      "Gothic photography session"
+    ],
+    "source_files": ["seasonal_events.txt", "amenities.txt"]
+  },
+  {
+    "id": 12,
+    "query": "Do you accept cryptocurrency as payment?",
+    "relevant_snippets": [
+      "Accepted Payment Methods",
+      "Cryptocurrency (BitCoffin, EtherGhost)",
+      "All major credit cards (Visa, MasterCard, Amex, Discover)",
+      "Soul Tokens (any variety)",
+      "PayPal (for modern monsters)"
+    ],
+    "source_files": ["policies.txt"]
+  },
+  {
+    "id": 13,
+    "query": "How far in advance should I book the Halloween Extravaganza?",
+    "relevant_snippets": [
+      "Halloween week: 6 months",
+      "Book by: September 1st (sells out every year!)",
+      "HALLOWEEN EXTRAVAGANZA (October 24-31)",
+      "3 nights accommodation (Oct 29-31)",
+      "Price: $999/room or 10 Monster Tokens"
+    ],
+    "source_files": ["seasonal_events.txt", "faq.txt"]
   }
 ]
