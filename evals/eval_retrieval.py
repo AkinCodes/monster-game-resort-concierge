@@ -629,4 +629,70 @@ if __name__ == "__main__":
 #      not an embedding or ranking problem. The content exists but
 #      gets split across chunk boundaries.
 #
+#
+# ── DEEP DIVE: Q5 & Q8 — THE REAL FAILURES ───────────────────────────────
+#
+# We grepped the knowledge base to confirm the content exists:
+#
+#   Q5 (Werewolf spa): amenities.txt lines 58-60
+#     Line 58: "Spa Services: Lunar Wellness Center"
+#     Line 59: "Full-Body Fur Grooming & Conditioning"
+#     Line 60: "Claw Sharpening & Polish"
+#
+#   Q8 (Frankenstein dining): amenities.txt lines 93-97
+#     Line 93: "Dining: Voltage Victuals Restaurant"
+#     Line 94: "Electric Eel Carpaccio"
+#     Line 95: "Shock-and-Awe Steak (tenderized via lightning)"
+#     Line 97: "Frankenstein's Feast"
+#
+# The content IS THERE. The pipeline scores ZERO. Why?
+#
+# Three likely causes:
+#
+#   1. CHUNKING: amenities.txt is a long file with 6 properties.
+#      If the chunker splits at fixed character counts, the Werewolf
+#      spa section (lines 58-60) might land in a chunk dominated by
+#      other Werewolf content (rooms, activities), diluting the
+#      "spa" signal. Same for Frankenstein dining.
+#
+#   2. VOCABULARY MISMATCH: The query says "spa services" but the
+#      content says "Full-Body Fur Grooming & Conditioning." Dense
+#      embeddings might not bridge that gap. BM25 definitely won't —
+#      there's zero keyword overlap between "spa services" and
+#      "Fur Grooming."
+#
+#   3. RANKING DILUTION: amenities.txt appears in many chunks because
+#      it covers all 6 properties. When you search "Werewolf spa",
+#      you get chunks from Vampire Manor, Mummy Resort, Zombie B&B
+#      all ranking above the Werewolf section because they share
+#      the word "amenities" or generic resort terms.
+#
+# How to fix (in order of impact):
+#
+#   a. PARENT-DOCUMENT RETRIEVAL: Store small chunks for retrieval
+#      but return the parent document (full property section) for
+#      context. This way "Fur Grooming" retrieves the whole
+#      Werewolf Lodge section, not just a 3-line fragment.
+#
+#   b. OVERLAPPING CHUNK WINDOWS: Instead of clean splits, overlap
+#      chunks by 20-30%. The Werewolf spa lines would appear in
+#      two adjacent chunks, doubling the chance of retrieval.
+#
+#   c. METADATA FILTERING: Tag each chunk with its property name.
+#      Query "Werewolf spa" → filter to Werewolf Lodge chunks
+#      first, then rank within that subset.
+#
+#   d. QUERY EXPANSION: Rewrite "spa services" to "spa services OR
+#      grooming OR wellness OR treatment" before retrieval. This
+#      bridges the vocabulary gap.
+#
+# INTERVIEW ANSWER:
+#   "Two of our 13 queries fail completely — both are amenity lookups
+#   in a long multi-property document. The chunker splits the content
+#   so the specific section gets diluted by other properties. I'd fix
+#   this with parent-document retrieval: embed small chunks for
+#   precision, but return the full property section for context.
+#   The evaluation caught the exact failure mode, which is the point
+#   of having a ground truth set."
+#
 # ==========================================================================
