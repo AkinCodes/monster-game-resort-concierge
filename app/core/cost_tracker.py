@@ -3,18 +3,16 @@
 from __future__ import annotations
 
 import logging
-import os
 from dataclasses import dataclass, field
 from functools import lru_cache
+from pathlib import Path
 from typing import Dict, Tuple
 
 import yaml
 
 logger = logging.getLogger(__name__)
 
-PRICING_PATH = os.path.join(
-    os.path.dirname(__file__), "..", "..", "configs", "model_pricing.yaml"
-)
+PRICING_PATH = Path(__file__).resolve().parent.parent.parent / "configs" / "model_pricing.yaml"
 
 
 @lru_cache(maxsize=1)

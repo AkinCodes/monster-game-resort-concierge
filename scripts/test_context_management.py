@@ -5,8 +5,9 @@ import os
 import sys
 import time
 import uuid
+from pathlib import Path
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 os.environ.setdefault("MRC_DATABASE_URL", "sqlite:///./test_context_experiment.db")
 os.environ.setdefault("MRC_REDIS_ENABLED", "false")
@@ -236,9 +237,9 @@ def experiment_3_summarisation(client):
     final_msgs = memory.get_messages(session_id)
     print(f"\n  Final state: {len(final_msgs)} messages remaining in DB (rest were summarised and deleted)")
 
-    db_full_path = os.path.join(os.path.dirname(__file__), "..", test_db_path)
-    if os.path.exists(test_db_path):
-        os.remove(test_db_path)
+    db_full_path = Path(__file__).resolve().parent.parent / test_db_path
+    if Path(test_db_path).exists():
+        Path(test_db_path).unlink()
     elif os.path.exists(db_full_path):
         os.remove(db_full_path)
 
