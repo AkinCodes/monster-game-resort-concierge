@@ -1,22 +1,13 @@
-"""Context Management Experiments for LinkedIn Article.
-
-Runs 4 experiments against the live Monster Game Resort Concierge
-to produce real data about conversation history management.
-
-Usage:
-    cd /Users/akin.olusanya/Desktop/monster-game-resort-concierge
-    source .venv/bin/activate
-    python scripts/test_context_management.py
-"""
+"""Context management experiments: token scaling, window size, auto-summarisation."""
 
 import asyncio
 import os
 import sys
 import time
 import uuid
+from pathlib import Path
 
-# Ensure project root is on path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 os.environ.setdefault("MRC_DATABASE_URL", "sqlite:///./test_context_experiment.db")
 os.environ.setdefault("MRC_REDIS_ENABLED", "false")
@@ -76,7 +67,6 @@ def experiment_1_context_matters(client):
 
     system = "You are a helpful concierge at Monster Game Resort."
 
-    # Build a 3-turn conversation
     conversation = [
         {"role": "user", "content": "Hi! My name is Akin and I'm staying in room 42."},
         {"role": "assistant", "content": "Welcome to Monster Game Resort, Akin! Great to have you in room 42. How can I help you today?"},
@@ -100,7 +90,6 @@ def experiment_1_context_matters(client):
     print(f"  Tokens: {result_without['prompt_tokens']} prompt + {result_without['completion_tokens']} completion = {result_without['total_tokens']} total")
     print(f"  Latency: {result_without['latency_ms']}ms")
 
-    # Analysis
     print("\n--- FINDINGS ---")
     knew_name_with = "akin" in result_with["content"].lower()
     knew_name_without = "akin" in result_without["content"].lower()
@@ -127,7 +116,6 @@ def experiment_2_token_scaling(client):
 
     system = "You are a helpful concierge at Monster Game Resort."
 
-    # Generate a realistic multi-turn conversation
     turns = [
         ("user", "Hi, I'm checking in. Name's Akin."),
         ("assistant", "Welcome Akin! How can I help you today?"),
@@ -226,7 +214,6 @@ def experiment_3_summarisation(client):
         msgs = memory.get_messages(session_id)
         msg_count = len(msgs)
 
-        # Check if summarisation happened
         with db.session() as conn:
             row = conn.execute(
                 "SELECT summary FROM sessions WHERE session_id = ?", (session_id,)
@@ -240,7 +227,6 @@ def experiment_3_summarisation(client):
         else:
             print(f"  Message {i+1:2d} ({role}): {msg_count} messages in DB, summary={'YES' if has_summary else 'no'}")
 
-    # Show the summary
     with db.session() as conn:
         row = conn.execute(
             "SELECT summary FROM sessions WHERE session_id = ?", (session_id,)
@@ -251,10 +237,9 @@ def experiment_3_summarisation(client):
     final_msgs = memory.get_messages(session_id)
     print(f"\n  Final state: {len(final_msgs)} messages remaining in DB (rest were summarised and deleted)")
 
-    # Clean up
-    db_full_path = os.path.join(os.path.dirname(__file__), "..", test_db_path)
-    if os.path.exists(test_db_path):
-        os.remove(test_db_path)
+    db_full_path = Path(__file__).resolve().parent.parent / test_db_path
+    if Path(test_db_path).exists():
+        Path(test_db_path).unlink()
     elif os.path.exists(db_full_path):
         os.remove(db_full_path)
 
@@ -272,7 +257,6 @@ def experiment_4_window_size(client):
 
     system = "You are a helpful concierge at Monster Game Resort. Always address the guest by name if known."
 
-    # A conversation where early context matters
     full_conversation = [
         {"role": "user", "content": "Hi! I'm Akin, I'm allergic to nuts and I'm vegan."},
         {"role": "assistant", "content": "Welcome Akin! I've noted your nut allergy and vegan diet. I'll make sure all recommendations are safe for you."},
@@ -326,13 +310,11 @@ def main():
 
     client = get_openai_client()
 
-    # Run experiments
     exp1_with, exp1_without = experiment_1_context_matters(client)
     exp2_results = experiment_2_token_scaling(client)
     exp3_result = experiment_3_summarisation(client)
     experiment_4_window_size(client)
 
-    # Final summary
     print("\n" + "=" * 70)
     print("SUMMARY — Article Data Points")
     print("=" * 70)
