@@ -182,7 +182,7 @@ def experiment_3_summarisation(client):
 
     # Set up a fresh SQLite database and MemoryStore
     test_db_path = "test_context_experiment.db"
-    if os.path.exists(test_db_path):
+    if Path(test_db_path).exists():
         os.remove(test_db_path)
 
     db = DatabaseManager(f"sqlite:///{test_db_path}")
@@ -240,8 +240,8 @@ def experiment_3_summarisation(client):
     db_full_path = Path(__file__).resolve().parent.parent / test_db_path
     if Path(test_db_path).exists():
         Path(test_db_path).unlink()
-    elif os.path.exists(db_full_path):
-        os.remove(db_full_path)
+    elif db_full_path.exists():
+        db_full_path.unlink()
 
     return {"total_sent": len(turns), "remaining": len(final_msgs)}
 

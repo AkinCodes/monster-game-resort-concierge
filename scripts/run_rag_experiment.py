@@ -13,9 +13,10 @@ Usage:
 import os
 import sys
 import time
+from pathlib import Path
 
 # Allow running from project root
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from app.rag.advanced_rag import AdvancedRAG
 from app.monitoring.mlflow_tracking import MLflowTracker
@@ -101,10 +102,10 @@ def main():
     rag = AdvancedRAG(persist_dir, collection)
 
     # Ingest knowledge if available
-    knowledge_path = os.path.join(os.getcwd(), "data", "knowledge")
-    if os.path.exists(knowledge_path):
+    knowledge_path = Path.cwd() / "data" / "knowledge"
+    if knowledge_path.exists():
         print(f"Ingesting knowledge from {knowledge_path}...")
-        rag.ingest_folder(knowledge_path)
+        rag.ingest_folder(str(knowledge_path))
 
     # Experiment 1: Hybrid with reranker (default)
     run_experiment(rag, tracker, BENCHMARK_QUERIES, "hybrid_reranked", bm25_weight=0.4, use_reranker=True)

@@ -1,6 +1,7 @@
 import os
 import tempfile
 import shutil
+from pathlib import Path
 import pytest
 import sqlite3
 from fastapi.testclient import TestClient
@@ -25,7 +26,7 @@ def reset_db(client):
     db_url = os.environ.get("MRC_DATABASE_URL")
     if db_url and db_url.startswith("sqlite:///"):
         db_path = db_url.replace("sqlite:///", "", 1)
-        if os.path.exists(db_path):
+        if Path(db_path).exists():
             conn = sqlite3.connect(db_path)
             cursor = conn.cursor()
             tables = [
@@ -53,8 +54,8 @@ def tmp_dir():
 def client(tmp_dir, monkeypatch):
     """Create test client with isolated database and RAG store."""
     # Override environment variables for test isolation
-    db_path = os.path.join(tmp_dir, "test.db")
-    rag_path = os.path.join(tmp_dir, ".rag_store")
+    db_path = str(Path(tmp_dir) / "test.db")
+    rag_path = str(Path(tmp_dir) / ".rag_store")
 
     monkeypatch.setenv(
         "MRC_DATABASE_URL", "sqlite:///" + db_path

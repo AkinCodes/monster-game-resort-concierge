@@ -3,6 +3,7 @@ import uuid
 import os
 import json
 from datetime import datetime
+from pathlib import Path
 from fastapi import Depends, FastAPI, HTTPException
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -475,10 +476,10 @@ def build_app() -> FastAPI:
             return {"error": "MCP server not available"}
         return mcp.get_server_info()
 
-    knowledge_path = os.path.join(os.getcwd(), "data", "knowledge")
-    if os.path.exists(knowledge_path):
+    knowledge_path = Path.cwd() / "data" / "knowledge"
+    if knowledge_path.exists():
         logger.info(f"Ingesting knowledge from {knowledge_path}...")
-        rag.ingest_folder(knowledge_path, token=settings.rag_ingestion_token)
+        rag.ingest_folder(str(knowledge_path), token=settings.rag_ingestion_token)
 
     return app
 

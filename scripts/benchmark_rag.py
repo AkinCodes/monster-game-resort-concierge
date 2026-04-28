@@ -5,8 +5,9 @@ import os
 import sys
 import time
 import tempfile
+from pathlib import Path
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from app.rag.advanced_rag import AdvancedRAG
 from app.rag.langchain_rag import LangChainRAG
@@ -100,11 +101,11 @@ def main():
     langchain_rag = LangChainRAG(langchain_dir, "benchmark_langchain")
 
     # Ingest knowledge
-    knowledge_path = os.path.join(os.getcwd(), "data", "knowledge")
-    if os.path.exists(knowledge_path):
+    knowledge_path = Path.cwd() / "data" / "knowledge"
+    if knowledge_path.exists():
         print(f"Ingesting from {knowledge_path}...")
-        custom_rag.ingest_folder(knowledge_path)
-        langchain_rag.ingest_folder(knowledge_path)
+        custom_rag.ingest_folder(str(knowledge_path))
+        langchain_rag.ingest_folder(str(knowledge_path))
     else:
         # Use sample data for testing
         sample_texts = [

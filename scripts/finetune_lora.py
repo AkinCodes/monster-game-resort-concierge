@@ -1,6 +1,5 @@
 """LoRA fine-tuning script for Phi-3-mini on the Monster Resort Q&A dataset."""
 
-import os
 import argparse
 import json
 import torch
@@ -332,7 +331,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Check if dataset exists
-    if not os.path.exists(args.dataset):
+    if not Path(args.dataset).exists():
         print(f"❌ Dataset not found: {args.dataset}")
         print("\nGenerate dataset first:")
         print("  python generate_synthetic_dataset.py --output data/concierge_qa.json")

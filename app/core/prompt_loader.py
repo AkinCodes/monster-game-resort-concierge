@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -25,7 +24,7 @@ def load_prompt(name: str, **kwargs: str) -> str:
     file_name = parts[0]
     yaml_path = str(_PROMPTS_DIR / f"{file_name}.yaml")
 
-    if not os.path.exists(yaml_path):
+    if not Path(yaml_path).exists():
         raise FileNotFoundError(f"Prompt file not found: {yaml_path}")
 
     data = _load_yaml(yaml_path)

@@ -1,8 +1,8 @@
 """Tests for the LangChain RAG implementation."""
 
-import os
 import tempfile
 import shutil
+from pathlib import Path
 import pytest
 
 from app.rag.langchain_rag import LangChainRAG
@@ -18,7 +18,7 @@ def tmp_dir():
 @pytest.fixture
 def lc_rag(tmp_dir):
     return LangChainRAG(
-        persist_dir=os.path.join(tmp_dir, "lc_store"),
+        persist_dir=str(Path(tmp_dir) / "lc_store"),
         collection="test_lc",
         chunk_size=200,
         chunk_overlap=20,
