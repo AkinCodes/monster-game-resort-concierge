@@ -96,24 +96,22 @@ class InputGuard:
 
     def check_pii(self, text: str) -> tuple[str, list[str]]:
         """Detect and redact PII, returning the cleaned text and types found."""
-        found: list[str] = []
+        found: set[str] = set()
         text, hit = _redact(text, _EMAIL_RE, "EMAIL")
         if hit:
-            found.append("email")
+            found.add("email")
         text, hit = _redact(text, _PHONE_RE, "PHONE")
         if hit:
-            found.append("phone")
-        # Credit cards: format match + Luhn validation (rejects random digit sequences)
-        cc_matches = _CC_RE.findall(text)
-        for match in cc_matches:
-            if _luhn_check(match):
-                text = text.replace(match, "[REDACTED CREDIT_CARD]")
-                if "credit_card" not in found:
-                    found.append("credit_card")
+            found.add("phone")
+        for match in _CC_RE.finditer(text):
+            full = match.group(0)
+            if _luhn_check(full):
+                text = text.replace(full, "[REDACTED CREDIT_CARD]")
+                found.add("credit_card")
         text, hit = _redact(text, _SSN_RE, "SSN")
         if hit:
-            found.append("ssn")
-        return text, found
+            found.add("ssn")
+        return text, list(found)
 
     def check_topic_boundary(self, text: str) -> bool:
         """Return *True* if the message is on-topic or harmless chitchat."""
@@ -158,11 +156,14 @@ class OutputGuard:
                 return False, "Response breaks character (AI self-reference)"
 
         output_has_email = bool(_EMAIL_RE.search(text))
+        output_has_phone = bool(_PHONE_RE.search(text))
         output_has_cc = bool(_CC_RE.search(text))
         output_has_ssn = bool(_SSN_RE.search(text))
 
         if output_has_email and "email" not in self.input_pii_types:
             return False, "Response contains email address not present in input"
+        if output_has_phone and "phone" not in self.input_pii_types:
+            return False, "Response contains phone number not present in input"
         if output_has_cc and "credit_card" not in self.input_pii_types:
             return False, "Response contains credit card number not present in input"
         if output_has_ssn and "ssn" not in self.input_pii_types:
