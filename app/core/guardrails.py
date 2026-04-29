@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import unicodedata
 from dataclasses import dataclass, field
 
 _EMAIL_RE = re.compile(r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+")
@@ -22,6 +23,27 @@ _CC_RE = re.compile(
     r")\b"
 )
 _SSN_RE = re.compile(r"\b\d{3}-\d{2}-\d{4}\b")
+
+
+def _normalize(text: str) -> str:
+    """Normalize unicode and lowercase to prevent bypass via homoglyphs or character tricks."""
+    return unicodedata.normalize("NFKC", text).lower()
+
+
+def _luhn_check(number: str) -> bool:
+    """Validate a credit card number using the Luhn algorithm."""
+    digits = [int(d) for d in re.sub(r"\D", "", number)]
+    if len(digits) < 13:
+        return False
+    checksum = 0
+    parity = len(digits) % 2
+    for i, d in enumerate(digits):
+        if i % 2 == parity:
+            d *= 2
+            if d > 9:
+                d -= 9
+        checksum += d
+    return checksum % 10 == 0
 
 
 def _redact(text: str, pattern: re.Pattern, label: str) -> tuple[str, bool]:
@@ -66,8 +88,9 @@ _OFFTOPIC_PATTERNS: list[re.Pattern] = [
 class InputGuard:
     def check_prompt_injection(self, text: str) -> tuple[bool, str]:
         """Return ``(is_safe, reason)`` after scanning for injection patterns."""
+        normalized = _normalize(text)
         for pattern in _INJECTION_PATTERNS:
-            if pattern.search(text):
+            if pattern.search(normalized):
                 return False, f"Prompt injection detected: {pattern.pattern}"
         return True, ""
 
@@ -80,9 +103,13 @@ class InputGuard:
         text, hit = _redact(text, _PHONE_RE, "PHONE")
         if hit:
             found.append("phone")
-        text, hit = _redact(text, _CC_RE, "CREDIT_CARD")
-        if hit:
-            found.append("credit_card")
+        # Credit cards: format match + Luhn validation (rejects random digit sequences)
+        cc_matches = _CC_RE.findall(text)
+        for match in cc_matches:
+            if _luhn_check(match):
+                text = text.replace(match, "[REDACTED CREDIT_CARD]")
+                if "credit_card" not in found:
+                    found.append("credit_card")
         text, hit = _redact(text, _SSN_RE, "SSN")
         if hit:
             found.append("ssn")
