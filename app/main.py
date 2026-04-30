@@ -55,6 +55,8 @@ def _validate_tool_call(tool_name: str, tool_args: dict) -> tuple[bool, str]:
             return False, "Blocked: search query cannot be empty."
         if len(query) > 500:
             return False, "Blocked: search query exceeds 500 character limit."
+    else:
+        logger.warning("validate_tool_call_unknown_tool", extra={"tool": tool_name})
     return True, ""
 
 
