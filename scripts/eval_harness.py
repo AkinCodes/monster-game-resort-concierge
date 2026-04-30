@@ -246,7 +246,7 @@ def _compute_hallucination_score(
         from app.validation.hallucination import HallucinationDetector
 
         detector = HallucinationDetector()
-        result = detector.score_response(response, contexts, query)
+        result = detector.score_response(response, contexts)
         return result.overall_score, result.level.value
     except Exception:
         # Fallback: simple token overlap

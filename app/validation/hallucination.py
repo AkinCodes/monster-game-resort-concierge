@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, List
+from typing import Dict, List, Optional, Tuple
 
 from prometheus_client import Counter, Histogram
 
@@ -29,6 +29,20 @@ class ConfidenceLevel(str, Enum):
     LOW = "LOW"
 
 
+_REFUSAL_PHRASES = [
+    "i don't have",
+    "i do not have",
+    "i'm not sure",
+    "i am not sure",
+    "i cannot find",
+    "i can't find",
+    "no information available",
+    "i don't know",
+    "i do not know",
+    "outside my knowledge",
+]
+
+
 @dataclass
 class ConfidenceResult:
     overall_score: float
@@ -36,15 +50,47 @@ class ConfidenceResult:
     context_overlap_score: float
     semantic_similarity_score: float
     source_attribution_score: float
+    note: str | None = None
 
     def to_dict(self) -> Dict:
-        return {
+        d = {
             "overall_score": round(self.overall_score, 4),
             "level": self.level.value,
             "context_overlap_score": round(self.context_overlap_score, 4),
             "semantic_similarity_score": round(self.semantic_similarity_score, 4),
             "source_attribution_score": round(self.source_attribution_score, 4),
         }
+        if self.note is not None:
+            d["note"] = self.note
+        return d
+
+
+# --- Claim-level NLI verification (experimental) ---
+# NLI labels returned by cross-encoder/nli-deberta-v3-small:
+#   0 = contradiction, 1 = entailment, 2 = neutral
+_NLI_LABEL_MAP = {0: "CONTRADICTED", 1: "SUPPORTED", 2: "NOT_SUPPORTED"}
+
+
+@dataclass
+class ClaimVerdict:
+    """Verdict for a single claim checked against context via NLI."""
+
+    claim: str
+    verdict: str  # "SUPPORTED", "NOT_SUPPORTED", or "CONTRADICTED"
+    best_context: str
+    confidence: float
+
+
+@dataclass
+class ClaimVerification:
+    """Result of running claim-level NLI verification on a full response."""
+
+    claims: List[ClaimVerdict] = field(default_factory=list)
+    grounding_ratio: float = 0.0  # fraction of SUPPORTED claims
+    num_supported: int = 0
+    num_unsupported: int = 0
+    nli_available: bool = True
+    note: Optional[str] = None
 
 
 def _tokenize(text: str) -> set[str]:
@@ -58,15 +104,37 @@ def _split_sentences(text: str) -> List[str]:
     return [s for s in sentences if len(s.split()) >= 3]
 
 
+def _is_refusal(text: str) -> bool:
+    """Check if the response is an honest refusal (cheap string matching)."""
+    lower = text.lower()
+    return any(phrase in lower for phrase in _REFUSAL_PHRASES)
+
+
+def _is_chitchat(response_text: str, contexts: List[str]) -> bool:
+    """Check if this is ungrounded chitchat (no meaningful context, short reply)."""
+    if len(response_text) >= 200:
+        return False
+    if not contexts:
+        return True
+    return all(len(ctx.strip()) < 20 for ctx in contexts)
+
+
 class HallucinationDetector:
     def __init__(
         self,
         high_threshold: float = 0.7,
         medium_threshold: float = 0.4,
+        overlap_weight: float = 0.2,
+        semantic_weight: float = 0.2,
+        attribution_weight: float = 0.6,
     ):
         self.high_threshold = high_threshold
         self.medium_threshold = medium_threshold
+        self.overlap_weight = overlap_weight
+        self.semantic_weight = semantic_weight
+        self.attribution_weight = attribution_weight
         self._model = None
+        self._nli_model = None
 
     def _get_model(self):
         """Lazy-load the sentence transformer model."""
@@ -80,6 +148,170 @@ class HallucinationDetector:
                     "sentence-transformers not available for hallucination detection"
                 )
         return self._model
+
+    def _get_nli_model(self):
+        """Lazy-load the NLI cross-encoder model (experimental)."""
+        if self._nli_model is None:
+            try:
+                from sentence_transformers import CrossEncoder
+
+                self._nli_model = CrossEncoder(
+                    "cross-encoder/nli-deberta-v3-small"
+                )
+            except (ImportError, RuntimeError, OSError) as exc:
+                logger.warning(f"NLI cross-encoder not available: {exc}")
+        return self._nli_model
+
+    # ------------------------------------------------------------------
+    # Claim-level NLI verification (experimental)
+    # ------------------------------------------------------------------
+
+    def verify_claims(
+        self,
+        response_text: str,
+        contexts: List[str],
+    ) -> ClaimVerification:
+        """Run claim-level NLI verification against context chunks.
+
+        This is an *experimental* addition that catches "right vocabulary,
+        wrong facts" hallucinations by checking whether each claim in the
+        response is actually entailed by the retrieved context.
+
+        The method is intentionally kept separate from ``score_response``
+        because NLI inference adds latency.  Call it explicitly when you
+        want the deeper check, or use ``score_response_with_claims`` for
+        the combined result.
+        """
+        nli = self._get_nli_model()
+
+        if nli is None:
+            return ClaimVerification(
+                nli_available=False,
+                note="NLI model unavailable — skipping claim verification",
+            )
+
+        claims = _split_sentences(response_text)
+
+        if not claims:
+            return ClaimVerification(note="No claims extracted from response")
+
+        if not contexts:
+            verdicts = [
+                ClaimVerdict(
+                    claim=c,
+                    verdict="NOT_SUPPORTED",
+                    best_context="",
+                    confidence=1.0,
+                )
+                for c in claims
+            ]
+            return ClaimVerification(
+                claims=verdicts,
+                grounding_ratio=0.0,
+                num_supported=0,
+                num_unsupported=len(claims),
+            )
+
+        try:
+            import numpy as np
+
+            verdicts: List[ClaimVerdict] = []
+
+            for claim in claims:
+                # Build premise-hypothesis pairs for every context chunk
+                pairs = [[ctx, claim] for ctx in contexts]
+                scores = nli.predict(pairs)  # shape (n_contexts, 3)
+
+                # Ensure scores is 2-D even for a single context
+                scores = np.atleast_2d(scores)
+
+                # Find the best entailment and contradiction scores
+                # across all context chunks.
+                best_ent_score = -1.0
+                best_ent_ctx = 0
+                best_contra_score = -1.0
+                best_contra_ctx = 0
+                best_neutral_score = -1.0
+                best_neutral_ctx = 0
+
+                for ctx_i, score_row in enumerate(scores):
+                    ent_val = float(score_row[1])
+                    contra_val = float(score_row[0])
+                    neutral_val = float(score_row[2])
+                    if ent_val > best_ent_score:
+                        best_ent_score = ent_val
+                        best_ent_ctx = ctx_i
+                    if contra_val > best_contra_score:
+                        best_contra_score = contra_val
+                        best_contra_ctx = ctx_i
+                    if neutral_val > best_neutral_score:
+                        best_neutral_score = neutral_val
+                        best_neutral_ctx = ctx_i
+
+                # Decision: entailment wins if it's the strongest signal
+                # from any context chunk.
+                if (
+                    best_ent_score >= best_contra_score
+                    and best_ent_score >= best_neutral_score
+                ):
+                    verdict = "SUPPORTED"
+                    best_ctx = contexts[best_ent_ctx]
+                    confidence = best_ent_score
+                elif best_contra_score >= best_neutral_score:
+                    verdict = "CONTRADICTED"
+                    best_ctx = contexts[best_contra_ctx]
+                    confidence = best_contra_score
+                else:
+                    verdict = "NOT_SUPPORTED"
+                    best_ctx = contexts[best_neutral_ctx]
+                    confidence = best_neutral_score
+
+                verdicts.append(
+                    ClaimVerdict(
+                        claim=claim,
+                        verdict=verdict,
+                        best_context=best_ctx,
+                        confidence=round(confidence, 4),
+                    )
+                )
+
+            num_supported = sum(
+                1 for v in verdicts if v.verdict == "SUPPORTED"
+            )
+            num_unsupported = sum(
+                1 for v in verdicts if v.verdict != "SUPPORTED"
+            )
+            grounding = num_supported / len(verdicts) if verdicts else 0.0
+
+            return ClaimVerification(
+                claims=verdicts,
+                grounding_ratio=round(grounding, 4),
+                num_supported=num_supported,
+                num_unsupported=num_unsupported,
+            )
+
+        except Exception as exc:
+            logger.warning(f"Claim verification failed: {exc}")
+            return ClaimVerification(
+                nli_available=False,
+                note=f"Claim verification error: {exc}",
+            )
+
+    def score_response_with_claims(
+        self,
+        response_text: str,
+        rag_contexts: List[str],
+    ) -> Tuple[ConfidenceResult, ClaimVerification]:
+        """Run both the fast heuristic score AND NLI claim verification.
+
+        Returns a tuple of ``(ConfidenceResult, ClaimVerification)``.
+        Use this when you want the full picture -- the heuristic score
+        gives a quick signal, while the NLI verification catches subtle
+        factual errors that token-overlap and embedding similarity miss.
+        """
+        confidence = self.score_response(response_text, rag_contexts)
+        verification = self.verify_claims(response_text, rag_contexts)
+        return confidence, verification
 
     def _compute_context_overlap(
         self, response_text: str, contexts: List[str]
@@ -156,14 +388,47 @@ class HallucinationDetector:
         self,
         response_text: str,
         rag_contexts: List[str],
-        user_query: str,
     ) -> ConfidenceResult:
-        """Score a response for hallucination risk."""
+        """Score a response for hallucination risk.
+
+        Pre-checks (cheap, no ML):
+        1. Refusal detection -- honest "I don't know" answers score HIGH.
+        2. Chitchat detection -- short replies with no real context score MEDIUM.
+        """
+        # --- Pre-check: refusal ------------------------------------------------
+        if _is_refusal(response_text):
+            logger.info("Intent pre-check: refusal detected, skipping scoring")
+            return ConfidenceResult(
+                overall_score=1.0,
+                level=ConfidenceLevel.HIGH,
+                context_overlap_score=0.0,
+                semantic_similarity_score=0.0,
+                source_attribution_score=0.0,
+                note="Refusal detected; honest admission of uncertainty is safe.",
+            )
+
+        # --- Pre-check: chitchat -----------------------------------------------
+        if _is_chitchat(response_text, rag_contexts):
+            logger.info("Intent pre-check: chitchat detected, skipping scoring")
+            return ConfidenceResult(
+                overall_score=0.5,
+                level=ConfidenceLevel.MEDIUM,
+                context_overlap_score=0.0,
+                semantic_similarity_score=0.0,
+                source_attribution_score=0.0,
+                note="Chitchat or greeting; grounding is not applicable.",
+            )
+
+        # --- Full scoring pipeline ---------------------------------------------
         overlap = self._compute_context_overlap(response_text, rag_contexts)
         semantic = self._compute_semantic_similarity(response_text, rag_contexts)
         attribution = self._compute_source_attribution(response_text, rag_contexts)
 
-        overall = 0.3 * overlap + 0.5 * semantic + 0.2 * attribution
+        overall = (
+            self.overlap_weight * overlap
+            + self.semantic_weight * semantic
+            + self.attribution_weight * attribution
+        )
 
         if overall >= self.high_threshold:
             level = ConfidenceLevel.HIGH

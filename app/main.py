@@ -317,7 +317,7 @@ def build_app() -> FastAPI:
                     )
 
                 confidence = detector.score_response(
-                    final_message, rag_contexts, text
+                    final_message, rag_contexts
                 )
 
                 tracker.log_confidence_metrics(confidence, provider=llm_resp2.provider)
@@ -341,7 +341,7 @@ def build_app() -> FastAPI:
                 )
 
             confidence = detector.score_response(
-                response_text, rag_contexts, text
+                response_text, rag_contexts
             )
             tracker.log_confidence_metrics(confidence, provider=llm_resp.provider)
 

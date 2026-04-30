@@ -10,7 +10,7 @@ import sys
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import List
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -295,30 +295,35 @@ def evaluate_retrieval(
 
 
 def print_report(report: RetrievalReport) -> None:
-    pct = lambda v: f"{v * 100:.1f}%"
+    def pct(v: float) -> str:
+        return f"{v * 100:.1f}%"  # noqa: E231
 
     print("\n=== Retrieval Quality Report ===")
     print(f"Queries evaluated: {report.num_queries}")
-    print(f"\nMRR (Mean Reciprocal Rank): {report.mrr:.4f}")
-    print(f"\nRecall@K:")
-    print(f"  Recall@3:  {pct(report.recall_at_3)}")
-    print(f"  Recall@5:  {pct(report.recall_at_5)}")
+    print(f"\nMRR (Mean Reciprocal Rank): {report.mrr:.4f}")  # noqa: E231
+    print("\nRecall@K:")
+    print(f"  Recall@3:  {pct(report.recall_at_3)}")  # noqa: E241
+    print(f"  Recall@5:  {pct(report.recall_at_5)}")  # noqa: E241
     print(f"  Recall@10: {pct(report.recall_at_10)}")
-    print(f"\nPrecision@K:")
-    print(f"  Precision@3:  {pct(report.precision_at_3)}")
-    print(f"  Precision@5:  {pct(report.precision_at_5)}")
+    print("\nPrecision@K:")
+    print(f"  Precision@3:  {pct(report.precision_at_3)}")  # noqa: E241
+    print(f"  Precision@5:  {pct(report.precision_at_5)}")  # noqa: E241
     print(f"  Precision@10: {pct(report.precision_at_10)}")
 
     print("\nPer-Query Breakdown:")
-    print(f"  {'ID':>3}  {'RR':>5}  {'R@3':>5}  {'R@5':>5}  {'R@10':>5}  "
-          f"{'P@3':>5}  {'P@5':>5}  {'P@10':>5}  Query")
-    print(f"  {'---':>3}  {'---':>5}  {'---':>5}  {'---':>5}  {'-----':>5}  "
-          f"{'---':>5}  {'---':>5}  {'-----':>5}  {'-----'}")
+    print(
+        f"  {'ID':>3}  {'RR':>5}  {'R@3':>5}  {'R@5':>5}  {'R@10':>5}  "  # noqa: E231
+        f"{'P@3':>5}  {'P@5':>5}  {'P@10':>5}  Query"  # noqa: E231
+    )
+    print(
+        f"  {'---':>3}  {'---':>5}  {'---':>5}  {'---':>5}  {'-----':>5}  "  # noqa: E231
+        f"{'---':>5}  {'---':>5}  {'-----':>5}  {'-----'}"  # noqa: E231
+    )
     for q in report.per_query:
         print(
-            f"  {q.query_id:>3}  {q.reciprocal_rank:>5.2f}  "
-            f"{q.recall_at_3:>5.2f}  {q.recall_at_5:>5.2f}  {q.recall_at_10:>5.2f}  "
-            f"{q.precision_at_3:>5.2f}  {q.precision_at_5:>5.2f}  {q.precision_at_10:>5.2f}  "
+            f"  {q.query_id:>3}  {q.reciprocal_rank:>5.2f}  "  # noqa: E231
+            f"{q.recall_at_3:>5.2f}  {q.recall_at_5:>5.2f}  {q.recall_at_10:>5.2f}  "  # noqa: E231
+            f"{q.precision_at_3:>5.2f}  {q.precision_at_5:>5.2f}  {q.precision_at_10:>5.2f}  "  # noqa: E231
             f"{q.query[:45]}"
         )
     print()
@@ -398,8 +403,8 @@ def compare_last(history_path: Path) -> None:
     curr = json.loads(lines[-1])
 
     print("\n=== Eval Comparison (last two runs) ===")
-    print(f"  Previous: {prev.get('git_sha', '?')}  @ {prev.get('timestamp', '?')}")
-    print(f"  Current:  {curr.get('git_sha', '?')}  @ {curr.get('timestamp', '?')}")
+    print(f"  Previous: {prev.get('git_sha', '?')}  @ {prev.get('timestamp', '?')}")  # noqa: E241
+    print(f"  Current:  {curr.get('git_sha', '?')}  @ {curr.get('timestamp', '?')}")  # noqa: E241
     print()
 
     for key in _METRIC_KEYS:
@@ -409,10 +414,10 @@ def compare_last(history_path: Path) -> None:
         if abs(delta) < 1e-6:
             status = "unchanged"
         elif delta > 0:
-            status = f"improved  (+{delta:.4f})"
+            status = f"improved  (+{delta:.4f})"  # noqa: E231
         else:
-            status = f"degraded  ({delta:.4f})"
-        print(f"  {key:<16} {old_val:.4f} -> {new_val:.4f}  {status}")
+            status = f"degraded  ({delta:.4f})"  # noqa: E231
+        print(f"  {key:<16} {old_val:.4f} -> {new_val:.4f}  {status}")  # noqa: E231
 
     prev_pass = prev.get("pass", False)
     curr_pass = curr.get("pass", False)
