@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import time
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Dict, List, Optional, Tuple
@@ -98,10 +99,21 @@ def _tokenize(text: str) -> set[str]:
     return set(re.findall(r"\w+", text.lower()))
 
 
+_ABBREV_SAFE = r"(?<!Mr)(?<!Ms)(?<!Dr)(?<!Jr)(?<!Sr)(?<!vs)(?<!etc)(?<!Prof)(?<!Inc)(?<!Ltd)(?<!St)"
+_CLAUSE_CONJ = re.compile(r",\s*\b(and|but|yet|while|although|however)\b\s+", re.IGNORECASE)
+
+
 def _split_sentences(text: str) -> List[str]:
-    """Split text into sentences with at least 3 words."""
-    sentences = re.split(r"(?<=[.!?])\s+", text.strip())
-    return [s for s in sentences if len(s.split()) >= 3]
+    """Split text into atomic claims: sentence boundaries + clause conjunctions."""
+    # Step 1: split on sentence-ending punctuation, safe around abbreviations
+    raw = re.split(rf"{_ABBREV_SAFE}(?<=[.!?])\s+", text.strip())
+    # Step 2: sub-split on ", and/but/yet..." where comma signals a clause boundary
+    claims: List[str] = []
+    for sentence in raw:
+        parts = _CLAUSE_CONJ.split(sentence)
+        # re.split with groups returns [chunk, conj, chunk, ...] — take every other
+        claims.extend(parts[::2])
+    return [c.strip().rstrip(",") for c in claims if len(c.split()) >= 3]
 
 
 def _is_refusal(text: str) -> bool:
@@ -182,9 +194,11 @@ class HallucinationDetector:
         want the deeper check, or use ``score_response_with_claims`` for
         the combined result.
         """
+        t0 = time.perf_counter()
         nli = self._get_nli_model()
 
         if nli is None:
+            logger.info("nli_verification_skipped", extra={"reason": "model_unavailable"})
             return ClaimVerification(
                 nli_available=False,
                 note="NLI model unavailable — skipping claim verification",
@@ -193,9 +207,11 @@ class HallucinationDetector:
         claims = _split_sentences(response_text)
 
         if not claims:
+            logger.info("nli_verification_skipped", extra={"reason": "no_claims"})
             return ClaimVerification(note="No claims extracted from response")
 
         if not contexts:
+            latency_ms = round((time.perf_counter() - t0) * 1000, 1)
             verdicts = [
                 ClaimVerdict(
                     claim=c,
@@ -205,6 +221,15 @@ class HallucinationDetector:
                 )
                 for c in claims
             ]
+            logger.info("nli_verification_complete", extra={
+                "num_claims": len(claims),
+                "supported": 0,
+                "not_supported": len(claims),
+                "contradicted": 0,
+                "grounding_ratio": 0.0,
+                "latency_ms": latency_ms,
+                "reason": "no_contexts",
+            })
             return ClaimVerification(
                 claims=verdicts,
                 grounding_ratio=0.0,
@@ -283,6 +308,25 @@ class HallucinationDetector:
             )
             grounding = num_supported / len(verdicts) if verdicts else 0.0
 
+            latency_ms = round((time.perf_counter() - t0) * 1000, 1)
+            num_contradicted = sum(1 for v in verdicts if v.verdict == "CONTRADICTED")
+
+            logger.info("nli_verification_complete", extra={
+                "num_claims": len(claims),
+                "supported": num_supported,
+                "not_supported": num_unsupported - num_contradicted,
+                "contradicted": num_contradicted,
+                "grounding_ratio": round(grounding, 4),
+                "latency_ms": latency_ms,
+            })
+
+            for v in verdicts:
+                logger.debug("claim_verdict", extra={
+                    "claim": v.claim[:120],
+                    "verdict": v.verdict,
+                    "confidence": v.confidence,
+                })
+
             return ClaimVerification(
                 claims=verdicts,
                 grounding_ratio=round(grounding, 4),
@@ -291,7 +335,11 @@ class HallucinationDetector:
             )
 
         except Exception as exc:
-            logger.warning(f"Claim verification failed: {exc}")
+            latency_ms = round((time.perf_counter() - t0) * 1000, 1)
+            logger.warning("nli_verification_failed", extra={
+                "error": str(exc),
+                "latency_ms": latency_ms,
+            })
             return ClaimVerification(
                 nli_available=False,
                 note=f"Claim verification error: {exc}",

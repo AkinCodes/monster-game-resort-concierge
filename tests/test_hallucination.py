@@ -42,6 +42,31 @@ class TestSplitSentences:
         sentences = _split_sentences(text)
         assert len(sentences) == 1
 
+    def test_abbreviation_safe(self):
+        text = "Dr. Smith arrived at 3 p.m. today."
+        sentences = _split_sentences(text)
+        assert len(sentences) == 1
+
+    def test_conjunction_split(self):
+        text = "The hotel has 5 rooms, and a heated pool."
+        claims = _split_sentences(text)
+        assert len(claims) == 2
+
+    def test_but_conjunction_split(self):
+        text = "The rooms are spacious, but the food is terrible."
+        claims = _split_sentences(text)
+        assert len(claims) == 2
+
+    def test_no_split_on_bare_and(self):
+        text = "The Bed and Breakfast is a lovely place to stay."
+        claims = _split_sentences(text)
+        assert len(claims) == 1
+
+    def test_multi_sentence_with_conjunctions(self):
+        text = "Check-in is at 3 PM. The rooms are large, and the pool is heated."
+        claims = _split_sentences(text)
+        assert len(claims) == 3
+
 
 class TestContextOverlap:
     def test_identical_text_high_overlap(self, detector):
