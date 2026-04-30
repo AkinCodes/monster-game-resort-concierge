@@ -1,24 +1,40 @@
-"""Five hallucination-detection experiments for LinkedIn article.
+"""Hallucination detection experiments with persistent result tracking.
 
-Each experiment probes a specific weakness in token-overlap + semantic-similarity
-scoring. Run: python -m evals.hallucination_experiments
+Each experiment probes a specific weakness in the detector. Results are
+appended to a JSONL history file so you can track how changes to the
+detector affect scores over time.
+
+Usage:
+    python -m evals.hallucination_experiments          # run all, save to JSONL
+    python -m evals.hallucination_experiments --compare-last  # diff last 2 runs
+    python -m evals.hallucination_experiments --history       # show full history
 """
 
 from __future__ import annotations
 
+import argparse
+import json
+import subprocess
 import sys
-import os
+from datetime import datetime, timezone
+from pathlib import Path
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
 
 from app.validation.hallucination import HallucinationDetector  # noqa: E402
 
-detector = HallucinationDetector()
+HISTORY_PATH = PROJECT_ROOT / "reports" / "hallucination_history.jsonl"
+
+# ---------------------------------------------------------------------------
+# Experiment definitions
+# ---------------------------------------------------------------------------
 
 EXPERIMENTS = [
-    # 1 ── Faithful Paraphrase (should score HIGH, will score HIGH)
     {
-        "name": "The Faithful Paraphrase",
+        "id": 1,
+        "name": "Faithful Paraphrase",
+        "expected_level": "HIGH",
         "query": "What time is check-in?",
         "response": (
             "Check-in starts at 3 PM across most properties. "
@@ -26,40 +42,39 @@ EXPERIMENTS = [
             "For our nocturnal friends, moonlight arrivals can be arranged."
         ),
         "contexts": [
-            "Check-in is from 3:00 PM. Early check-in is available based on lair readiness.",
-            "For nocturnal guests, we can arrange 'moonlight arrival' with prior notice.",
-            "Checkout is by 11:00 AM. Late checkout may incur a small broomstick fee.",
+            "Check-in is from 3:00 PM. Early check-in is available "
+            "based on lair readiness.",
+            "For nocturnal guests, we can arrange 'moonlight arrival' "
+            "with prior notice.",
+            "Checkout is by 11:00 AM. Late checkout may incur a small "
+            "broomstick fee.",
         ],
-        "expect": "HIGH  -- real facts, paraphrased from source. Scores MEDIUM (0.69) because paraphrasing drops token overlap to 0.37 despite perfect accuracy.",
     },
-    # 2 ── Confident Fabrication (should score LOW, will likely score HIGH)
     {
-        "name": "The Confident Fabrication",
+        "id": 2,
+        "name": "Confident Fabrication",
+        "expected_level": "LOW",
         "query": "What are the spa treatments at Werewolf Lodge?",
         "response": (
             "The Werewolf Lodge offers a Crystal Moonbeam Facial, "
             "a Deep Forest Mud Wrap sourced from enchanted Scottish clay, "
-            "and an exclusive Howling Harmony Sound Bath priced at 200 Monster Tokens. "
+            "and an exclusive Howling Harmony Sound Bath priced at "
+            "200 Monster Tokens. "
             "Sessions run from midnight to 4 AM in the underground grotto."
         ),
         "contexts": [
-            "Spa Services: Lunar Wellness Center. Full-Body Fur Grooming & Conditioning. "
-            "Claw Sharpening & Polish. Moonstone Hot Stone Massage. "
-            "Howling Therapy Sessions (soundproof booths). "
-            "Post-Transformation Recovery Treatment. Silver-Free Aromatherapy.",
+            "Spa Services: Lunar Wellness Center. Full-Body Fur Grooming "
+            "& Conditioning. Claw Sharpening & Polish. Moonstone Hot "
+            "Stone Massage. Howling Therapy Sessions (soundproof booths). "
+            "Post-Transformation Recovery Treatment. Silver-Free "
+            "Aromatherapy.",
             "Location: Scottish Highlands, deep in the misty moorlands.",
         ],
-        "expect": (
-            "LOW   -- every specific detail is invented. Scores LOW (0.29) because "
-            "fabricated nouns ('Crystal Moonbeam', 'enchanted clay', 'grotto') "
-            "have zero overlap. The detector catches this one -- but only because "
-            "the fabricator used CREATIVE vocabulary. A lazier fabrication reusing "
-            "context words would sail through."
-        ),
     },
-    # 3 ── Style Mimic with wrong facts (should score LOW, will score HIGH)
     {
-        "name": "The Style Mimic",
+        "id": 3,
+        "name": "Style Mimic",
+        "expected_level": "LOW",
         "query": "Tell me about Castle Frankenstein's room types.",
         "response": (
             "Castle Frankenstein offers three luxurious room types: "
@@ -69,23 +84,18 @@ EXPERIMENTS = [
             "All rooms include surge protectors and rubber flooring."
         ),
         "contexts": [
-            "Room Types: Galvanic Suites with adjustable voltage (10-1000V). "
-            "Laboratory Lofts: Mad scientist-themed with complimentary beakers. "
-            "Bolted Bedchambers: Premium suites with neck-bolt charging stations. "
-            "Tesla Tower Penthouse: 360-degree views, unlimited electricity.",
+            "Room Types: Galvanic Suites with adjustable voltage "
+            "(10-1000V). Laboratory Lofts: Mad scientist-themed with "
+            "complimentary beakers. Bolted Bedchambers: Premium suites "
+            "with neck-bolt charging stations. Tesla Tower Penthouse: "
+            "360-degree views, unlimited electricity.",
             "All rooms equipped with lightning rods & surge protectors.",
         ],
-        "expect": (
-            "LOW   -- wrong room names, wrong view angle, invented 'Igor's Quarters'. "
-            "Scores MEDIUM (0.56) because 'beakers', 'surge protectors', 'penthouse', "
-            "'views' overlap with context. Attribution=1.0 because every sentence "
-            "shares 30%+ words with context. THIS IS THE KILLER: factually wrong "
-            "but stylistically grounded = passes the detector."
-        ),
     },
-    # 4 ── Honest Refusal (should score HIGH-trust, detector says LOW)
     {
-        "name": "The Honest Refusal",
+        "id": 4,
+        "name": "Honest Refusal",
+        "expected_level": "HIGH",
         "query": "Do you offer helicopter transfers from the airport?",
         "response": (
             "I don't have specific information about helicopter transfers. "
@@ -97,69 +107,255 @@ EXPERIMENTS = [
             "(Vampire Manor specialty). Sandstorm Portals (Mummy Resort). "
             "Coffin Express Delivery.",
         ],
-        "expect": (
-            "HIGH  -- safest possible answer, zero hallucination risk. Scores "
-            "LOW (0.13) because 'I don't have information' shares no tokens "
-            "with hearse/bat/coffin context. The detector PUNISHES honesty."
-        ),
     },
-    # 5 ── Pure Chitchat (no right answer exists)
     {
+        "id": 5,
         "name": "Pure Chitchat",
+        "expected_level": "MEDIUM",
         "query": "Hello, how are you?",
         "response": (
-            "Welcome to Monster Resort! I'm doing wonderfully, thank you for asking. "
-            "How can I help you plan your supernatural getaway today?"
+            "Welcome to Monster Resort! I'm doing wonderfully, thank you "
+            "for asking. How can I help you plan your supernatural getaway "
+            "today?"
         ),
         "contexts": [],
-        "expect": (
-            "N/A   -- no context means all three signals=0.0. Scores 0.0/LOW. "
-            "Correct behavior here, but reveals the detector has no concept of "
-            "'this response doesn't NEED grounding' -- it just says LOW."
-        ),
     },
 ]
 
 
-def main():
+# ---------------------------------------------------------------------------
+# Run experiments
+# ---------------------------------------------------------------------------
+
+
+def _get_git_sha() -> str:
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            capture_output=True, text=True,
+        )
+        return result.stdout.strip() or "unknown"
+    except Exception:
+        return "unknown"
+
+
+def run_experiments(
+    detector: HallucinationDetector,
+) -> list[dict]:
+    """Run all experiments and return per-experiment result dicts."""
+    results = []
+    for exp in EXPERIMENTS:
+        r = detector.score_response(exp["response"], exp["contexts"])
+        d = r.to_dict()
+        results.append({
+            "id": exp["id"],
+            "name": exp["name"],
+            "expected_level": exp["expected_level"],
+            "actual_level": d["level"],
+            "overall_score": d["overall_score"],
+            "overlap": d["context_overlap_score"],
+            "semantic": d["semantic_similarity_score"],
+            "attribution": d["source_attribution_score"],
+            "note": d.get("note"),
+            "match": exp["expected_level"] == d["level"],
+        })
+    return results
+
+
+def print_results(results: list[dict]) -> None:
+    """Print a table of experiment results."""
     print("=" * 72)
     print("HALLUCINATION DETECTOR EXPERIMENTS")
     print("=" * 72)
 
-    for i, exp in enumerate(EXPERIMENTS, 1):
-        result = detector.score_response(
-            exp["response"], exp["contexts"]
-        )
-        d = result.to_dict()
-
+    matches = 0
+    for r in results:
+        mark = "OK" if r["match"] else "MISMATCH"
+        matches += int(r["match"])
         print(f"\n{'─' * 72}")
-        print(f"EXP {i}: {exp['name']}")
+        print(f"  EXP {r['id']}: {r['name']}  [{mark}]")
         print(f"{'─' * 72}")
-        print(f"  Query:    {exp['query']}")  # noqa: E241
-        print(f"  Response: {exp['response'][:80]}...")
-        print(f"  EXPECTED: {exp['expect']}")
-        print(f"  ACTUAL:   {d['level']}  (score={d['overall_score']:.4f})")  # noqa: E241, E231
-        print(f"    overlap={d['context_overlap_score']:.4f}  "  # noqa: E231
-              f"semantic={d['semantic_similarity_score']:.4f}  "  # noqa: E231
-              f"attribution={d['source_attribution_score']:.4f}")  # noqa: E231
-
-        # Flag mismatches
-        expected_level = exp["expect"][:4].strip()
-        if expected_level in ("HIGH", "LOW") and expected_level != d["level"]:
-            print(f"  >>> MISMATCH: expected {expected_level}, got {d['level']}")  # noqa: E221
+        print(
+            f"  Expected: {r['expected_level']:<8} "  # noqa: E231
+            f"Actual: {r['actual_level']:<8} "  # noqa: E231
+            f"Score: {r['overall_score']:.4f}"  # noqa: E231
+        )
+        print(
+            f"  overlap={r['overlap']:.4f}  "  # noqa: E231
+            f"semantic={r['semantic']:.4f}  "  # noqa: E231
+            f"attribution={r['attribution']:.4f}"  # noqa: E231
+        )
+        if r["note"]:
+            print(f"  note: {r['note']}")
 
     print(f"\n{'=' * 72}")
-    print("KEY FINDINGS:")
-    print("  1. Paraphrase penalty: Correct answers score MEDIUM, not HIGH (Exp 1)")
-    print("  2. Creative fabrication caught: Novel vocabulary = low overlap (Exp 2)")
-    print("  3. Style mimic passes: Wrong facts + right vocabulary = MEDIUM (Exp 3)")
-    print("  4. Honesty punished: 'I don't know' scores LOWER than wrong facts (Exp 4)")
-    print("  5. No intent awareness: Chitchat flagged same as hallucination (Exp 5)")
-    print()
-    print("CORE FLAW: The detector measures *lexical grounding*, not *factual")
-    print("accuracy*. Exp 3 vs Exp 4 is the smoking gun -- a factually WRONG")
-    print("answer scores 4.4x higher than a factually SAFE refusal.")
+    print(f"  {matches}/{len(results)} experiments match expected level")
     print("=" * 72)
+
+
+# ---------------------------------------------------------------------------
+# JSONL persistence
+# ---------------------------------------------------------------------------
+
+
+def save_run(results: list[dict]) -> None:
+    """Append this run to the JSONL history file."""
+    HISTORY_PATH.parent.mkdir(parents=True, exist_ok=True)
+
+    per_exp = {}
+    for r in results:
+        per_exp[r["name"]] = {
+            "level": r["actual_level"],
+            "score": r["overall_score"],
+            "match": r["match"],
+        }
+
+    entry = {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "git_sha": _get_git_sha(),
+        "num_experiments": len(results),
+        "num_matched": sum(1 for r in results if r["match"]),
+        "experiments": per_exp,
+    }
+
+    with open(HISTORY_PATH, "a") as f:
+        f.write(json.dumps(entry) + "\n")
+
+    print(f"\nRun appended to {HISTORY_PATH}")
+
+
+def compare_last() -> None:
+    """Print metric deltas between the two most recent runs."""
+    if not HISTORY_PATH.exists():
+        print("No hallucination history found.")
+        return
+
+    lines = HISTORY_PATH.read_text().strip().splitlines()
+    if len(lines) < 2:
+        print("Need at least 2 runs in history to compare.")
+        return
+
+    try:
+        prev = json.loads(lines[-2])
+        curr = json.loads(lines[-1])
+    except json.JSONDecodeError:
+        print("Error: corrupted history entries. Re-run to generate fresh data.")
+        return
+
+    print("\n=== Hallucination Experiment Comparison ===")
+    print(
+        f"  Previous: {prev['git_sha']}  "  # noqa: E241
+        f"@ {prev['timestamp']}"
+    )
+    print(
+        f"  Current:  {curr['git_sha']}  "  # noqa: E241
+        f"@ {curr['timestamp']}"
+    )
+    print(
+        f"\n  Match rate: "
+        f"{prev['num_matched']}/{prev['num_experiments']} -> "
+        f"{curr['num_matched']}/{curr['num_experiments']}"
+    )
+
+    print(f"\n  {'Experiment':<25} {'Prev':>12} {'Curr':>12} {'Delta':>10}")  # noqa: E231
+    print(f"  {'─' * 25} {'─' * 12} {'─' * 12} {'─' * 10}")  # noqa: E231
+
+    prev_exps = prev.get("experiments", {})
+    curr_exps = curr.get("experiments", {})
+    all_names = list(dict.fromkeys(
+        list(prev_exps.keys()) + list(curr_exps.keys())
+    ))
+
+    for name in all_names:
+        p = prev_exps.get(name, {})
+        c = curr_exps.get(name, {})
+        p_score = p.get("score", 0.0)
+        c_score = c.get("score", 0.0)
+        delta = c_score - p_score
+
+        p_label = f"{p.get('level', '—'):>5} {p_score:.4f}"  # noqa: E231
+        c_label = f"{c.get('level', '—'):>5} {c_score:.4f}"  # noqa: E231
+
+        if abs(delta) < 1e-6:
+            d_label = "  —"
+        elif delta > 0:
+            d_label = f" +{delta:.4f}"  # noqa: E231
+        else:
+            d_label = f" {delta:.4f}"  # noqa: E231
+
+        print(f"  {name:<25} {p_label:>12} {c_label:>12} {d_label:>10}")  # noqa: E231
+
+    print()
+
+
+def show_history() -> None:
+    """Print all historical runs as a timeline."""
+    if not HISTORY_PATH.exists():
+        print("No hallucination history found.")
+        return
+
+    lines = HISTORY_PATH.read_text().strip().splitlines()
+    print(f"\n=== Hallucination Experiment History ({len(lines)} runs) ===\n")
+    print(
+        f"  {'#':>3}  {'Date':>10}  {'SHA':>8}  "  # noqa: E231
+        f"{'Matched':>8}  Scores"  # noqa: E231
+    )
+    print(f"  {'─' * 3}  {'─' * 10}  {'─' * 8}  {'─' * 8}  {'─' * 30}")  # noqa: E231
+
+    for i, line in enumerate(lines, 1):
+        try:
+            entry = json.loads(line)
+        except json.JSONDecodeError:
+            print(f"  {i:>3}  [corrupted entry — skipped]")  # noqa: E231
+            continue
+        ts = entry["timestamp"][:10]
+        sha = entry["git_sha"]
+        matched = f"{entry['num_matched']}/{entry['num_experiments']}"
+
+        scores = []
+        for name, data in entry.get("experiments", {}).items():
+            short = name[:3]
+            scores.append(f"{short}={data['score']:.2f}")  # noqa: E231
+        score_str = "  ".join(scores)
+
+        print(f"  {i:>3}  {ts}  {sha:>8}  {matched:>8}  {score_str}")  # noqa: E231
+
+    print()
+
+
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(
+        description="Run hallucination detection experiments"
+    )
+    parser.add_argument(
+        "--compare-last",
+        action="store_true",
+        help="Print deltas between the two most recent runs",
+    )
+    parser.add_argument(
+        "--history",
+        action="store_true",
+        help="Show full run history",
+    )
+    args = parser.parse_args()
+
+    if args.compare_last:
+        compare_last()
+        return
+
+    if args.history:
+        show_history()
+        return
+
+    detector = HallucinationDetector()
+    results = run_experiments(detector)
+    print_results(results)
+    save_run(results)
 
 
 if __name__ == "__main__":

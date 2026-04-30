@@ -399,8 +399,12 @@ def compare_last(history_path: Path) -> None:
         print("Need at least 2 runs in history to compare.")
         return
 
-    prev = json.loads(lines[-2])
-    curr = json.loads(lines[-1])
+    try:
+        prev = json.loads(lines[-2])
+        curr = json.loads(lines[-1])
+    except json.JSONDecodeError:
+        print("Error: corrupted history entries. Re-run to generate fresh data.")
+        return
 
     print("\n=== Eval Comparison (last two runs) ===")
     print(f"  Previous: {prev.get('git_sha', '?')}  @ {prev.get('timestamp', '?')}")  # noqa: E241
@@ -422,6 +426,36 @@ def compare_last(history_path: Path) -> None:
     prev_pass = prev.get("pass", False)
     curr_pass = curr.get("pass", False)
     print(f"\n  Pass status: {'PASS' if prev_pass else 'FAIL'} -> {'PASS' if curr_pass else 'FAIL'}")
+    print()
+
+
+def show_history(history_path: Path) -> None:
+    """Print all historical runs as a timeline."""
+    if not history_path.exists():
+        print("No eval history found.")
+        return
+
+    lines = history_path.read_text().strip().splitlines()
+    print(f"\n=== Retrieval Eval History ({len(lines)} runs) ===\n")
+    print(
+        f"  {'#':>3}  {'Date':>10}  {'SHA':>8}  "  # noqa: E231
+        f"{'MRR':>6}  {'R@5':>6}  {'Pass':>5}"  # noqa: E231
+    )
+    print(f"  {'─' * 3}  {'─' * 10}  {'─' * 8}  {'─' * 6}  {'─' * 6}  {'─' * 5}")  # noqa: E231
+
+    for i, line in enumerate(lines, 1):
+        try:
+            entry = json.loads(line)
+        except json.JSONDecodeError:
+            print(f"  {i:>3}  [corrupted entry — skipped]")  # noqa: E231
+            continue
+        ts = entry.get("timestamp", "?")[:10]
+        sha = entry.get("git_sha", "?")
+        mrr = entry.get("mrr", 0.0)
+        r5 = entry.get("recall_at_5", 0.0)
+        passed = "PASS" if entry.get("pass", False) else "FAIL"
+        print(f"  {i:>3}  {ts}  {sha:>8}  {mrr:>6.4f}  {r5:>6.4f}  {passed:>5}")  # noqa: E231
+
     print()
 
 
@@ -464,12 +498,22 @@ def main() -> None:
         default=False,
         help="Print metric deltas between the two most recent eval runs",
     )
+    parser.add_argument(
+        "--history",
+        action="store_true",
+        default=False,
+        help="Show full run history",
+    )
     args = parser.parse_args()
 
     history_path = args.output.parent / "eval_history.jsonl"
 
     if args.compare_last:
         compare_last(history_path)
+        return
+
+    if args.history:
+        show_history(history_path)
         return
 
     retriever: Retriever

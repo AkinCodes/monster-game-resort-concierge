@@ -77,17 +77,30 @@ Prompt tokens scale approximately **12.5x** from turn 0 to turn 20. At turn 0 th
 
 ## Hallucination Detection
 
-Every response is scored by three signals, weighted and combined into a confidence score.
+Two-tier system: fast heuristic scoring on every response, plus optional NLI claim verification for deeper factual checking.
 
-### Signal Weights
+### Tier 1: Heuristic Scoring
+
+**Intent Pre-Checks (no ML, runs first):**
+
+| Check | Condition | Result |
+|-------|-----------|--------|
+| Refusal detection | Response contains "I don't know", "I cannot find", etc. | HIGH (1.0) — honest uncertainty is safe |
+| Chitchat detection | Short response (< 200 chars) + empty/trivial contexts | MEDIUM (0.5) — grounding not applicable |
+
+If neither pre-check fires, the response goes through the full scoring pipeline.
+
+**Signal Weights:**
 
 | Signal | Weight | Method |
 |--------|--------|--------|
-| Semantic similarity | 50% | Cosine similarity between response and retrieved context using `all-MiniLM-L6-v2` |
-| Token overlap | 30% | Token-level intersection ratio (response tokens vs. context tokens) |
-| Source attribution | 20% | Sentence-level grounding check: what fraction of response sentences have >= 30% overlap with a source chunk |
+| Source attribution | 60% | Sentence-level grounding: fraction of response claims with >= 30% token overlap against any context chunk |
+| Token overlap | 20% | Token-level intersection ratio (response tokens vs. context tokens) |
+| Semantic similarity | 20% | Max cosine similarity between response and context embeddings (`all-MiniLM-L6-v2`) |
 
-### Confidence Thresholds
+Attribution is weighted highest because it measures whether each claim traces back to a source, not just whether the response "sounds like" the context.
+
+**Confidence Thresholds:**
 
 | Level | Threshold | Interpretation |
 |-------|-----------|----------------|
@@ -95,11 +108,35 @@ Every response is scored by three signals, weighted and combined into a confiden
 | MEDIUM | >= 0.4 | Partially grounded; some claims may not be in the knowledge base |
 | LOW | < 0.4 | Significant portions of the response are not supported by retrieved context |
 
-### Where It Fails
+### Tier 2: NLI Claim Verification (Experimental)
 
-- **Paraphrased facts:** If the LLM rephrases a fact heavily, token overlap drops even though the information is correct. Semantic similarity partially compensates but not fully.
-- **Multi-hop reasoning:** If the answer requires combining facts from two different chunks, no single chunk scores high on attribution, pulling the score down.
-- **Chitchat responses:** Greetings and small talk have no corresponding knowledge base content, so they always score LOW. The system does not distinguish "no context needed" from "hallucinating."
+Claim-level entailment checking via `cross-encoder/nli-deberta-v3-small`. This layer catches the failure mode where a response uses the right vocabulary but states wrong facts.
+
+1. Response is split into atomic claims (abbreviation-safe sentence splitting + clause conjunction splitting on ", and/but/yet...")
+2. Each claim is checked against every context chunk via NLI (entailment / contradiction / neutral)
+3. Best entailment score across all contexts determines the verdict per claim
+
+**Output:** `ClaimVerification` with per-claim verdicts (SUPPORTED / NOT_SUPPORTED / CONTRADICTED), grounding ratio, and latency.
+
+Called explicitly via `verify_claims()` or combined with Tier 1 via `score_response_with_claims()`. Adds ~50-200ms latency depending on claim count.
+
+### Experiment Results (Before vs. After Upgrade)
+
+| Experiment | Old Score | Old Level | New Score | New Level | Fix |
+|------------|-----------|-----------|-----------|-----------|-----|
+| Faithful Paraphrase | 0.69 | MEDIUM | 0.83 | HIGH | Attribution reweight (60%) |
+| Confident Fabrication | 0.29 | LOW | 0.13 | LOW | Already caught |
+| Style Mimic (wrong facts) | 0.56 | MEDIUM | 0.58 | MEDIUM | Known gap — NLI catches it |
+| Honest Refusal | 0.13 | LOW | 1.00 | HIGH | Refusal pre-check |
+| Pure Chitchat | 0.00 | LOW | 0.50 | MEDIUM | Chitchat pre-check |
+
+3 of 5 original failures fixed. Run `python -m evals.hallucination_experiments` to reproduce.
+
+### Remaining Gaps
+
+- **Style mimic (Exp 3):** Factually wrong responses that reuse context vocabulary still score MEDIUM on the heuristic. The NLI claim verification layer is the mitigation — it checks entailment, not just word overlap.
+- **Multi-hop reasoning:** Answers combining facts from multiple chunks score lower on attribution because no single chunk covers the full response.
+- **NLI latency:** Claim verification adds inference time. Not enabled by default on every request.
 
 ---
 
@@ -126,7 +163,7 @@ Estimated cost per 10-turn conversation by model, assuming average token usage o
 - **No persistent tracing.** No integration with LangSmith, Langfuse, or any trace store. Debugging a bad response from yesterday means re-running the query.
 - **Streaming is incomplete.** The `/chat/stream` endpoint exists but hallucination detection runs after full generation, so confidence scores are only available at the end of the stream, not incrementally.
 - **No online learning.** The knowledge base is static. Guest corrections ("actually, the Mummy Resort pool closes at 8pm, not 10pm") are not fed back into the retrieval index.
-- **Hallucination detector is heuristic.** Token overlap + semantic similarity is not a trained classifier. It works well for high-confidence and low-confidence cases but is unreliable in the 0.4-0.7 range where it matters most.
+- **Heuristic detector has a known gap.** The Tier 1 heuristic measures lexical grounding, not factual accuracy. Responses that reuse context vocabulary but state wrong facts score MEDIUM. The Tier 2 NLI verification mitigates this but adds latency and is not on by default.
 - **Guardrails are rule-based.** InputGuard detects 13 injection patterns and redacts PII, but it's regex-based, not ML-based. Sophisticated adversarial attacks could bypass it.
 - **Summarization is lossy.** The auto-summarization at 12 messages compresses context, which means specific details from early in a conversation (allergies, room preferences, accessibility needs) can be lost.
 - **Eval harness tool-use pass rate is 0%.** Tool selection accuracy is 80%, but end-to-end tool execution in the eval harness fails consistently due to mock/integration boundary issues. This needs investigation.
