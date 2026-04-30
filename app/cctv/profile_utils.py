@@ -1,4 +1,4 @@
-import asyncio
+import inspect
 import time
 import functools
 import logging
@@ -8,7 +8,7 @@ def profile(func):
     """Profile execution time for both sync and async functions."""
     logger = logging.getLogger("monster_resort")
 
-    if asyncio.iscoroutinefunction(func):
+    if inspect.iscoroutinefunction(func):
 
         @functools.wraps(func)
         async def async_wrapper(*args, **kwargs):
