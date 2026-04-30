@@ -315,7 +315,7 @@ def build_app() -> FastAPI:
 
                 # Confidence scoring
                 confidence = detector.score_response(
-                    final_message, rag_contexts, user_text
+                    final_message, rag_contexts
                 )
 
                 # Optional MLflow logging
@@ -337,7 +337,7 @@ def build_app() -> FastAPI:
 
             # No tool calls — direct response
             confidence = detector.score_response(
-                llm_resp.content, rag_contexts, user_text
+                llm_resp.content, rag_contexts
             )
             tracker.log_confidence_metrics(confidence, provider=llm_resp.provider)
 

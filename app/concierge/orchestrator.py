@@ -433,7 +433,7 @@ class ConciergeOrchestrator:
 
                 hal_detector = HallucinationDetector()
                 result.confidence = hal_detector.score_response(
-                    result.response, result.sources, user_message
+                    result.response, result.sources
                 )
             except Exception as exc:
                 logger.warning(

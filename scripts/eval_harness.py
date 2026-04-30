@@ -1,28 +1,5 @@
 #!/usr/bin/env python3
-"""
-Evaluation Harness for Monster Resort RAG Pipeline
-===================================================
-
-Runs a suite of test cases through the full pipeline and produces a quality
-scorecard.  Can operate in two modes:
-
-  **live**   — sends queries through the real LLM + RAG pipeline (requires a
-               running model provider).
-  **mock**   — uses lightweight stubs so the harness itself can be validated
-               without any external dependencies.
-
-Usage
------
-    # Run with mock stubs (no API keys required):
-    python scripts/eval_harness.py
-
-    # Run against the live pipeline:
-    python scripts/eval_harness.py --live
-
-    # Custom test file and output location:
-    python scripts/eval_harness.py --test-file data/eval_cases.json \\
-                                   --output reports/eval_report.json
-"""
+"""Evaluation harness that runs test cases through the RAG pipeline and produces a quality scorecard."""
 
 from __future__ import annotations
 
@@ -187,12 +164,12 @@ class LivePipelineRunner(PipelineRunner):
         if self._initialized:
             return
         # Lazy imports so the harness can load even if deps are missing
-        from app.concierge.llm_providers import (
+        from app.core.llm_providers import (
             LLMMessage,
             ModelRouter,
             OpenAIProvider,
         )
-        from app.concierge.tools import VALID_HOTELS
+        from app.core.tools import VALID_HOTELS
 
         api_key = os.environ.get("OPENAI_API_KEY", "")
         if not api_key:
@@ -266,10 +243,10 @@ def _compute_hallucination_score(
     dependencies (sentence-transformers) are unavailable.
     """
     try:
-        from app.manager_office.hallucination import HallucinationDetector
+        from app.validation.hallucination import HallucinationDetector
 
         detector = HallucinationDetector()
-        result = detector.score_response(response, contexts, query)
+        result = detector.score_response(response, contexts)
         return result.overall_score, result.level.value
     except Exception:
         # Fallback: simple token overlap
