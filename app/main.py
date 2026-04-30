@@ -74,6 +74,13 @@ def _validate_tool_call(tool_name: str, tool_args: dict) -> tuple[bool, str]:
             return False, "Blocked: search query cannot be empty."
         if len(query) > 500:
             return False, "Blocked: search query exceeds 500 character limit."
+    else:
+        # NOTE: If the LLM hallucinates a tool name that doesn't exist (e.g., "delete_user"),
+        # this function lets it through with (True, ""). That's OK because the ToolRegistry
+        # will reject it at execution time — registry.get(name) returns None and the tool
+        # loop returns an error dict. We log a warning here for debugging, but don't block
+        # because future tools might be added to the registry without updating this function.
+        logger.warning("validate_tool_call_unknown_tool", extra={"tool": tool_name})
     return True, ""
 
 
