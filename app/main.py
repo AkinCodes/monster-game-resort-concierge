@@ -64,6 +64,16 @@ def _validate_tool_call(tool_name: str, tool_args: dict) -> tuple[bool, str]:
         hotel = tool_args.get("hotel_name", "")
         if hotel not in VALID_HOTELS:
             return False, f"Blocked: unknown hotel '{hotel}'. Not in official registry."
+    elif tool_name == "get_booking":
+        booking_id = tool_args.get("booking_id", "")
+        if not booking_id or not booking_id.strip():
+            return False, "Blocked: booking_id cannot be empty."
+    elif tool_name == "search_amenities":
+        query = tool_args.get("query", "")
+        if not query or not query.strip():
+            return False, "Blocked: search query cannot be empty."
+        if len(query) > 500:
+            return False, "Blocked: search query exceeds 500 character limit."
     return True, ""
 
 
