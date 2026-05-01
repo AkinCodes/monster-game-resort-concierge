@@ -12,11 +12,16 @@ from enum import Enum
 from typing import Any, List, Optional
 
 from .cost_tracker import CostAccumulator
+from .guardrails import InputGuard, OutputGuard
 from .llm_providers import LLMMessage, LLMProvider, LLMResponse
 from .memory import MemoryStore
 from .prompt_loader import load_prompt
 from .structured_output import StructuredOutputParser
 from .tools import ToolRegistry, VALID_HOTELS
+from ..validation.hallucination import (
+    ConfidenceLevel,
+    HallucinationDetector,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -62,11 +67,11 @@ class ConciergeOrchestrator:
     def __init__(
         self,
         llm_provider: LLMProvider,
-        rag: Any,  # VectorRAG or AdvancedRAG instance
+        rag: Any,
         tool_registry: ToolRegistry,
         memory_store: MemoryStore,
-        detector=None,
-        input_guard=None,
+        detector: Optional[HallucinationDetector] = None,
+        input_guard: Optional[InputGuard] = None,
     ):
         self.llm = llm_provider
         self.rag = rag
@@ -443,38 +448,100 @@ class ConciergeOrchestrator:
         # Everything else → planner decides
         return None
 
+    # ------------------------------------------------------------------
+    # Guardrail helpers
+    # ------------------------------------------------------------------
+
+    def _apply_input_guardrails(
+        self, text: str,
+    ) -> tuple[str, list[str], Optional[ExecutionResult]]:
+        """Run input guardrails. Returns (sanitised_text, pii_types, block).
+
+        If ``block`` is not None the request was rejected and handle()
+        should return it immediately.
+        """
+        if not self.input_guard:
+            return text, [], None
+
+        safe, reason = self.input_guard.check_prompt_injection(text)
+        if not safe:
+            logger.warning("input_guard_blocked", extra={"reason": reason})
+            return text, [], ExecutionResult(
+                response="I'm unable to process that request.",
+                plan=Plan(intent=IntentType.CHITCHAT),
+                guardrail="prompt_injection",
+            )
+
+        if not self.input_guard.check_topic_boundary(text):
+            logger.info("input_guard_off_topic")
+            return text, [], ExecutionResult(
+                response=(
+                    "I am the Grand Chamberlain of the Monster Resort. "
+                    "I can only assist with resort and hospitality "
+                    "inquiries."
+                ),
+                plan=Plan(intent=IntentType.CHITCHAT),
+                guardrail="off_topic",
+            )
+
+        sanitised, pii_types = self.input_guard.check_pii(text)
+        return sanitised, pii_types, None
+
+    def _apply_output_guardrails(
+        self, result: ExecutionResult, pii_types: list[str],
+    ) -> None:
+        """Check the response for leaked PII or character breaks."""
+        if not self.input_guard:
+            return
+
+        output_guard = OutputGuard(input_pii_types=pii_types)
+        out_safe, out_reason = output_guard.check_response(result.response)
+        if not out_safe:
+            logger.warning(
+                "output_guard_blocked", extra={"reason": out_reason},
+            )
+            result.response = (
+                "I must beg your pardon — let me rephrase. "
+                "How else may I assist you with your stay?"
+            )
+            result.guardrail = "output_blocked"
+
+    def _apply_hallucination_detection(
+        self, result: ExecutionResult,
+    ) -> None:
+        """Score the response and run NLI if confidence is not HIGH."""
+        if not self.detector or not result.rag_contexts:
+            return
+
+        try:
+            result.confidence = self.detector.score_response(
+                result.response, result.rag_contexts
+            )
+            if result.confidence.level != ConfidenceLevel.HIGH:
+                result.claim_verification = (
+                    self.detector.verify_claims(
+                        result.response, result.rag_contexts
+                    )
+                )
+        except Exception as exc:
+            logger.warning(
+                "hallucination_detection_failed",
+                extra={"error": str(exc)},
+            )
+
+    # ------------------------------------------------------------------
+    # Main entry point
+    # ------------------------------------------------------------------
+
     async def handle(self, user_message: str, session_id: str) -> ExecutionResult:
-        """Main entry point: guardrails, plan, execute, validate, save."""
+        """Guardrails → plan → execute → validate → save."""
         overall_start = time.monotonic()
 
-        # --- Input guardrails ---
-        if self.input_guard:
-            safe, reason = self.input_guard.check_prompt_injection(user_message)
-            if not safe:
-                logger.warning("input_guard_blocked", extra={"reason": reason})
-                return ExecutionResult(
-                    response="I'm unable to process that request.",
-                    plan=Plan(intent=IntentType.CHITCHAT),
-                    guardrail="prompt_injection",
-                )
-
-            if not self.input_guard.check_topic_boundary(user_message):
-                logger.info("input_guard_off_topic")
-                return ExecutionResult(
-                    response=(
-                        "I am the Grand Chamberlain of the Monster Resort. "
-                        "I can only assist with resort and hospitality "
-                        "inquiries."
-                    ),
-                    plan=Plan(intent=IntentType.CHITCHAT),
-                    guardrail="off_topic",
-                )
-
-            user_message, pii_types = self.input_guard.check_pii(
-                user_message
-            )
-        else:
-            pii_types = []
+        user_message, pii_types, block = self._apply_input_guardrails(
+            user_message,
+        )
+        if block is not None:
+            return block
 
         cheap_intent = self._classify_intent_cheap(user_message)
 
@@ -503,44 +570,10 @@ class ConciergeOrchestrator:
 
         result = await self.execute(plan, user_message, session_id)
 
-        if plan.intent == IntentType.KNOWLEDGE and self.detector:
-            try:
-                from ..validation.hallucination import ConfidenceLevel
+        if plan.intent == IntentType.KNOWLEDGE:
+            self._apply_hallucination_detection(result)
 
-                result.confidence = self.detector.score_response(
-                    result.response, result.rag_contexts
-                )
-                if result.confidence.level != ConfidenceLevel.HIGH:
-                    result.claim_verification = (
-                        self.detector.verify_claims(
-                            result.response, result.rag_contexts
-                        )
-                    )
-            except Exception as exc:
-                logger.warning(
-                    "hallucination_detection_failed",
-                    extra={"error": str(exc)},
-                )
-
-        # --- Output guardrails ---
-        if self.input_guard:
-            from ..core.guardrails import OutputGuard
-
-            output_guard = OutputGuard(input_pii_types=pii_types)
-            out_safe, out_reason = output_guard.check_response(
-                result.response
-            )
-            if not out_safe:
-                logger.warning(
-                    "output_guard_blocked",
-                    extra={"reason": out_reason},
-                )
-                result.response = (
-                    "I must beg your pardon — let me rephrase. "
-                    "How else may I assist you with your stay?"
-                )
-                result.guardrail = "output_blocked"
-
+        self._apply_output_guardrails(result, pii_types)
         result.pii_types = pii_types
 
         self.memory.add_message(session_id, "user", user_message)
