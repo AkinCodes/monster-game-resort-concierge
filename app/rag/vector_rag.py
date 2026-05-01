@@ -5,7 +5,7 @@ import numpy as np
 from typing import Iterable, List, Optional
 from ..monitoring.metrics import Counter
 
-RAG_HIT_COUNT = Counter("mrc_rag_hits_total", "Total RAG search hits", ["query"])
+RAG_HIT_COUNT = Counter("mrc_rag_hits_total", "Total RAG search hits")
 
 # --- Vector-based RAG using ChromaDB and HuggingFace embeddings ---
 import chromadb  # noqa: E402
@@ -23,6 +23,7 @@ class VectorRAG:
         collection: str,
         embedding_model: str = "all-MiniLM-L6-v2",
         ingestion_token: Optional[str] = None,
+        enable_anomaly_detection: bool = False,
     ):
         """
         Initialize VectorRAG with HuggingFace embeddings (compatible with ChromaDB 0.5.23).
@@ -37,6 +38,7 @@ class VectorRAG:
         self.collection_name = collection
         self.embedding_model = embedding_model
         self._ingestion_token = ingestion_token
+        self._anomaly_detection = enable_anomaly_detection
 
         # Initialize ChromaDB client
         self.chroma_client = chromadb.PersistentClient(path=persist_dir)
@@ -161,7 +163,10 @@ class VectorRAG:
             return 0
 
         # Defense 5: Check for anomalous embeddings
-        anomalies = self._check_embedding_anomaly(text_list)
+        if self._anomaly_detection:
+            anomalies = self._check_embedding_anomaly(text_list)
+        else:
+            anomalies = [False] * len(text_list)
 
         now = time.time()
         if sources:
@@ -279,7 +284,7 @@ class VectorRAG:
                 out.append({"text": doc, "meta": meta, "score": float(score)})
 
             if out:
-                RAG_HIT_COUNT.labels(query=query).inc()
+                RAG_HIT_COUNT.inc()
 
             return {"ok": True, "query": query, "results": out}
         except Exception as e:

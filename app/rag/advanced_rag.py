@@ -38,18 +38,15 @@ class AdvancedRAG(VectorRAG):
         embedding_model: str = "all-MiniLM-L6-v2",
         reranker_model: str = "BAAI/bge-reranker-base",
         ingestion_token: str | None = None,
+        enable_anomaly_detection: bool = False,
     ):
-        """
-        Initialize Advanced RAG system.
-
-        Args:
-            persist_dir: ChromaDB persistence directory
-            collection: Collection name
-            embedding_model: HuggingFace embedding model
-            reranker_model: Cross-encoder model for reranking
-            ingestion_token: Token required for ingestion operations
-        """
-        super().__init__(persist_dir, collection, embedding_model, ingestion_token=ingestion_token)
+        super().__init__(
+            persist_dir,
+            collection,
+            embedding_model,
+            ingestion_token=ingestion_token,
+            enable_anomaly_detection=enable_anomaly_detection,
+        )
 
         # BM25 components
         self.corpus: List[str] = []
@@ -63,8 +60,7 @@ class AdvancedRAG(VectorRAG):
             f"AdvancedRAG initialized with {embedding_model} + {reranker_model}"
         )
 
-        # Rebuild BM25 from existing ChromaDB data (so it works without re-ingestion)
-        self._rebuild_bm25_from_store()
+        # BM25 is built lazily on first search (not at startup) for performance
 
     def _rebuild_bm25_from_store(self):
         """Rebuild BM25 index from existing ChromaDB documents."""
@@ -126,6 +122,8 @@ class AdvancedRAG(VectorRAG):
             List of (doc_index, score) tuples
         """
         if self.bm25 is None:
+            self._rebuild_bm25_from_store()
+        if self.bm25 is None:
             logger.warning("BM25 index not built, returning empty results")
             return []
 
@@ -141,18 +139,14 @@ class AdvancedRAG(VectorRAG):
         ]
 
     def _dense_search(self, query: str, k: int = 20) -> List[Tuple[str, float]]:
-        """
-        Dense embedding search (from parent class).
-
-        Args:
-            query: Search query
-            k: Number of results
-
-        Returns:
-            List of (text, score) tuples
-        """
-        results = super().search(query, k=k)
-        return [(r["text"], r["score"]) for r in results.get("results", [])]
+        """Dense embedding search via ChromaDB directly."""
+        try:
+            results = self.collection.query(query_texts=[query], n_results=k)
+            docs = results.get("documents", [[]])[0]
+            scores = results.get("distances", [[]])[0]
+            return [(doc, float(score)) for doc, score in zip(docs, scores)]
+        except Exception:
+            return []
 
     def _reciprocal_rank_fusion(
         self,
