@@ -39,7 +39,7 @@ This isn't a wrapper around an API call. It's a complete backend: a 3-stage retr
 - **3-provider LLM fallback** — OpenAI → Anthropic → Ollama. If one goes down, the next takes over automatically. No user-facing errors during provider outages.
 - **Function-calling agent** — Tool registry with schema generation, input validation against a 6-property allowlist, and async execution with timing and structured logging.
 - **Tool sandboxing** — 10s timeout and 50/min rate limiting per tool to prevent runaway or abusive calls.
-- **Two-agent orchestrator (`/chat/v2`)** — Planner classifies intent (knowledge/tool/clarify/chitchat), Executor carries out the plan with structured output parsing and retry logic.
+- **Two-agent orchestrator** — Planner classifies intent (knowledge/tool/clarify/chitchat), Executor carries out the plan with structured output parsing and retry logic.
 - **Native structured outputs** — `response_format` support with a 3-level fallback chain (native JSON mode → regex extraction → raw).
 - **Input/output guardrails** — Prompt injection defense, PII redaction, topic boundary enforcement, and output filtering (`app/core/guardrails.py`).
 - **Database-backed conversation memory** — Messages persist across restarts. Automatic summarization at 12 messages compresses context while preserving conversational continuity.
@@ -358,7 +358,6 @@ uv run uvicorn app.main:app --reload
 | `POST` | `/chat/stream` | Streaming chat via SSE |
 | `GET` | `/tools` | List registered tools and schemas |
 | `GET` | `/metrics` | Prometheus metrics |
-| `POST` | `/chat/v2` | Orchestrator-based chat (plan-then-execute) |
 | `GET` | `/api/v1/traces` | Recent LLM call traces (latency, tokens, cost) |
 | `GET` | `/api/v1/mcp/tools` | MCP tool discovery |
 | `POST` | `/api/v1/mcp/call` | MCP tool execution |

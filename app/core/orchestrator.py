@@ -8,14 +8,14 @@ import time
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Optional
+from typing import Any, List, Optional
 
 from .cost_tracker import CostAccumulator
 from .llm_providers import LLMMessage, LLMProvider, LLMResponse
 from .memory import MemoryStore
 from .prompt_loader import load_prompt
 from .structured_output import StructuredOutputParser
-from .tools import ToolRegistry
+from .tools import ToolRegistry, VALID_HOTELS
 
 logger = logging.getLogger(__name__)
 
@@ -46,9 +46,11 @@ class ExecutionResult:
     plan: Plan
     tool_result: Optional[dict] = None
     sources: list[str] = field(default_factory=list)
+    rag_contexts: List[str] = field(default_factory=list)
     latency_ms: float = 0
     token_usage: dict = field(default_factory=dict)
     confidence: object = None
+    claim_verification: Optional[object] = None
 
 
 class ConciergeOrchestrator:
@@ -60,11 +62,13 @@ class ConciergeOrchestrator:
         rag: Any,  # VectorRAG or AdvancedRAG instance
         tool_registry: ToolRegistry,
         memory_store: MemoryStore,
+        detector=None,
     ):
         self.llm = llm_provider
         self.rag = rag
         self.tools = tool_registry
         self.memory = memory_store
+        self.detector = detector
         self._total_planner_tokens = 0
         self._total_executor_tokens = 0
         self._costs = CostAccumulator()
@@ -262,6 +266,7 @@ class ConciergeOrchestrator:
             response=response.content,
             plan=plan,
             sources=sources,
+            rag_contexts=context_parts,
             token_usage=response.usage,
         )
 
@@ -285,6 +290,12 @@ class ConciergeOrchestrator:
                 response=f"I don't have a tool called '{plan.tool_name}'. Available tools: {', '.join(available)}.",
                 plan=plan,
             )
+
+        valid, reason = self._validate_tool_call(
+            plan.tool_name, plan.tool_args
+        )
+        if not valid:
+            return ExecutionResult(response=reason, plan=plan)
 
         args = dict(plan.tool_args)
         if "session_id" not in args:
@@ -386,15 +397,19 @@ class ConciergeOrchestrator:
 
         result = await self.execute(plan, user_message, session_id)
 
-        # Hallucination detection for knowledge responses
-        if plan.intent == IntentType.KNOWLEDGE:
+        if plan.intent == IntentType.KNOWLEDGE and self.detector:
             try:
-                from ..validation.hallucination import HallucinationDetector
+                from ..validation.hallucination import ConfidenceLevel
 
-                hal_detector = HallucinationDetector()
-                result.confidence = hal_detector.score_response(
-                    result.response, result.sources
+                result.confidence = self.detector.score_response(
+                    result.response, result.rag_contexts
                 )
+                if result.confidence.level != ConfidenceLevel.HIGH:
+                    result.claim_verification = (
+                        self.detector.verify_claims(
+                            result.response, result.rag_contexts
+                        )
+                    )
             except Exception as exc:
                 logger.warning(
                     "hallucination_detection_failed",
@@ -418,6 +433,39 @@ class ConciergeOrchestrator:
         )
 
         return result
+
+    @staticmethod
+    def _validate_tool_call(
+        tool_name: str, tool_args: dict
+    ) -> tuple[bool, str]:
+        """Validate tool call arguments before execution."""
+        if tool_name == "book_room":
+            hotel = tool_args.get("hotel_name", "")
+            if hotel not in VALID_HOTELS:
+                return (
+                    False,
+                    f"Blocked: unknown hotel '{hotel}'."
+                    " Not in official registry.",
+                )
+        elif tool_name == "get_booking":
+            booking_id = tool_args.get("booking_id", "")
+            if not booking_id or not booking_id.strip():
+                return False, "Blocked: booking_id cannot be empty."
+        elif tool_name == "search_amenities":
+            query = tool_args.get("query", "")
+            if not query or not query.strip():
+                return False, "Blocked: search query cannot be empty."
+            if len(query) > 500:
+                return (
+                    False,
+                    "Blocked: search query exceeds 500 character limit.",
+                )
+        else:
+            logger.warning(
+                "validate_tool_call_unknown_tool",
+                extra={"tool": tool_name},
+            )
+        return True, ""
 
     def _format_history(self, messages: list[dict]) -> str:
         """Format conversation history for prompt injection."""

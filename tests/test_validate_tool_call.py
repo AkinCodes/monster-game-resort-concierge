@@ -1,11 +1,13 @@
-"""Tests for _validate_tool_call in app/main.py."""
+"""Tests for _validate_tool_call tool argument validation."""
 
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from app.main import _validate_tool_call  # noqa: E402
+from app.core.orchestrator import ConciergeOrchestrator  # noqa: E402
+
+_validate_tool_call = ConciergeOrchestrator._validate_tool_call
 
 
 class TestBookRoom:

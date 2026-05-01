@@ -81,6 +81,14 @@ class ClaimVerdict:
     best_context: str
     confidence: float
 
+    def to_dict(self) -> dict:
+        return {
+            "claim": self.claim,
+            "verdict": self.verdict,
+            "best_context": self.best_context,
+            "confidence": round(self.confidence, 4),
+        }
+
 
 @dataclass
 class ClaimVerification:
@@ -92,6 +100,18 @@ class ClaimVerification:
     num_unsupported: int = 0
     nli_available: bool = True
     note: Optional[str] = None
+
+    def to_dict(self) -> dict:
+        d = {
+            "grounding_ratio": round(self.grounding_ratio, 4),
+            "num_supported": self.num_supported,
+            "num_unsupported": self.num_unsupported,
+            "nli_available": self.nli_available,
+            "claims": [c.to_dict() for c in self.claims],
+        }
+        if self.note is not None:
+            d["note"] = self.note
+        return d
 
 
 def _tokenize(text: str) -> set[str]:
