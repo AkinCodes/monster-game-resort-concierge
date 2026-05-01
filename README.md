@@ -35,11 +35,11 @@ This isn't a wrapper around an API call. It's a complete backend: a 3-stage retr
 ## Technical Highlights
 
 - **3-stage hybrid RAG pipeline** — BM25 keyword + dense vector retrieval, fused via Reciprocal Rank Fusion, then reranked by a cross-encoder. Not a single-vector lookup.
-- **Hallucination detection on every response** — token overlap + semantic similarity + source attribution scoring → HIGH / MEDIUM / LOW confidence returned with every answer.
+- **Tiered hallucination detection** — Fast heuristic (token overlap + semantic similarity + source attribution) on every knowledge response. When confidence is MEDIUM or LOW, claim-level NLI verification runs to check each fact against the source material. Intent pre-checks handle refusals and chitchat without scoring.
 - **3-provider LLM fallback** — OpenAI → Anthropic → Ollama. If one goes down, the next takes over automatically. No user-facing errors during provider outages.
 - **Function-calling agent** — Tool registry with schema generation, input validation against a 6-property allowlist, and async execution with timing and structured logging.
 - **Tool sandboxing** — 10s timeout and 50/min rate limiting per tool to prevent runaway or abusive calls.
-- **Two-agent orchestrator** — Planner classifies intent (knowledge/tool/clarify/chitchat), Executor carries out the plan with structured output parsing and retry logic.
+- **Two-agent orchestrator with cheap classifier** — A zero-cost heuristic bypasses the planner for obvious intents (greetings, simple questions). For ambiguous or tool-related queries, a Planner LLM classifies intent and extracts arguments, then an Executor carries out the plan with focused, per-intent prompts.
 - **Native structured outputs** — `response_format` support with a 3-level fallback chain (native JSON mode → regex extraction → raw).
 - **Input/output guardrails** — Prompt injection defense, PII redaction, topic boundary enforcement, and output filtering (`app/core/guardrails.py`).
 - **Database-backed conversation memory** — Messages persist across restarts. Automatic summarization at 12 messages compresses context while preserving conversational continuity.
@@ -63,26 +63,29 @@ Guest: "Book me a room at Werewolf Lodge — but not during full moon, I shed ev
 ```
 
 1. Message is validated, sanitized, and authenticated (JWT or API key)
-2. RAG pipeline runs hybrid search — BM25 keyword + dense vector retrieval — fused via Reciprocal Rank Fusion, then reranked by a cross-encoder
-3. Top 5 context chunks are injected into the system prompt with source attribution tags
-4. LLM (OpenAI / Anthropic / Ollama) generates a response and decides whether to call a tool
-5. Tool executes: validates hotel against a 6-property allowlist, checks dates, writes to SQLite, generates a PDF receipt
-6. Tool results feed back to the LLM for a synthesis response
-7. Hallucination detector scores the final output (context overlap + semantic similarity + source attribution) and assigns HIGH / MEDIUM / LOW confidence
-8. Response streams back to the Gradio chat UI with confidence metadata
-9. Prometheus captures request latency, token usage, RAG retrieval time, and confidence distribution
+2. Orchestrator runs input guardrails: prompt injection defense, topic boundary check, PII redaction
+3. Cheap classifier checks if intent is obvious (greeting → CHITCHAT, question → KNOWLEDGE). If ambiguous, Planner LLM classifies intent and extracts tool arguments
+4. Executor dispatches based on intent:
+   - **KNOWLEDGE** → RAG hybrid search (BM25 + dense + RRF + cross-encoder reranker), top 5 chunks injected into a focused prompt
+   - **TOOL** → validates args against allowlist, executes tool, LLM summarises result
+   - **CHITCHAT / CLARIFY** → direct LLM response with persona prompt
+5. For KNOWLEDGE responses: hallucination detector scores the output (heuristic first, then claim-level NLI if confidence is not HIGH)
+6. Output guardrails check for leaked PII or character breaks
+7. Response returned with confidence scores, claim verification, and intent metadata
 
 **Sample `/chat` response:**
 
 ```json
 {
-  "response": "The Mummy Resort offers a Sand Exfoliation Treatment, Papyrus Wrap Therapy...",
-  "confidence": "HIGH",
-  "confidence_score": 0.87,
-  "provider": "openai",
-  "model": "gpt-4o",
+  "ok": true,
+  "reply": "The Mummy Resort offers a Sand Exfoliation Treatment, Papyrus Wrap Therapy...",
   "session_id": "abc-123",
-  "request_id": "req-456"
+  "intent": "knowledge",
+  "confidence": {"overall_score": 0.87, "level": "HIGH"},
+  "claim_verification": null,
+  "sources": ["mummy_resort.md"],
+  "tools_used": [],
+  "guardrail": null
 }
 ```
 
@@ -98,8 +101,37 @@ Guest: "Book me a room at Werewolf Lodge — but not during full moon, I shed ev
          |
 +--------v---------+
 |    FastAPI        |  :8000
-|   /chat  /metrics |
+|  /chat (thin)     |
 +--------+---------+
+         |
++--------v-----------------+
+|   ConciergeOrchestrator  |
+|                           |
+|  Input Guardrails         |
+|  ├─ Prompt injection      |
+|  ├─ Topic boundary        |
+|  └─ PII redaction         |
+|                           |
+|  Cheap Classifier         |
+|  ├─ Greeting → CHITCHAT   |
+|  ├─ Question → KNOWLEDGE  |
+|  └─ Ambiguous → Planner   |
+|                           |
+|  Planner (LLM call #1)   |
+|  └─ Intent + tool args    |
+|                           |
+|  Executor (LLM call #2)  |
+|  ├─ _execute_knowledge()  |
+|  ├─ _execute_tool()       |
+|  ├─ _execute_chitchat()   |
+|  └─ _execute_clarify()    |
+|                           |
+|  Hallucination Detection  |
+|  ├─ Tier 1: Heuristic     |
+|  └─ Tier 2: NLI (if !HIGH)|
+|                           |
+|  Output Guardrails        |
++--------+-----------------+
          |
 +--------+--------+-----------+
 |                 |            |
@@ -110,35 +142,34 @@ v                 v            v
 | Limiting |  |          |  |          |
 | - JWT    |  | - OpenAI |  | - BM25   |
 | - API key|  | - Anthro |  | - Dense  |
-| (SHA-256)|  | - Ollama |  | (ChromaDB|
-| - SlowAPI|  | Auto-fall|  | - RRF    |
-| - Input  |  |   back   |  | - Cross- |
-| sanitize |  +----+-----+  |  encoder  |
-+----------+       |        | reranking |
-                   v        +-----+----+
-         +---------+---+          |
-         | Agent Loop   |<--------+
-         | (tool calls) |
-         +---+-----+---+
-             |     |
-             v     v
-    +--------+  +--+------+
-    | SQLite |  |   PDF   |
-    |Bookings|  | Receipts|
-    +--------+  +---------+
+| - SlowAPI|  | - Ollama |  | - RRF    |
++----------+  | fallback |  | - Cross- |
+              +----+-----+  | encoder  |
+                   |        +-----+----+
+              +----v----+         |
+              | Tools   |<--------+
+              | - book  |
+              | - get   |
+              | - search|
+              +---+--+--+
+                  |  |
+                  v  v
+           +------+ +-------+
+           |SQLite| |  PDF  |
+           +------+ +-------+
 ```
 
 ### Project Structure
 
 ```
 app/
-├── main.py                 # FastAPI app, agent loop, /chat endpoint
+├── main.py                 # FastAPI app, thin /chat route, init helpers
 ├── config.py               # Settings from .env (pydantic BaseSettings)
 ├── core/
 │   ├── tools.py            # Tool registry + book_room, get_booking, search_amenities (sandboxed)
 │   ├── memory.py           # MemoryStore — DB-backed persistence + auto-summarization
 │   ├── llm_providers.py    # ModelRouter — OpenAI / Anthropic / Ollama fallback + prompt caching
-│   ├── orchestrator.py     # Two-agent orchestrator — Planner + Executor
+│   ├── orchestrator.py     # Orchestrator — guardrails, cheap classifier, planner, executor, hallucination detection
 │   ├── structured_output.py # JSON output parser with 3-level fallback chain
 │   ├── guardrails.py       # Input/output guardrails — injection defense, PII redaction
 │   ├── mcp_server.py       # MCP tool server — discovery, execution, metadata
@@ -354,7 +385,7 @@ uv run uvicorn app.main:app --reload
 | `GET` | `/health` | Liveness check |
 | `GET` | `/ready` | Readiness check |
 | `POST` | `/login` | Get JWT access + refresh tokens |
-| `POST` | `/chat` | Main chat endpoint (returns confidence scores + provider used) |
+| `POST` | `/chat` | Main chat endpoint (orchestrator-based, returns confidence + intent) |
 | `POST` | `/chat/stream` | Streaming chat via SSE |
 | `GET` | `/tools` | List registered tools and schemas |
 | `GET` | `/metrics` | Prometheus metrics |
