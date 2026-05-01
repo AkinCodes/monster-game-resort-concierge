@@ -49,8 +49,10 @@ class ExecutionResult:
     rag_contexts: List[str] = field(default_factory=list)
     latency_ms: float = 0
     token_usage: dict = field(default_factory=dict)
-    confidence: object = None
+    confidence: Optional[object] = None
     claim_verification: Optional[object] = None
+    guardrail: Optional[str] = None
+    pii_types: List[str] = field(default_factory=list)
 
 
 class ConciergeOrchestrator:
@@ -63,12 +65,14 @@ class ConciergeOrchestrator:
         tool_registry: ToolRegistry,
         memory_store: MemoryStore,
         detector=None,
+        input_guard=None,
     ):
         self.llm = llm_provider
         self.rag = rag
         self.tools = tool_registry
         self.memory = memory_store
         self.detector = detector
+        self.input_guard = input_guard
         self._total_planner_tokens = 0
         self._total_executor_tokens = 0
         self._costs = CostAccumulator()
@@ -382,8 +386,37 @@ class ConciergeOrchestrator:
         )
 
     async def handle(self, user_message: str, session_id: str) -> ExecutionResult:
-        """Main entry point: plan, execute, save to memory."""
+        """Main entry point: guardrails, plan, execute, validate, save."""
         overall_start = time.monotonic()
+
+        # --- Input guardrails ---
+        if self.input_guard:
+            safe, reason = self.input_guard.check_prompt_injection(user_message)
+            if not safe:
+                logger.warning("input_guard_blocked", extra={"reason": reason})
+                return ExecutionResult(
+                    response="I'm unable to process that request.",
+                    plan=Plan(intent=IntentType.CHITCHAT),
+                    guardrail="prompt_injection",
+                )
+
+            if not self.input_guard.check_topic_boundary(user_message):
+                logger.info("input_guard_off_topic")
+                return ExecutionResult(
+                    response=(
+                        "I am the Grand Chamberlain of the Monster Resort. "
+                        "I can only assist with resort and hospitality "
+                        "inquiries."
+                    ),
+                    plan=Plan(intent=IntentType.CHITCHAT),
+                    guardrail="off_topic",
+                )
+
+            user_message, pii_types = self.input_guard.check_pii(
+                user_message
+            )
+        else:
+            pii_types = []
 
         plan = await self.plan(user_message, session_id)
         logger.info(
@@ -415,6 +448,27 @@ class ConciergeOrchestrator:
                     "hallucination_detection_failed",
                     extra={"error": str(exc)},
                 )
+
+        # --- Output guardrails ---
+        if self.input_guard:
+            from ..core.guardrails import OutputGuard
+
+            output_guard = OutputGuard(input_pii_types=pii_types)
+            out_safe, out_reason = output_guard.check_response(
+                result.response
+            )
+            if not out_safe:
+                logger.warning(
+                    "output_guard_blocked",
+                    extra={"reason": out_reason},
+                )
+                result.response = (
+                    "I must beg your pardon — let me rephrase. "
+                    "How else may I assist you with your stay?"
+                )
+                result.guardrail = "output_blocked"
+
+        result.pii_types = pii_types
 
         self.memory.add_message(session_id, "user", user_message)
         self.memory.add_message(session_id, "assistant", result.response)

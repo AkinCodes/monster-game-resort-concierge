@@ -29,7 +29,7 @@ from .validation.hallucination import HallucinationDetector  # noqa: E402
 from .monitoring.mlflow_tracking import MLflowTracker  # noqa: E402
 from .monitoring.logging_utils import setup_logging  # noqa: E402
 from .validation.validators import validate_message  # noqa: E402
-from .core.guardrails import InputGuard, OutputGuard  # noqa: E402
+from .core.guardrails import InputGuard  # noqa: E402
 from .core.llm_providers import ModelRouter  # noqa: E402
 
 logger = setup_logging()
@@ -181,6 +181,7 @@ def build_app() -> FastAPI:
             tool_registry=registry,
             memory_store=memory,
             detector=detector,
+            input_guard=input_guard,
         )
 
     # --- ROUTES ---
@@ -194,36 +195,9 @@ def build_app() -> FastAPI:
             raise HTTPException(status_code=400, detail="message is required")
 
         try:
-            text = validate_message(user_text)
+            user_text = validate_message(user_text)
         except Exception:
             raise HTTPException(status_code=400, detail="Invalid message")
-
-        # --- Input guardrails ---
-        injection_safe, injection_reason = input_guard.check_prompt_injection(
-            text
-        )
-        if not injection_safe:
-            logger.warning(f"input_guard_blocked: {injection_reason}")
-            return {
-                "ok": True,
-                "reply": "I'm unable to process that request.",
-                "session_id": session_id,
-                "guardrail": "prompt_injection",
-            }
-
-        if not input_guard.check_topic_boundary(text):
-            logger.info("input_guard: off-topic request blocked")
-            return {
-                "ok": True,
-                "reply": (
-                    "I am the Grand Chamberlain of the Monster Resort. "
-                    "I can only assist with resort and hospitality inquiries."
-                ),
-                "session_id": session_id,
-                "guardrail": "off_topic",
-            }
-
-        sanitized_text, pii_types = input_guard.check_pii(text)
 
         if orchestrator is None:
             return {
@@ -232,43 +206,29 @@ def build_app() -> FastAPI:
                 "session_id": session_id,
             }
 
-        result = await orchestrator.handle(sanitized_text, session_id)
+        result = await orchestrator.handle(user_text, session_id)
 
-        # --- Output guardrails ---
-        reply = result.response
-        output_guard = OutputGuard(input_pii_types=pii_types)
-        out_safe, out_reason = output_guard.check_response(reply)
-        if not out_safe:
-            logger.warning(f"output_guard_blocked: {out_reason}")
-            reply = (
-                "I must beg your pardon — let me rephrase. "
-                "How else may I assist you with your stay?"
-            )
-
-        # --- MLflow logging ---
         if tracker and result.confidence:
-            provider = getattr(result, "provider", None)
-            tracker.log_confidence_metrics(result.confidence, provider=provider)
-
-        claim_verification = getattr(result, "claim_verification", None)
+            tracker.log_confidence_metrics(result.confidence)
 
         return {
             "ok": True,
-            "reply": reply,
+            "reply": result.response,
             "session_id": session_id,
             "intent": result.plan.intent.value,
-            "tools_used": [result.tool_result] if result.tool_result else [],
+            "tools_used": (
+                [result.tool_result] if result.tool_result else []
+            ),
             "confidence": (
                 result.confidence.to_dict()
-                if hasattr(result.confidence, "to_dict")
-                else result.confidence
+                if result.confidence else None
             ),
             "claim_verification": (
-                claim_verification.to_dict()
-                if hasattr(claim_verification, "to_dict")
-                else claim_verification
+                result.claim_verification.to_dict()
+                if result.claim_verification else None
             ),
             "sources": result.sources,
+            "guardrail": result.guardrail,
         }
 
     # --- OBSERVABILITY ENDPOINT ---
