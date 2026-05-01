@@ -17,8 +17,7 @@ generated_pdfs/
 .ablation_rag_store/
 .uv-cache/
 mlruns/
-monster_resort.log
-monster_resort_errors.log
+monster_resort*.log*
 .claude/
 .DS_Store
 node_modules/
