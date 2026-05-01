@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import time
 import uuid
 from dataclasses import dataclass, field
@@ -385,6 +386,63 @@ class ConciergeOrchestrator:
             token_usage=response.usage,
         )
 
+    # ------------------------------------------------------------------
+    # Cheap intent classifier — bypass the planner LLM when obvious
+    # ------------------------------------------------------------------
+
+    _GREETING_WORDS = frozenset([
+        "hello", "hi", "hey", "howdy", "greetings", "good morning",
+        "good afternoon", "good evening", "good night", "yo", "sup",
+        "hiya", "morning", "evening", "afternoon",
+    ])
+
+    _TOOL_KEYWORDS = frozenset([
+        "book", "reserve", "reservation", "cancel", "booking",
+        "my booking", "booking id", "check my", "look up",
+    ])
+
+    _BOOKING_ID_PATTERN = re.compile(
+        r"#[A-Za-z0-9]{3,}|(?:BK|BOOK|RES|REF)-?\d{4,}",
+        re.IGNORECASE,
+    )
+
+    def _classify_intent_cheap(
+        self, text: str,
+    ) -> Optional[IntentType]:
+        """Return an intent if obvious, or None to defer to the planner.
+
+        Only returns CHITCHAT or KNOWLEDGE — never TOOL, because tool
+        execution needs the planner to extract tool_name and tool_args.
+        Conservative: returns None on any ambiguity.
+        """
+        lower = text.lower().strip()
+        words = lower.split()
+
+        # Chitchat: short greetings with no substantive content
+        if len(words) <= 6:
+            stripped = lower.rstrip("!?.,:;")
+            if stripped in self._GREETING_WORDS:
+                return IntentType.CHITCHAT
+            if any(g in lower for g in self._GREETING_WORDS):
+                if "?" not in text and len(words) <= 4:
+                    return IntentType.CHITCHAT
+
+        # Tool-related keywords → must use planner (needs arg extraction)
+        if any(k in lower for k in self._TOOL_KEYWORDS):
+            return None
+        if self._BOOKING_ID_PATTERN.search(text):
+            return None
+
+        # Knowledge: question or statement asking about the resort
+        if len(words) >= 3 and ("?" in text or any(
+            w in lower for w in ("what", "where", "when", "how", "tell",
+                                 "about", "does", "is there", "do you")
+        )):
+            return IntentType.KNOWLEDGE
+
+        # Everything else → planner decides
+        return None
+
     async def handle(self, user_message: str, session_id: str) -> ExecutionResult:
         """Main entry point: guardrails, plan, execute, validate, save."""
         overall_start = time.monotonic()
@@ -418,15 +476,30 @@ class ConciergeOrchestrator:
         else:
             pii_types = []
 
-        plan = await self.plan(user_message, session_id)
-        logger.info(
-            "orchestrator_plan_decided",
-            extra={
-                "intent": plan.intent.value,
-                "reasoning": plan.reasoning,
-                "session_id": session_id,
-            },
-        )
+        cheap_intent = self._classify_intent_cheap(user_message)
+
+        if cheap_intent is not None:
+            plan = Plan(
+                intent=cheap_intent,
+                reasoning="cheap classifier (planner bypassed)",
+            )
+            logger.info(
+                "orchestrator_plan_bypassed",
+                extra={
+                    "intent": plan.intent.value,
+                    "session_id": session_id,
+                },
+            )
+        else:
+            plan = await self.plan(user_message, session_id)
+            logger.info(
+                "orchestrator_plan_decided",
+                extra={
+                    "intent": plan.intent.value,
+                    "reasoning": plan.reasoning,
+                    "session_id": session_id,
+                },
+            )
 
         result = await self.execute(plan, user_message, session_id)
 
