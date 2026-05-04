@@ -300,9 +300,11 @@ Weighted confidence score on every response (`app/validation/hallucination.py`):
 
 | Signal | Weight | Method |
 |--------|--------|--------|
-| Semantic similarity | 50% | Cosine similarity via `all-MiniLM-L6-v2` |
-| Token overlap | 30% | Token-level intersection ratio |
-| Source attribution | 20% | Sentence-level grounding check (>= 30% overlap) |
+| Source attribution | 60% | Sentence-level grounding check (>= 30% overlap) |
+| Token overlap | 20% | Token-level intersection ratio |
+| Semantic similarity | 20% | Cosine similarity via `all-MiniLM-L6-v2` |
+
+When confidence is MEDIUM or LOW, claim-level NLI verification runs via `cross-encoder/nli-deberta-v3-small` to check each individual claim against the source material.
 
 | Confidence Level | Threshold |
 |------------------|-----------|
@@ -341,7 +343,7 @@ Per-request cost estimates from `app/core/cost_tracker.py` (prices per 1M tokens
 | Component | Detail |
 |-----------|--------|
 | Docker services | 6 (API, PostgreSQL, Redis, Prometheus, Grafana, MLflow) |
-| Test count | 193 tests across 20 files |
+| Test count | 233 tests across 20 files |
 | Orchestrator | Two-agent plan-then-execute (Planner classifies intent into knowledge / tool / clarify / chitchat, Executor carries out the plan) |
 | LLM fallback chain | OpenAI -> Anthropic -> Ollama |
 | Deployment | ECS Fargate (1 vCPU, 2 GB RAM) |
@@ -446,7 +448,7 @@ RAG wins on factual accuracy and freshness (can retrieve new docs without retrai
 
 ## Testing
 
-20 test files covering API endpoints, authentication, guardrails, hallucination detection, RAG retrieval, LLM provider fallback, orchestrator, tool execution, MLflow tracking, and RAGAS evaluation.
+233 tests across 20 files covering API endpoints, authentication, guardrails, hallucination detection, RAG retrieval, LLM provider fallback, orchestrator, tool execution, MLflow tracking, and RAGAS evaluation.
 
 ```sh
 uv run pytest --cov=app --cov-report=term-missing
@@ -522,7 +524,7 @@ SQLite is the default for local development (zero setup). For production or mult
 ## Known Limitations
 
 - **SQLite** is the default database — set `MRC_DATABASE_URL` to a PostgreSQL connection string for multi-instance deployment
-- **Hallucination detector** uses heuristic scoring (token overlap + semantic similarity), not a trained classifier — effective for high-confidence cases, less reliable in ambiguous ones
+- **Hallucination detector** uses a two-tier approach: fast heuristic scoring (20/20/60 weights) on every knowledge response, with conditional NLI claim verification only when confidence is not HIGH. The style-mimic gap (wrong facts, right vocabulary) is caught by the NLI tier but not the heuristic alone
 - **Cross-encoder reranking** adds ~50ms latency per query — a deliberate accuracy/latency trade-off
 - **Guardrails are rule-based** — prompt injection defense and PII redaction use pattern matching, not a trained classifier
 - **Knowledge base is static** — no automated ingestion pipeline for new content (manual `ingest_knowledge.py`)
@@ -539,7 +541,7 @@ SQLite is the default for local development (zero setup). For production or mult
 - **Observability** — Prometheus metrics, Grafana dashboards, per-call LLM tracing with cost tracking, health/readiness separation
 - **Cloud deployment** — Docker, AWS ECS Fargate, ECR, Secrets Manager, GitHub Actions CI/CD
 - **Parameter-efficient fine-tuning (LoRA)** — RAG vs fine-tuned vs combined comparison with metrics
-- **Testing** — 20 test files (193 tests) covering auth, guardrails, RAG, hallucination detection, LLM fallback, orchestrator, and MLOps
+- **Testing** — 20 test files (233 tests) covering auth, guardrails, RAG, hallucination detection, LLM fallback, orchestrator, and MLOps
 
 ---
 
