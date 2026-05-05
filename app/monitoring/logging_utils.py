@@ -2,7 +2,7 @@ import logging
 import sys
 from logging.handlers import RotatingFileHandler
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class MonsterResortError(Exception):
@@ -34,7 +34,7 @@ class JSONFormatter(logging.Formatter):
 
     def format(self, record):
         log_obj = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "level": record.levelname,
             "logger": record.name,
             "message": record.getMessage(),

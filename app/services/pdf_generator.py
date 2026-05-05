@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Sequence
 
@@ -52,7 +52,7 @@ class PDFGenerator:
         y -= 0.25 * inch
         canvas.drawString(1 * inch, y, f"Booking ID: {booking_id}")
         y -= 0.25 * inch
-        canvas.drawString(1 * inch, y, f"Issued: {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}")
+        canvas.drawString(1 * inch, y, f"Issued: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}")
         y -= 0.4 * inch
 
         canvas.setFont("Helvetica-Bold", 12)

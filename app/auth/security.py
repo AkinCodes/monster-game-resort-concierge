@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 import secrets
 import hashlib
@@ -59,7 +59,7 @@ class APIKeyManager:
         """Create new API key"""
         key = f"mr_{secrets.token_urlsafe(32)}"
         key_hash = hashlib.sha256(key.encode()).hexdigest()
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         expires = now + timedelta(days=expires_days)
         with self.db.session() as conn:
             conn.execute(
@@ -84,7 +84,7 @@ class APIKeyManager:
             # Check expiration
             if row["expires_at"]:
                 expires = datetime.fromisoformat(row["expires_at"])
-                if datetime.utcnow() > expires:
+                if datetime.now(timezone.utc) > expires:
                     logger.warning(f"Expired key used by {row['user_id']}")
                     return None
             # Check if active
@@ -94,7 +94,7 @@ class APIKeyManager:
             # Update last used
             conn.execute(
                 "UPDATE api_keys SET last_used_at = ? WHERE key_hash = ?",
-                (datetime.utcnow().isoformat(), key_hash),
+                (datetime.now(timezone.utc).isoformat(), key_hash),
             )
             return row["user_id"]
 
@@ -104,7 +104,7 @@ class APIKeyManager:
         with self.db.session() as conn:
             conn.execute(
                 "INSERT INTO api_key_usage (key_hash, endpoint, timestamp, success) VALUES (?, ?, ?, ?)",
-                (key_hash, endpoint, datetime.utcnow().isoformat(), int(success)),
+                (key_hash, endpoint, datetime.now(timezone.utc).isoformat(), int(success)),
             )
 
     def list_keys(self, user_id: Optional[str] = None) -> list[dict]:

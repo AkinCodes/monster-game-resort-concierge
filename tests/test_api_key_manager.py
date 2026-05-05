@@ -1,6 +1,6 @@
 import os
 import pytest
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from app.auth.security import APIKeyManager
 
@@ -81,7 +81,7 @@ class TestVerifyKey:
         import hashlib
 
         key_hash = hashlib.sha256(key.encode()).hexdigest()
-        past = (datetime.utcnow() - timedelta(hours=1)).isoformat()
+        past = (datetime.now(timezone.utc) - timedelta(hours=1)).isoformat()
         with manager.db.session() as conn:
             conn.execute(
                 "UPDATE api_keys SET expires_at = ? WHERE key_hash = ?",
