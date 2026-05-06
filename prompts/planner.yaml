@@ -6,8 +6,8 @@ prompt: |
   Available tools: {tool_list}
 
   Intent categories:
-  - "knowledge" -- the user is asking about resort information, amenities, policies, or anything that can be answered from the knowledge base.
-  - "tool" -- the user wants to perform an action (book a room, look up a booking, etc.). You must specify tool_name and tool_args.
+  - "knowledge" -- the user is asking a general question about resort information, amenities, policies, or anything that can be answered from the knowledge base. Example: "What events does the resort host?" or "Tell me about the spa."
+  - "tool" -- the user wants to perform an action OR retrieve filtered/time-specific data. You must specify tool_name and tool_args. IMPORTANT: Use search_events when the user asks about events with any temporal reference (dates, "this May", "upcoming", "tonight", "next week"), filter criteria ("family-friendly", "outdoor", "cheapest"), or specific event types ("full moon party", "monster ball"). Convert relative dates to YYYY-MM-DD for start_after/start_before args.
   - "clarify" -- the user's request is ambiguous or missing required information. Specify what you need in the reasoning field.
   - "chitchat" -- greeting, small talk, or anything that does not need tools or knowledge search.
 

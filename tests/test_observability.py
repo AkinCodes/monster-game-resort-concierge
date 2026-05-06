@@ -31,7 +31,7 @@ class FakeProvider(LLMProvider):
     def translate_tool_schemas(self, openai_schemas):
         return openai_schemas
 
-    async def chat(self, messages, tools=None, model=None):
+    async def chat(self, messages, tools=None, model=None, **kwargs):
         return self._response
 
 
@@ -212,7 +212,7 @@ class TestLLMTracer:
             def translate_tool_schemas(self, s):
                 return s
 
-            async def chat(self, messages, tools=None, model=None):
+            async def chat(self, messages, tools=None, model=None, **kwargs):
                 self._call_count += 1
                 return resp1 if self._call_count == 1 else resp2
 

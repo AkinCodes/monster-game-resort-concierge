@@ -116,9 +116,12 @@ class LLMTracer(LLMProvider):
         messages: List[LLMMessage],
         tools: Optional[List[dict]] = None,
         model: Optional[str] = None,
+        response_format: Optional[dict] = None,
     ) -> LLMResponse:
         start = time.perf_counter()
-        response = await self._provider.chat(messages, tools, model)
+        response = await self._provider.chat(
+            messages, tools, model, response_format=response_format,
+        )
         elapsed_ms = round((time.perf_counter() - start) * 1000, 2)
 
         prompt_tokens = response.usage.get("prompt_tokens", 0)

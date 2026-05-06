@@ -508,7 +508,25 @@ def make_registry(
             extra={"request_id": request_id, "kwargs": kwargs},
         )
 
-        result = _search_events_fn(**kwargs)
+        # Map common LLM parameter name variants to our function signature
+        _PARAM_ALIASES = {
+            "hotel": "hotel_name",
+            "availability": "has_availability",
+            "type": "event_type",
+            "sort": "sort_by",
+            "order": "sort_order",
+        }
+        _VALID_PARAMS = {
+            "hotel_name", "event_type", "start_after", "start_before",
+            "has_availability", "tags", "sort_by", "sort_order",
+            "limit", "offset",
+        }
+        cleaned = {}
+        for k, v in kwargs.items():
+            key = _PARAM_ALIASES.get(k, k)
+            if key in _VALID_PARAMS:
+                cleaned[key] = v
+        result = _search_events_fn(**cleaned)
 
         logger.info(
             "search_events_completed",

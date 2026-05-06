@@ -428,6 +428,21 @@ class ConciergeOrchestrator:
         "my booking", "booking id", "check my", "look up",
     ])
 
+    # Temporal / filter phrases that signal an event query needs search_events
+    _EVENT_FILTER_SIGNALS = re.compile(
+        r"this\s+(week|weekend|month|may|june|july|august|september|october"
+        r"|november|december|january|february|march|april)"
+        r"|next\s+(week|weekend|month)"
+        r"|in\s+(may|june|july|august|september|october|november|december"
+        r"|january|february|march|april)"
+        r"|tonight|today|tomorrow"
+        r"|cheapest|most\s+popular|family[\s-]friendly|outdoor|indoor"
+        r"|adults[\s-]only|available|upcoming|happening"
+        r"|full\s+moon|monster\s+ball|haunted\s+tour|potion\s+workshop"
+        r"|graveyard\s+brunch|screening|wellness",
+        re.IGNORECASE,
+    )
+
     _BOOKING_ID_PATTERN = re.compile(
         r"#[A-Za-z0-9]{3,}|(?:BK|BOOK|RES|REF)-?\d{4,}",
         re.IGNORECASE,
@@ -458,6 +473,10 @@ class ConciergeOrchestrator:
         if any(k in lower for k in self._TOOL_KEYWORDS):
             return None
         if self._BOOKING_ID_PATTERN.search(text):
+            return None
+
+        # Event queries with temporal/filter language → planner (needs search_events)
+        if any(w in lower for w in ("event", "events")) and self._EVENT_FILTER_SIGNALS.search(text):
             return None
 
         # Knowledge: question or statement asking about the resort
@@ -643,13 +662,13 @@ class ConciergeOrchestrator:
                     "Blocked: search query exceeds 500 character limit.",
                 )
         elif tool_name == "search_events":
-            date_re = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+            date_re = re.compile(r"^\d{4}-\d{2}-\d{2}")
             for date_field in ("start_after", "start_before"):
                 val = tool_args.get(date_field)
-                if val is not None and not date_re.match(val):
+                if val is not None and not date_re.match(str(val)):
                     return (
                         False,
-                        f"Blocked: {date_field} must be in "
+                        f"Blocked: {date_field} must start with "
                         f"YYYY-MM-DD format, got '{val}'.",
                     )
             limit = tool_args.get("limit")
