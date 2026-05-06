@@ -64,15 +64,24 @@ class LLMProvider(ABC):
 
 
 class OpenAIProvider(LLMProvider):
-    def __init__(self, api_key: str, model: str = "gpt-4o-mini"):
+    def __init__(
+        self,
+        api_key: str,
+        model: str = "gpt-4o-mini",
+        base_url: Optional[str] = None,
+    ):
         import openai
 
-        self._client = openai.AsyncOpenAI(api_key=api_key)
+        kwargs: Dict[str, Any] = {"api_key": api_key}
+        if base_url:
+            kwargs["base_url"] = base_url
+        self._client = openai.AsyncOpenAI(**kwargs)
         self._model = model
+        self._provider_name = "openrouter" if base_url else "openai"
 
     @property
     def name(self) -> str:
-        return "openai"
+        return self._provider_name
 
     @property
     def supports_response_format(self) -> bool:
@@ -140,7 +149,7 @@ class OpenAIProvider(LLMProvider):
             content=msg.content or "",
             tool_calls=tool_calls,
             model=resp.model,
-            provider="openai",
+            provider=self._provider_name,
             usage=usage,
         )
 

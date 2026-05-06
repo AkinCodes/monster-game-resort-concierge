@@ -52,6 +52,11 @@ class Settings(BaseSettings):
     anthropic_api_key: str | None = Field(default=None, description="Anthropic API key")
     anthropic_model: str = "claude-sonnet-4-20250514"
 
+    # OpenRouter (OpenAI-compatible gateway)
+    openrouter_api_key: str = ""
+    openrouter_model: str = "openai/gpt-4o-mini"
+    openrouter_enabled: bool = False
+
     # Ollama (local models)
     ollama_base_url: str = "http://localhost:11434"
     ollama_model: str = "llama3"
@@ -59,8 +64,8 @@ class Settings(BaseSettings):
 
     # LLM Routing
     llm_provider_priority: str = Field(
-        default="openai",
-        description="Comma-separated provider priority, e.g. 'openai,anthropic,ollama'",
+        default="openai,anthropic,openrouter,ollama",
+        description="Comma-separated provider priority, e.g. 'openai,anthropic,openrouter,ollama'",
     )
     llm_fallback_enabled: bool = True
 

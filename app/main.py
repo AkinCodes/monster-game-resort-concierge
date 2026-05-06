@@ -55,6 +55,15 @@ def _build_router(settings) -> ModelRouter | None:
                 providers.append(
                     AnthropicProvider(api_key=api_key, model=settings.anthropic_model)
                 )
+        elif name == "openrouter":
+            if settings.openrouter_enabled and settings.openrouter_api_key:
+                providers.append(
+                    OpenAIProvider(
+                        api_key=settings.openrouter_api_key,
+                        model=settings.openrouter_model,
+                        base_url="https://openrouter.ai/api/v1",
+                    )
+                )
         elif name == "ollama":
             if settings.ollama_enabled:
                 providers.append(
