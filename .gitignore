@@ -18,6 +18,11 @@ generated_pdfs/
 .uv-cache/
 mlruns/
 monster_resort*.log*
+*.log
+*.pth
+*.pkl
+*.onnx
+*.bin
 .claude/
 .DS_Store
 node_modules/

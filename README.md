@@ -151,6 +151,7 @@ v                 v            v
               | - book  |
               | - get   |
               | - search|
+              | - events|
               +---+--+--+
                   |  |
                   v  v
@@ -166,7 +167,7 @@ app/
 ├── main.py                 # FastAPI app, thin /chat route, init helpers
 ├── config.py               # Settings from .env (pydantic BaseSettings)
 ├── core/
-│   ├── tools.py            # Tool registry + book_room, get_booking, search_amenities (sandboxed)
+│   ├── tools.py            # Tool registry + book_room, get_booking, search_amenities, search_events (sandboxed)
 │   ├── memory.py           # MemoryStore — DB-backed persistence + auto-summarization
 │   ├── llm_providers.py    # ModelRouter — OpenAI / Anthropic / Ollama fallback + prompt caching
 │   ├── orchestrator.py     # Orchestrator — guardrails, cheap classifier, planner, executor, hallucination detection
@@ -343,7 +344,7 @@ Per-request cost estimates from `app/core/cost_tracker.py` (prices per 1M tokens
 | Component | Detail |
 |-----------|--------|
 | Docker services | 6 (API, PostgreSQL, Redis, Prometheus, Grafana, MLflow) |
-| Test count | 233 tests across 20 files |
+| Test count | 262 tests across 20 files |
 | Orchestrator | Two-agent plan-then-execute (Planner classifies intent into knowledge / tool / clarify / chitchat, Executor carries out the plan) |
 | LLM fallback chain | OpenAI -> Anthropic -> Ollama |
 | Deployment | ECS Fargate (1 vCPU, 2 GB RAM) |
@@ -448,7 +449,7 @@ RAG wins on factual accuracy and freshness (can retrieve new docs without retrai
 
 ## Testing
 
-233 tests across 20 files covering API endpoints, authentication, guardrails, hallucination detection, RAG retrieval, LLM provider fallback, orchestrator, tool execution, MLflow tracking, and RAGAS evaluation.
+262 tests across 20 files covering API endpoints, authentication, guardrails, hallucination detection, RAG retrieval, LLM provider fallback, orchestrator, tool execution, MLflow tracking, and RAGAS evaluation.
 
 ```sh
 uv run pytest --cov=app --cov-report=term-missing
@@ -541,7 +542,7 @@ SQLite is the default for local development (zero setup). For production or mult
 - **Observability** — Prometheus metrics, Grafana dashboards, per-call LLM tracing with cost tracking, health/readiness separation
 - **Cloud deployment** — Docker, AWS ECS Fargate, ECR, Secrets Manager, GitHub Actions CI/CD
 - **Parameter-efficient fine-tuning (LoRA)** — RAG vs fine-tuned vs combined comparison with metrics
-- **Testing** — 20 test files (233 tests) covering auth, guardrails, RAG, hallucination detection, LLM fallback, orchestrator, and MLOps
+- **Testing** — 20 test files (262 tests) covering auth, guardrails, RAG, hallucination detection, LLM fallback, orchestrator, and MLOps
 
 ---
 
