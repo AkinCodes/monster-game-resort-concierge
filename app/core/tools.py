@@ -94,6 +94,109 @@ class Tool:
                 },
             }
 
+        elif self.name == "search_events":
+            return {
+                "name": "search_events",
+                "description": (
+                    "Search for events across all Monster Resort "
+                    "properties. Supports filtering by hotel, event "
+                    "type, date range, availability, and tags. "
+                    "Returns paginated results with sorting."
+                ),
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "hotel_name": {
+                            "type": "string",
+                            "enum": list(VALID_HOTELS),
+                            "description": "Filter by resort name",
+                        },
+                        "event_type": {
+                            "type": "string",
+                            "enum": [
+                                "full_moon_party",
+                                "monster_ball",
+                                "haunted_tour",
+                                "potion_workshop",
+                                "graveyard_brunch",
+                                "screening",
+                                "wellness",
+                            ],
+                            "description": "Filter by event category",
+                        },
+                        "start_after": {
+                            "type": "string",
+                            "description": (
+                                "ISO date (YYYY-MM-DD) — only events "
+                                "starting after this date"
+                            ),
+                        },
+                        "start_before": {
+                            "type": "string",
+                            "description": (
+                                "ISO date (YYYY-MM-DD) — only events "
+                                "starting before this date"
+                            ),
+                        },
+                        "has_availability": {
+                            "type": "boolean",
+                            "description": (
+                                "If true, only return events with "
+                                "available tickets"
+                            ),
+                        },
+                        "tags": {
+                            "type": "array",
+                            "items": {
+                                "type": "string",
+                                "enum": [
+                                    "family-friendly",
+                                    "adults-only",
+                                    "outdoor",
+                                    "dining",
+                                    "wellness",
+                                    "music",
+                                    "seasonal",
+                                ],
+                            },
+                            "description": (
+                                "Filter by event tags (matches events "
+                                "with ANY of the given tags)"
+                            ),
+                        },
+                        "sort_by": {
+                            "type": "string",
+                            "enum": ["date", "popularity", "price"],
+                            "description": "Field to sort results by",
+                            "default": "date",
+                        },
+                        "sort_order": {
+                            "type": "string",
+                            "enum": ["asc", "desc"],
+                            "description": "Sort direction",
+                            "default": "asc",
+                        },
+                        "limit": {
+                            "type": "integer",
+                            "description": (
+                                "Maximum number of results to return "
+                                "(default 10, max 50)"
+                            ),
+                            "default": 10,
+                        },
+                        "offset": {
+                            "type": "integer",
+                            "description": (
+                                "Number of results to skip for "
+                                "pagination (default 0)"
+                            ),
+                            "default": 0,
+                        },
+                    },
+                    "required": [],
+                },
+            }
+
         logger.warning("no_schema_for_tool", extra={"tool": self.name})
         return {}
 
@@ -386,6 +489,36 @@ def make_registry(
             extra={
                 "request_id": request_id,
                 "result_count": len(result) if hasattr(result, "__len__") else None,
+            },
+        )
+
+        return result
+
+    from ..data.events import search_events as _search_events_fn
+
+    @registry.register(
+        "search_events",
+        "Search for events across all Monster Resort properties. "
+        "Supports filtering by hotel, event type, date range, "
+        "availability, and tags. Returns paginated results with sorting.",
+    )
+    async def search_events_tool(request_id: str, **kwargs):
+        logger.info(
+            "search_events_called",
+            extra={"request_id": request_id, "kwargs": kwargs},
+        )
+
+        result = _search_events_fn(**kwargs)
+
+        logger.info(
+            "search_events_completed",
+            extra={
+                "request_id": request_id,
+                "result_count": (
+                    len(result.get("results", []))
+                    if isinstance(result, dict)
+                    else None
+                ),
             },
         )
 

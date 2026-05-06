@@ -620,6 +620,28 @@ class ConciergeOrchestrator:
                     False,
                     "Blocked: search query exceeds 500 character limit.",
                 )
+        elif tool_name == "search_events":
+            date_re = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+            for date_field in ("start_after", "start_before"):
+                val = tool_args.get(date_field)
+                if val is not None and not date_re.match(val):
+                    return (
+                        False,
+                        f"Blocked: {date_field} must be in "
+                        f"YYYY-MM-DD format, got '{val}'.",
+                    )
+            limit = tool_args.get("limit")
+            if limit is not None and (limit < 1 or limit > 50):
+                return (
+                    False,
+                    "Blocked: limit must be between 1 and 50.",
+                )
+            offset = tool_args.get("offset")
+            if offset is not None and offset < 0:
+                return (
+                    False,
+                    "Blocked: offset must be >= 0.",
+                )
         else:
             logger.warning(
                 "validate_tool_call_unknown_tool",
