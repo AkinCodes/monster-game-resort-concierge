@@ -33,5 +33,5 @@ jobs:
         MRC_OPENAI_API_KEY: dummy
         MRC_API_KEY: dummy
         MRC_JWT_SECRET_KEY: ci-test-secret-key-minimum-32-characters-long
-        MRC_ANTHROPIC_API_KEY: dummy
+        TOKENIZERS_PARALLELISM: "false"
       run: pytest tests/ -v --cov=app --cov-report=term-missing
