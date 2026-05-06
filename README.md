@@ -10,9 +10,9 @@
 
 # Monster Game Resort Concierge
 
-A fully wired AI concierge system with hybrid RAG (BM25 + dense + cross-encoder reranking), real-time hallucination scoring, multi-provider LLM fallback, and function-calling tool execution — built to demonstrate how retrieval, agent loops, memory, monitoring, and deployment work together in a production-shaped architecture.
+A production-grade AI concierge with a two-agent orchestrator (Planner → Executor), hybrid RAG (BM25 + dense + cross-encoder reranking), 3-tier hallucination detection (heuristic + NLI + LLM-as-Judge), and 4 function-calling tools with rich filtering, pagination, and enum-constrained schemas — built to demonstrate how retrieval, orchestration, memory, evaluation, and deployment work together in a production-shaped architecture.
 
-This isn't a wrapper around an API call. It's a complete backend: a 3-stage retrieval pipeline, an agent loop with tool calling, database-backed conversation memory with automatic summarization, hallucination detection on every response, and CI/CD to AWS — all behind JWT auth, rate limiting, and Prometheus observability.
+This isn't a wrapper around an API call. It's a complete backend: a cheap intent classifier that bypasses the planner for 50-70% of queries, a 3-stage retrieval pipeline, Pydantic-validated structured outputs, database-backed conversation memory with automatic summarization, and CI/CD to AWS — all behind JWT auth, rate limiting, and Prometheus observability.
 
 ### The 6 Resorts
 
@@ -35,10 +35,10 @@ This isn't a wrapper around an API call. It's a complete backend: a 3-stage retr
 ## Technical Highlights
 
 - **3-stage hybrid RAG pipeline** — BM25 keyword + dense vector retrieval, fused via Reciprocal Rank Fusion, then reranked by a cross-encoder. Not a single-vector lookup.
-- **Tiered hallucination detection** — Fast heuristic (token overlap + semantic similarity + source attribution) on every knowledge response. When confidence is MEDIUM or LOW, claim-level NLI verification runs to check each fact against the source material. Intent pre-checks handle refusals and chitchat without scoring.
-- **3-provider LLM fallback** — OpenAI → Anthropic → Ollama. If one goes down, the next takes over automatically. No user-facing errors during provider outages.
-- **Function-calling agent** — Tool registry with schema generation, input validation against a 6-property allowlist, and async execution with timing and structured logging.
-- **Tool sandboxing** — 10s timeout and 50/min rate limiting per tool to prevent runaway or abusive calls.
+- **3-tier hallucination detection** — Tier 1: fast heuristic (token overlap + semantic similarity + source attribution). Tier 2: conditional NLI claim verification via cross-encoder when confidence is not HIGH. Tier 3: LLM-as-Judge evaluation (GPT-4o-mini scores correctness, groundedness, relevance on a 1-5 scale). Intent pre-checks handle refusals and chitchat without scoring.
+- **4-provider LLM fallback** — OpenAI → Anthropic → OpenRouter → Ollama. If one goes down, the next takes over automatically. OpenRouter uses the same OpenAI-compatible SDK with a `base_url` override. No user-facing errors during provider outages.
+- **Function-calling agent with 4 tools** — `book_room`, `get_booking`, `search_amenities`, and `search_events`. The `search_events` tool demonstrates production MCP patterns: 10 optional parameters with enum constraints, date range filtering, tag matching, pagination, sorting, and parameter alias mapping for LLM output normalisation.
+- **Tool sandboxing** — 10s timeout and 50/min rate limiting per tool to prevent runaway or abusive calls. Pydantic schema enforcement on planner outputs with graceful fallback on validation failure.
 - **Two-agent orchestrator with cheap classifier** — A zero-cost heuristic bypasses the planner for obvious intents (greetings, simple questions). For ambiguous or tool-related queries, a Planner LLM classifies intent and extracts arguments, then an Executor carries out the plan with focused, per-intent prompts.
 - **Native structured outputs** — `response_format` support with a 3-level fallback chain (native JSON mode → regex extraction → raw).
 - **Input/output guardrails** — Prompt injection defense, PII redaction, topic boundary enforcement, and output filtering (`app/core/guardrails.py`).
@@ -142,8 +142,9 @@ v                 v            v
 | Limiting |  |          |  |          |
 | - JWT    |  | - OpenAI |  | - BM25   |
 | - API key|  | - Anthro |  | - Dense  |
-| - SlowAPI|  | - Ollama |  | - RRF    |
-+----------+  | fallback |  | - Cross- |
+| - SlowAPI|  | - OpenRtr|  | - RRF    |
++----------+  | - Ollama |
+              | fallback |  | - Cross- |
               +----+-----+  | encoder  |
                    |        +-----+----+
               +----v----+         |
@@ -192,7 +193,7 @@ app/
 │   ├── auth_mixins.py      # FastAPI dependency — JWT or API key auth
 │   └── users_db.py         # Demo user store
 ├── validation/
-│   ├── hallucination.py    # Confidence scoring (overlap + semantic + attribution)
+│   ├── hallucination.py    # 3-tier detection (heuristic + NLI + LLM-as-Judge), ClaimVerdict/ClaimVerification with to_dict()
 │   ├── validators.py       # Input sanitization and message validation
 │   └── ragas_eval.py       # RAGAS evaluation framework
 ├── monitoring/
@@ -200,6 +201,8 @@ app/
 │   ├── logging_utils.py    # Structured JSON logging + custom exceptions
 │   ├── mlflow_tracking.py  # MLflow experiment tracking
 │   └── profile_utils.py    # Performance profiling decorator
+├── data/
+│   └── events.py           # 25 mock events + search_events() filter/sort/paginate function
 ├── api/
 │   └── admin_routes.py     # Admin endpoints — API key CRUD
 └── services/
@@ -209,6 +212,12 @@ prompts/
 ├── planner.yaml                # Planner agent system prompt (versioned)
 ├── executor.yaml               # Executor agent system prompt (versioned)
 └── summarization.yaml          # Conversation summarization prompt (versioned)
+
+evals/
+├── hallucination_experiments.py # 5-experiment detector stress test with JSONL history
+├── llm_judge.py                # LLM-as-Judge evaluator (GPT-4o-mini, 1-5 scoring, --compare-heuristic)
+├── eval_retrieval.py           # Retrieval quality metrics (MRR, Recall@K, Precision@K)
+└── retrieval_ground_truth.json # 13-query ground truth answer key
 
 scripts/
 ├── benchmark_rag.py            # Hybrid RAG vs LangChain benchmark (MLflow tracked)
@@ -346,7 +355,7 @@ Per-request cost estimates from `app/core/cost_tracker.py` (prices per 1M tokens
 | Docker services | 6 (API, PostgreSQL, Redis, Prometheus, Grafana, MLflow) |
 | Test count | 262 tests across 20 files |
 | Orchestrator | Two-agent plan-then-execute (Planner classifies intent into knowledge / tool / clarify / chitchat, Executor carries out the plan) |
-| LLM fallback chain | OpenAI -> Anthropic -> Ollama |
+| LLM fallback chain | OpenAI -> Anthropic -> OpenRouter -> Ollama |
 | Deployment | ECS Fargate (1 vCPU, 2 GB RAM) |
 
 ---
@@ -357,7 +366,7 @@ Per-request cost estimates from `app/core/cost_tracker.py` (prices per 1M tokens
 
 * Python 3.11+
 * [uv](https://docs.astral.sh/uv/) (recommended) or pip
-* At least one LLM provider: OpenAI API key, Anthropic API key, or local Ollama
+* At least one LLM provider: OpenAI API key, Anthropic API key, OpenRouter API key, or local Ollama
 
 ### Setup
 
@@ -460,7 +469,8 @@ uv run pytest --cov=app --cov-report=term-missing
 | API & Auth | 4 | Endpoints, JWT flow, API key lifecycle, rate limiting |
 | RAG Pipeline | 3 | Retrieval accuracy, LangChain parity, unit chunking |
 | LLM & Agent | 2 | Provider fallback, hallucination scoring |
-| Booking & Tools | 2 | Booking creation, tool registry validation |
+| Booking & Tools | 3 | Booking creation, tool registry validation, search_events (29 tests: filtering, pagination, sorting, edge cases) |
+| Orchestrator | 2 | Planner parsing, Pydantic validation, structured output fallback |
 | MLOps | 2 | MLflow experiment tracking, RAGAS evaluation |
 | Infrastructure | 1 | Cache utilities |
 
@@ -497,7 +507,7 @@ Deployment config in `deploy/aws/`:
 All settings via `.env` (prefix: `MRC_`). See `.env.example` for the full list.
 
 ```env
-MRC_LLM_PROVIDER_PRIORITY=openai,anthropic,ollama
+MRC_LLM_PROVIDER_PRIORITY=openai,anthropic,openrouter,ollama
 MRC_LLM_FALLBACK_ENABLED=true
 MRC_OPENAI_MODEL=gpt-4o
 MRC_HALLUCINATION_HIGH_THRESHOLD=0.7
@@ -535,14 +545,16 @@ SQLite is the default for local development (zero setup). For production or mult
 
 ## Skills Demonstrated
 
-- **LLM application architecture** — agent loops, tool calling, conversation memory, multi-provider orchestration
-- **Information retrieval** — hybrid search (BM25 + dense + RRF), cross-encoder reranking, retrieval evaluation
-- **MLOps** — MLflow experiment tracking, RAGAS evaluation framework, automated benchmarking
+- **LLM application architecture** — two-agent orchestrator (Planner → Executor), cheap intent classifier, Pydantic schema enforcement, 4-provider routing with fallback
+- **AI-to-tool interface design** — enum-constrained MCP tool schemas with 10 optional parameters, pagination, sorting, parameter alias mapping for LLM output normalisation
+- **Information retrieval** — hybrid search (BM25 + dense + RRF), cross-encoder reranking, retrieval ablation study
+- **Evaluation** — 3-tier hallucination detection (heuristic + NLI + LLM-as-Judge), RAGAS, regression-tracked eval harness with JSONL history and git SHA tagging
+- **MLOps** — MLflow experiment tracking, YAML prompt management, persistent eval store with `--compare-last` delta tracking
 - **Production engineering** — JWT/API key auth, input/output guardrails (injection defense, PII redaction), rate limiting, structured logging
 - **Observability** — Prometheus metrics, Grafana dashboards, per-call LLM tracing with cost tracking, health/readiness separation
 - **Cloud deployment** — Docker, AWS ECS Fargate, ECR, Secrets Manager, GitHub Actions CI/CD
 - **Parameter-efficient fine-tuning (LoRA)** — RAG vs fine-tuned vs combined comparison with metrics
-- **Testing** — 20 test files (262 tests) covering auth, guardrails, RAG, hallucination detection, LLM fallback, orchestrator, and MLOps
+- **Testing** — 21 test files (262 tests) covering auth, guardrails, RAG, hallucination detection, LLM fallback, orchestrator, search_events, and MLOps
 
 ---
 
