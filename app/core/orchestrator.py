@@ -11,6 +11,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, List, Optional
 
+from pydantic import BaseModel, Field, ValidationError, field_validator
+
 from .cost_tracker import CostAccumulator
 from .guardrails import InputGuard, OutputGuard
 from .llm_providers import LLMMessage, LLMProvider, LLMResponse
@@ -33,15 +35,24 @@ class IntentType(str, Enum):
     CHITCHAT = "chitchat"
 
 
-@dataclass
-class Plan:
+class Plan(BaseModel):
     """The planner's decision."""
 
     intent: IntentType
-    tool_name: Optional[str] = None
-    tool_args: dict = field(default_factory=dict)
-    search_query: Optional[str] = None
+    tool_name: str | None = None
+    tool_args: dict = Field(default_factory=dict)
+    search_query: str | None = None
     reasoning: str = ""
+
+    @field_validator("intent", mode="before")
+    @classmethod
+    def normalize_intent(cls, v):
+        if isinstance(v, str):
+            try:
+                return IntentType(v.lower())
+            except ValueError:
+                return IntentType.CHITCHAT
+        return v
 
 
 @dataclass
@@ -182,19 +193,30 @@ class ConciergeOrchestrator:
                 reasoning="JSON parse failed; defaulting to chitchat",
             )
 
-        intent_str = data.get("intent", "chitchat").lower()
         try:
-            intent = IntentType(intent_str)
-        except ValueError:
-            intent = IntentType.CHITCHAT
-
-        return Plan(
-            intent=intent,
-            tool_name=data.get("tool_name"),
-            tool_args=data.get("tool_args") or {},
-            search_query=data.get("search_query"),
-            reasoning=data.get("reasoning", ""),
-        )
+            return Plan.model_validate(data)
+        except ValidationError as exc:
+            logger.warning(
+                "planner_pydantic_validation_failed",
+                extra={"error": str(exc), "raw_keys": list(data.keys())},
+            )
+            # Fall back to keyword heuristic
+            lower = str(data).lower()
+            if any(kw in lower for kw in ["book", "reserve", "lookup", "get_booking"]):
+                return Plan(
+                    intent=IntentType.TOOL,
+                    reasoning="Pydantic validation failed; detected tool keywords",
+                )
+            if any(kw in lower for kw in ["amenities", "pool", "spa", "restaurant"]):
+                return Plan(
+                    intent=IntentType.KNOWLEDGE,
+                    search_query=str(data)[:100],
+                    reasoning="Pydantic validation failed; detected knowledge keywords",
+                )
+            return Plan(
+                intent=IntentType.CHITCHAT,
+                reasoning="Pydantic validation failed; defaulting to chitchat",
+            )
 
     async def execute(
         self, plan: Plan, user_message: str, session_id: str
