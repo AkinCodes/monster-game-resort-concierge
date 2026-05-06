@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from datetime import datetime
+from typing import Any
+
 VALID_EVENT_TYPES = {
     "full_moon_party",
     "monster_ball",
@@ -384,6 +387,18 @@ _SORT_KEY_MAP = {
 }
 
 
+def _parse_iso_date(date_str: str | None) -> datetime | None:
+    """Parse an ISO date string into a naive-UTC datetime for comparison."""
+    if not date_str:
+        return None
+    try:
+        cleaned = date_str.replace("Z", "+00:00")
+        dt = datetime.fromisoformat(cleaned)
+        return dt.replace(tzinfo=None)
+    except (ValueError, TypeError):
+        return None
+
+
 def search_events(
     *,
     hotel_name: str | None = None,
@@ -396,32 +411,56 @@ def search_events(
     sort_order: str = "asc",
     limit: int = 10,
     offset: int = 0,
-) -> dict:
+) -> dict[str, Any]:
     """Filter, sort, and paginate mock resort events."""
     results = list(MOCK_EVENTS)
 
-    # --- filters (only applied when the parameter is not None) ---
-    if hotel_name is not None:
+    # --- input validation ---
+    if sort_by not in VALID_SORT_FIELDS:
+        sort_by = "date"
+    if sort_order not in {"asc", "desc"}:
+        sort_order = "asc"
+    if limit < 1:
+        limit = 10
+    if offset < 0:
+        offset = 0
+
+    # --- filters (only applied when provided) ---
+    if hotel_name:
         results = [e for e in results if e["hotel_name"] == hotel_name]
 
-    if event_type is not None:
+    if event_type:
         results = [e for e in results if e["event_type"] == event_type]
 
-    if start_after is not None:
-        results = [e for e in results if e["starts_at"] > start_after]
+    if start_after:
+        start_dt = _parse_iso_date(start_after)
+        if start_dt:
+            results = [
+                e for e in results
+                if _parse_iso_date(e["starts_at"])
+                and _parse_iso_date(e["starts_at"]) > start_dt
+            ]
 
-    if start_before is not None:
-        results = [e for e in results if e["starts_at"] < start_before]
+    if start_before:
+        end_dt = _parse_iso_date(start_before)
+        if end_dt:
+            results = [
+                e for e in results
+                if _parse_iso_date(e["starts_at"])
+                and _parse_iso_date(e["starts_at"]) < end_dt
+            ]
 
     if has_availability is not None:
         results = [
-            e for e in results if e["has_availability"] is has_availability
+            e for e in results
+            if e["has_availability"] is has_availability
         ]
 
     if tags:
-        tag_set = set(tags)
+        tag_set = {t.lower() for t in tags}
         results = [
-            e for e in results if tag_set & set(e["tags"])
+            e for e in results
+            if tag_set & {t.lower() for t in e.get("tags", [])}
         ]
 
     # --- sort ---
