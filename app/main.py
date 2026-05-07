@@ -119,13 +119,11 @@ def _init_core_services(settings, db, rag):
 
 
 def _init_llm(settings):
-    """Build LLM router and tracer."""
+    """Build LLM router wrapped in a tracer."""
     raw_router = _build_router(settings)
-    tracer: LLMTracer | None = None
-    if raw_router is not None:
-        tracer = LLMTracer(raw_router)
-    router = tracer
-    return router, tracer
+    if raw_router is None:
+        return None
+    return LLMTracer(raw_router)
 
 
 def _init_guardrails(settings):
@@ -160,8 +158,8 @@ def build_app() -> FastAPI:
     _init_cache(settings)
 
     rag = _init_rag(settings)
-    memory, registry, pdf = _init_core_services(settings, db, rag)
-    router, tracer = _init_llm(settings)
+    memory, registry, _ = _init_core_services(settings, db, rag)
+    tracer = _init_llm(settings)
     input_guard, detector = _init_guardrails(settings)
     tracker = _init_observability(app, settings)
 
@@ -183,9 +181,9 @@ def build_app() -> FastAPI:
         }
 
     orchestrator = None
-    if router is not None:
+    if tracer is not None:
         orchestrator = ConciergeOrchestrator(
-            llm_provider=router,
+            llm_provider=tracer,
             rag=rag,
             tool_registry=registry,
             memory_store=memory,
