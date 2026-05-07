@@ -635,6 +635,9 @@ class ConciergeOrchestrator:
 
         return result
 
+    _DANGEROUS_PATH_RE = re.compile(r"\.\.|[/\\\x00\n\r;|&`$<>()]")
+    _DATE_FORMAT_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
     @staticmethod
     def _validate_tool_call(
         tool_name: str, tool_args: dict
@@ -648,6 +651,29 @@ class ConciergeOrchestrator:
                     f"Blocked: unknown hotel '{hotel}'."
                     " Not in official registry.",
                 )
+            # guest_name validation
+            guest_name = tool_args.get("guest_name", "")
+            if not guest_name or not guest_name.strip():
+                return False, "Blocked: guest_name cannot be empty."
+            if len(guest_name) > 100:
+                return (
+                    False,
+                    "Blocked: guest_name exceeds 100 character limit.",
+                )
+            if ConciergeOrchestrator._DANGEROUS_PATH_RE.search(guest_name):
+                return (
+                    False,
+                    "Blocked: guest_name contains invalid characters.",
+                )
+            # date format validation
+            for date_field in ("check_in", "check_out"):
+                val = tool_args.get(date_field, "")
+                if not ConciergeOrchestrator._DATE_FORMAT_RE.match(str(val)):
+                    return (
+                        False,
+                        f"Blocked: {date_field} must be YYYY-MM-DD"
+                        f" format, got '{val}'.",
+                    )
         elif tool_name == "get_booking":
             booking_id = tool_args.get("booking_id", "")
             if not booking_id or not booking_id.strip():

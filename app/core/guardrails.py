@@ -57,9 +57,15 @@ _INJECTION_PATTERNS: list[re.Pattern] = [
     for p in [
         r"ignore\s+(all\s+)?previous\s+instructions",
         r"ignore\s+(all\s+)?above\s+instructions",
+        r"ignore\s+(all\s+)?(your|my|these|the|its|prior)\s+(instructions|rules|guidelines|prompt)",
+        r"forget\s+(all\s+)?(your|my|these|the|its|prior)\s+(instructions|rules|guidelines|prompt)",
+        r"(?:do\s+not|don'?t|stop)\s+follow(?:ing)?\s+(your|the|any)\s+(instructions|rules|guidelines|prompt)",
         r"disregard\s+(all\s+)?previous",
+        r"disregard\s+everything",
         r"you\s+are\s+now\s+(?:a|an|the)\b",
-        r"new\s+instructions?\s*:",
+        r"you\s+(?:must|will)\s+now\b",
+        r"from\s+now\s+on[,;]?\s+you\s+(?:are|will|must|should|have|can)",
+        r"new\s+(?:instructions?\s*:|role|persona)",
         r"system\s*prompt\s*:",
         r"act\s+as\s+(?:a|an|if)\b",
         r"pretend\s+(?:you\s+are|to\s+be)\b",
@@ -68,6 +74,7 @@ _INJECTION_PATTERNS: list[re.Pattern] = [
         r"\bDAN\b",  # "Do Anything Now" jailbreak
         r"jailbreak",
         r"reveal\s+(?:your|the)\s+(?:system|initial)\s+prompt",
+        r"ignore\s+everything\s+above",
     ]
 ]
 
@@ -140,6 +147,17 @@ _CHARACTER_BREAK_PATTERNS: list[re.Pattern] = [
     ]
 ]
 
+_PARAPHRASED_LEAKAGE_PATTERNS: list[re.Pattern] = [
+    re.compile(p, re.IGNORECASE)
+    for p in [
+        r"my\s+instructions\s+say",
+        r"my\s+system\s+prompt",
+        r"I\s+was\s+told\s+to",
+        r"my\s+rules\s+are",
+        r"I'?m\s+programmed\s+to",
+    ]
+]
+
 
 @dataclass
 class OutputGuard:
@@ -155,6 +173,10 @@ class OutputGuard:
             if pattern.search(text):
                 return False, "Response breaks character (AI self-reference)"
 
+        for pattern in _PARAPHRASED_LEAKAGE_PATTERNS:
+            if pattern.search(text):
+                return False, "Response contains paraphrased system prompt leakage"
+
         output_has_email = bool(_EMAIL_RE.search(text))
         output_has_phone = bool(_PHONE_RE.search(text))
         output_has_cc = bool(_CC_RE.search(text))
@@ -164,8 +186,8 @@ class OutputGuard:
             return False, "Response contains email address not present in input"
         if output_has_phone and "phone" not in self.input_pii_types:
             return False, "Response contains phone number not present in input"
-        if output_has_cc and "credit_card" not in self.input_pii_types:
-            return False, "Response contains credit card number not present in input"
+        if output_has_cc:
+            return False, "Response contains credit card number"
         if output_has_ssn and "ssn" not in self.input_pii_types:
             return False, "Response contains SSN not present in input"
 

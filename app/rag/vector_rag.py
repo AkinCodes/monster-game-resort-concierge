@@ -16,6 +16,19 @@ from ..monitoring.profile_utils import profile  # noqa: E402
 from ..database.cache_utils import cache_response  # noqa: E402
 
 
+_RAG_INJECTION_PATTERNS: list[re.Pattern] = [
+    re.compile(p, re.IGNORECASE)
+    for p in [
+        r"SYSTEM\s*:",
+        r"###\s*INSTRUCTION",
+        r"ignore\s+(all\s+)?previous\s+instructions",
+        r"you\s+are\s+now\s+(?:a|an|the)\b",
+        r"\[INST\]",
+        r"<<SYS>>",
+    ]
+]
+
+
 class VectorRAG:
     def __init__(
         self,
@@ -102,6 +115,27 @@ class VectorRAG:
 
         return chunks
 
+    @staticmethod
+    def _sanitize_chunk(text: str) -> str:
+        """Strip injection patterns from a text chunk before ingestion.
+
+        Removes suspicious portions (system instructions, prompt injections)
+        rather than discarding the entire chunk.
+        """
+        sanitized = text
+        for pattern in _RAG_INJECTION_PATTERNS:
+            match = pattern.search(sanitized)
+            if match:
+                logger.warning(
+                    "rag_chunk_injection_stripped",
+                    extra={
+                        "pattern": pattern.pattern,
+                        "preview": sanitized[max(0, match.start() - 20):match.end() + 20],
+                    },
+                )
+                sanitized = pattern.sub("", sanitized)
+        return sanitized.strip()
+
     def _check_ingestion_auth(self, token: Optional[str] = None):
         """Defense 3: Verify ingestion token before allowing writes."""
         if self._ingestion_token and token != self._ingestion_token:
@@ -173,6 +207,22 @@ class VectorRAG:
             metadatas = [{"source": s} for s in sources]
         else:
             metadatas = [{"source": source} for _ in text_list]
+
+        # Defense 6: Sanitize chunks to strip injected instructions
+        text_list = [self._sanitize_chunk(t) for t in text_list]
+        # Remove any chunks that became empty after sanitisation
+        filtered = [
+            (t, m, a)
+            for t, m, a in zip(text_list, metadatas, anomalies)
+            if t
+        ]
+        if not filtered:
+            return 0
+        text_list, metadatas, anomalies = (
+            [x[0] for x in filtered],
+            [x[1] for x in filtered],
+            [x[2] for x in filtered],
+        )
 
         # Defense 2 & 4: Add content hash, ingestion timestamp, and anomaly flag
         for i, text in enumerate(text_list):
