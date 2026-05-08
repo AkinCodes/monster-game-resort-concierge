@@ -496,6 +496,28 @@ def make_registry(
 
     from ..data.events import search_events as _search_events_fn
 
+    # --- Normalisation maps for search_events wrapper ---
+    _TAG_ALIASES: dict[str, str] = {
+        "kid friendly": "family-friendly",
+        "kid-friendly": "family-friendly",
+        "adult": "adults-only",
+        "adult only": "adults-only",
+        "adult-only": "adults-only",
+        "outdoors": "outdoor",
+        "food": "dining",
+    }
+    _SORT_ORDER_ALIASES: dict[str, str] = {
+        "ascending": "asc",
+        "descending": "desc",
+    }
+
+    def _normalise_tag(tag: str) -> str:
+        """Normalise a single tag: apply aliases, then space->hyphen + lower."""
+        t = tag.strip().lower()
+        if t in _TAG_ALIASES:
+            return _TAG_ALIASES[t]
+        return t.replace(" ", "-")
+
     @registry.register(
         "search_events",
         "Search for events across all Monster Resort properties. "
@@ -515,6 +537,7 @@ def make_registry(
             "type": "event_type",
             "sort": "sort_by",
             "order": "sort_order",
+            "tag": "tags",
         }
         _VALID_PARAMS = {
             "hotel_name", "event_type", "start_after", "start_before",
@@ -535,6 +558,44 @@ def make_registry(
                 if given in full_name.lower():
                     cleaned["hotel_name"] = full_name
                     break
+
+        # Normalise event_type: "full moon party" -> "full_moon_party"
+        if "event_type" in cleaned and cleaned["event_type"]:
+            cleaned["event_type"] = (
+                cleaned["event_type"].strip().lower().replace(" ", "_")
+            )
+
+        # Normalise tags: aliases + space->hyphen
+        if "tags" in cleaned and cleaned["tags"]:
+            cleaned["tags"] = [_normalise_tag(t) for t in cleaned["tags"]]
+
+        # Normalise sort_by: lowercase
+        if "sort_by" in cleaned and cleaned["sort_by"]:
+            cleaned["sort_by"] = cleaned["sort_by"].strip().lower()
+
+        # Normalise sort_order: "ascending"->"asc", "descending"->"desc"
+        if "sort_order" in cleaned and cleaned["sort_order"]:
+            raw = cleaned["sort_order"].strip().lower()
+            cleaned["sort_order"] = _SORT_ORDER_ALIASES.get(raw, raw)
+
+        # Coerce has_availability string to bool
+        if "has_availability" in cleaned:
+            v = cleaned["has_availability"]
+            if isinstance(v, str):
+                cleaned["has_availability"] = v.strip().lower() == "true"
+
+        # Coerce limit/offset to int
+        for int_field in ("limit", "offset"):
+            if int_field in cleaned:
+                try:
+                    cleaned[int_field] = int(cleaned[int_field])
+                except (ValueError, TypeError):
+                    del cleaned[int_field]
+
+        # Wrap single tag string in a list
+        if "tags" in cleaned and isinstance(cleaned["tags"], str):
+            cleaned["tags"] = [cleaned["tags"]]
+
         result = _search_events_fn(**cleaned)
 
         logger.info(

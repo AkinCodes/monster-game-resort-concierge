@@ -1,12 +1,15 @@
 """Tests for the search_events tool — data layer + validation."""
 
+import asyncio
 import sys
 from pathlib import Path
+from unittest.mock import MagicMock
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from app.data.events import MOCK_EVENTS, search_events  # noqa: E402
 from app.core.orchestrator import ConciergeOrchestrator  # noqa: E402
+from app.core.tools import make_registry  # noqa: E402
 
 _validate = ConciergeOrchestrator._validate_tool_call
 
@@ -281,3 +284,131 @@ class TestNegativeOffset:
         )
         assert ok is False
         assert "offset" in reason.lower()
+
+
+# ===================================================================
+# 16-25  Normalisation tests (search_events_tool wrapper)
+# ===================================================================
+
+
+def _make_registry():
+    """Build a ToolRegistry with mock dependencies."""
+    db = MagicMock()
+    pdf = MagicMock()
+    rag = MagicMock(return_value=[])
+    return make_registry(db, pdf, rag)
+
+
+def _run(coro):
+    """Run an async coroutine synchronously."""
+    return asyncio.get_event_loop().run_until_complete(coro)
+
+
+class TestEventTypeNormalisation:
+    """16. event_type normalisation — spaces to underscores, lowercase."""
+
+    def test_spaces_to_underscores(self):
+        reg = _make_registry()
+        result = _run(reg.async_execute_with_timing(
+            "search_events", event_type="full moon party",
+        ))
+        assert result["ok"] is True
+        assert result["total"] > 0
+        for e in result["events"]:
+            assert e["event_type"] == "full_moon_party"
+
+    def test_mixed_case_event_type(self):
+        reg = _make_registry()
+        result = _run(reg.async_execute_with_timing(
+            "search_events", event_type="Haunted Tour",
+        ))
+        assert result["ok"] is True
+        assert result["total"] > 0
+        for e in result["events"]:
+            assert e["event_type"] == "haunted_tour"
+
+
+class TestTagsNormalisation:
+    """17. tags normalisation — aliases, spaces to hyphens."""
+
+    def test_space_to_hyphen(self):
+        reg = _make_registry()
+        result = _run(reg.async_execute_with_timing(
+            "search_events", tags=["family friendly"],
+        ))
+        assert result["ok"] is True
+        assert result["total"] > 0
+        for e in result["events"]:
+            assert "family-friendly" in e["tags"]
+
+    def test_adult_only_alias(self):
+        reg = _make_registry()
+        result = _run(reg.async_execute_with_timing(
+            "search_events", tags=["adult only"],
+        ))
+        assert result["ok"] is True
+        assert result["total"] > 0
+        for e in result["events"]:
+            assert "adults-only" in e["tags"]
+
+    def test_outdoors_alias(self):
+        reg = _make_registry()
+        result = _run(reg.async_execute_with_timing(
+            "search_events", tags=["outdoors"],
+        ))
+        assert result["ok"] is True
+        assert result["total"] > 0
+        for e in result["events"]:
+            assert "outdoor" in e["tags"]
+
+    def test_kid_friendly_alias(self):
+        reg = _make_registry()
+        result = _run(reg.async_execute_with_timing(
+            "search_events", tags=["kid friendly"],
+        ))
+        assert result["ok"] is True
+        assert result["total"] > 0
+        for e in result["events"]:
+            assert "family-friendly" in e["tags"]
+
+    def test_food_alias(self):
+        reg = _make_registry()
+        result = _run(reg.async_execute_with_timing(
+            "search_events", tags=["food"],
+        ))
+        assert result["ok"] is True
+        assert result["total"] > 0
+        for e in result["events"]:
+            assert "dining" in e["tags"]
+
+
+class TestSortNormalisation:
+    """18. sort_by / sort_order normalisation."""
+
+    def test_sort_by_uppercase(self):
+        reg = _make_registry()
+        result = _run(reg.async_execute_with_timing(
+            "search_events", sort_by="Price", sort_order="desc", limit=5,
+        ))
+        assert result["ok"] is True
+        prices = [e["price"] for e in result["events"]]
+        assert prices == sorted(prices, reverse=True)
+
+    def test_sort_order_ascending_alias(self):
+        reg = _make_registry()
+        result = _run(reg.async_execute_with_timing(
+            "search_events", sort_by="date", sort_order="ascending", limit=5,
+        ))
+        assert result["ok"] is True
+        dates = [e["starts_at"] for e in result["events"]]
+        assert dates == sorted(dates)
+
+    def test_sort_order_descending_alias(self):
+        reg = _make_registry()
+        result = _run(reg.async_execute_with_timing(
+            "search_events", sort_by="price", sort_order="Descending",
+            limit=5,
+        ))
+        assert result["ok"] is True
+        prices = [e["price"] for e in result["events"]]
+        assert prices == sorted(prices, reverse=True)
