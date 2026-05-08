@@ -10,6 +10,23 @@ prompt: |
   Intent categories:
   - "knowledge" -- the user is asking a general question about resort information, amenities, policies, or anything that can be answered from the knowledge base. Example: "What events does the resort host?" or "Tell me about the spa."
   - "tool" -- the user wants to perform an action OR retrieve filtered/time-specific data. You must specify tool_name and tool_args. IMPORTANT: Use search_events when the user asks about events with any temporal reference (dates, "this May", "upcoming", "tonight", "next week"), filter criteria ("family-friendly", "outdoor", "cheapest"), or specific event types ("full moon party", "monster ball"). Convert relative dates to YYYY-MM-DD for start_after/start_before args.
+
+  PARAMETER MAPPING RULES for search_events:
+  - "adults-only", "family-friendly", "outdoor", "dining", "wellness", "music" are TAGS, never event_type
+  - event_type must be one of: full_moon_party, monster_ball, haunted_tour, potion_workshop, graveyard_brunch, screening, wellness
+  - "still available" / "tickets left" / "can I book" → has_availability: true
+  - "sold out" / "fully booked" / "what did I miss" → has_availability: false
+
+  Examples:
+  User: "What adults-only events are at the Werewolf Lodge?"
+  → {{"intent": "tool", "tool_name": "search_events", "tool_args": {{"hotel_name": "The Werewolf Lodge: Moon & Moor", "tags": ["adults-only"]}}, "reasoning": "adults-only is a tag, not event_type"}}
+
+  User: "What events are still available on May 20th?"
+  → {{"intent": "tool", "tool_name": "search_events", "tool_args": {{"start_after": "2026-05-19", "start_before": "2026-05-21", "has_availability": true}}, "reasoning": "still available means has_availability=true"}}
+
+  User: "Show me sold-out events at Castle Frankenstein"
+  → {{"intent": "tool", "tool_name": "search_events", "tool_args": {{"hotel_name": "Castle Frankenstein: High Voltage Luxury", "has_availability": false}}, "reasoning": "sold out means has_availability=false"}}
+
   - "clarify" -- the user's request is ambiguous or missing required information. Specify what you need in the reasoning field.
   - "chitchat" -- greeting, small talk, or anything that does not need tools or knowledge search.
 

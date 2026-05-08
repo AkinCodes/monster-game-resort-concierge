@@ -412,3 +412,52 @@ class TestSortNormalisation:
         assert result["ok"] is True
         prices = [e["price"] for e in result["events"]]
         assert prices == sorted(prices, reverse=True)
+
+
+# ===================================================================
+# 19  Tag bleed detection & unknown event_type removal
+# ===================================================================
+
+
+class TestTagBleedDetection:
+    """19. event_type values that are actually tags get moved to tags."""
+
+    def test_adults_only_moved_to_tags(self):
+        reg = _make_registry()
+        result = _run(reg.async_execute_with_timing(
+            "search_events", event_type="adults-only",
+        ))
+        assert result["ok"] is True
+        assert result["total"] > 0
+        for e in result["events"]:
+            assert "adults-only" in e["tags"]
+
+    def test_family_friendly_moved_to_tags(self):
+        reg = _make_registry()
+        result = _run(reg.async_execute_with_timing(
+            "search_events", event_type="family-friendly",
+        ))
+        assert result["ok"] is True
+        assert result["total"] > 0
+        for e in result["events"]:
+            assert "family-friendly" in e["tags"]
+
+    def test_valid_event_type_stays(self):
+        reg = _make_registry()
+        result = _run(reg.async_execute_with_timing(
+            "search_events", event_type="full_moon_party",
+        ))
+        assert result["ok"] is True
+        assert result["total"] > 0
+        for e in result["events"]:
+            assert e["event_type"] == "full_moon_party"
+
+    def test_unknown_event_type_removed(self):
+        """Unknown event_type is dropped so results aren't silently empty."""
+        reg = _make_registry()
+        result = _run(reg.async_execute_with_timing(
+            "search_events", event_type="banana_festival",
+        ))
+        assert result["ok"] is True
+        # Without removal this would be 0; with removal we get all events
+        assert result["total"] == len(MOCK_EVENTS)

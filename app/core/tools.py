@@ -122,27 +122,48 @@ class Tool:
                                 "screening",
                                 "wellness",
                             ],
-                            "description": "Filter by event category",
+                            "description": (
+                                "Official event category. Must be "
+                                "one of the enum values. Do NOT "
+                                "put audience tags like "
+                                "'adults-only', 'family-friendly',"
+                                " 'outdoor' here — those go in "
+                                "the tags parameter."
+                            ),
                         },
                         "start_after": {
                             "type": "string",
                             "description": (
                                 "ISO date (YYYY-MM-DD) — only events "
-                                "starting after this date"
+                                "starting after this date. Use "
+                                "today's date context to convert "
+                                "relative references like 'this "
+                                "May', 'next weekend', 'tonight' "
+                                "to YYYY-MM-DD format."
                             ),
                         },
                         "start_before": {
                             "type": "string",
                             "description": (
                                 "ISO date (YYYY-MM-DD) — only events "
-                                "starting before this date"
+                                "starting before this date. Use "
+                                "today's date context to convert "
+                                "relative references like 'this "
+                                "May', 'next weekend', 'tonight' "
+                                "to YYYY-MM-DD format."
                             ),
                         },
                         "has_availability": {
                             "type": "boolean",
                             "description": (
-                                "If true, only return events with "
-                                "available tickets"
+                                "Set to true when the user wants "
+                                "events they can still book "
+                                "('still available', 'tickets "
+                                "left', 'can I attend'). Set to "
+                                "false ONLY when the user "
+                                "explicitly asks for sold-out "
+                                "events ('sold out', 'fully "
+                                "booked', 'what did I miss')."
                             ),
                         },
                         "tags": {
@@ -160,8 +181,13 @@ class Tool:
                                 ],
                             },
                             "description": (
-                                "Filter by event tags (matches events "
-                                "with ANY of the given tags)"
+                                "Audience and theme tags. Use "
+                                "this for: adults-only, "
+                                "family-friendly, outdoor, dining,"
+                                " wellness, music, seasonal. "
+                                "These are NOT event types — they "
+                                "describe who the event is for or "
+                                "what kind of experience it is."
                             ),
                         },
                         "sort_by": {
@@ -595,6 +621,27 @@ def make_registry(
         # Wrap single tag string in a list
         if "tags" in cleaned and isinstance(cleaned["tags"], str):
             cleaned["tags"] = [cleaned["tags"]]
+
+        # --- Post-normalisation validation ---
+        # Tag bleed detection: if event_type is actually a tag, move it
+        if "event_type" in cleaned and cleaned["event_type"]:
+            from ..data.events import VALID_TAGS, VALID_EVENT_TYPES
+            et = cleaned["event_type"]
+            if et in VALID_TAGS or et.replace("_", "-") in VALID_TAGS:
+                tags = cleaned.get("tags", [])
+                tags.append(et.replace("_", "-"))
+                cleaned["tags"] = tags
+                del cleaned["event_type"]
+                logger.info(
+                    f"search_events: moved '{et}' from event_type to tags"
+                )
+            # Ensure event_type is valid; drop unknown values silently
+            elif et not in VALID_EVENT_TYPES:
+                logger.warning(
+                    "search_events: unknown event_type "
+                    f"'{et}', removing"
+                )
+                del cleaned["event_type"]
 
         result = _search_events_fn(**cleaned)
 
