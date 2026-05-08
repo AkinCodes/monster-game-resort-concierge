@@ -105,7 +105,11 @@ class ConciergeOrchestrator:
         history = self.memory.get_messages(session_id, limit=5)
         history_text = self._format_history(history)
 
-        system_prompt = load_prompt("planner", tool_list=tool_list)
+        from datetime import date
+        today = date.today().isoformat()
+        system_prompt = load_prompt(
+            "planner", tool_list=tool_list, today_date=today,
+        )
 
         user_content = user_message
         if history_text:
