@@ -526,6 +526,15 @@ def make_registry(
             key = _PARAM_ALIASES.get(k, k)
             if key in _VALID_PARAMS:
                 cleaned[key] = v
+        # Fuzzy-match hotel_name if LLM sends a partial name
+        if "hotel_name" in cleaned and cleaned["hotel_name"]:
+            from ..data.events import MOCK_EVENTS
+            known_hotels = {e["hotel_name"] for e in MOCK_EVENTS}
+            given = cleaned["hotel_name"].lower()
+            for full_name in known_hotels:
+                if given in full_name.lower():
+                    cleaned["hotel_name"] = full_name
+                    break
         result = _search_events_fn(**cleaned)
 
         logger.info(
