@@ -9,7 +9,7 @@ services:
       - MRC_ENVIRONMENT=prod
       - MRC_API_KEY=${MRC_API_KEY}
       - MRC_OPENAI_API_KEY=${MRC_OPENAI_API_KEY}
-      - MRC_DATABASE_URL=postgresql://monster:monster_secret@postgres:5432/monster_resort
+      - MRC_DATABASE_URL=postgresql://monster:${POSTGRES_PASSWORD:-monster_secret}@postgres:5432/monster_resort
       - MRC_REDIS_URL=redis://redis:6379/0
       - MRC_REDIS_ENABLED=true
     volumes:
@@ -34,7 +34,7 @@ services:
     environment:
       POSTGRES_DB: monster_resort
       POSTGRES_USER: monster
-      POSTGRES_PASSWORD: monster_secret
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-monster_secret}
     ports:
       - "5432:5432"
     volumes:
@@ -77,7 +77,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
     volumes:
       - grafana_data:/var/lib/grafana
     restart: unless-stopped
