@@ -215,6 +215,7 @@
       { id: "playground", label: "Playground" },
       { id: "sessions", label: "Sessions" },
       { id: "observability", label: "Observability" },
+      { id: "evals", label: "Evals" },
       { id: "overview", label: "Overview" }
     ];
 
@@ -250,6 +251,15 @@
         window.VIEWS.observability.render(viewEl);
       } else {
         renderViewMissing("observability");
+      }
+    }
+
+    function showEvals() {
+      viewEl.innerHTML = "";
+      if (window.VIEWS.evals && typeof window.VIEWS.evals.render === "function") {
+        window.VIEWS.evals.render(viewEl);
+      } else {
+        renderViewMissing("evals");
       }
     }
 
@@ -362,6 +372,7 @@
       playground: showPlayground,
       sessions: showSessions,
       observability: showObservability,
+      evals: showEvals,
       overview: showOverview
     };
 
@@ -401,6 +412,7 @@
   <!-- View modules (owned by other agents) -->
   <script src="/console/assets/playground.js"></script>
   <script src="/console/assets/observability.js"></script>
+  <script src="/console/assets/evals.js"></script>
   <script>
     // Re-render the default view in case the module scripts loaded after
     // the initial render call above.

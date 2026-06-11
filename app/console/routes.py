@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import re
 from pathlib import Path
 
@@ -10,9 +11,18 @@ router = APIRouter(tags=["console"])
 
 _STATIC_DIR = (Path(__file__).parent / "static").resolve()
 _INDEX_HTML = _STATIC_DIR / "index.html"
+_REPORTS_DIR = (Path(__file__).resolve().parents[2] / "reports")
 
 # Asset names: alphanumerics, underscore, dot, dash; must end in .js
 _ASSET_RE = re.compile(r"^[a-zA-Z0-9_.-]+\.js$")
+
+# Pre-computed offline-eval reports surfaced by the Evals tab (read-only).
+_EVAL_JSON_FILES = {
+    "retrieval_metrics": "retrieval_metrics.json",
+    "retrieval_ablation": "retrieval_ablation.json",
+    "eval_report": "eval_report.json",
+}
+_EVAL_JSONL_FILES = {"hallucination": "hallucination_history.jsonl"}
 
 
 @router.get("/console")
@@ -41,3 +51,34 @@ def console_asset(name: str):
         raise HTTPException(status_code=404, detail="Not found")
 
     return FileResponse(str(target), media_type="text/javascript")
+
+
+@router.get("/console/evals")
+def console_evals():
+    """Return the latest offline-eval results (read-only) for the Evals tab.
+
+    Reads pre-computed report files from reports/. A missing or invalid file
+    yields null for that key rather than failing the whole response.
+    """
+    out: dict = {}
+    for key, fname in _EVAL_JSON_FILES.items():
+        path = _REPORTS_DIR / fname
+        data = None
+        if path.is_file():
+            try:
+                data = json.loads(path.read_text())
+            except (ValueError, OSError):
+                data = None
+        out[key] = data
+    for key, fname in _EVAL_JSONL_FILES.items():
+        path = _REPORTS_DIR / fname
+        data = None
+        if path.is_file():
+            try:
+                lines = [ln for ln in path.read_text().splitlines() if ln.strip()]
+                if lines:
+                    data = json.loads(lines[-1])  # latest run
+            except (ValueError, OSError):
+                data = None
+        out[key] = data
+    return {"ok": True, "evals": out}
