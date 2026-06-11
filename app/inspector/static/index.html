@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Session Inspector — Monster Resort</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #0d1117;
+    --panel: #161b22;
+    --panel-2: #1c2330;
+    --border: #2b3340;
+    --text: #e6edf3;
+    --muted: #8b96a5;
+    --blue: #4493f8;
+    --green: #3fb950;
+    --amber: #d29922;
+    --red: #f85149;
+    --orange: #db6d28;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+  }
+  .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+
+  /* ---- Left pane ---- */
+  #left {
+    width: 360px;
+    min-width: 300px;
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+  }
+  .lhead { padding: 18px 18px 12px; border-bottom: 1px solid var(--border); }
+  .lhead h1 { font-size: 17px; margin: 0; letter-spacing: .2px; }
+  .lhead .sub {
+    margin-top: 4px; font-size: 11px; color: var(--amber);
+    text-transform: uppercase; letter-spacing: .6px; font-weight: 600;
+  }
+  .searchbar { display: flex; gap: 8px; padding: 12px 18px; }
+  .searchbar input {
+    flex: 1; background: var(--panel-2); border: 1px solid var(--border);
+    color: var(--text); padding: 8px 10px; border-radius: 6px; font-size: 13px;
+    outline: none;
+  }
+  .searchbar input:focus { border-color: var(--blue); }
+  .searchbar button, .reload-btn {
+    background: var(--blue); color: #fff; border: none; border-radius: 6px;
+    padding: 8px 12px; cursor: pointer; font-weight: 600; font-size: 13px;
+  }
+  .searchbar button:hover { filter: brightness(1.1); }
+  .count {
+    padding: 4px 18px 10px; font-size: 12px; color: var(--muted);
+  }
+  #sessionList { flex: 1; overflow-y: auto; padding: 0 8px 12px; }
+  .srow {
+    padding: 10px 12px; border-radius: 8px; cursor: pointer;
+    border: 1px solid transparent; margin-bottom: 4px;
+  }
+  .srow:hover { background: var(--panel-2); }
+  .srow.active { background: var(--panel-2); border-color: var(--blue); }
+  .srow .sid { font-size: 12.5px; font-weight: 600; }
+  .srow .meta { font-size: 11px; color: var(--muted); margin-top: 3px; display: flex; gap: 10px; }
+  .srow .prev { font-size: 11.5px; color: var(--muted); margin-top: 5px; font-style: italic; }
+
+  /* ---- Right pane ---- */
+  #right { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  .rhead { padding: 16px 22px; border-bottom: 1px solid var(--border); background: var(--panel); }
+  .rhead h2 { margin: 0; font-size: 16px; }
+  .rhead .totals { margin-top: 6px; font-size: 12px; color: var(--muted); display: flex; gap: 16px; flex-wrap: wrap; }
+  #transcript { flex: 1; overflow-y: auto; padding: 22px; }
+  .empty { color: var(--muted); padding: 40px; text-align: center; }
+
+  .compressed-note {
+    background: rgba(210,153,34,.12); border: 1px solid rgba(210,153,34,.35);
+    color: var(--amber); padding: 10px 14px; border-radius: 8px; font-size: 12.5px;
+    margin-bottom: 18px;
+  }
+
+  .card {
+    border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px;
+    margin-bottom: 14px; background: var(--panel); border-left-width: 3px;
+  }
+  .card.user { border-left-color: var(--blue); }
+  .card.assistant { border-left-color: var(--green); }
+  .card .role {
+    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px;
+  }
+  .card.user .role { color: var(--blue); }
+  .card.assistant .role { color: var(--green); }
+  .card .ts { font-size: 11px; color: var(--muted); float: right; font-weight: 400; }
+  .card .content { margin-top: 8px; white-space: pre-wrap; line-height: 1.5; word-wrap: break-word; }
+
+  .badges { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .chip {
+    font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 999px;
+    border: 1px solid var(--border); letter-spacing: .3px;
+  }
+  .chip.intent { background: rgba(68,147,248,.14); color: var(--blue); border-color: rgba(68,147,248,.4); }
+  .chip.conf-high { background: rgba(63,185,80,.14); color: var(--green); border-color: rgba(63,185,80,.4); }
+  .chip.conf-medium { background: rgba(210,153,34,.14); color: var(--amber); border-color: rgba(210,153,34,.4); }
+  .chip.conf-low { background: rgba(248,81,73,.14); color: var(--red); border-color: rgba(248,81,73,.4); }
+  .chip.guardrail { background: rgba(248,81,73,.18); color: var(--red); border-color: rgba(248,81,73,.5); }
+  .chip.pii { background: rgba(219,109,40,.18); color: var(--orange); border-color: rgba(219,109,40,.5); }
+
+  details.block { margin-top: 10px; }
+  details.block summary {
+    cursor: pointer; font-size: 12px; font-weight: 600; color: var(--muted);
+    padding: 6px 10px; background: var(--panel-2); border-radius: 6px;
+    list-style: none; user-select: none;
+  }
+  details.block summary::-webkit-details-marker { display: none; }
+  details.block summary::before { content: "▸ "; }
+  details.block[open] summary::before { content: "▾ "; }
+  details.tool summary { color: var(--amber); border: 1px solid rgba(210,153,34,.35); }
+  details.block pre {
+    margin: 6px 0 0; background: #0b0f14; border: 1px solid var(--border);
+    border-radius: 6px; padding: 10px; font-size: 11.5px; overflow-x: auto;
+    white-space: pre-wrap; word-wrap: break-word; max-height: 320px; overflow-y: auto;
+  }
+  .tool-label { font-size: 11px; color: var(--amber); margin: 8px 0 2px; font-weight: 600; }
+  .sources-list { margin: 6px 0 0; padding-left: 18px; font-size: 12px; color: var(--muted); }
+
+  .footstrip {
+    margin-top: 10px; font-size: 11px; color: var(--muted);
+    border-top: 1px solid var(--border); padding-top: 8px;
+  }
+</style>
+</head>
+<body>
+  <div id="left">
+    <div class="lhead">
+      <h1>Session Inspector — Monster Resort</h1>
+      <div class="sub">Synthetic data — staging only</div>
+    </div>
+    <div class="searchbar">
+      <input id="searchInput" type="text" placeholder="Filter by session id…" />
+      <button id="searchBtn">Search</button>
+    </div>
+    <div class="count" id="sessionCount">No sessions loaded</div>
+    <div id="sessionList"></div>
+  </div>
+
+  <div id="right">
+    <div class="rhead">
+      <h2 id="rTitle">Messages</h2>
+      <div class="totals" id="rTotals"></div>
+    </div>
+    <div id="transcript">
+      <div class="empty">Select a session on the left to inspect its transcript.</div>
+    </div>
+  </div>
+
+<script>
+(function () {
+  "use strict";
+
+  const API_KEY_STORE = "inspector_api_key";
+  let currentSession = null;
+
+  function getApiKey(forcePrompt) {
+    let key = sessionStorage.getItem(API_KEY_STORE);
+    if (!key || forcePrompt) {
+      key = window.prompt("Enter API key (sent as Authorization: Bearer)");
+      if (key) {
+        key = key.trim();
+        sessionStorage.setItem(API_KEY_STORE, key);
+      }
+    }
+    return key;
+  }
+
+  async function apiFetch(path) {
+    let key = getApiKey(false);
+    if (!key) throw new Error("no-key");
+    let res = await fetch(path, {
+      headers: { "Authorization": "Bearer " + key },
+    });
+    if (res.status === 401) {
+      // Re-prompt once on auth failure
+      key = getApiKey(true);
+      if (!key) throw new Error("no-key");
+      res = await fetch(path, {
+        headers: { "Authorization": "Bearer " + key },
+      });
+    }
+    if (!res.ok) {
+      throw new Error("HTTP " + res.status);
+    }
+    return res.json();
+  }
+
+  function esc(s) {
+    if (s === null || s === undefined) return "";
+    return String(s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function fmtTime(s) {
+    if (!s) return "";
+    const d = new Date(s);
+    if (isNaN(d.getTime())) return esc(s);
+    return d.toLocaleString();
+  }
+
+  function truncId(id) {
+    if (!id) return "";
+    return id.length > 22 ? id.slice(0, 10) + "…" + id.slice(-6) : id;
+  }
+
+  // ---- Sessions list ----
+  async function loadSessions() {
+    const search = document.getElementById("searchInput").value.trim();
+    const listEl = document.getElementById("sessionList");
+    const countEl = document.getElementById("sessionCount");
+    countEl.textContent = "Loading…";
+    let data;
+    try {
+      const q = search ? "?search=" + encodeURIComponent(search) : "";
+      data = await apiFetch("/inspector/sessions" + q + (search ? "&" : "?") + "page_size=100");
+    } catch (e) {
+      if (e.message === "no-key") { countEl.textContent = "API key required."; return; }
+      countEl.textContent = "Failed to load sessions (" + e.message + ")";
+      return;
+    }
+    const sessions = data.sessions || [];
+    countEl.textContent = sessions.length + " of " + data.total + " session(s)";
+    listEl.innerHTML = "";
+    if (!sessions.length) {
+      listEl.innerHTML = '<div class="empty">No sessions found.</div>';
+      return;
+    }
+    for (const s of sessions) {
+      const row = document.createElement("div");
+      row.className = "srow";
+      row.dataset.sid = s.session_id;
+      let html =
+        '<div class="sid mono">' + esc(truncId(s.session_id)) + '</div>' +
+        '<div class="meta"><span>' + esc(fmtTime(s.updated_at)) + '</span>' +
+        '<span>' + (s.message_count || 0) + ' msg</span></div>';
+      if (s.summary_preview) {
+        html += '<div class="prev">' + esc(s.summary_preview) + '…</div>';
+      }
+      row.innerHTML = html;
+      row.addEventListener("click", () => selectSession(s.session_id, row));
+      listEl.appendChild(row);
+    }
+  }
+
+  function selectSession(sid, rowEl) {
+    document.querySelectorAll(".srow.active").forEach((e) => e.classList.remove("active"));
+    if (rowEl) rowEl.classList.add("active");
+    currentSession = sid;
+    loadTranscript(sid);
+  }
+
+  // ---- Transcript ----
+  async function loadTranscript(sid) {
+    const title = document.getElementById("rTitle");
+    const totals = document.getElementById("rTotals");
+    const cont = document.getElementById("transcript");
+    title.textContent = "Messages — " + truncId(sid);
+    totals.textContent = "";
+    cont.innerHTML = '<div class="empty">Loading transcript…</div>';
+
+    let data;
+    try {
+      data = await apiFetch("/inspector/sessions/" + encodeURIComponent(sid) + "/transcript");
+    } catch (e) {
+      if (e.message === "no-key") { cont.innerHTML = '<div class="empty">API key required.</div>'; return; }
+      cont.innerHTML = '<div class="empty">Failed to load transcript (' + esc(e.message) + ').</div>';
+      return;
+    }
+
+    const msgs = data.messages || [];
+    let totLatency = 0, totCost = 0, costSeen = false;
+    for (const m of msgs) {
+      if (m.turn_meta) {
+        if (typeof m.turn_meta.latency_ms === "number") totLatency += m.turn_meta.latency_ms;
+        if (typeof m.turn_meta.estimated_cost_usd === "number") {
+          totCost += m.turn_meta.estimated_cost_usd; costSeen = true;
+        }
+      }
+    }
+    const totalParts = [msgs.length + " messages"];
+    if (totLatency > 0) totalParts.push(Math.round(totLatency) + " ms total");
+    if (costSeen) totalParts.push("$" + totCost.toFixed(5) + " total");
+    totals.innerHTML = totalParts.map((p) => "<span>" + esc(p) + "</span>").join("");
+
+    cont.innerHTML = "";
+    if (data.summary) {
+      const note = document.createElement("div");
+      note.className = "compressed-note";
+      note.textContent = "ℹ Earlier messages compressed into a session summary: " + data.summary;
+      cont.appendChild(note);
+    }
+    if (!msgs.length) {
+      cont.innerHTML += '<div class="empty">No messages in this session.</div>';
+      return;
+    }
+    for (const m of msgs) {
+      cont.appendChild(renderCard(m));
+    }
+  }
+
+  function chip(cls, text) {
+    return '<span class="chip ' + cls + '">' + esc(text) + '</span>';
+  }
+
+  function pretty(v) {
+    try { return JSON.stringify(v, null, 2); }
+    catch (e) { return String(v); }
+  }
+
+  function renderCard(m) {
+    const card = document.createElement("div");
+    const role = (m.role || "").toLowerCase();
+    card.className = "card " + (role === "user" ? "user" : "assistant");
+
+    let html =
+      '<span class="role">' + esc(m.role || "?") + '</span>' +
+      '<span class="ts">' + esc(fmtTime(m.created_at)) + '</span>' +
+      '<div class="content">' + esc(m.content) + '</div>';
+
+    const tm = m.turn_meta;
+    if (tm) {
+      const badges = [];
+      if (tm.intent) badges.push(chip("intent", tm.intent));
+      if (tm.confidence_level) {
+        const lvl = String(tm.confidence_level).toLowerCase();
+        const score = (typeof tm.confidence_score === "number")
+          ? " " + (tm.confidence_score <= 1 ? Math.round(tm.confidence_score * 100) + "%" : tm.confidence_score.toFixed(2))
+          : "";
+        badges.push(chip("conf-" + lvl, String(tm.confidence_level).toUpperCase() + score));
+      }
+      if (tm.guardrail) badges.push(chip("guardrail", "⚠ " + tm.guardrail));
+      if (tm.pii_types && tm.pii_types.length) {
+        badges.push(chip("pii", "PII redacted: " + tm.pii_types.join(", ")));
+      }
+      if (badges.length) html += '<div class="badges">' + badges.join("") + '</div>';
+
+      // Sources (collapsible)
+      if (tm.sources && tm.sources.length) {
+        let items = "";
+        for (const src of tm.sources) {
+          const label = (typeof src === "string") ? src : pretty(src);
+          items += "<li>" + esc(label) + "</li>";
+        }
+        html +=
+          '<details class="block"><summary>Sources (' + tm.sources.length + ')</summary>' +
+          '<ul class="sources-list">' + items + '</ul></details>';
+      }
+
+      // Tool block (collapsible)
+      if (tm.tool_name) {
+        let inner = "";
+        if (tm.tool_args !== null && tm.tool_args !== undefined) {
+          inner += '<div class="tool-label">Args</div><pre>' + esc(pretty(tm.tool_args)) + '</pre>';
+        }
+        if (tm.tool_result !== null && tm.tool_result !== undefined) {
+          inner += '<div class="tool-label">Result</div><pre>' + esc(pretty(tm.tool_result)) + '</pre>';
+        }
+        html +=
+          '<details class="block tool"><summary>Tool: ' + esc(tm.tool_name) + '</summary>' +
+          inner + '</details>';
+      }
+
+      // Footer strip
+      const foot = [];
+      if (typeof tm.latency_ms === "number") foot.push(Math.round(tm.latency_ms) + "ms");
+      if (tm.prompt_tokens != null || tm.completion_tokens != null) {
+        foot.push((tm.prompt_tokens || 0) + "p+" + (tm.completion_tokens || 0) + "c tok");
+      }
+      if (typeof tm.estimated_cost_usd === "number") foot.push("$" + tm.estimated_cost_usd.toFixed(6));
+      if (foot.length) {
+        html += '<div class="footstrip mono">' + esc(foot.join(" · ")) + '</div>';
+      }
+    }
+
+    card.innerHTML = html;
+    return card;
+  }
+
+  // ---- Wire up ----
+  document.getElementById("searchBtn").addEventListener("click", loadSessions);
+  document.getElementById("searchInput").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") loadSessions();
+  });
+
+  getApiKey(false);
+  loadSessions();
+})();
+</script>
+</body>
+</html>

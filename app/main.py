@@ -16,6 +16,7 @@ from .services.pdf_generator import PDFGenerator  # noqa: E402
 from .rag.advanced_rag import AdvancedRAG  # noqa: E402
 from .auth.security import install_rate_limiter, APIKeyManager  # noqa: E402
 from .api.admin_routes import router as admin_router  # noqa: E402
+from .inspector import router as inspector_router  # noqa: E402
 from .auth.auth_mixins import jwt_or_api_key  # noqa: E402
 from .core.tools import make_registry  # noqa: E402
 from .core.llm_providers import (  # noqa: E402
@@ -164,6 +165,7 @@ def build_app() -> FastAPI:
     tracker = _init_observability(app, settings)
 
     app.include_router(admin_router)
+    app.include_router(inspector_router)
 
     @app.get("/health")
     def health():

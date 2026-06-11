@@ -624,6 +624,65 @@ class ConciergeOrchestrator:
         self.memory.add_message(session_id, "user", user_message)
         self.memory.add_message(session_id, "assistant", result.response)
 
+        # --- Session Inspector: persist per-turn metadata (best-effort) ---
+        try:
+            intent_val = None
+            plan_intent = getattr(plan, "intent", None)
+            if plan_intent is not None:
+                intent_val = getattr(plan_intent, "value", plan_intent)
+
+            plan_tool_args = getattr(plan, "tool_args", None)
+            result_tool_result = getattr(result, "tool_result", None)
+            result_sources = getattr(result, "sources", None)
+            result_pii_types = getattr(result, "pii_types", None)
+
+            confidence_score = None
+            confidence_level = None
+            confidence = getattr(result, "confidence", None)
+            if confidence is not None:
+                confidence_score = getattr(confidence, "overall_score", None)
+                level = getattr(confidence, "level", None)
+                if level is not None:
+                    confidence_level = getattr(
+                        level, "value", getattr(level, "name", str(level))
+                    )
+
+            prompt_tokens = None
+            completion_tokens = None
+            token_usage = getattr(result, "token_usage", None)
+            if isinstance(token_usage, dict):
+                prompt_tokens = token_usage.get("prompt_tokens")
+                completion_tokens = token_usage.get("completion_tokens")
+
+            meta = {
+                "intent": intent_val,
+                "tool_name": getattr(plan, "tool_name", None),
+                "tool_args_json": json.dumps(plan_tool_args) if plan_tool_args else None,
+                "tool_result_json": (
+                    json.dumps(result_tool_result, default=str)
+                    if result_tool_result is not None
+                    else None
+                ),
+                "sources_json": json.dumps(result_sources) if result_sources else None,
+                "guardrail": getattr(result, "guardrail", None),
+                "pii_types_json": (
+                    json.dumps(result_pii_types) if result_pii_types else None
+                ),
+                "confidence_score": confidence_score,
+                "confidence_level": confidence_level,
+                "prompt_tokens": prompt_tokens,
+                "completion_tokens": completion_tokens,
+                "estimated_cost_usd": None,
+                "latency_ms": getattr(result, "latency_ms", None),
+                "planner_bypassed": 1 if cheap_intent is not None else 0,
+            }
+            self.memory.add_turn_metadata(session_id, meta)
+        except Exception as exc:
+            logger.warning(
+                "turn_metadata_persist_failed",
+                extra={"session_id": session_id, "error": str(exc)},
+            )
+
         total_ms = round((time.monotonic() - overall_start) * 1000, 2)
         logger.info(
             "orchestrator_handle_completed",

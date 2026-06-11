@@ -12,8 +12,8 @@ from sqlalchemy.engine import Engine
 from ..config import Settings
 from ..monitoring.logging_utils import logger, DatabaseError
 
-# Incremented to 3 to reflect the addition of booking_reference
-SCHEMA_VERSION = 3
+# Incremented to 4 to reflect the addition of the turn_metadata table
+SCHEMA_VERSION = 4
 
 DDL = [
     # --- System & Migration Tracking ---
@@ -33,6 +33,8 @@ DDL = [
     """CREATE INDEX IF NOT EXISTS idx_messages_session_id ON messages(session_id)""",
     """CREATE INDEX IF NOT EXISTS idx_bookings_session_id ON bookings(session_id)""",
     """CREATE INDEX IF NOT EXISTS idx_bookings_reference  ON bookings(booking_reference)""",
+    """CREATE INDEX IF NOT EXISTS idx_turn_meta_session ON turn_metadata(session_id)""",
+    """CREATE INDEX IF NOT EXISTS idx_turn_meta_message ON turn_metadata(message_id)""",
 ]
 
 # Tables with AUTOINCREMENT need different syntax for Postgres (SERIAL/GENERATED)
@@ -84,6 +86,51 @@ DDL_BOOKINGS_POSTGRES = """CREATE TABLE IF NOT EXISTS bookings (
     special_requests  TEXT,
     status            TEXT NOT NULL DEFAULT 'confirmed',
     created_at        TEXT NOT NULL
+)"""
+
+# Per-turn metadata for the Session Inspector (one row per assistant turn)
+DDL_TURN_METADATA_SQLITE = """CREATE TABLE IF NOT EXISTS turn_metadata (
+    id                 INTEGER PRIMARY KEY AUTOINCREMENT,
+    message_id         INTEGER,
+    session_id         TEXT NOT NULL,
+    intent             TEXT,
+    tool_name          TEXT,
+    tool_args_json     TEXT,
+    tool_result_json   TEXT,
+    sources_json       TEXT,
+    guardrail          TEXT,
+    pii_types_json     TEXT,
+    confidence_score   REAL,
+    confidence_level   TEXT,
+    prompt_tokens      INTEGER,
+    completion_tokens  INTEGER,
+    estimated_cost_usd REAL,
+    latency_ms         REAL,
+    planner_bypassed   INTEGER DEFAULT 0,
+    created_at         TEXT NOT NULL,
+    FOREIGN KEY(session_id) REFERENCES sessions(session_id)
+)"""
+
+DDL_TURN_METADATA_POSTGRES = """CREATE TABLE IF NOT EXISTS turn_metadata (
+    id                 SERIAL PRIMARY KEY,
+    message_id         INTEGER,
+    session_id         TEXT NOT NULL,
+    intent             TEXT,
+    tool_name          TEXT,
+    tool_args_json     TEXT,
+    tool_result_json   TEXT,
+    sources_json       TEXT,
+    guardrail          TEXT,
+    pii_types_json     TEXT,
+    confidence_score   REAL,
+    confidence_level   TEXT,
+    prompt_tokens      INTEGER,
+    completion_tokens  INTEGER,
+    estimated_cost_usd REAL,
+    latency_ms         REAL,
+    planner_bypassed   INTEGER DEFAULT 0,
+    created_at         TEXT NOT NULL,
+    FOREIGN KEY(session_id) REFERENCES sessions(session_id)
 )"""
 
 # Postgres uses ON CONFLICT ... DO UPDATE instead of INSERT OR REPLACE
@@ -226,9 +273,11 @@ class DatabaseManager:
                     # Insert table DDL before the index DDL
                     all_ddl.insert(1, DDL_MESSAGES_POSTGRES)
                     all_ddl.insert(2, DDL_BOOKINGS_POSTGRES)
+                    all_ddl.insert(3, DDL_TURN_METADATA_POSTGRES)
                 else:
                     all_ddl.insert(1, DDL_MESSAGES_SQLITE)
                     all_ddl.insert(2, DDL_BOOKINGS_SQLITE)
+                    all_ddl.insert(3, DDL_TURN_METADATA_SQLITE)
 
                 for stmt in all_ddl:
                     conn.execute(stmt)

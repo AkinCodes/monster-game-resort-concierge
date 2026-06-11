@@ -47,6 +47,49 @@ class MemoryStore:
 
         self._maybe_summarise(session_id)
 
+    def add_turn_metadata(self, session_id: str, meta: dict) -> None:
+        now = datetime.now(timezone.utc).isoformat()
+        with self.db.session() as conn:
+            row = conn.execute(
+                "SELECT MAX(id) AS mid FROM messages WHERE session_id = ?",
+                (session_id,),
+            ).fetchone()
+            message_id = row["mid"] if row else None
+            # If summarisation just pruned the assistant message (the session hit
+            # the summarise threshold on this turn), MAX(id) is NULL. Skip rather
+            # than write an orphaned, never-displayable metadata row.
+            if message_id is None:
+                return
+
+            conn.execute(
+                """INSERT INTO turn_metadata(
+                    message_id, session_id, intent, tool_name, tool_args_json,
+                    tool_result_json, sources_json, guardrail, pii_types_json,
+                    confidence_score, confidence_level, prompt_tokens,
+                    completion_tokens, estimated_cost_usd, latency_ms,
+                    planner_bypassed, created_at
+                ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    message_id,
+                    session_id,
+                    meta.get("intent"),
+                    meta.get("tool_name"),
+                    meta.get("tool_args_json"),
+                    meta.get("tool_result_json"),
+                    meta.get("sources_json"),
+                    meta.get("guardrail"),
+                    meta.get("pii_types_json"),
+                    meta.get("confidence_score"),
+                    meta.get("confidence_level"),
+                    meta.get("prompt_tokens"),
+                    meta.get("completion_tokens"),
+                    meta.get("estimated_cost_usd"),
+                    meta.get("latency_ms"),
+                    meta.get("planner_bypassed"),
+                    now,
+                ),
+            )
+
     def get_messages(self, session_id: str, limit: int = 50) -> list[dict]:
         with self.db.session() as conn:
             rows = conn.execute(
@@ -119,6 +162,12 @@ class MemoryStore:
             ids = [r["id"] for r in rows]
             if ids:
                 placeholders = ",".join(["?"] * len(ids))
+                # Drop turn metadata for the summarised-away messages so the
+                # inspector never carries rows pointing at deleted messages.
+                conn.execute(
+                    f"DELETE FROM turn_metadata WHERE message_id IN ({placeholders})",
+                    tuple(ids),
+                )
                 conn.execute(
                     f"DELETE FROM messages WHERE id IN ({placeholders})",
                     tuple(ids),
