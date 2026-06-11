@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Monster Ops Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #0d1117;
+    --panel: #161b22;
+    --panel-2: #1c2330;
+    --border: #2b3340;
+    --text: #e6edf3;
+    --muted: #8b96a5;
+    --blue: #4493f8;
+    --green: #3fb950;
+    --amber: #d29922;
+    --red: #f85149;
+    --orange: #db6d28;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+  }
+  .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+
+  /* ---- Left nav ---- */
+  #nav {
+    width: 240px;
+    min-width: 220px;
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+  }
+  .nhead { padding: 20px 18px 16px; border-bottom: 1px solid var(--border); }
+  .nhead h1 { font-size: 17px; margin: 0; letter-spacing: .2px; }
+  .nhead .sub {
+    margin-top: 5px; font-size: 11px; color: var(--amber);
+    text-transform: uppercase; letter-spacing: .6px; font-weight: 600;
+  }
+  .navlist { padding: 12px 10px; display: flex; flex-direction: column; gap: 3px; }
+  .navitem {
+    padding: 10px 14px; border-radius: 8px; cursor: pointer; font-size: 14px;
+    font-weight: 500; color: var(--muted); border: 1px solid transparent;
+    user-select: none; display: flex; align-items: center; gap: 10px;
+  }
+  .navitem:hover { background: var(--panel-2); color: var(--text); }
+  .navitem.active {
+    background: var(--panel-2); color: var(--text); border-color: var(--blue);
+    font-weight: 600;
+  }
+  .navitem .dot {
+    width: 7px; height: 7px; border-radius: 50%; background: var(--border);
+    flex: 0 0 auto;
+  }
+  .navitem.active .dot { background: var(--blue); }
+  .nfoot {
+    margin-top: auto; padding: 14px 18px; border-top: 1px solid var(--border);
+    font-size: 11px; color: var(--muted); line-height: 1.5;
+  }
+  .nfoot .keybtn {
+    margin-top: 8px; background: var(--panel-2); border: 1px solid var(--border);
+    color: var(--text); padding: 6px 10px; border-radius: 6px; cursor: pointer;
+    font-size: 11px; font-weight: 600; width: 100%;
+  }
+  .nfoot .keybtn:hover { border-color: var(--blue); }
+
+  /* ---- Main content ---- */
+  #view { flex: 1; min-width: 0; overflow: auto; position: relative; }
+
+  /* ---- Shared content helpers (also usable by view scripts) ---- */
+  .view-pad { padding: 24px 28px; }
+  .view-title { font-size: 18px; margin: 0 0 4px; font-weight: 600; }
+  .view-blurb { font-size: 12.5px; color: var(--muted); margin: 0 0 20px; line-height: 1.5; }
+  .cards {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 14px; margin-bottom: 20px;
+  }
+  .stat-card {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px 18px; border-left: 3px solid var(--blue);
+  }
+  .stat-card .label {
+    font-size: 11px; text-transform: uppercase; letter-spacing: .6px;
+    color: var(--muted); font-weight: 600;
+  }
+  .stat-card .value { font-size: 26px; font-weight: 700; margin-top: 8px; }
+  .stat-card .value.mono { font-size: 20px; }
+  .stat-card.green { border-left-color: var(--green); }
+  .stat-card.amber { border-left-color: var(--amber); }
+  .stat-card.orange { border-left-color: var(--orange); }
+  .stat-card .sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
+  .err-box {
+    background: rgba(248,81,73,.12); border: 1px solid rgba(248,81,73,.35);
+    color: var(--red); padding: 10px 14px; border-radius: 8px; font-size: 12.5px;
+    margin-bottom: 14px;
+  }
+  .loading { color: var(--muted); padding: 30px 0; font-size: 13px; }
+</style>
+</head>
+<body>
+  <nav id="nav">
+    <div class="nhead">
+      <h1>Monster Ops Console</h1>
+      <div class="sub">Synthetic data — staging</div>
+    </div>
+    <div class="navlist" id="navlist"></div>
+    <div class="nfoot">
+      Console shell · serves view modules
+      <button class="keybtn" id="reauthBtn" type="button">Re-enter API key</button>
+    </div>
+  </nav>
+  <div id="view"></div>
+
+  <script>
+  (function () {
+    "use strict";
+
+    var KEY_STORE = "inspector_api_key";
+
+    function getKey(forcePrompt) {
+      var key = sessionStorage.getItem(KEY_STORE);
+      if (!key || forcePrompt) {
+        var entered = window.prompt(
+          "Enter API key (used for protected Ops Console endpoints):",
+          key || ""
+        );
+        if (entered === null || entered === "") {
+          if (key) return key; // keep existing if user cancels
+          throw new Error("no-key");
+        }
+        key = entered.trim();
+        sessionStorage.setItem(KEY_STORE, key);
+      }
+      return key;
+    }
+
+    function buildInit(opts, key) {
+      opts = opts || {};
+      var init = { method: opts.method || "GET", headers: {} };
+      init.headers["Authorization"] = "Bearer " + key;
+      if (opts.body !== undefined && opts.body !== null) {
+        if (typeof opts.body === "object") {
+          init.headers["Content-Type"] = "application/json";
+          init.body = JSON.stringify(opts.body);
+        } else {
+          init.body = opts.body;
+        }
+      }
+      return init;
+    }
+
+    var OPS = {
+      apiFetch: function (path, opts) {
+        var key;
+        try {
+          key = getKey(false);
+        } catch (e) {
+          return Promise.reject(new Error("no-key"));
+        }
+
+        return fetch(path, buildInit(opts, key)).then(function (res) {
+          if (res.status === 401) {
+            // Re-prompt once and retry.
+            var newKey;
+            try {
+              newKey = getKey(true);
+            } catch (e) {
+              throw new Error("no-key");
+            }
+            return fetch(path, buildInit(opts, newKey)).then(function (res2) {
+              if (!res2.ok) throw new Error("HTTP " + res2.status);
+              return res2.json();
+            });
+          }
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          return res.json();
+        });
+      },
+
+      esc: function (s) {
+        if (s === null || s === undefined) return "";
+        return String(s)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      },
+
+      fmtTime: function (iso) {
+        if (!iso) return "";
+        var d = new Date(iso);
+        if (isNaN(d.getTime())) return String(iso);
+        return d.toLocaleString();
+      }
+    };
+
+    window.OPS = OPS;
+    window.VIEWS = window.VIEWS || {};
+
+    // ---- Navigation / SPA ----
+
+    var NAV = [
+      { id: "playground", label: "Playground" },
+      { id: "sessions", label: "Sessions" },
+      { id: "observability", label: "Observability" },
+      { id: "overview", label: "Overview" }
+    ];
+
+    var viewEl = document.getElementById("view");
+    var navlistEl = document.getElementById("navlist");
+    var current = null;
+
+    function setActive(id) {
+      var items = navlistEl.querySelectorAll(".navitem");
+      for (var i = 0; i < items.length; i++) {
+        items[i].classList.toggle("active", items[i].getAttribute("data-id") === id);
+      }
+    }
+
+    function renderViewMissing(name) {
+      viewEl.innerHTML =
+        '<div class="view-pad"><div class="err-box">View module "' +
+        OPS.esc(name) + '" is not available yet.</div></div>';
+    }
+
+    function showPlayground() {
+      viewEl.innerHTML = "";
+      if (window.VIEWS.playground && typeof window.VIEWS.playground.render === "function") {
+        window.VIEWS.playground.render(viewEl);
+      } else {
+        renderViewMissing("playground");
+      }
+    }
+
+    function showObservability() {
+      viewEl.innerHTML = "";
+      if (window.VIEWS.observability && typeof window.VIEWS.observability.render === "function") {
+        window.VIEWS.observability.render(viewEl);
+      } else {
+        renderViewMissing("observability");
+      }
+    }
+
+    function showSessions() {
+      // Key (if present) is shared same-origin via sessionStorage.
+      viewEl.innerHTML = "";
+      var frame = document.createElement("iframe");
+      frame.src = "/inspector";
+      frame.style.width = "100%";
+      frame.style.height = "100%";
+      frame.style.border = "0";
+      viewEl.appendChild(frame);
+    }
+
+    function statCard(label, value, opts) {
+      opts = opts || {};
+      var cls = "stat-card" + (opts.tone ? " " + opts.tone : "");
+      var valCls = "value" + (opts.mono ? " mono" : "");
+      var sub = opts.sub ? '<div class="sub">' + OPS.esc(opts.sub) + "</div>" : "";
+      return (
+        '<div class="' + cls + '">' +
+          '<div class="label">' + OPS.esc(label) + "</div>" +
+          '<div class="' + valCls + '">' + OPS.esc(value) + "</div>" +
+          sub +
+        "</div>"
+      );
+    }
+
+    function showOverview() {
+      viewEl.innerHTML =
+        '<div class="view-pad">' +
+          '<h2 class="view-title">Overview</h2>' +
+          '<p class="view-blurb">A live snapshot of the staging concierge: ' +
+          'how many sessions exist, what the LLM tracer has seen, and whether ' +
+          'the service is healthy. All figures come from existing endpoints.</p>' +
+          '<div class="loading" id="ovLoading">Loading metrics…</div>' +
+          '<div class="cards" id="ovCards" style="display:none"></div>' +
+        "</div>";
+
+      var cardsEl = document.getElementById("ovCards");
+      var loadingEl = document.getElementById("ovLoading");
+      var cards = [];
+
+      function done() {
+        loadingEl.style.display = "none";
+        cardsEl.style.display = "grid";
+        cardsEl.innerHTML = cards.join("");
+      }
+
+      var pSessions = OPS.apiFetch("/inspector/sessions?page_size=1")
+        .then(function (d) {
+          cards.push(statCard("Total sessions",
+            (d && typeof d.total === "number") ? d.total : "—",
+            { sub: "synthetic" }));
+        })
+        .catch(function (e) {
+          cards.push(statCard("Total sessions", "error",
+            { tone: "amber", sub: String(e.message || e) }));
+        });
+
+      var pTraces = OPS.apiFetch("/api/v1/traces")
+        .then(function (d) {
+          var s = (d && d.summary) || {};
+          var calls = (s.total_calls != null) ? s.total_calls :
+                      (s.count != null ? s.count : 0);
+          var cost = (s.total_estimated_cost_usd != null) ? s.total_estimated_cost_usd :
+                     (s.total_cost_usd != null ? s.total_cost_usd : null);
+          var tokens = (s.total_tokens != null) ? s.total_tokens :
+                       ((s.total_prompt_tokens != null || s.total_completion_tokens != null)
+                         ? (s.total_prompt_tokens || 0) + (s.total_completion_tokens || 0) : null);
+          cards.push(statCard("LLM calls", calls,
+            { tone: "green", sub: "from tracer" }));
+          if (cost != null) {
+            cards.push(statCard("Est. LLM cost",
+              "$" + Number(cost).toFixed(4),
+              { tone: "orange", mono: true }));
+          }
+          if (tokens != null) {
+            cards.push(statCard("Tokens used", tokens,
+              { tone: "orange", mono: true }));
+          }
+        })
+        .catch(function (e) {
+          cards.push(statCard("LLM summary", "error",
+            { tone: "amber", sub: String(e.message || e) }));
+        });
+
+      var pHealth = OPS.apiFetch("/health")
+        .then(function (d) {
+          var ok = d && d.ok;
+          cards.push(statCard("Health",
+            ok ? "OK" : "DOWN",
+            { tone: ok ? "green" : "amber",
+              sub: (d && d.app) ? d.app : "" }));
+        })
+        .catch(function (e) {
+          cards.push(statCard("Health", "unreachable",
+            { tone: "amber", sub: String(e.message || e) }));
+        });
+
+      Promise.all([pSessions, pTraces, pHealth]).then(function () {
+        if (!cards.length) {
+          cards.push(statCard("No data", "—", { sub: "nothing returned" }));
+        }
+        done();
+      });
+    }
+
+    var ROUTES = {
+      playground: showPlayground,
+      sessions: showSessions,
+      observability: showObservability,
+      overview: showOverview
+    };
+
+    function go(id) {
+      if (!ROUTES[id]) id = "playground";
+      current = id;
+      setActive(id);
+      ROUTES[id]();
+    }
+
+    // Build nav
+    NAV.forEach(function (item) {
+      var el = document.createElement("div");
+      el.className = "navitem";
+      el.setAttribute("data-id", item.id);
+      el.innerHTML = '<span class="dot"></span>' + OPS.esc(item.label);
+      el.addEventListener("click", function () { go(item.id); });
+      navlistEl.appendChild(el);
+    });
+
+    document.getElementById("reauthBtn").addEventListener("click", function () {
+      try {
+        getKey(true);
+      } catch (e) { /* user cancelled with no key */ }
+    });
+
+    // Prompt for the key once on first load so Playground is authed.
+    try {
+      getKey(false);
+    } catch (e) { /* user declined; views can re-prompt on demand */ }
+
+    // Default view = Playground
+    go("playground");
+  })();
+  </script>
+
+  <!-- View modules (owned by other agents) -->
+  <script src="/console/assets/playground.js"></script>
+  <script src="/console/assets/observability.js"></script>
+  <script>
+    // Re-render the default view in case the module scripts loaded after
+    // the initial render call above.
+    (function () {
+      if (window.VIEWS && window.VIEWS.playground &&
+          typeof window.VIEWS.playground.render === "function") {
+        var active = document.querySelector(".navitem.active");
+        if (active && active.getAttribute("data-id") === "playground") {
+          window.VIEWS.playground.render(document.getElementById("view"));
+        }
+      }
+    })();
+  </script>
+</body>
+</html>
