@@ -91,6 +91,37 @@ Guest: "Book me a room at Werewolf Lodge — but not during full moon, I shed ev
 
 ---
 
+## Session Inspector — Conversation Observability
+
+A read-only dashboard at `/inspector` for replaying any agent conversation — search a session, then step through the full transcript and see **why** the agent did what it did.
+
+![Session Inspector dashboard](docs/images/session-inspector.gif)
+
+Every assistant turn is annotated with signals the orchestrator already computes but used to discard — now persisted per turn:
+
+- **Intent** — what the planner decided (KNOWLEDGE / TOOL / CLARIFY / CHITCHAT)
+- **Confidence** — the hallucination detector's HIGH / MEDIUM / LOW grade and score
+- **Tool calls** — name, arguments, and raw result (expandable JSON)
+- **RAG sources** — which documents were retrieved to ground the answer
+- **Guardrail flags** — prompt-injection / off-topic blocks and PII-redaction notices
+- **Cost** — latency, prompt/completion tokens, and $ per turn, with session totals
+
+This turns a log viewer into a *reasoning, safety, and cost debugger*. It complements the other two observability surfaces rather than duplicating them: `/metrics` (Prometheus) answers fleet-level questions, `/api/v1/traces` answers per-LLM-call questions, and the inspector gives the per-conversation, human-readable replay neither of those does.
+
+**How it works:** a `turn_metadata` table (schema v4) is written on every turn inside `orchestrator.handle()` (best-effort — it never blocks a response). Two auth-gated JSON endpoints back the UI:
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /inspector` | The dashboard (static HTML shell) |
+| `GET /inspector/sessions?search=&page=&page_size=` | Paginated session list |
+| `GET /inspector/sessions/{session_id}/transcript` | Full transcript + per-turn metadata |
+
+**View it:** start the app, open `http://localhost:8000/inspector`, and enter an API key when prompted. Sessions contain synthetic data only.
+
+> Short demo loop, rendered from the real inspector UI with representative synthetic session data.
+
+---
+
 ## Architecture
 
 ```
