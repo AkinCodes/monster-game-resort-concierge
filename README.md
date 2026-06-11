@@ -91,6 +91,25 @@ Guest: "Book me a room at Werewolf Lodge — but not during full moon, I shed ev
 
 ---
 
+## Ops Console — Live Agent Dashboard
+
+A single-page operations console at `/console` for driving and observing the agentic system — built entirely over endpoints that already exist.
+
+![Monster Ops Console](docs/images/ops-console.gif)
+
+Four tabs, one coherent build → reason → act → observe → prove loop:
+
+- **Playground** — message the concierge and *watch it think*: the planner's intent, the confidence grade, which tool fired (and its args/result), the retrieved sources, and any guardrail flags — rendered live per turn. A second "Tools" mode invokes any MCP tool directly and shows the raw result.
+- **Sessions** — the Session Inspector (below), embedded as a tab.
+- **Observability** — every LLM call traced: provider, model, prompt/completion tokens, **cost**, and latency, with running totals.
+- **Evals** — an offline-quality scoreboard from the eval harness: end-to-end pass rates by category, retrieval **MRR / Recall@k / Precision@k**, a **retrieval ablation** table (BM25 vs dense vs hybrid vs full pipeline), and the hallucination-detector experiments. This is the eval-driven-development surface.
+
+Self-contained dark-theme SPA (no frameworks); auth-gated data calls; traversal-safe static serving. Open `http://localhost:8000/console` and enter an API key.
+
+> Short demo loop, rendered from the real console UI with representative synthetic data.
+
+---
+
 ## Session Inspector — Conversation Observability
 
 A read-only dashboard at `/inspector` for replaying any agent conversation — search a session, then step through the full transcript and see **why** the agent did what it did.
