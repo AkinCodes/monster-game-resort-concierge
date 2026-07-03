@@ -63,14 +63,18 @@ class AdvancedRAG(VectorRAG):
         # BM25 is built lazily on first search (not at startup) for performance
 
     def _rebuild_bm25_from_store(self):
-        """Rebuild BM25 index from existing ChromaDB documents."""
-        all_docs = self.collection.get()
-        docs = all_docs.get("documents", [])
-        if docs:
-            self.corpus = docs
-            tokenized = [doc.lower().split() for doc in docs]
-            self.bm25 = BM25Okapi(tokenized)
-            logger.info(f"Built BM25 index with {len(docs)} documents")
+        """Rebuild the BM25 index from ChromaDB — the single source of truth.
+
+        BM25 must mirror what is *actually stored* (sanitized, de-duplicated, non-empty),
+        never the raw ingest input. Build into a local, then update both references
+        together so a reader is unlikely to observe a corpus/bm25 pair from different
+        generations. (Tuple assignment is two stores under the GIL — not truly atomic;
+        if concurrent ingestion is ever added, guard these updates with a lock.)
+        """
+        docs = self.collection.get().get("documents") or []
+        new_bm25 = BM25Okapi([doc.lower().split() for doc in docs]) if docs else None
+        self.corpus, self.bm25 = docs, new_bm25
+        logger.info(f"Built BM25 index with {len(docs)} documents")
 
     def _load_reranker(self):
         """Lazy load reranker to save memory until needed."""
@@ -100,12 +104,10 @@ class AdvancedRAG(VectorRAG):
         # Store in vector DB (parent class)
         count = super().ingest_texts(texts, source=source, sources=sources, token=token)
 
-        # Build BM25 index
-        self.corpus.extend(texts)
-        tokenized_corpus = [doc.lower().split() for doc in self.corpus]
-        self.bm25 = BM25Okapi(tokenized_corpus)
-
-        logger.info(f"Built BM25 index with {len(self.corpus)} documents")
+        # Rebuild BM25 from the store so the corpus mirrors ChromaDB (sanitized, deduped);
+        # never trust raw `texts` — a divergent BM25 corpus would resurface scrubbed
+        # prompt-injections via the keyword path.
+        self._rebuild_bm25_from_store()
         return count
 
     # ingest_folder inherited from VectorRAG — handles chunking and dedup
