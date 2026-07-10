@@ -51,3 +51,10 @@ scripts/test_tool_call_fixes.py
 # DeepEval local telemetry/cache dir (written at test runtime)
 .deepeval/
 .deepeval-cache.json
+
+# Personal practice/study guides (local learning notes, not shipped)
+/deploy/aws/AWS_DEPLOYMENT_PRACTICE_GUIDE.md
+/docs/docker_practice_guide.md
+/docs/finetune_practice_guide.md
+/docs/llm_observability_and_cost_tracking.md
+/docs/prometheus_metrics_practice_guide.md
