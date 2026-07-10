@@ -142,6 +142,13 @@ def run_ablation() -> Dict:
     else:
         print(f"      Collection already has {rag.collection.count()} documents")
 
+    # Warm-load the cross-encoder (and BM25) BEFORE the timed loop so the
+    # first query's model-load cold-start does not pollute latency. Cold-start
+    # is a one-time startup cost in production, not a per-request cost, and
+    # letting it land on the first measured query inflates the reported mean.
+    print("      Warming up reranker (excludes cold-start from timings)...")
+    rag.warm_up()
+
     # --- Load ground truth and queries ---
     ground_truth = load_ground_truth()
     gt_map: Dict[str, List[str]] = {}

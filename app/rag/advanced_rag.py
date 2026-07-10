@@ -81,6 +81,27 @@ class AdvancedRAG(VectorRAG):
         if self.reranker is None:
             self.reranker = CrossEncoder(self.reranker_model)
 
+    def warm_up(self):
+        """Pre-load the cross-encoder (and BM25 index) so the first real query
+        does not pay the model-load cold-start.
+
+        The cross-encoder weighs a few hundred MB and takes seconds to load on
+        first use. If that load happens inside the first `search()` call, it
+        pollutes latency measurements and inflates the p99 that real users see.
+        Call this once at startup (or before benchmarking) to move that cost
+        out of the request path.
+        """
+        self._load_reranker()
+        if self.bm25 is None:
+            self._rebuild_bm25_from_store()
+        # Force a tiny forward pass so lazy CUDA/graph init also happens now.
+        try:
+            self.reranker.predict([["warm up", "warm up"]])
+        except Exception as exc:
+            # Non-fatal: warm-up is an optimization, not a correctness requirement.
+            # The first real query will simply pay the load cost instead.
+            logger.warning(f"Reranker warm-up forward pass failed (non-fatal): {exc}")
+
     def ingest_texts(
         self,
         texts: List[str],
@@ -150,12 +171,40 @@ class AdvancedRAG(VectorRAG):
         except Exception:
             return []
 
+    def _union_candidates(
+        self,
+        bm25_results: List[Tuple[int, float]],
+        dense_results: List[Tuple[str, float]],
+    ) -> List[Dict]:
+        """Build the DEDUPED UNION of the BM25 and dense candidate pools.
+
+        Why not just reuse RRF's output? RRF blends *ranks* and then we truncate
+        to `hybrid_k` before reranking. On a mixed signal (strong dense, weak
+        BM25) that truncation can drop a doc the cross-encoder would have ranked
+        #1 simply because RRF buried it. Recall at the rerank stage matters more
+        than the pre-rerank order — the cross-encoder re-scores everything from
+        scratch — so we hand it the full union and let it decide, rather than
+        pre-filtering with a weaker fusion score.
+        """
+        seen = set()
+        pool: List[Dict] = []
+        for idx, _ in bm25_results:
+            doc = self.corpus[idx]
+            if doc not in seen:
+                seen.add(doc)
+                pool.append({"text": doc, "score": 0.0})
+        for doc, _ in dense_results:
+            if doc not in seen:
+                seen.add(doc)
+                pool.append({"text": doc, "score": 0.0})
+        return pool
+
     def _reciprocal_rank_fusion(
         self,
         bm25_results: List[Tuple[int, float]],
         dense_results: List[Tuple[str, float]],
         k: int = 60,
-        bm25_weight: float = 0.4,
+        bm25_weight: float = 0.15,
     ) -> List[Dict]:
         """
         Combine BM25 and dense results using Reciprocal Rank Fusion.
@@ -222,7 +271,7 @@ class AdvancedRAG(VectorRAG):
         query: str,
         k: int = 5,
         hybrid_k: int = 20,
-        bm25_weight: float = 0.4,
+        bm25_weight: float = 0.15,
         use_reranker: bool = True,
     ) -> Dict:
         """
@@ -231,29 +280,34 @@ class AdvancedRAG(VectorRAG):
         Args:
             query: Search query
             k: Number of final results
-            hybrid_k: Number of candidates before reranking
-            bm25_weight: Weight for BM25 in RRF
+            hybrid_k: Number of candidates retrieved from each retriever
+            bm25_weight: Weight for BM25 in RRF. The dense retriever is the
+                stronger signal on this corpus (see the retrieval ablation), so
+                BM25 is kept as a low-weight tie-breaker rather than an equal
+                partner — a high BM25 weight measurably *hurt* MRR.
             use_reranker: Whether to rerank with cross-encoder
 
         Returns:
             Dict with 'results' (list of {text, score})
         """
-        # 1. Retrieve candidates
+        # 1. Retrieve candidates from both retrievers.
         bm25_results = self._bm25_search(query, k=hybrid_k)
         dense_results = self._dense_search(query, k=hybrid_k)
 
-        # 2. Fuse results
+        # 2. Reranker path: hand it the DEDUPED UNION of both pools so recall is
+        #    maximized before the cross-encoder does the real scoring. We do NOT
+        #    pre-rank with RRF here — RRF's weaker fusion order (and its
+        #    truncation) could drop a doc the cross-encoder would have surfaced.
+        if use_reranker:
+            candidates = self._union_candidates(bm25_results, dense_results)
+            reranked = self._rerank(query, candidates, top_k=k)
+            return {"results": reranked}
+
+        # 3. No-reranker path: RRF is the final ranker, so its order matters.
         fused_docs = self._reciprocal_rank_fusion(
             bm25_results, dense_results, k=60, bm25_weight=bm25_weight
         )
-
-        # 3. Rerank (optional)
-        if use_reranker:
-            reranked = self._rerank(query, fused_docs, top_k=k)
-            return {"results": reranked}
-        else:
-            # Return top-k fused docs with real fusion scores
-            return {"results": fused_docs[:k]}
+        return {"results": fused_docs[:k]}
 
 
 # Convenience function for easy migration

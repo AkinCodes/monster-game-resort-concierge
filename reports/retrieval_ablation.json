@@ -1,13 +1,13 @@
 {
   "BM25 only": {
-    "avg_latency_ms": 0.13,
+    "avg_latency_ms": 0.14,
     "avg_result_count": 5.0,
-    "avg_precision_at_5": 0.15,
-    "avg_mrr": 0.4167,
+    "avg_precision_at_5": 0.1692,
+    "avg_mrr": 0.4487,
     "per_query": [
       {
         "query": "What are the check-in and checkout times?",
-        "latency_ms": 0.21,
+        "latency_ms": 0.28,
         "num_results": 5,
         "precision_at_5": 0.4,
         "mrr": 1.0,
@@ -23,7 +23,7 @@
       },
       {
         "query": "Tell me about Vampire Manor rooms and coffins",
-        "latency_ms": 0.14,
+        "latency_ms": 0.15,
         "num_results": 5,
         "precision_at_5": 0.0,
         "mrr": 0.0,
@@ -68,18 +68,58 @@
         "precision_at_5": 0.0,
         "mrr": 0.0,
         "top_result_preview": "cross dimensions)\n   \u2022 Breakout spaces in crypts\n   \u2022 Team dining options\n   \u2022 Evening entertainment\n\nPricing: Custom qu"
+      },
+      {
+        "query": "Can I book a room at Zombie B&B if I'm not a zombie?",
+        "latency_ms": 0.21,
+        "num_results": 5,
+        "precision_at_5": 0.4,
+        "mrr": 1.0,
+        "top_result_preview": "days. Restoration services $50 per item. Replacement parts available if original cannot be located.\n\nQ: Are the mystery "
+      },
+      {
+        "query": "What spa services does the Mummy Resort offer?",
+        "latency_ms": 0.13,
+        "num_results": 5,
+        "precision_at_5": 0.2,
+        "mrr": 0.5,
+        "top_result_preview": "\ud83c\udff0 OFFICIAL MONSTER RESORT LODGINGS \ud83c\udff0\n\n\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\n\n1. THE MUMMY "
+      },
+      {
+        "query": "What's the most romantic property for a Valentine's Day stay?",
+        "latency_ms": 0.16,
+        "num_results": 5,
+        "precision_at_5": 0.0,
+        "mrr": 0.0,
+        "top_result_preview": "\ud83c\udff0 MONSTER RESORT FREQUENTLY ASKED QUESTIONS \ud83c\udff0\n\n\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\n\nGENE"
+      },
+      {
+        "query": "Do you accept cryptocurrency as payment?",
+        "latency_ms": 0.1,
+        "num_results": 5,
+        "precision_at_5": 0.0,
+        "mrr": 0.0,
+        "top_result_preview": "m. We accept insurance from most dark magic providers. Restoration services subject to availability.\n\nMUMMY RESORT:\n\nQ: "
+      },
+      {
+        "query": "How far in advance should I book the Halloween Extravaganza?",
+        "latency_ms": 0.17,
+        "num_results": 5,
+        "precision_at_5": 0.4,
+        "mrr": 1.0,
+        "top_result_preview": "ces available for difficult communications. Warning: We are not responsible for traumatized mortals.\n\n\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550"
       }
     ]
   },
   "Dense only": {
-    "avg_latency_ms": 9.02,
+    "avg_latency_ms": 7.94,
     "avg_result_count": 5.0,
-    "avg_precision_at_5": 0.3,
-    "avg_mrr": 0.75,
+    "avg_precision_at_5": 0.3077,
+    "avg_mrr": 0.7179,
     "per_query": [
       {
         "query": "What are the check-in and checkout times?",
-        "latency_ms": 8.6,
+        "latency_ms": 11.7,
         "num_results": 5,
         "precision_at_5": 0.6,
         "mrr": 1.0,
@@ -87,7 +127,7 @@
       },
       {
         "query": "What is the pet policy?",
-        "latency_ms": 8.48,
+        "latency_ms": 6.93,
         "num_results": 5,
         "precision_at_5": 0.4,
         "mrr": 1.0,
@@ -95,7 +135,7 @@
       },
       {
         "query": "Tell me about Vampire Manor rooms and coffins",
-        "latency_ms": 7.41,
+        "latency_ms": 6.79,
         "num_results": 5,
         "precision_at_5": 0.2,
         "mrr": 1.0,
@@ -103,15 +143,15 @@
       },
       {
         "query": "What is the WiFi password?",
-        "latency_ms": 8.37,
+        "latency_ms": 11.48,
         "num_results": 5,
-        "precision_at_5": 0.4,
+        "precision_at_5": 0.6,
         "mrr": 1.0,
         "top_result_preview": "able. Many guests have been with us for centuries. Convert to haunting staff for free accommodation!\n\nQ: What's your WiF"
       },
       {
         "query": "What spa services does the Werewolf Lodge offer?",
-        "latency_ms": 8.9,
+        "latency_ms": 7.27,
         "num_results": 5,
         "precision_at_5": 0.0,
         "mrr": 0.0,
@@ -119,7 +159,7 @@
       },
       {
         "query": "What happens during the Halloween event?",
-        "latency_ms": 7.99,
+        "latency_ms": 7.73,
         "num_results": 5,
         "precision_at_5": 0.2,
         "mrr": 1.0,
@@ -127,7 +167,7 @@
       },
       {
         "query": "What is the cancellation and refund policy?",
-        "latency_ms": 12.66,
+        "latency_ms": 7.0,
         "num_results": 5,
         "precision_at_5": 0.6,
         "mrr": 1.0,
@@ -135,23 +175,63 @@
       },
       {
         "query": "What dining options does Castle Frankenstein have?",
-        "latency_ms": 9.78,
+        "latency_ms": 8.11,
         "num_results": 5,
         "precision_at_5": 0.0,
         "mrr": 0.0,
         "top_result_preview": "\u2022 Wilderness Survival Training\n      \u2022 Fang Maintenance Classes\n      \u2022 Midnight Bagpipe Concerts\n\n\u26a1 Special Features:\n "
+      },
+      {
+        "query": "Can I book a room at Zombie B&B if I'm not a zombie?",
+        "latency_ms": 7.34,
+        "num_results": 5,
+        "precision_at_5": 0.0,
+        "mrr": 0.0,
+        "top_result_preview": "Zombie B&B: Flexible (shamble in whenever)\n   \u2022 Ghostly B&B: Time is meaningless (phase in anytime)\n\nEarly Check-In:\n   "
+      },
+      {
+        "query": "What spa services does the Mummy Resort offer?",
+        "latency_ms": 7.12,
+        "num_results": 5,
+        "precision_at_5": 0.4,
+        "mrr": 0.3333,
+        "top_result_preview": "\ud83c\udff0 OFFICIAL MONSTER RESORT LODGINGS \ud83c\udff0\n\n\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\n\n1. THE MUMMY "
+      },
+      {
+        "query": "What's the most romantic property for a Valentine's Day stay?",
+        "latency_ms": 7.43,
+        "num_results": 5,
+        "precision_at_5": 0.2,
+        "mrr": 1.0,
+        "top_result_preview": "\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\n\n\ud83d\udc8d VALENTINES DARK HEARTS WEEKEND (February 13-14)\n\nAll Properties Rom"
+      },
+      {
+        "query": "Do you accept cryptocurrency as payment?",
+        "latency_ms": 6.81,
+        "num_results": 5,
+        "precision_at_5": 0.2,
+        "mrr": 1.0,
+        "top_result_preview": "mpires only\n\n\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\n\n\ud83d\udcb3 PAYMENT POLICIES\n\nAccepted Payment M"
+      },
+      {
+        "query": "How far in advance should I book the Halloween Extravaganza?",
+        "latency_ms": 7.46,
+        "num_results": 5,
+        "precision_at_5": 0.6,
+        "mrr": 1.0,
+        "top_result_preview": "\ud83c\udff0 MONSTER RESORT SEASONAL PACKAGES & SPECIAL EVENTS \ud83c\udff0\n\n\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550"
       }
     ]
   },
   "Hybrid (no reranker)": {
-    "avg_latency_ms": 10.23,
+    "avg_latency_ms": 8.39,
     "avg_result_count": 5.0,
-    "avg_precision_at_5": 0.3,
-    "avg_mrr": 0.5833,
+    "avg_precision_at_5": 0.3385,
+    "avg_mrr": 0.7179,
     "per_query": [
       {
         "query": "What are the check-in and checkout times?",
-        "latency_ms": 8.41,
+        "latency_ms": 7.71,
         "num_results": 5,
         "precision_at_5": 0.6,
         "mrr": 1.0,
@@ -159,79 +239,7 @@
       },
       {
         "query": "What is the pet policy?",
-        "latency_ms": 15.87,
-        "num_results": 5,
-        "precision_at_5": 0.4,
-        "mrr": 0.3333,
-        "top_result_preview": "\u2022 Hellhounds: $75/night (includes fire insurance)\n   \u2022 Damage deposit: 1 Monster Token (refundable)\n\nPet Amenities:\n   \u2022"
-      },
-      {
-        "query": "Tell me about Vampire Manor rooms and coffins",
-        "latency_ms": 8.6,
-        "num_results": 5,
-        "precision_at_5": 0.2,
-        "mrr": 0.3333,
-        "top_result_preview": "\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\n\nTESTIMONIALS FROM PAST GUESTS:\n\n\u2b50\u2b50\u2b50\u2b50\u2b50 \"Best coffin "
-      },
-      {
-        "query": "What is the WiFi password?",
-        "latency_ms": 9.78,
-        "num_results": 5,
-        "precision_at_5": 0.4,
-        "mrr": 1.0,
-        "top_result_preview": "able. Many guests have been with us for centuries. Convert to haunting staff for free accommodation!\n\nQ: What's your WiF"
-      },
-      {
-        "query": "What spa services does the Werewolf Lodge offer?",
-        "latency_ms": 8.91,
-        "num_results": 5,
-        "precision_at_5": 0.0,
-        "mrr": 0.0,
-        "top_result_preview": "\u2022 Hellhounds: $75/night (includes fire insurance)\n   \u2022 Damage deposit: 1 Monster Token (refundable)\n\nPet Amenities:\n   \u2022"
-      },
-      {
-        "query": "What happens during the Halloween event?",
-        "latency_ms": 9.41,
-        "num_results": 5,
-        "precision_at_5": 0.2,
-        "mrr": 1.0,
-        "top_result_preview": "\ud83c\udff0 MONSTER RESORT SEASONAL PACKAGES & SPECIAL EVENTS \ud83c\udff0\n\n\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550"
-      },
-      {
-        "query": "What is the cancellation and refund policy?",
-        "latency_ms": 8.65,
-        "num_results": 5,
-        "precision_at_5": 0.6,
-        "mrr": 1.0,
-        "top_result_preview": "\u2022 Late checkout: Additional broomstick fee ($25/hour)\n   \u2022 Express checkout: Drop key in coffin slot\n\nExtended Stays:\n  "
-      },
-      {
-        "query": "What dining options does Castle Frankenstein have?",
-        "latency_ms": 12.18,
-        "num_results": 5,
-        "precision_at_5": 0.0,
-        "mrr": 0.0,
-        "top_result_preview": "\u2022 Hellhounds: $75/night (includes fire insurance)\n   \u2022 Damage deposit: 1 Monster Token (refundable)\n\nPet Amenities:\n   \u2022"
-      }
-    ]
-  },
-  "Full pipeline": {
-    "avg_latency_ms": 1086.92,
-    "avg_result_count": 5.0,
-    "avg_precision_at_5": 0.325,
-    "avg_mrr": 0.6667,
-    "per_query": [
-      {
-        "query": "What are the check-in and checkout times?",
-        "latency_ms": 2581.09,
-        "num_results": 5,
-        "precision_at_5": 0.6,
-        "mrr": 1.0,
-        "top_result_preview": "Check-in is from 3:00 PM. Early check-in is available based on lair readiness.\nCheckout is by 11:00 AM. Late checkout ma"
-      },
-      {
-        "query": "What is the pet policy?",
-        "latency_ms": 898.5,
+        "latency_ms": 7.51,
         "num_results": 5,
         "precision_at_5": 0.4,
         "mrr": 1.0,
@@ -239,15 +247,15 @@
       },
       {
         "query": "Tell me about Vampire Manor rooms and coffins",
-        "latency_ms": 960.07,
+        "latency_ms": 7.27,
         "num_results": 5,
-        "precision_at_5": 0.2,
-        "mrr": 1.0,
-        "top_result_preview": "\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\n\n4. VAMPIRE MANOR: ETERNAL NIGHT INN\n   \"Where Darkness is Always Golden Hour\"\n\n\ud83d\udccd Location: Transy"
+        "precision_at_5": 0.4,
+        "mrr": 0.3333,
+        "top_result_preview": "\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\n\nTESTIMONIALS FROM PAST GUESTS:\n\n\u2b50\u2b50\u2b50\u2b50\u2b50 \"Best coffin "
       },
       {
         "query": "What is the WiFi password?",
-        "latency_ms": 929.27,
+        "latency_ms": 7.2,
         "num_results": 5,
         "precision_at_5": 0.6,
         "mrr": 1.0,
@@ -255,7 +263,119 @@
       },
       {
         "query": "What spa services does the Werewolf Lodge offer?",
-        "latency_ms": 913.9,
+        "latency_ms": 7.27,
+        "num_results": 5,
+        "precision_at_5": 0.0,
+        "mrr": 0.0,
+        "top_result_preview": "\u2022 Hellhounds: $75/night (includes fire insurance)\n   \u2022 Damage deposit: 1 Monster Token (refundable)\n\nPet Amenities:\n   \u2022"
+      },
+      {
+        "query": "What happens during the Halloween event?",
+        "latency_ms": 7.57,
+        "num_results": 5,
+        "precision_at_5": 0.2,
+        "mrr": 1.0,
+        "top_result_preview": "\ud83c\udff0 MONSTER RESORT SEASONAL PACKAGES & SPECIAL EVENTS \ud83c\udff0\n\n\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550"
+      },
+      {
+        "query": "What is the cancellation and refund policy?",
+        "latency_ms": 7.77,
+        "num_results": 5,
+        "precision_at_5": 0.6,
+        "mrr": 1.0,
+        "top_result_preview": "\u2022 Late checkout: Additional broomstick fee ($25/hour)\n   \u2022 Express checkout: Drop key in coffin slot\n\nExtended Stays:\n  "
+      },
+      {
+        "query": "What dining options does Castle Frankenstein have?",
+        "latency_ms": 10.42,
+        "num_results": 5,
+        "precision_at_5": 0.0,
+        "mrr": 0.0,
+        "top_result_preview": "\u2022 Hellhounds: $75/night (includes fire insurance)\n   \u2022 Damage deposit: 1 Monster Token (refundable)\n\nPet Amenities:\n   \u2022"
+      },
+      {
+        "query": "Can I book a room at Zombie B&B if I'm not a zombie?",
+        "latency_ms": 8.8,
+        "num_results": 5,
+        "precision_at_5": 0.2,
+        "mrr": 1.0,
+        "top_result_preview": "package included. All guests are treated with equal enthusiasm regardless of species.\n\nGHOSTLY B&B:\n\nQ: What if I'm not "
+      },
+      {
+        "query": "What spa services does the Mummy Resort offer?",
+        "latency_ms": 7.69,
+        "num_results": 5,
+        "precision_at_5": 0.2,
+        "mrr": 0.5,
+        "top_result_preview": "\ud83c\udff0 OFFICIAL MONSTER RESORT LODGINGS \ud83c\udff0\n\n\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\n\n1. THE MUMMY "
+      },
+      {
+        "query": "What's the most romantic property for a Valentine's Day stay?",
+        "latency_ms": 14.4,
+        "num_results": 5,
+        "precision_at_5": 0.4,
+        "mrr": 0.5,
+        "top_result_preview": "r-Round)\n\n\"Till the Moon Sets... Continue\"\n\nAvailable at all properties, customized by monster type:\n\nStandard Honeymoon"
+      },
+      {
+        "query": "Do you accept cryptocurrency as payment?",
+        "latency_ms": 7.5,
+        "num_results": 5,
+        "precision_at_5": 0.2,
+        "mrr": 1.0,
+        "top_result_preview": "mpires only\n\n\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\n\n\ud83d\udcb3 PAYMENT POLICIES\n\nAccepted Payment M"
+      },
+      {
+        "query": "How far in advance should I book the Halloween Extravaganza?",
+        "latency_ms": 7.92,
+        "num_results": 5,
+        "precision_at_5": 0.6,
+        "mrr": 1.0,
+        "top_result_preview": "\ud83c\udff0 MONSTER RESORT SEASONAL PACKAGES & SPECIAL EVENTS \ud83c\udff0\n\n\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550"
+      }
+    ]
+  },
+  "Full pipeline": {
+    "avg_latency_ms": 736.87,
+    "avg_result_count": 5.0,
+    "avg_precision_at_5": 0.3077,
+    "avg_mrr": 0.7564,
+    "per_query": [
+      {
+        "query": "What are the check-in and checkout times?",
+        "latency_ms": 860.16,
+        "num_results": 5,
+        "precision_at_5": 0.6,
+        "mrr": 1.0,
+        "top_result_preview": "Check-in is from 3:00 PM. Early check-in is available based on lair readiness.\nCheckout is by 11:00 AM. Late checkout ma"
+      },
+      {
+        "query": "What is the pet policy?",
+        "latency_ms": 841.58,
+        "num_results": 5,
+        "precision_at_5": 0.4,
+        "mrr": 1.0,
+        "top_result_preview": "ffins available\n   \u2022 Babysitting: Haunted dolls on request\n   \u2022 No human children (for their safety)\n\n\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550"
+      },
+      {
+        "query": "Tell me about Vampire Manor rooms and coffins",
+        "latency_ms": 823.34,
+        "num_results": 5,
+        "precision_at_5": 0.2,
+        "mrr": 1.0,
+        "top_result_preview": "\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\n\n4. VAMPIRE MANOR: ETERNAL NIGHT INN\n   \"Where Darkness is Always Golden Hour\"\n\n\ud83d\udccd Location: Transy"
+      },
+      {
+        "query": "What is the WiFi password?",
+        "latency_ms": 769.36,
+        "num_results": 5,
+        "precision_at_5": 0.6,
+        "mrr": 1.0,
+        "top_result_preview": "able. Many guests have been with us for centuries. Convert to haunting staff for free accommodation!\n\nQ: What's your WiF"
+      },
+      {
+        "query": "What spa services does the Werewolf Lodge offer?",
+        "latency_ms": 759.43,
         "num_results": 5,
         "precision_at_5": 0.0,
         "mrr": 0.0,
@@ -263,7 +383,7 @@
       },
       {
         "query": "What happens during the Halloween event?",
-        "latency_ms": 818.65,
+        "latency_ms": 702.72,
         "num_results": 5,
         "precision_at_5": 0.2,
         "mrr": 0.3333,
@@ -271,7 +391,7 @@
       },
       {
         "query": "What is the cancellation and refund policy?",
-        "latency_ms": 699.91,
+        "latency_ms": 635.84,
         "num_results": 5,
         "precision_at_5": 0.6,
         "mrr": 1.0,
@@ -279,11 +399,51 @@
       },
       {
         "query": "What dining options does Castle Frankenstein have?",
-        "latency_ms": 893.94,
+        "latency_ms": 736.13,
         "num_results": 5,
         "precision_at_5": 0.0,
         "mrr": 0.0,
         "top_result_preview": "t be stored in provided mini-coffin-fridge. Cannot bring garlic-based products anywhere on premises.\n\nQ: Is there a bar?"
+      },
+      {
+        "query": "Can I book a room at Zombie B&B if I'm not a zombie?",
+        "latency_ms": 757.05,
+        "num_results": 5,
+        "precision_at_5": 0.2,
+        "mrr": 1.0,
+        "top_result_preview": "days. Restoration services $50 per item. Replacement parts available if original cannot be located.\n\nQ: Are the mystery "
+      },
+      {
+        "query": "What spa services does the Mummy Resort offer?",
+        "latency_ms": 663.73,
+        "num_results": 5,
+        "precision_at_5": 0.2,
+        "mrr": 1.0,
+        "top_result_preview": "urprise\" - a 5-course ancient delicacy\n      \u2022 Hours: Midnight to Dawn (nocturnal service available)\n\n\ud83d\udc86 Spa Services: Et"
+      },
+      {
+        "query": "What's the most romantic property for a Valentine's Day stay?",
+        "latency_ms": 700.85,
+        "num_results": 5,
+        "precision_at_5": 0.4,
+        "mrr": 0.5,
+        "top_result_preview": "\u2022 Eternal vow ceremony\n   \u2022 Professional dark photography session\n   \u2022 Complimentary room upgrades\n\nPricing by Property:"
+      },
+      {
+        "query": "Do you accept cryptocurrency as payment?",
+        "latency_ms": 763.55,
+        "num_results": 5,
+        "precision_at_5": 0.2,
+        "mrr": 1.0,
+        "top_result_preview": "mpires only\n\n\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\n\n\ud83d\udcb3 PAYMENT POLICIES\n\nAccepted Payment M"
+      },
+      {
+        "query": "How far in advance should I book the Halloween Extravaganza?",
+        "latency_ms": 565.62,
+        "num_results": 5,
+        "precision_at_5": 0.4,
+        "mrr": 1.0,
+        "top_result_preview": "ces available for difficult communications. Warning: We are not responsible for traumatized mortals.\n\n\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550"
       }
     ]
   }

@@ -287,7 +287,7 @@ scripts/
 
 **Decision:** Three-stage pipeline — BM25 + dense retrieval in parallel, fused via Reciprocal Rank Fusion, then reranked by a cross-encoder (BGE).
 
-**Trade-off:** Adds ~50ms latency per query vs single-vector search. The precision improvement justifies the cost — proper noun queries (e.g., "What does Vampire Manor offer?") went from partial matches to consistent top-1 hits. Run `uv run python scripts/benchmark_rag.py` to compare against a LangChain baseline.
+**Trade-off (measured, not assumed):** On this corpus the cross-encoder reranker adds ~730ms/query on CPU (warm — cold-start is warmed out at startup) for a +0.04 MRR gain over dense-only (0.756 vs 0.718). That is a steep price for a narrow win, and on a 5-file corpus dense-only is genuinely hard to beat. The reranker pays off as the corpus grows, when candidate ambiguity rises and a GPU cuts the inference cost by an order of magnitude; for latency-sensitive paths the hybrid-no-reranker config (best Precision@5, single-digit-ms) is the right default. See the [Retrieval Quality](#retrieval-quality) ablation and [`docs/blog/reranker-war-story.md`](docs/blog/reranker-war-story.md). Run `uv run python scripts/ablation_retrieval.py` to reproduce.
 
 ### Why SQLite by default, with PostgreSQL support?
 
@@ -329,7 +329,22 @@ See [EVALUATION.md](EVALUATION.md) for full ablation studies, failure analysis, 
 
 ### Retrieval Quality
 
-8-query evaluation over the resort knowledge base (`reports/retrieval_metrics.json`):
+**Retrieval ablation — 13-query ground truth (`reports/retrieval_ablation.json`, `scripts/ablation_retrieval.py`):**
+
+| Config | Avg Latency (ms) | Precision@5 | MRR |
+|--------|----------------:|------------:|----:|
+| BM25 only | 0.1 | 0.169 | 0.449 |
+| Dense only | 7.9 | 0.308 | 0.718 |
+| Hybrid (no reranker) | 8.4 | **0.338** | 0.718 |
+| **Full pipeline (hybrid + cross-encoder)** | 736.9 | 0.308 | **0.756** |
+
+Honest read of this scoreboard, not a marketing one:
+
+- **Full pipeline has the best MRR (0.756)** — the cross-encoder reranker earns its keep on rank-of-first-relevant, edging out dense-only (0.718).
+- **But it is ~90x slower** (737ms vs 8ms on CPU). On a corpus this small the reranker's accuracy win is real but narrow, and the latency cost is steep. Hybrid-no-reranker matches dense on MRR and has the best Precision@5 (0.338) at single-digit-millisecond latency — the best accuracy/latency point for this corpus.
+- These are the numbers *after* fixing the pipeline. The original config (`bm25_weight=0.4`, RRF-truncated candidates fed to the reranker, cold cross-encoder inside the timed loop) was both **slower and worse** than dense-only. Full write-up: [`docs/blog/reranker-war-story.md`](docs/blog/reranker-war-story.md).
+
+Legacy Recall/Precision@k over the earlier 8-query set (`reports/retrieval_metrics.json`):
 
 | Metric | @3 | @5 | @10 |
 |--------|-----|-----|------|
@@ -586,7 +601,7 @@ SQLite is the default for local development (zero setup). For production or mult
 
 - **SQLite** is the default database — set `MRC_DATABASE_URL` to a PostgreSQL connection string for multi-instance deployment
 - **Hallucination detector** uses a two-tier approach: fast heuristic scoring (20/20/60 weights) on every knowledge response, with conditional NLI claim verification only when confidence is not HIGH. The style-mimic gap (wrong facts, right vocabulary) is caught by the NLI tier but not the heuristic alone
-- **Cross-encoder reranking** adds ~50ms latency per query — a deliberate accuracy/latency trade-off
+- **Cross-encoder reranking** adds ~730ms/query on CPU (measured, warm) for a +0.04 MRR gain over dense-only on this small corpus — a real but narrow win; use the hybrid-no-reranker config on latency-sensitive paths and enable the reranker where a GPU and a larger, more ambiguous corpus make it pay off (see [Retrieval Quality](#retrieval-quality))
 - **Guardrails are rule-based** — prompt injection defense and PII redaction use pattern matching, not a trained classifier
 - **Knowledge base is static** — no automated ingestion pipeline for new content (manual `ingest_knowledge.py`)
 - **Rate limiting is global**, not per-user — all clients share the same quota
