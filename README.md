@@ -6,6 +6,7 @@
   <img src="https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white" />
   <img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" />
   <img src="https://img.shields.io/badge/AWS_ECS-FF9900?style=for-the-badge&logo=amazonaws&logoColor=white" />
+  <img src="https://img.shields.io/badge/Evals-DeepEval_CI_Gate-4c1?style=for-the-badge" />
 </p>
 
 # Monster Game Resort Concierge
@@ -418,7 +419,7 @@ Per-request cost estimates from `app/core/cost_tracker.py` (prices per 1M tokens
 | Component | Detail |
 |-----------|--------|
 | Docker services | 6 (API, PostgreSQL, Redis, Prometheus, Grafana, MLflow) |
-| Test count | 292 tests across 20 files |
+| Test count | 331 passing across 24 files (352 total; 21 live-eval tests gated behind an API key) |
 | Orchestrator | Two-agent plan-then-execute (Planner classifies intent into knowledge / tool / clarify / chitchat, Executor carries out the plan) |
 | LLM fallback chain | OpenAI -> Anthropic -> OpenRouter -> Ollama |
 | Deployment | ECS Fargate (1 vCPU, 2 GB RAM) |
@@ -523,7 +524,7 @@ RAG wins on factual accuracy and freshness (can retrieve new docs without retrai
 
 ## Testing
 
-292 tests across 20 files covering API endpoints, authentication, guardrails, hallucination detection, RAG retrieval, LLM provider fallback, orchestrator, tool execution, MLflow tracking, and RAGAS evaluation.
+331 passing tests across 24 files covering API endpoints, authentication, guardrails, hallucination detection, RAG retrieval, LLM provider fallback, orchestrator, tool execution, MLflow tracking, RAGAS evaluation, and a DeepEval CI regression gate (a further 21 live-judge tests are gated behind an API key).
 
 ```sh
 uv run pytest --cov=app --cov-report=term-missing
@@ -619,7 +620,7 @@ SQLite is the default for local development (zero setup). For production or mult
 - **Observability** — Prometheus metrics, Grafana dashboards, per-call LLM tracing with cost tracking, health/readiness separation
 - **Cloud deployment** — Docker, AWS ECS Fargate, ECR, Secrets Manager, GitHub Actions CI/CD
 - **Parameter-efficient fine-tuning (LoRA)** — RAG vs fine-tuned vs combined comparison with metrics
-- **Testing** — 21 test files (292 tests) covering auth, guardrails, RAG, hallucination detection, LLM fallback, orchestrator, search_events, and MLOps
+- **Testing** — 24 test files (331 passing) covering auth, guardrails, RAG, hallucination detection, LLM fallback, orchestrator, search_events, MLOps, and a DeepEval CI regression gate
 
 ---
 
