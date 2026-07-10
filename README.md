@@ -6,7 +6,11 @@
   <img src="https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white" />
   <img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" />
   <img src="https://img.shields.io/badge/AWS_ECS-FF9900?style=for-the-badge&logo=amazonaws&logoColor=white" />
-  <img src="https://img.shields.io/badge/Evals-DeepEval_CI_Gate-4c1?style=for-the-badge" />
+</p>
+
+<p align="center">
+  <a href="https://github.com/AkinCodes/monster-game-resort-concierge/actions/workflows/test.yml"><img src="https://github.com/AkinCodes/monster-game-resort-concierge/actions/workflows/test.yml/badge.svg?branch=main" alt="Test Suite" /></a>
+  <a href="https://github.com/AkinCodes/monster-game-resort-concierge/actions/workflows/evals.yml"><img src="https://github.com/AkinCodes/monster-game-resort-concierge/actions/workflows/evals.yml/badge.svg?branch=main" alt="Eval Gate" /></a>
 </p>
 
 # Monster Game Resort Concierge
