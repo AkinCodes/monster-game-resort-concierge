@@ -35,12 +35,24 @@ from typing import Dict, List
 
 import pytest
 
-from deepeval import assert_test
-from deepeval.metrics import BaseMetric
-from deepeval.test_case import LLMTestCase
+# deepeval is an *optional* dependency, intentionally NOT in requirements.txt:
+# it pulls a heavy transitive tree and is only needed for the eval gate. The
+# fast "Test Suite" workflow (test.yml) installs requirements.txt WITHOUT
+# deepeval and runs the whole tests/ tree, so this module must skip cleanly
+# there instead of raising a collection-time ImportError that aborts the run.
+# The dedicated Eval Gate workflow (evals.yml) DOES install deepeval, so these
+# tests execute there. importorskip turns "no deepeval" into a clean skip.
+pytest.importorskip(
+    "deepeval",
+    reason="deepeval not installed; run the Eval Gate workflow (evals.yml).",
+)
 
-from app.validation.hallucination import HallucinationDetector
-from scripts.eval_harness import MockPipelineRunner
+from deepeval import assert_test  # noqa: E402
+from deepeval.metrics import BaseMetric  # noqa: E402
+from deepeval.test_case import LLMTestCase  # noqa: E402
+
+from app.validation.hallucination import HallucinationDetector  # noqa: E402
+from scripts.eval_harness import MockPipelineRunner  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Configuration / calibrated thresholds
