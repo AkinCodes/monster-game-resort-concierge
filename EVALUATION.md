@@ -140,6 +140,48 @@ Called explicitly via `verify_claims()` or combined with Tier 1 via `score_respo
 
 ---
 
+## CI Eval Gate (DeepEval)
+
+A DeepEval regression gate (`tests/test_evals_deepeval.py`, workflow `.github/workflows/evals.yml`) fails a PR when response *quality* regresses — not just when a unit test breaks. It wraps the 20 golden cases in `data/eval_cases.json` as DeepEval `LLMTestCase`s and asserts metric thresholds.
+
+**Design: robust without secrets.** The default gate runs entirely offline — no LLM judge, no API key. The headline metric is the repo's own 3-tier hallucination detector (`app/validation/hallucination.py`) wrapped as a custom DeepEval `BaseMetric`. The optional LLM-as-judge metrics (`AnswerRelevancyMetric`, `FaithfulnessMetric`) are gated behind `RUN_LIVE_EVALS=1` + `OPENAI_API_KEY` and are skipped otherwise.
+
+### What gates (offline, runs on every PR)
+
+| Metric | Type | Scope | Floor | Baseline (main) |
+|--------|------|-------|-------|-----------------|
+| Hallucination grounding | Custom `BaseMetric` (3-tier detector) | per-case | ≥ 0.55 | min 0.620 |
+| Hallucination grounding (mean) | Custom | aggregate | ≥ 0.62 | mean 0.682 |
+| Keyword coverage | Custom `BaseMetric` | per-case | ≥ 0.30 | min 0.333 |
+| Keyword coverage (mean) | Custom | aggregate | ≥ 0.75 | mean 0.883 |
+| Tool-selection accuracy | Aggregate assertion | tool-use cases | ≥ 0.75 | 0.800 (12/15) |
+
+Floors are calibrated from a real baseline run on current `main` (the deterministic `MockPipelineRunner` from `scripts/eval_harness.py`) and set **below** the observed baseline so ordinary scoring noise does not false-trip the gate. Raise them (never silently lower) when the pipeline genuinely improves.
+
+### Live LLM-judge gate (opt-in)
+
+| Metric | Threshold |
+|--------|-----------|
+| `AnswerRelevancyMetric` | ≥ 0.5 |
+| `FaithfulnessMetric` | ≥ 0.5 |
+
+Runs only when `RUN_LIVE_EVALS=1` and a real `OPENAI_API_KEY` are present. In CI this is a separate `live-evals` job keyed on the `OPENAI_API_KEY` secret; it no-ops (exits 0) when the secret is absent, so the default gate stays green on forks.
+
+### Run locally
+
+```bash
+# Offline gate (no API key needed) — this is what CI runs by default
+pytest tests/test_evals_deepeval.py -v -o addopts="" -p no:cacheprovider
+
+# Live LLM-judge gate (needs a real key; costs money)
+RUN_LIVE_EVALS=1 OPENAI_API_KEY=sk-... \
+  pytest tests/test_evals_deepeval.py -v -o addopts="" -k live
+```
+
+> The `-o addopts=""` override disables the repo-wide coverage/`--maxfail=1` addopts so the eval suite runs standalone. Latest offline run: **23 passed, 20 skipped** (the 20 skips are the API-key-gated live-judge cases).
+
+---
+
 ## Cost Analysis
 
 Estimated cost per 10-turn conversation by model, assuming average token usage observed in testing.

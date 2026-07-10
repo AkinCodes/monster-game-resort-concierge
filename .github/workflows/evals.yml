@@ -1,0 +1,93 @@
+name: Eval Gate
+
+# DeepEval quality-regression gate. Separate from the unit/lint Test Suite
+# (test.yml) so a quality regression fails a PR the same way a broken test
+# does -- without slowing down or entangling the fast test job.
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  offline-evals:
+    # Default gate: runs the offline, no-API-key DeepEval suite on every PR.
+    # Uses the repo's own 3-tier hallucination detector as a custom metric,
+    # plus keyword-coverage and tool-selection gates over the 20 golden cases.
+    name: Offline eval gate (no API key)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-evals-${{ hashFiles('**/requirements.txt') }}
+      - name: Cache HuggingFace models
+        # The offline custom metrics load all-MiniLM-L6-v2 (embeddings) and
+        # nli-deberta-v3-small (claim verification). Cache them so a fresh
+        # runner doesn't re-download from the HF hub every run (network flake).
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: ${{ runner.os }}-hf-evals-minilm-nli-deberta-v1
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          # deepeval needs pydantic>=2.11.7; install it after requirements so
+          # pip upgrades pydantic to a compatible version for the eval suite.
+          pip install "deepeval>=4.0.7,<5.0.0" "pydantic>=2.11.7,<3.0.0"
+      - name: Run offline eval gate
+        env:
+          MRC_ENVIRONMENT: dev
+          MRC_DATABASE_URL: sqlite:///./test_ci.db
+          MRC_OPENAI_API_KEY: dummy
+          MRC_API_KEY: dummy
+          MRC_JWT_SECRET_KEY: ci-test-secret-key-minimum-32-characters-long
+          TOKENIZERS_PARALLELISM: "false"
+          # Telemetry off; keeps CI logs clean and avoids outbound calls.
+          DEEPEVAL_TELEMETRY_OPT_OUT: "YES"
+        run: |
+          pytest tests/test_evals_deepeval.py -v -o addopts="" -p no:cacheprovider
+
+  live-evals:
+    # Optional LLM-as-judge gate (AnswerRelevancy + Faithfulness). Only runs
+    # when an OPENAI_API_KEY secret is configured; skipped on forks/PRs with
+    # no secret so the default gate stays green and free.
+    name: Live LLM-judge eval gate (optional)
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install "deepeval>=4.0.7,<5.0.0" "pydantic>=2.11.7,<3.0.0"
+      - name: Run live LLM-judge eval gate
+        env:
+          MRC_ENVIRONMENT: dev
+          MRC_DATABASE_URL: sqlite:///./test_ci.db
+          MRC_API_KEY: dummy
+          MRC_JWT_SECRET_KEY: ci-test-secret-key-minimum-32-characters-long
+          TOKENIZERS_PARALLELISM: "false"
+          DEEPEVAL_TELEMETRY_OPT_OUT: "YES"
+          RUN_LIVE_EVALS: "1"
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          if [ -z "$OPENAI_API_KEY" ]; then
+            echo "OPENAI_API_KEY secret not set -- skipping live LLM-judge evals."
+            exit 0
+          fi
+          pytest tests/test_evals_deepeval.py -v -o addopts="" \
+            -p no:cacheprovider -k "live"

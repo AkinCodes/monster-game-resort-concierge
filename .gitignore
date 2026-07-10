@@ -47,3 +47,7 @@ docs/mcproject/
 docs/rag_architecture/
 scripts/test_openai_connection.py
 scripts/test_tool_call_fixes.py
+
+# DeepEval local telemetry/cache dir (written at test runtime)
+.deepeval/
+.deepeval-cache.json

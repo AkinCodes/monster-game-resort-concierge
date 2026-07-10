@@ -11,7 +11,9 @@ dependencies = [
     "fastapi==0.115.6",
     "uvicorn[standard]==0.34.0",
     "python-multipart==0.0.20",
-    "pydantic==2.10.6",
+    # Relaxed from ==2.10.6 to satisfy deepeval (needs >=2.11.7); verified
+    # working with the app + full test suite on 2.13.4.
+    "pydantic>=2.11.7,<3.0.0",
     "pydantic-settings>=2.10.1",
     # ─────────────────────────────────────────────────────────────────────────────
     # HTTP, Async & Files
@@ -48,6 +50,7 @@ dependencies = [
     # ─────────────────────────────────────────────────────────────────────────────
     "ragas==0.2.11",
     "datasets==3.2.0",
+    "deepeval>=4.0.7,<5.0.0",   # DeepEval CI quality-regression gate
     # ─────────────────────────────────────────────────────────────────────────────
     # PDF, Security, Utilities
     # ─────────────────────────────────────────────────────────────────────────────
