@@ -146,6 +146,7 @@ class TestPlannerRequestsStructuredOutput:
     def _make_orchestrator(self, provider):
         memory = Mock()
         memory.get_messages.return_value = []
+        memory.get_summary.return_value = None
         tool_registry = Mock()
         tool_registry.list.return_value = []
         orch = ConciergeOrchestrator(

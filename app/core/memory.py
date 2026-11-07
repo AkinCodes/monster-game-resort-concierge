@@ -12,6 +12,7 @@ from ..database.db import DatabaseManager
 class MemoryStore:
     db: DatabaseManager
     max_messages_before_summary: int = 12
+    max_summary_chunks: int = 5
 
     def ensure_session(self, session_id: str, metadata: Optional[dict] = None) -> None:
         now = datetime.now(timezone.utc).isoformat()
@@ -93,10 +94,20 @@ class MemoryStore:
     def get_messages(self, session_id: str, limit: int = 50) -> list[dict]:
         with self.db.session() as conn:
             rows = conn.execute(
-                "SELECT role, content, created_at FROM messages WHERE session_id = ? ORDER BY id ASC LIMIT ?",
+                "SELECT role, content, created_at FROM ("
+                "SELECT id, role, content, created_at FROM messages"
+                " WHERE session_id = ? ORDER BY id DESC LIMIT ?"
+                ") AS recent ORDER BY id ASC",
                 (session_id, int(limit)),
             ).fetchall()
         return [dict(r) for r in rows]
+
+    def get_summary(self, session_id: str) -> Optional[str]:
+        with self.db.session() as conn:
+            row = conn.execute(
+                "SELECT summary FROM sessions WHERE session_id = ?", (session_id,)
+            ).fetchone()
+        return row["summary"] if row else None
 
     def _maybe_summarise(self, session_id: str) -> None:
         import os
@@ -121,7 +132,7 @@ class MemoryStore:
             if not rows:
                 return
             lines = [f"{r['role']}: {r['content']}" for r in rows]
-            openai_api_key = os.getenv("OPENAI_API_KEY")
+            openai_api_key = os.getenv("MRC_OPENAI_API_KEY") or os.getenv("OPENAI_API_KEY")
             summary = None
             if openai and openai_api_key:
                 try:
@@ -155,6 +166,7 @@ class MemoryStore:
             ).fetchone()
             prev = (existing["summary"] or "").strip() if existing else ""
             merged = (prev + "\n" + summary).strip() if prev else summary
+            merged = "\n".join(merged.splitlines()[-self.max_summary_chunks:])
             conn.execute(
                 "UPDATE sessions SET summary = ? WHERE session_id = ?",
                 (merged, session_id),
@@ -189,4 +201,4 @@ class MemoryStore:
         entity_summary = (
             f"Mentioned: {', '.join(set(entities[:5]))}" if entities else ""
         )
-        return f"{intent_summary}. {entity_summary}".strip()
+        return ". ".join(part for part in (intent_summary, entity_summary) if part)

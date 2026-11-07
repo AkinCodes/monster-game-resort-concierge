@@ -102,8 +102,7 @@ class ConciergeOrchestrator:
         tool_descriptions = [f"{t.name}: {t.description}" for t in available_tools]
         tool_list = "; ".join(tool_descriptions) if tool_descriptions else "(none)"
 
-        history = self.memory.get_messages(session_id, limit=5)
-        history_text = self._format_history(history)
+        history_text = self._history_text(session_id)
 
         from datetime import date
         today = date.today().isoformat()
@@ -281,12 +280,11 @@ class ConciergeOrchestrator:
                 sources.append(source)
 
         context = "\n---\n".join(context_parts) if context_parts else "(no results found)"
-        history = self.memory.get_messages(session_id, limit=5)
 
         prompt = load_prompt(
             "executor.knowledge",
             context=context,
-            history=self._format_history(history),
+            history=self._history_text(session_id),
             question=user_message,
         )
 
@@ -368,12 +366,10 @@ class ConciergeOrchestrator:
         self, plan: Plan, user_message: str, session_id: str
     ) -> ExecutionResult:
         """Generate a clarification question."""
-        history = self.memory.get_messages(session_id, limit=5)
-
         prompt = load_prompt(
             "executor.clarify",
             reasoning=plan.reasoning,
-            history=self._format_history(history),
+            history=self._history_text(session_id),
             question=user_message,
         )
 
@@ -395,11 +391,9 @@ class ConciergeOrchestrator:
         self, plan: Plan, user_message: str, session_id: str
     ) -> ExecutionResult:
         """Generate a direct conversational response."""
-        history = self.memory.get_messages(session_id, limit=5)
-
         prompt = load_prompt(
             "executor.chitchat",
-            history=self._format_history(history),
+            history=self._history_text(session_id),
             question=user_message,
         )
 
@@ -779,11 +773,24 @@ class ConciergeOrchestrator:
             )
         return True, ""
 
-    def _format_history(self, messages: list[dict]) -> str:
+    def _history_text(self, session_id: str) -> str:
+        """Return the latest messages plus the summary of earlier, cleared ones."""
+        messages = self.memory.get_messages(session_id, limit=5)
+        summary = self.memory.get_summary(session_id)
+        if summary and self.input_guard:
+            safe, reason = self.input_guard.check_prompt_injection(summary)
+            if not safe:
+                logger.warning("summary_guard_blocked", extra={"reason": reason})
+                summary = None
+        return self._format_history(messages, summary)
+
+    def _format_history(self, messages: list[dict], summary: str | None = None) -> str:
         """Format conversation history for prompt injection."""
-        if not messages:
+        if not messages and not summary:
             return "(no prior conversation)"
         lines = []
+        if summary:
+            lines.append(f"Summary of earlier conversation: {' '.join(summary.splitlines())}")
         for msg in messages:
             role = msg.get("role", "unknown")
             content = msg.get("content", "")

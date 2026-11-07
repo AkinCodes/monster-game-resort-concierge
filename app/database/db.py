@@ -143,6 +143,15 @@ UPSERT_MIGRATION_POSTGRES = (
 )
 
 
+def ordered_ddl(is_postgres: bool) -> list[str]:
+    """Return the DDL with each table after the sessions table it references, before the indexes."""
+    if is_postgres:
+        tables = [DDL_MESSAGES_POSTGRES, DDL_BOOKINGS_POSTGRES, DDL_TURN_METADATA_POSTGRES]
+    else:
+        tables = [DDL_MESSAGES_SQLITE, DDL_BOOKINGS_SQLITE, DDL_TURN_METADATA_SQLITE]
+    return DDL[:2] + tables + DDL[2:]
+
+
 def _convert_qmarks(sql: str):
     """Convert ?-style positional params to :p0, :p1, ... named params.
 
@@ -267,19 +276,7 @@ class DatabaseManager:
     def _init_db(self):
         try:
             with self.get_connection() as conn:
-                # Create tables — pick correct DDL per backend
-                all_ddl = list(DDL)  # copy shared DDL
-                if self._is_postgres:
-                    # Insert table DDL before the index DDL
-                    all_ddl.insert(1, DDL_MESSAGES_POSTGRES)
-                    all_ddl.insert(2, DDL_BOOKINGS_POSTGRES)
-                    all_ddl.insert(3, DDL_TURN_METADATA_POSTGRES)
-                else:
-                    all_ddl.insert(1, DDL_MESSAGES_SQLITE)
-                    all_ddl.insert(2, DDL_BOOKINGS_SQLITE)
-                    all_ddl.insert(3, DDL_TURN_METADATA_SQLITE)
-
-                for stmt in all_ddl:
+                for stmt in ordered_ddl(self._is_postgres):
                     conn.execute(stmt)
 
                 cur = conn.execute("SELECT MAX(version) AS v FROM schema_migrations")
