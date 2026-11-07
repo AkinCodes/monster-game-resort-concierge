@@ -18,3 +18,15 @@ updated_readmes/
 mlruns/
 .pytest_cache/
 .coverage
+.coverage.*
+htmlcov/
+.uv-cache/
+.ablation_rag_store/
+*.db
+*.log
+*.log.*
+backups/
+test_pdfs/
+generated_pdfs/
+.deepeval/
+.ruff_cache/

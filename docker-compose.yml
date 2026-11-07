@@ -8,6 +8,7 @@ services:
     environment:
       - MRC_ENVIRONMENT=prod
       - MRC_API_KEY=${MRC_API_KEY}
+      - MRC_JWT_SECRET_KEY=${MRC_JWT_SECRET_KEY:?set MRC_JWT_SECRET_KEY in .env, 32+ characters}
       - MRC_OPENAI_API_KEY=${MRC_OPENAI_API_KEY}
       - MRC_DATABASE_URL=postgresql://monster:${POSTGRES_PASSWORD:-monster_secret}@postgres:5432/monster_resort
       - MRC_REDIS_URL=redis://redis:6379/0
@@ -23,7 +24,7 @@ services:
         condition: service_healthy
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "python", "-c", "import httpx; httpx.get('http://localhost:8000/health', timeout=5).raise_for_status()"]
       interval: 30s
       timeout: 10s
       retries: 3
