@@ -261,13 +261,13 @@ def build_app() -> FastAPI:
     mcp = MCPServer(tool_registry=registry) if registry else None
 
     @app.get("/api/v1/mcp/tools")
-    def mcp_list_tools():
+    def mcp_list_tools(_: str = Depends(jwt_or_api_key)):
         if mcp is None:
             return {"tools": []}
         return {"tools": mcp.list_tools()}
 
     @app.post("/api/v1/mcp/call")
-    async def mcp_call_tool(request: dict):
+    async def mcp_call_tool(request: dict, _: str = Depends(jwt_or_api_key)):
         if mcp is None:
             return {
                 "content": [{"type": "text", "text": "MCP server not available"}],
@@ -275,10 +275,13 @@ def build_app() -> FastAPI:
             }
         name = request.get("name", "")
         arguments = request.get("arguments", {})
+        valid, reason = ConciergeOrchestrator._validate_tool_call(name, arguments)
+        if not valid:
+            return {"content": [{"type": "text", "text": reason}], "isError": True}
         return await mcp.call_tool(name, arguments)
 
     @app.get("/api/v1/mcp/info")
-    def mcp_server_info():
+    def mcp_server_info(_: str = Depends(jwt_or_api_key)):
         if mcp is None:
             return {"error": "MCP server not available"}
         return mcp.get_server_info()

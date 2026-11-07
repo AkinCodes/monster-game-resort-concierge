@@ -51,3 +51,36 @@ def test_sql_injection_prevention(client):
     assert response.status_code in [200, 400, 422, 500]
     health = client.get("/health")
     assert health.status_code == 200
+
+
+def test_mcp_endpoints_require_auth(client):
+    """Test MCP endpoints reject unauthenticated requests"""
+    assert client.get("/api/v1/mcp/tools").status_code in [401, 403]
+    assert client.get("/api/v1/mcp/info").status_code in [401, 403]
+    response = client.post(
+        "/api/v1/mcp/call",
+        json={"name": "book_room", "arguments": {}},
+    )
+    assert response.status_code in [401, 403]
+
+
+def test_mcp_tools_with_auth(client):
+    """Test MCP tool discovery works with a valid key"""
+    response = client.get("/api/v1/mcp/tools", headers=AUTH)
+    assert response.status_code == 200
+    assert "tools" in response.json()
+
+
+def test_mcp_call_blocks_unknown_hotel(client):
+    """Test MCP tool calls get the same argument checks as the agent"""
+    response = client.post(
+        "/api/v1/mcp/call",
+        json={
+            "name": "book_room",
+            "arguments": {"hotel_name": "Not A Real Hotel", "guest_name": "Vlad"},
+        },
+        headers=AUTH,
+    )
+    data = response.json()
+    assert data["isError"] is True
+    assert "Blocked" in data["content"][0]["text"]
