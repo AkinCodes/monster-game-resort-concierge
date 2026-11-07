@@ -68,8 +68,8 @@ def experiment_1_context_matters(client):
     system = "You are a helpful concierge at Monster Game Resort."
 
     conversation = [
-        {"role": "user", "content": "Hi! My name is Akin and I'm staying in room 42."},
-        {"role": "assistant", "content": "Welcome to Monster Game Resort, Akin! Great to have you in room 42. How can I help you today?"},
+        {"role": "user", "content": "Hi! My name is Vlad and I'm staying in room 42."},
+        {"role": "assistant", "content": "Welcome to Monster Game Resort, Vlad! Great to have you in room 42. How can I help you today?"},
         {"role": "user", "content": "What activities do you have for kids under 10?"},
         {"role": "assistant", "content": "We have the Monster Splash Pool (ages 3+), Cookie Monster's Baking Class (ages 5+), and the Junior Monster Hunt (ages 7+). Would you like to book any of these?"},
     ]
@@ -91,8 +91,8 @@ def experiment_1_context_matters(client):
     print(f"  Latency: {result_without['latency_ms']}ms")
 
     print("\n--- FINDINGS ---")
-    knew_name_with = "akin" in result_with["content"].lower()
-    knew_name_without = "akin" in result_without["content"].lower()
+    knew_name_with = "vlad" in result_with["content"].lower()
+    knew_name_without = "vlad" in result_without["content"].lower()
     knew_room_with = "42" in result_with["content"]
     knew_room_without = "42" in result_without["content"]
     knew_class_with = "bak" in result_with["content"].lower()
@@ -117,8 +117,8 @@ def experiment_2_token_scaling(client):
     system = "You are a helpful concierge at Monster Game Resort."
 
     turns = [
-        ("user", "Hi, I'm checking in. Name's Akin."),
-        ("assistant", "Welcome Akin! How can I help you today?"),
+        ("user", "Hi, I'm checking in. Name's Vlad."),
+        ("assistant", "Welcome Vlad! How can I help you today?"),
         ("user", "What restaurants do you have?"),
         ("assistant", "We have The Monster Grill (steakhouse), Cookie's Kitchen (family), and The Haunted Bistro (fine dining)."),
         ("user", "Book me a table at Cookie's Kitchen for 7pm tonight."),
@@ -191,8 +191,8 @@ def experiment_3_summarisation(client):
     session_id = f"exp3-{uuid.uuid4().hex[:8]}"
 
     turns = [
-        ("user", "Hi, I'm Akin checking into room 42."),
-        ("assistant", "Welcome Akin! Room 42, got it."),
+        ("user", "Hi, I'm Vlad checking into room 42."),
+        ("assistant", "Welcome Vlad! Room 42, got it."),
         ("user", "What restaurants do you have?"),
         ("assistant", "Monster Grill, Cookie's Kitchen, Haunted Bistro."),
         ("user", "Book Cookie's Kitchen for 3 at 7pm."),
@@ -258,8 +258,8 @@ def experiment_4_window_size(client):
     system = "You are a helpful concierge at Monster Game Resort. Always address the guest by name if known."
 
     full_conversation = [
-        {"role": "user", "content": "Hi! I'm Akin, I'm allergic to nuts and I'm vegan."},
-        {"role": "assistant", "content": "Welcome Akin! I've noted your nut allergy and vegan diet. I'll make sure all recommendations are safe for you."},
+        {"role": "user", "content": "Hi! I'm Vlad, I'm allergic to nuts and I'm vegan."},
+        {"role": "assistant", "content": "Welcome Vlad! I've noted your nut allergy and vegan diet. I'll make sure all recommendations are safe for you."},
         {"role": "user", "content": "What's the weather like today?"},
         {"role": "assistant", "content": "It's sunny and 24°C today — perfect for the pool!"},
         {"role": "user", "content": "How do I get to the spa?"},
@@ -287,7 +287,7 @@ def experiment_4_window_size(client):
         result = chat_with_history(client, system, msgs)
         mentions_allergy = "nut" in result["content"].lower() or "allerg" in result["content"].lower()
         mentions_vegan = "vegan" in result["content"].lower() or "plant" in result["content"].lower()
-        mentions_name = "akin" in result["content"].lower()
+        mentions_name = "vlad" in result["content"].lower()
 
         print(f"  Window={label:>6}: name={mentions_name}, allergy={mentions_allergy}, vegan={mentions_vegan} | {result['prompt_tokens']} tokens | {result['latency_ms']}ms")
         print(f"    Response: {result['content'][:150]}...")

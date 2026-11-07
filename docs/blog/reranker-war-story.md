@@ -1,6 +1,6 @@
 # My "advanced" RAG pipeline was slower *and* worse than the baseline. Here's how I found out — and what I did about it.
 
-I built a three-stage retrieval pipeline for the Monster Resort concierge: BM25 keyword search and dense vector search running in parallel, fused with Reciprocal Rank Fusion, then reranked by a BGE cross-encoder. It has the shape of every "serious" RAG diagram you've seen. It looks like the thing a senior engineer builds.
+I built a three-stage retrieval pipeline for the Monster Resort concierge: BM25 keyword search and dense vector search, fused with Reciprocal Rank Fusion, then reranked by a BGE cross-encoder. It has the shape of every "serious" RAG diagram you've seen. It looks like the thing a senior engineer builds.
 
 Then I ran my own ablation scoreboard against it — and it lost. To the simplest baseline in the study.
 
@@ -72,9 +72,9 @@ The 963ms average hid a lie. Here's the per-query breakdown from that run:
  564.8 ms   How far in advance should I book...
 ```
 
-The first query paid **3.4 seconds** — the cost of loading the cross-encoder weights off disk on first use. That's a one-time *startup* cost in production, not a per-request cost, but because the model loaded lazily *inside* the first timed `search()` call, it landed squarely on my latency measurement and dragged the mean up by ~200ms/query. Any p99 I quoted from this would be fiction.
+The first query paid **3.4 seconds** — the cost of loading the cross-encoder weights off disk on first use. That's a one-time cost on the first query, not a per-request cost, but because the model loaded lazily *inside* the first timed `search()` call, it landed squarely on my latency measurement and dragged the mean up by ~200ms/query. Any p99 I quoted from this would be fiction.
 
-The fix: a `warm_up()` method that pre-loads the cross-encoder (and forces a tiny warm forward pass) at startup, called before the timed loop. Now the measurement reflects steady-state, which is what a user actually experiences.
+The fix: a `warm_up()` method that pre-loads the cross-encoder (and forces a tiny warm forward pass), called before the timed loop. Now the measurement reflects steady state, which is what every query after the first one sees. The app itself doesn't call `warm_up()` yet, so its first knowledge query still pays the load cost.
 
 ## The real numbers after the fix
 
@@ -97,7 +97,7 @@ And now the uncomfortable honesty, because a fabricated victory would defeat the
 
 **On a 5-file corpus, dense-only is genuinely hard to beat.** The reranker technically wins on MRR, but it costs ~90x the latency (737ms vs 8ms on CPU) to move MRR by 0.04. On this corpus, if I were shipping a latency-sensitive path, I would ship **hybrid-no-reranker** — it has the best Precision@5, matches the best MRR, and runs in single-digit milliseconds. I did *not* make the reranker a slam-dunk, because on this data it isn't one.
 
-So when *would* the reranker win decisively? When candidate ambiguity rises — a larger corpus with many near-duplicate chunks, where dense retrieval returns ten plausible-looking passages and only the cross-encoder can tell which one actually answers the question. And when there's a GPU: the ~730ms CPU inference drops by roughly an order of magnitude, which changes the trade-off entirely. Those are the conditions under which I'd turn the reranker on by default. Naming those conditions — instead of claiming the reranker always wins — is the whole point.
+So when *would* the reranker win decisively? When candidate ambiguity rises — a larger corpus with many near-duplicate chunks, where dense retrieval returns ten plausible-looking passages and only the cross-encoder can tell which one actually answers the question. And when there's a GPU: the ~730ms CPU inference should drop by roughly an order of magnitude (I haven't measured that here), which would change the trade-off entirely. Those are the conditions under which I'd turn the reranker on by default. Naming those conditions — instead of claiming the reranker always wins — is the whole point.
 
 ## The transferable lesson
 
